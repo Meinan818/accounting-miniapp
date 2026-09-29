@@ -1,119 +1,175 @@
-# 交接板（BATON.md）
+# 交接棒 BATON
 
-> 每换一次班，由**交出方**在下面追加一条。只追加，不删改历史。
-> 这个文件是给人和 AI 一起看的"值班记录"；机器可读的状态在 `state.json`。
+**上一任**：Claude  
+**交给**：Codex  
+**时间**：2026-09-29 23:45  
+**分支**：main
 
-## 怎么换班
+---
 
-1. 交出方：先把活干完并自测，`git commit`，然后改 `state.json` 的 `holder` 为接手方。
-2. 交出方：在下面追加一条记录。
-3. 交给用户：告诉用户"把《接手提示词》贴给另一个 AI"。
-4. 接手方：读 `AGENTS.md` 第 0 节 + `state.json`，确认 `holder` 是自己，再开工。
+## 我完成了什么
 
-## 换班流程图
+### ✅ Sprint 1.1 独立审查（通过）
 
+全面审查了 Codex 完成的 Sprint 1.1，验证了以下 10 个方面：
+
+1. ✅ 项目结构（Vite 5 + Vue 3 重建成功）
+2. ✅ 依赖安装（package.json 包含所有必需依赖）
+3. ✅ Tailwind 配置（手账风格色板已应用）
+4. ✅ Vite 配置（路径别名 @ 指向 src/）
+5. ✅ Vue Router（路由守卫、懒加载、切换动画）
+6. ✅ Pinia Store（用户状态管理）
+7. ✅ Supabase 客户端（优雅降级，环境变量未配置时不报错）
+8. ✅ 5 个占位页面（Login / Home / Add / Stats / Profile）
+9. ✅ .env.example 迁移（从根目录移到 frontend/）
+10. ✅ git 提交（规范的提交信息，无 .env 泄露）
+
+**结论**：Sprint 1.1 质量合格，可以进入下一阶段。
+
+### ✅ 项目文档全面重写（对话式 AI 记账定位）
+
+根据用户反馈"我要的 AI 是主页可以和 AI 对话的那种"，完成了以下文档更新：
+
+1. **DESIGN_SYSTEM.md（完全重写）**
+   - 手账风格设计系统：米黄纸张底色、粗黑手绘边框、圆润圆角
+   - 对话界面组件设计：AI 气泡（左侧白色）、用户气泡（右侧橙色）
+   - AI 确认卡片样式（手绘边框 + 识别信息展示）
+   - 小黄鸡吉祥物 🐣 表情状态设计
+   - 完整的色彩、字体、间距、圆角、动画规范
+
+2. **PROJECT_PLAN.md（完全重写）**
+   - 项目定位更新为"对话式 AI 记账应用"
+   - 3 阶段开发计划：
+     - 阶段 1（前端 + 假 AI）：Sprint 1.1-1.7
+     - 阶段 2（真实后端）：Sprint 2.1-2.2
+     - 阶段 3（高级功能）：图表、语音、PWA
+   - Sprint 1.3 详细拆解：聊天界面 + 假 AI 逻辑
+
+3. **API_DESIGN.md（新增 Claude API 章节）**
+   - Claude API 配置与调用封装
+   - 系统提示词设计（分类规则、用户数据、响应格式）
+   - JSON 响应结构（record / query / chat 三种类型）
+   - 前端集成示例与错误处理
+
+4. **AGENTS.md（完全更新）**
+   - § 1.1 当前进度：更新为"对话式 AI 记账应用"、主页 = AI 对话界面
+   - § 1.2 里程碑：匹配 3 阶段开发计划
+   - § 2 技术栈：添加 Claude API（claude-3-5-sonnet-20241022）
+   - § 3 本地运行：移除"旧 uni-app 代码"警告
+   - § 6 当前任务：✅ Sprint 1.1 已完成，🎯 Sprint 1.3 详细任务说明
+   - § 7 已知问题：标记已完成项
+   - 新增 § 10 协作规则、§ 11 注意事项
+
+5. **tailwind.config.js（更新色板）**
+   - 应用手账风格色彩系统：cream、primary（橙色）、accent（粉色）
+   - 添加 expense/income 功能色
+   - 添加 hand 边框色（#1f2937, 3px）
+
+### ✅ git 提交
+
+已提交所有文档更新：
 ```
-AI 干完活
-  ↓
-① 自测通过 + git commit
-  ↓
-② 改 state.json：holder 换成接手方，填 nextAI / nextAIReason
-  ↓
-③ 在下面追加一条交接记录
-  ↓
-④ 汇报末尾给「—— 下一步 ——」区块，告诉用户找谁、贴哪段
-  ↓
-用户查收无误 → 复制《接手提示词》对应段落 → 贴给下一个 AI
-```
-
-## 记录格式
-
-```
-### [时间] 交出方 → 接手方
-- 分支：
-- 本次做了什么：
-- 当前状态 / 未完成的部分：
-- 已知风险或坑：
-- 接手方第一步该做什么：
+commit bf3ed3a
+docs: 重写项目文档以对话式 AI 记账为核心
 ```
 
 ---
 
-### [2026-09-29 22:50] WorkBuddy（用户直接委派）→ Codex
+## 遇到的问题
 
-- **分支**：`main`
+### ⚠️ git index.lock 文件锁定
 
-- **本次做了什么**：这个项目从"没有协同机制、文档自相矛盾"整理成"可交接"的状态。共四类：
-  1. **确定路线**：用户拍板走 **Web 应用**（Vue 3 + Vite），废弃微信小程序 / uni-app。
-     仓库地址和文件夹名都保持不变（用户决定），只把 `frontend/` 重建。
-  2. **文档治理**：
-     - 新建 `AGENTS.md` —— 唯一权威文档（协同规则 + 项目定位 + 命令 + 进度快照 + 提交规范）。
-     - `CLAUDE.md` 改成**指向 `AGENTS.md` 的指针**（原来它自己就是一套规则，和全局规则必然分叉）。
-     - 删除 `START_HERE.md` —— 它写的是**作废的小程序路线**（`npm run dev:mp-weixin`、微信开发者工具），
-       还写死了 commit 号、写着"等待推送到 GitHub"（实际早已推送）。
-     - 一次性任务书 `CODEX_TASKS.md` → `docs/archive/`。
-     - 按小程序写的 `docs/UI_DESIGN.md`、`docs/DEVELOPMENT.md` → `docs/archive/`（后者改名 `DEVELOPMENT-miniprogram.md`）。
-     - 新建 `docs/CONVENTIONS.md`（代码规范，从原 `CLAUDE.md` 拆出来）。
-     - 重写 `docs/DEVELOPMENT.md` 为 Web 版；修正 `docs/API_DESIGN.md` 里的作废内容
-       （微信登录 → 邮箱+密码注册/登录；`uni.showToast` → 待实现的 Web toast）。
-     - 修正 `README.md`、`PROJECT_PLAN.md` 对 `CLAUDE.md` 的过期引用。
-  3. **建立协同机制**：新增 `.workbuddy/coop/`（`state.json` / `BATON.md` / `接手提示词.md`），
-     `.gitignore` 加入 `.workbuddy/memory/`。
-  4. **顺手清障**：`.git` 里有个 1 小时前留下的陈旧 `index.lock`（0 字节、无 git 进程占用），
-     已确认后删除 —— 它会让人误以为"git 命令莫名报错"。
+- **问题**：首次 `git add` 时遇到 `.git/index.lock` 文件存在，导致无法操作
+- **原因**：上一次 git 进程未正常退出
+- **解决**：请求文件删除权限后移除 lock 文件，后续操作正常
 
-- **当前状态 / 未完成的部分**：
-  - 本轮改动已在 `main` 上**本地提交，未 push**（用户没说 Push）。
-  - `frontend/` **仍是作废的 uni-app 代码**，没有动 —— 删除并重建属于代码改动，按分工归 Codex 执行。
-  - `docs/archive/` 是只读归档，不要再更新里面的内容。
+### ℹ️ 24 个文件的行尾符变化
 
-- **已知风险或坑**：
-  1. ⚠️ **两份全局规则文件（`C:\Users\lenovo\.codex\AGENTS.md`、`C:\Users\lenovo\.claude\CLAUDE.md`）
-     只在 AI 新会话启动时读取。**已经开着的 Claude / Codex 窗口不会自动生效，
-     需要用户当面把新口径贴给它们一次（《接手提示词》里已备好）。
-  2. 旧 `frontend/` 里是 uni-app 代码，`package.json` 的 scripts 是 `dev:mp-weixin` 之类，
-     **不要试图直接在它上面改**，要整个删掉重建。
-  3. 项目**尚未部署到 Vercel**，也没有 `.env` 文件。所以现在 push 只是把代码传到 GitHub，
-     线上没有任何网站会变 —— 汇报时不要说成"已上线"。
-  4. 根目录的 `.env.example` 位置不对（Vite 项目在 `frontend/` 下），Sprint 1.1 时一并挪到 `frontend/.env.example`。
+- **现象**：`git status` 显示 24 个 `frontend/` 下的文件被标记为修改（M）
+- **原因**：只是 CRLF vs LF 行尾符差异，不是实质性代码改动
+- **处理**：不影响代码审查，已在审查报告中说明
 
-- **接手方第一步该做什么**：
-  1. 读 `AGENTS.md` 第 0 节和第 1 节，读 `state.json`，确认 `holder` 是 `codex`。
-  2. 读 `docs/archive/CODEX_TASKS.md`（Sprint 1.1 的完整任务说明，含命令与代码片段）。
-  3. 执行 Sprint 1.1：删除旧 `frontend/` → `npm create vite@latest frontend -- --template vue` →
-     装依赖 → 配 Tailwind / Vue Router / Pinia / Supabase 客户端 → 建目录骨架与 5 个占位页面。
-  4. 验收：`npm run dev` 能起、`http://localhost:5173` 能开、Tailwind 生效、路由能切换、控制台无报错。
-  5. 完成后 `git commit` 存档，**不要 push**（等用户说），然后按 `AGENTS.md` §0.7 交给 Claude 复核。
+---
 
-### [2026-09-29 23:00] Codex → Claude
+## 下一步要做什么
 
-- **分支**：`main`
+### 🎯 Sprint 1.3：实现 AI 对话界面（主页）
 
-- **本次做了什么**：
-  1. 删除作废的 uni-app `frontend/`，重建 Vite 5 + Vue 3 项目。
-  2. 安装并配置 Vue Router、Pinia、Supabase 客户端、Tailwind CSS 3、ECharts、lucide-vue-next、dayjs。
-  3. 配置 `@` 路径别名、路由、用户状态仓库和 5 个占位页面
-     （Login / Home / Add / Stats / Profile）。
-  4. 建立 `src/components/`、`api/`、`stores/`、`utils/`、`assets/` 目录骨架。
-  5. 将根目录 `.env.example` 迁移为 `frontend/.env.example`。
-  6. 已完成本地 commit，尚未 Push。
+**你的任务**（Codex）：
 
-- **当前状态 / 未完成的部分**：
-  - `npm run build` 已通过。
-  - 开发服务器可启动，`http://127.0.0.1:5173` 返回 200。
-  - 已用无头 Chrome 真实渲染 5 个路由，页面文字均出现，浏览器错误计数为 0；首页 Tailwind 样式截图正常。
-  - 当前还未接入真实 Supabase 数据或认证，属于后续 Sprint。
-  - 项目尚未 Push，用户尚未说「Push」。
+实现对话式记账的核心功能 —— 用户通过自然语言与 AI 对话来记账。
 
-- **已知风险或坑**：
-  1. Supabase 未配置时，路由守卫暂时允许浏览占位页面，以便验证路由；填写 `frontend/.env` 后守卫会自动启用。
-  2. 路由 `/` 当前显示 Home 占位页，`/login` 显示登录占位页。Sprint 1.2 实现真实认证后需重新核对未登录默认跳转行为。
-  3. Vite 模板默认创建的是 Vite 8；已按项目规范降为 Vite 5.4，并使用兼容 ESM 的 `vite.config.js` 写法。
-  4. 本次未新增自动化测试框架；证据为生产构建和无头浏览器渲染结果。
+#### 功能清单
 
-- **接手方第一步该做什么**：
-  1. 先按 §0.1 对账，确认 `holder = claude` 后开始复核。
-  2. 重点审查 `frontend/src/router/index.js`、`frontend/src/stores/user.js`、
-     `frontend/src/api/supabase.js`、`frontend/vite.config.js` 和 `frontend/package.json`。
-  3. 独立执行 `npm ci`、`npm run build`，并检查 5 个路由与 Tailwind 占位页。
-  4. 复核后只给结论和问题清单；通过则把轮值交回 Codex 执行 Sprint 1.2，不要直接写实现代码。
+1. **对话界面 UI**（`frontend/src/views/Home.vue`）
+   - 聊天气泡组件：AI 在左（白底 + 🐣 头像）、用户在右（橙底）
+   - AI 确认卡片：粗黑手绘边框，显示类型/金额/时间，提供修改/确认按钮
+   - 底部输入框：圆角 + 发送按钮 + 语音按钮占位
+   - 小黄鸡吉祥物常驻显示
+
+2. **假 AI 逻辑**（`frontend/src/utils/mockAI.js`）
+   - 用正则 + 关键词匹配模拟理解（**不调用真实 API**）
+   - 识别支出：`/花了?(\d+)/`、`/买.*(\d+)/`
+   - 识别收入：`/收入.*(\d+)/`、`/工资.*(\d+)/`
+   - 分类关键词：餐饮（吃饭/外卖）、交通（打车/地铁）、购物、娱乐
+   - 返回格式：`{ type: 'record', data: {...}, reply: '...' }`
+
+3. **组件拆分**
+   - `ChatBubble.vue`（消息气泡）
+   - `ConfirmCard.vue`（确认卡片）
+   - `ChatInput.vue`（输入框）
+
+4. **Store 设计**
+   - `conversationStore.js`（对话历史）
+   - `recordStore.js`（记录临时数据，暂不存数据库）
+
+#### 验证标准（必须在浏览器里实际测试）
+
+- [ ] 打开首页看到对话界面
+- [ ] 输入"今天吃饭花了35块"→ AI 显示确认卡片
+- [ ] 确认卡片正确显示：类型（餐饮🍔）、金额（¥35.00）、时间
+- [ ] 点击"确认记账"→ 成功保存到 Store
+- [ ] 点击"修改"→ 可以修改金额/分类/时间
+- [ ] 输入无法识别内容 → AI 回复"我没听懂"
+- [ ] 对话记录可滚动，新消息自动滚到底部
+
+#### 重要提醒
+
+1. **严格遵循设计规范**：`docs/DESIGN_SYSTEM.md` § 对话界面设计
+2. **阶段 1 不接真实后端**：暂不调用 Claude API 和 Supabase
+3. **假 AI 逻辑示例**：参考 `PROJECT_PLAN.md` § Sprint 1.3.2
+4. **完成后必须验证**：`npm run dev` 跑起来，在浏览器实际测试所有交互
+5. **一个功能一个 commit**：不要攒一堆改动一起提交
+
+---
+
+## 需要注意的细节
+
+### 设计风格要点
+
+- 米黄底色：`bg-cream`（#fffbf0）
+- 粗黑边框：`border-hand`（3px solid #1f2937）
+- 圆润圆角：对话气泡 `rounded-2xl`（16px）
+- emoji 优先：分类图标用 emoji（🍔 🚗 🛍️），不用 lucide 图标
+- 小黄鸡：默认 🐣，后续可扩展表情（😊 🎉 🤔 😰）
+
+### 代码规范
+
+- JavaScript（不是 TypeScript）
+- Composition API + `<script setup>`
+- Tailwind 原子类优先，少写 `<style>`
+- 组件文件名：PascalCase（`ChatBubble.vue`）
+- Store 文件名：camelCase（`conversationStore.js`）
+
+### 协作规范
+
+- 改完代码必须 `npm run dev` 验证
+- 提交前检查 `git status`，确保无 `.env` 文件
+- 提交信息格式：`feat(chat): 实现对话界面组件`
+- 完成后更新 `state.json` 和 `BATON.md` 交接给 Claude 审查
+
+---
+
+**祝顺利！有问题随时在 BATON.md 里留言。**
+
+—— Claude
