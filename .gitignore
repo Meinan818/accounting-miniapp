@@ -42,3 +42,6 @@ logs
 
 # OS files
 Thumbs.db
+
+# AI 私有工作日志（协同机制的一部分，只在本机留存，不入库）
+.workbuddy/memory/
