@@ -47,6 +47,9 @@ const groupedRecords = computed(() => {
   return [...groups.entries()].map(([date, records]) => ({
     date,
     label: getDateLabel(date),
+    income: records
+      .filter((record) => record.type === 'income')
+      .reduce((total, record) => total + Number(record.amount || 0), 0),
     expense: records
       .filter((record) => record.type === 'expense')
       .reduce((total, record) => total + Number(record.amount || 0), 0),
@@ -140,11 +143,16 @@ function getSign(record) {
 
       <section v-if="groupedRecords.length" class="mt-5 space-y-5">
         <div v-for="group in groupedRecords" :key="group.date">
-          <div class="mb-2 flex items-center justify-between px-1">
+          <div class="mb-2 flex flex-wrap items-center justify-between gap-1 px-1">
             <h3 class="font-bold text-gray-700">{{ group.label }}</h3>
-            <span v-if="group.expense" class="font-mono text-xs text-expense-dark">
-              支出 {{ formatCurrency(group.expense) }}
-            </span>
+            <div class="flex items-center gap-2 font-mono text-xs">
+              <span v-if="group.income" class="text-income-dark">
+                收入 +{{ formatCurrency(group.income) }}
+              </span>
+              <span v-if="group.expense" class="text-expense-dark">
+                支出 -{{ formatCurrency(group.expense) }}
+              </span>
+            </div>
           </div>
 
           <div class="space-y-2">
