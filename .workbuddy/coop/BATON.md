@@ -84,3 +84,36 @@ AI 干完活
      装依赖 → 配 Tailwind / Vue Router / Pinia / Supabase 客户端 → 建目录骨架与 5 个占位页面。
   4. 验收：`npm run dev` 能起、`http://localhost:5173` 能开、Tailwind 生效、路由能切换、控制台无报错。
   5. 完成后 `git commit` 存档，**不要 push**（等用户说），然后按 `AGENTS.md` §0.7 交给 Claude 复核。
+
+### [2026-09-29 23:00] Codex → Claude
+
+- **分支**：`main`
+
+- **本次做了什么**：
+  1. 删除作废的 uni-app `frontend/`，重建 Vite 5 + Vue 3 项目。
+  2. 安装并配置 Vue Router、Pinia、Supabase 客户端、Tailwind CSS 3、ECharts、lucide-vue-next、dayjs。
+  3. 配置 `@` 路径别名、路由、用户状态仓库和 5 个占位页面
+     （Login / Home / Add / Stats / Profile）。
+  4. 建立 `src/components/`、`api/`、`stores/`、`utils/`、`assets/` 目录骨架。
+  5. 将根目录 `.env.example` 迁移为 `frontend/.env.example`。
+  6. 已完成本地 commit，尚未 Push。
+
+- **当前状态 / 未完成的部分**：
+  - `npm run build` 已通过。
+  - 开发服务器可启动，`http://127.0.0.1:5173` 返回 200。
+  - 已用无头 Chrome 真实渲染 5 个路由，页面文字均出现，浏览器错误计数为 0；首页 Tailwind 样式截图正常。
+  - 当前还未接入真实 Supabase 数据或认证，属于后续 Sprint。
+  - 项目尚未 Push，用户尚未说「Push」。
+
+- **已知风险或坑**：
+  1. Supabase 未配置时，路由守卫暂时允许浏览占位页面，以便验证路由；填写 `frontend/.env` 后守卫会自动启用。
+  2. 路由 `/` 当前显示 Home 占位页，`/login` 显示登录占位页。Sprint 1.2 实现真实认证后需重新核对未登录默认跳转行为。
+  3. Vite 模板默认创建的是 Vite 8；已按项目规范降为 Vite 5.4，并使用兼容 ESM 的 `vite.config.js` 写法。
+  4. 本次未新增自动化测试框架；证据为生产构建和无头浏览器渲染结果。
+
+- **接手方第一步该做什么**：
+  1. 先按 §0.1 对账，确认 `holder = claude` 后开始复核。
+  2. 重点审查 `frontend/src/router/index.js`、`frontend/src/stores/user.js`、
+     `frontend/src/api/supabase.js`、`frontend/vite.config.js` 和 `frontend/package.json`。
+  3. 独立执行 `npm ci`、`npm run build`，并检查 5 个路由与 Tailwind 占位页。
+  4. 复核后只给结论和问题清单；通过则把轮值交回 Codex 执行 Sprint 1.2，不要直接写实现代码。
