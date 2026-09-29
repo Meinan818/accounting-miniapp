@@ -22,33 +22,59 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 ## 认证 API
 
-### 1. 微信登录
+> 认证方式：**邮箱 + 密码**（Supabase Auth）。
+> 旧的"微信登录"方案属于作废的微信小程序路线，已移除；不要再按它实现。
+
+### 1. 邮箱注册
 
 ```javascript
 // api/auth.js
 
 /**
- * 微信小程序登录
+ * 邮箱注册
+ * @param {string} email
+ * @param {string} password
  * @returns {Promise<Object>} 用户信息
  */
-export async function loginWithWechat() {
-  const { code } = await uni.login({ provider: 'weixin' })
-  
-  // 调用云函数或后端接口交换 session_key
-  // 然后使用 Supabase Auth
-  const { data, error } = await supabase.auth.signInWithIdToken({
-    provider: 'wechat',
-    token: code
+export async function signUpWithEmail(email, password) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { nickname: '用户' } }
   })
-  
+
   if (error) throw error
-  
-  // 创建或更新用户信息
-  await createOrUpdateUser(data.user)
-  
+
+  // 同步到业务用户表 users
+  if (data.user) await createOrUpdateUser(data.user)
+
   return data.user
 }
+```
 
+### 2. 邮箱登录
+
+```javascript
+/**
+ * 邮箱登录
+ * @param {string} email
+ * @param {string} password
+ * @returns {Promise<Object>} 用户信息
+ */
+export async function signInWithEmail(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+  if (error) throw error
+
+  return data.user
+}
+```
+
+> 注意：Supabase 默认要求邮箱验证。若演示阶段想跳过，去 Dashboard → Authentication → Providers → Email 里关掉 "Confirm email"。
+
+### 3. 退出登录与获取当前用户
+
+```javascript
 /**
  * 退出登录
  */
@@ -569,11 +595,11 @@ export function handleApiError(error) {
     message = '数据已存在'
   }
   
-  uni.showToast({
-    title: message,
-    icon: 'none'
-  })
-  
+  // 提示用户
+  // ⚠️ 旧的 uni.showToast 是小程序 API，Web 版不可用。
+  // Web 版用项目自己的 toast 工具（待实现，建议放 @/utils/toast.js，导出 showToast）
+  showToast(message)
+
   throw error
 }
 ```

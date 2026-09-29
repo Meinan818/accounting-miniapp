@@ -1,491 +1,139 @@
-# 开发指南
+# 智账 — 开发指南（docs/DEVELOPMENT.md）
 
-## 环境搭建
+> 适用路线：**Web 应用**（Vue 3 + Vite + Tailwind CSS + Supabase），部署到 Vercel。
+> 旧版（微信小程序 / uni-app / HBuilderX）指南已作废，见 `docs/archive/DEVELOPMENT-miniprogram.md`。
+> AI 协作规则见根目录 `AGENTS.md`；代码规范见 `docs/CONVENTIONS.md`。
+
+## 一、环境搭建
 
 ### 1. 安装 Node.js
 
-确保安装 Node.js 16 或更高版本：
+需要 **Node.js 18 或更高**（Vite 5 的要求）：
 
 ```bash
-node -v  # 应显示 v16.x.x 或更高
-npm -v   # 应显示 8.x.x 或更高
+node -v    # 应 ≥ v18
+npm -v
 ```
 
-下载地址: https://nodejs.org/
+### 2. 编辑器
 
----
+推荐 VS Code，装两个插件：**Vue - Official**（Vue 语言支持）、**Tailwind CSS IntelliSense**。
 
-### 2. 安装 HBuilderX（推荐）或 VS Code
+## 二、项目初始化
 
-#### 方案 A: HBuilderX（官方推荐）
-
-1. 下载 HBuilderX: https://www.dcloud.io/hbuilderx.html
-2. 安装「uni-app 编译器」插件
-3. 导入项目目录
-
-#### 方案 B: VS Code
-
-1. 安装 VS Code: https://code.visualstudio.com/
-2. 安装插件:
-   - `uni-create-view`
-   - `uni-helper`
-   - `Vue Language Features (Volar)`
-3. 全局安装 uni-app CLI:
-
-```bash
-npm install -g @dcloudio/uvm
-uvm
-```
-
----
-
-### 3. 安装微信开发者工具
-
-1. 下载: https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
-2. 登录微信账号
-3. 设置 → 安全设置 → 开启「服务端口」
-
----
-
-### 4. 注册 Supabase 账号
-
-1. 访问: https://app.supabase.com
-2. 使用 GitHub 账号登录（免费）
-3. 创建新项目:
-   - Organization: 个人账号
-   - Project Name: `accounting-app`
-   - Database Password: 保存好密码
-   - Region: 选择离你最近的区域
-
----
-
-## 项目初始化
-
-### 1. 安装依赖
+> ⚠️ 目前 `frontend/` 还是作废的 uni-app 代码，需要先按 `docs/archive/CODEX_TASKS.md` 重建为 Vite 项目（Sprint 1.1 的任务）。下面的命令在重建之后才成立。
 
 ```bash
 cd frontend
 npm install
 ```
 
-依赖列表：
-- `vue`: ^3.2.0
-- `@dcloudio/vite-plugin-uni`: 最新版
-- `@supabase/supabase-js`: ^2.38.0
-- `pinia`: ^2.1.0
-
----
-
-### 2. 配置 Supabase
-
-#### 2.1 获取项目凭证
-
-在 Supabase Dashboard:
-1. 进入你的项目
-2. 点击左侧「Settings」→「API」
-3. 复制以下信息:
-   - `Project URL`
-   - `anon public` key
-
-#### 2.2 配置环境变量
+网络慢时先切国内镜像：
 
 ```bash
-# 在项目根目录创建 .env 文件
-cp .env.example .env
+npm config set registry https://registry.npmmirror.com
 ```
 
-编辑 `.env`:
-```env
-VITE_SUPABASE_URL=https://xxxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+## 三、配置 Supabase
+
+### 1. 建项目并拿凭证
+
+1. 访问 https://app.supabase.com ，用 GitHub 账号登录。
+2. New Project：名称 `accounting-app`；数据库密码设强密码并**记下来**；Region 选 `Northeast Asia (Tokyo)` 或最近的。
+3. 等项目创建完成（约 2 分钟）。
+4. Settings → API，复制 **Project URL** 和 **anon public key**。
+
+### 2. 配置环境变量
+
+在 **`frontend/`** 目录下创建 `.env`（不是项目根目录）：
+
+```
+VITE_SUPABASE_URL=你的 Project URL
+VITE_SUPABASE_ANON_KEY=你的 anon key
 ```
 
----
+- 变量名必须以 `VITE_` 开头，否则前端读不到；**改完必须重启 dev server**。
+- `.env` 已在 `.gitignore` 中，**永不入库**。
+- 只放 anon key；`service_role` key **严禁**出现在前端代码或任何文档里。
 
 ### 3. 初始化数据库
 
-在 Supabase Dashboard:
+在 Supabase Dashboard → 左侧 SQL Editor → New Query，**按顺序**执行项目 `supabase/` 下的三个文件：
 
-1. 进入「SQL Editor」
-2. 新建查询
-3. 依次执行以下 SQL 文件:
+| 顺序 | 文件 | 作用 |
+|---|---|---|
+| 1 | `supabase/schema.sql` | 建 5 张表（users / categories / records / budgets / accounts） |
+| 2 | `supabase/seed.sql` | 插入初始数据（35 条预设分类） |
+| 3 | `supabase/rls_policies.sql` | 配置行级安全策略（用户只能访问自己的数据） |
 
-```sql
--- 1. 创建表结构
--- 复制粘贴 supabase/schema.sql 的内容
--- 点击「Run」
+**验证**：左侧 Table Editor 应能看到 5 张表，`categories` 有 35 条数据。
 
--- 2. 插入初始数据
--- 复制粘贴 supabase/seed.sql 的内容
--- 点击「Run」
+> 这一步是**人工操作**，AI 做不了，也不要假装完成。
 
--- 3. 配置安全策略
--- 复制粘贴 supabase/rls_policies.sql 的内容
--- 点击「Run」
-```
+### 4. 配置 Storage（可选，里程碑 3 做票据上传时再配）
 
-#### 验证数据库
+建一个 Bucket（建议名 `receipts`）存票据照片，并配 RLS 策略允许用户上传/删除自己的文件、所有人可读。策略写法参考 `supabase/rls_policies.sql` 的风格。
 
-进入「Table Editor」，应该能看到：
-- ✅ users 表
-- ✅ categories 表（有 35 条预设数据）
-- ✅ records 表
-- ✅ budgets 表
-- ✅ accounts 表
-
----
-
-### 4. 配置 Storage（图片上传）
-
-1. 进入「Storage」
-2. 点击「Create a new bucket」:
-   - Name: `receipts`
-   - Public: ✅ 勾选（公开访问）
-3. 点击「Create bucket」
-
-#### 配置存储策略
-
-进入 `receipts` bucket → Policies:
-
-```sql
--- 允许用户上传自己的图片
-CREATE POLICY "Users can upload own receipts"
-ON storage.objects FOR INSERT
-WITH CHECK (
-  bucket_id = 'receipts' AND
-  auth.uid()::text = (storage.foldername(name))[1]
-);
-
--- 允许所有人查看图片
-CREATE POLICY "Public access to receipts"
-ON storage.objects FOR SELECT
-USING (bucket_id = 'receipts');
-
--- 允许用户删除自己的图片
-CREATE POLICY "Users can delete own receipts"
-ON storage.objects FOR DELETE
-USING (
-  bucket_id = 'receipts' AND
-  auth.uid()::text = (storage.foldername(name))[1]
-);
-```
-
----
-
-## 启动项目
-
-### 1. 开发模式
+## 四、启动项目
 
 ```bash
 cd frontend
-npm run dev:mp-weixin
+
+npm run dev        # 开发服务器，默认 http://localhost:5173
+npm run build      # 生产构建，产物在 frontend/dist
+npm run preview    # 本地预览构建产物
 ```
 
-编译完成后，会生成 `dist/dev/mp-weixin` 目录。
+## 五、开发流程
 
----
+1. 读 `docs/DESIGN_SYSTEM.md` 了解视觉规范，读 `docs/CONVENTIONS.md` 了解写法。
+2. 按 `docs/CONVENTIONS.md` 的目录结构新建页面 / 组件。
+3. 调数据用 `src/api/` 下封装好的方法，**不要在组件里直接写 Supabase 查询**。
+4. 本地在浏览器里**亲手点一遍**（验收要求见 `AGENTS.md` 第 8 节）。
+5. 提交（一个功能一个 commit，格式见 `docs/CONVENTIONS.md`）。
 
-### 2. 在微信开发者工具中打开
+## 六、调试技巧
 
-1. 打开微信开发者工具
-2. 选择「导入项目」
-3. 目录选择: `frontend/dist/dev/mp-weixin`
-4. AppID: 点击「测试号」（或使用自己的 AppID）
-5. 点击「导入」
+| 要查什么 | 去哪看 |
+|---|---|
+| 组件状态 / 响应式数据 | Vue DevTools（浏览器插件） |
+| 网络请求与状态码 | DevTools → Network，筛 `supabase.co` |
+| 运行时错误 | DevTools → Console |
+| 数据到底写没写进去 | Supabase Table Editor 直接看表 |
+| RLS 是否拦住了查询 | SQL Editor 里用 `select auth.uid()` 对照策略条件 |
+| 环境变量读没读到 | Console 打印 `import.meta.env.VITE_SUPABASE_URL` |
 
----
+热更新不工作时：确认文件在 `frontend/src/` 下，然后重启 dev server。
 
-### 3. 配置合法域名（重要）
+## 七、常见问题
 
-在微信开发者工具中:
-1. 点击右上角「详情」
-2. 「本地设置」→ 勾选「不校验合法域名」
+**Q1：`npm install` 失败**
+切镜像后重试：`npm config set registry https://registry.npmmirror.com`；必要时删掉 `node_modules` 和 `package-lock.json` 再装。
 
-> **注意**: 正式发布时需要在微信公众平台配置 Supabase 域名为合法域名。
+**Q2：报 `Cannot find module`**
+依赖没装全，或路径别名没配。检查 `vite.config.js` 里的 `@` → `./src` 别名和 `node_modules` 是否存在。
 
----
+**Q3：Supabase 请求失败 / 网络错误**
+检查 `frontend/.env` 是否存在、变量名是否以 `VITE_` 开头、是否重启过 dev server。
 
-## 开发流程
+**Q4：查询成功但返回空数组**
+多半是 RLS 策略问题。检查 `supabase/rls_policies.sql` 是否执行成功、策略里的 `auth.uid()` 条件是否匹配当前登录用户。
 
-### 1. 创建新页面
+**Q5：Tailwind 样式不生效**
+检查 `tailwind.config.js` 的 `content` 是否覆盖所有 `.vue` 文件，以及 `src/style.css` 里是否有 `@tailwind` 三行指令。
 
-```bash
-# 使用 HBuilderX: 右键 pages 文件夹 → 新建页面
-# 或手动创建:
-mkdir frontend/pages/demo
-touch frontend/pages/demo/demo.vue
-```
+**Q6：环境变量改了但没变化**
+Vite 只在启动时读取 `.env`，**必须重启** dev server。
 
-在 `pages.json` 中注册:
-```json
-{
-  "pages": [
-    {
-      "path": "pages/demo/demo",
-      "style": {
-        "navigationBarTitleText": "演示页面"
-      }
-    }
-  ]
-}
-```
+**Q7：注册后登录提示邮箱未验证**
+Supabase 默认开启邮箱验证。演示阶段可在 Dashboard → Authentication → Providers → Email 里关掉 "Confirm email"。
 
----
+## 八、打包与部署（里程碑 3）
 
-### 2. 调用 API
+1. 把仓库推到 GitHub（`main` 分支）。
+2. Vercel 里 New Project → 导入该仓库。
+3. Root Directory 设为 `frontend`；Build Command `npm run build`；Output Directory `dist`。
+4. 在 Vercel 的环境变量里配置 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`。
+5. 之后每次 push 到 `main`，Vercel 会自动重新构建并上线（约 1–2 分钟）。
 
-```javascript
-// 在页面中使用
-import { getRecords } from '@/api/record'
-
-export default {
-  async onLoad() {
-    try {
-      const { records } = await getRecords({
-        userId: 'xxx',
-        month: '2026-09'
-      })
-      console.log(records)
-    } catch (error) {
-      console.error(error)
-    }
-  }
-}
-```
-
----
-
-### 3. 调试技巧
-
-#### 查看日志
-```javascript
-console.log('Debug:', data)  // 在微信开发者工具的 Console 中查看
-```
-
-#### 查看网络请求
-1. 微信开发者工具 → 调试器 → Network
-2. 查看 Supabase API 请求和响应
-
-#### 模拟器测试
-- 微信开发者工具的模拟器
-- 真机调试（扫码预览）
-
-#### Storage 查看
-```javascript
-// 查看本地存储
-const value = uni.getStorageSync('key')
-console.log(value)
-```
-
----
-
-### 4. 热重载
-
-修改代码后会自动重新编译，微信开发者工具会自动刷新。
-
-如果没有刷新:
-1. 手动点击「编译」按钮
-2. 或重启微信开发者工具
-
----
-
-## 常见问题
-
-### Q1: 编译失败，提示 `Cannot find module`
-
-**解决**:
-```bash
-rm -rf node_modules
-rm package-lock.json
-npm install
-```
-
----
-
-### Q2: Supabase 请求失败，提示网络错误
-
-**检查**:
-1. `.env` 文件配置是否正确
-2. 微信开发者工具是否勾选「不校验合法域名」
-3. Supabase 项目是否正常运行
-
-**测试连接**:
-```javascript
-// 在页面 onLoad 中测试
-import { supabase } from '@/api/index'
-
-const { data, error } = await supabase.from('categories').select('*').limit(1)
-console.log('Test:', data, error)
-```
-
----
-
-### Q3: RLS 策略导致查询返回空数据
-
-**原因**: 未登录或 RLS 策略配置错误
-
-**解决**:
-1. 确保已调用登录接口
-2. 检查 `supabase/rls_policies.sql` 是否正确执行
-3. 在 Supabase Dashboard → Authentication → Policies 中检查策略
-
-**临时禁用 RLS（仅测试）**:
-```sql
-ALTER TABLE records DISABLE ROW LEVEL SECURITY;
-```
-
----
-
-### Q4: 图片上传失败
-
-**检查**:
-1. Storage bucket 是否创建
-2. Storage 策略是否配置
-3. 图片大小是否超过限制（Supabase 免费版限制 50MB）
-
-**测试上传**:
-```javascript
-import { uploadReceipt } from '@/api/upload'
-
-uni.chooseImage({
-  count: 1,
-  success: async (res) => {
-    const tempFilePath = res.tempFilePaths[0]
-    const url = await uploadReceipt(tempFilePath, 'user-id')
-    console.log('Uploaded:', url)
-  }
-})
-```
-
----
-
-### Q5: 真机预览时白屏
-
-**原因**: 
-1. 域名校验失败
-2. 未配置合法域名
-
-**解决**:
-- 开发阶段：使用「开发版」扫码预览
-- 正式版本：在微信公众平台配置 Supabase 域名
-
----
-
-## Git 工作流
-
-### 1. 初始化 Git
-
-```bash
-git init
-git add .
-git commit -m "chore: 项目初始化"
-```
-
----
-
-### 2. 创建分支
-
-```bash
-# 创建功能分支
-git checkout -b feature/record-list
-
-# 开发完成后
-git add .
-git commit -m "feat(record): 完成账单列表页面"
-```
-
----
-
-### 3. 提交规范
-
-```
-<type>(<scope>): <subject>
-
-类型:
-- feat: 新功能
-- fix: Bug 修复
-- docs: 文档更新
-- style: 代码格式
-- refactor: 重构
-- test: 测试
-- chore: 构建/配置
-
-示例:
-feat(record): 添加账单删除功能
-fix(login): 修复微信登录失败问题
-docs(readme): 更新安装步骤
-```
-
----
-
-### 4. 推送到 GitHub
-
-```bash
-# 关联远程仓库
-git remote add origin https://github.com/your-username/accounting-app.git
-
-# 推送代码
-git push -u origin main
-```
-
----
-
-## 性能优化建议
-
-### 1. 图片优化
-- 压缩上传的图片（使用 uni.compressImage）
-- 使用 WebP 格式
-- 懒加载列表图片
-
-### 2. 列表优化
-- 使用虚拟列表（长列表场景）
-- 分页加载（每页 20 条）
-- 防抖搜索（输入延迟 300ms）
-
-### 3. 缓存策略
-- 分类数据缓存到本地（有效期 1 天）
-- 用户信息缓存
-- API 请求去重
-
----
-
-## 打包发布
-
-### 1. 构建生产版本
-
-```bash
-npm run build:mp-weixin
-```
-
-生成目录: `dist/build/mp-weixin`
-
----
-
-### 2. 上传到微信平台
-
-1. 微信开发者工具 → 上传
-2. 填写版本号和描述
-3. 上传成功后，到微信公众平台提交审核
-
----
-
-### 3. 审核准备
-
-需要准备:
-- 隐私政策页面
-- 用户协议页面
-- 小程序图标和截图
-- 功能介绍
-
----
-
-## 有用的资源
-
-- [uni-app 官方文档](https://uniapp.dcloud.net.cn/)
-- [Supabase 文档](https://supabase.com/docs)
-- [微信小程序开发文档](https://developers.weixin.qq.com/miniprogram/dev/framework/)
-- [Vue 3 文档](https://cn.vuejs.org/)
-
----
-
-**最后更新**: 2026-09-29
+> push 到 `main` 等于线上发布，**必须先由用户明确说「Push」才推**。规则见 `AGENTS.md` 第 0.5 节。
