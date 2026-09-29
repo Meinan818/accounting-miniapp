@@ -1,6 +1,7 @@
 <script setup>
 // 1. 导入
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import dayjs from 'dayjs'
 import ChatBubble from '@/components/common/ChatBubble.vue'
 import ChatInput from '@/components/common/ChatInput.vue'
 import ConfirmCard from '@/components/common/ConfirmCard.vue'
@@ -127,13 +128,24 @@ function handleConfirmRecord(messageId, record) {
   recordStore.addRecord(record)
   conversationStore.markRecordConfirmed(messageId)
 
-  const updatedTotal = recordStore.categoryExpenses[record.category] || record.amount
-  const totalLabel = record.type === 'income' ? '收入' : '支出'
+  const typeLabel = record.type === 'income' ? '收入' : '支出'
+  const isCurrentMonth = dayjs(record.date).format('YYYY-MM') === dayjs().format('YYYY-MM')
+  let successMessage
+
+  if (isCurrentMonth) {
+    const categorySource = record.type === 'income'
+      ? recordStore.categoryIncome
+      : recordStore.categoryExpenses
+    const updatedTotal = categorySource[record.category] || record.amount
+    successMessage = `✅ 记账成功！本月${record.category}${typeLabel}已累计 ${formatCurrency(updatedTotal)}。`
+  } else {
+    successMessage = `✅ 记账成功！已记录一笔${record.category}${typeLabel} ${formatCurrency(record.amount)}。`
+  }
 
   conversationStore.addMessage({
     role: 'assistant',
     kind: 'text',
-    content: `✅ 记账成功！本月${record.category}${totalLabel}已累计 ${formatCurrency(updatedTotal)}。`,
+    content: successMessage,
   })
   conversationStore.setMascotMood('success')
   resetMoodLater()
