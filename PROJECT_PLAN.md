@@ -603,6 +603,7 @@ function getFakeAIResponse(userInput) {
 - [ ] 金额滚动变化动画
 - [ ] 日历选中日期的弹性反馈
 - [ ] 完整 reduced-motion 无障碍检查
+- [ ] 获取原稿 SVG/PNG 插画和字体后，替换当前 emoji 高保真版本，做到像素级 1:1
 
 ### 测试与发布
 
