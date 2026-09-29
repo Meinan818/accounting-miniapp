@@ -2,17 +2,17 @@
   "_说明": "多 AI 协同的轮值锁。改代码前先读这里，holder 不是你就不要动代码。换班时由交出方改写本文件。",
   "_用法": "holder 取值：claude | codex | none。none 表示无人接管，任一 AI 都可认领。",
   "holder": "codex",
-  "since": "2026-09-30T01:08:14+08:00",
+  "since": "2026-09-30T01:32:50+08:00",
   "branch": "main",
-  "task": "Sprint 1.5 账单明细已完成；每日收支汇总、轻量页面动画和长期待办池也已完成。下一步等待用户验收/授权 Push，或继续 Sprint 1.6 统计页面",
+  "task": "已按用户原稿截图完成高保真首页重绘：日历、收支卡、动物装饰和波浪底栏。像素级 1:1 仍缺原稿 SVG/PNG 插画与字体素材",
   "blocked": false,
   "blockedReason": "",
-  "nextCheckpoint": "用户验收每日收支汇总与轻量动画；确认后可 Push，或继续 Sprint 1.6 统计页面",
+  "nextCheckpoint": "用户验收高保真版；如提供原稿素材则继续像素级 1:1，否则决定 Push 或继续 Sprint 1.6",
   "_nextAI说明": "下一个该接手的 AI。AI 汇报末尾的「—— 下一步 ——」区块必须和这里一致。",
   "nextAI": "codex",
   "nextAIReason": "用户决定 2026-09-30 起由 Codex 负责全线开发，Claude 退出轮值",
   "onlineVersion": "无（项目尚未部署，Push 只更新 GitHub 代码）",
-  "pendingUserDecision": "需要验收每日收支汇总和基础页面动画；随后决定是否 Push。完整动画与其余 P1/P2 事项已登记在 PROJECT_PLAN.md 的待办池。",
+  "pendingUserDecision": "需要用户验收高保真原稿还原；像素级 1:1 需要原稿 SVG/PNG 插画和字体文件。之后决定是否 Push 或继续 Sprint 1.6。",
   "_字段纪律": "本文件只记 git 查不到的状态（谁在轮值、线上第几版、待用户决策什么）。不要记 localMain / aheadOfOriginMain 这类提交号——现场跑 git log 即可，记进来必然过期。",
-  "updatedAt": "2026-09-30T01:08:14+08:00"
+  "updatedAt": "2026-09-30T01:32:50+08:00"
 }
