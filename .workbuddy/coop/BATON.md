@@ -173,3 +173,66 @@ docs: 重写项目文档以对话式 AI 记账为核心
 **祝顺利！有问题随时在 BATON.md 里留言。**
 
 —— Claude
+
+---
+
+## 2026-09-29 23:42 · Codex → Claude
+
+**上一任**：Codex
+
+**交给**：Claude
+
+**分支**：main
+
+### 我完成了什么
+
+Sprint 1.3「AI 对话界面」已实现：
+
+1. `Home.vue` 已改为对话式主页，包含顶部本月支出、可滚动消息区、思考状态和底部输入栏。
+2. 新增 `ChatBubble.vue`：AI 左侧白色气泡、用户右侧粉橙气泡。
+3. 新增 `ConfirmCard.vue`：粗黑手绘边框确认卡片，支持修改类型、金额、分类、日期、时间和备注。
+4. 新增 `ChatInput.vue`：文本发送、Enter 发送、语音按钮占位提示。
+5. 新增 `MascotChicken.vue`：小黄鸡 🐣 固定左下角，并根据状态切换心情。
+6. 新增 `mockAI.js`：本地正则 + 关键词识别支出、收入、分类和本月查询，不调用真实 API。
+7. 新增 `conversationStore.js` 和 `recordStore.js`：Pinia + localStorage 持久化对话和假账单。
+8. 新增 `format.js`：金额和记录时间格式化。
+
+### 已完成验证
+
+- `npm run build` 通过：Vite 5.4.21，1810 个模块，无构建错误。
+- 假 AI 单元检查通过：支出、收入、本月查询、分类查询、缺少金额、无法识别均返回预期结果。
+- 无头 Chrome 完整交互通过：
+  - 输入“今天吃饭花了35块”出现确认卡片。
+  - 正确显示餐饮、¥35.00、时间。
+  - 修改为交通、¥42.50、12:30 后卡片正确更新。
+  - 点击确认后显示“已记账”和成功回复，顶部总支出更新为 ¥1276.50。
+  - “本月花了多少”返回本月总支出，“天气真好”返回未识别提示。
+  - 语音占位按钮提示正常。
+  - 新消息自动滚动到底部。
+  - 浏览器错误计数为 0。
+- 截图证据：
+  - `C:\Users\lenovo\AppData\Local\Temp\zhizhang-sprint-1.3.png`
+  - `C:\Users\lenovo\AppData\Local\Temp\zhizhang-confirm-card.png`
+
+### 未完成 / 风险
+
+1. 当前仍是阶段 1 假数据，不连接 Supabase，也不调用 Claude API。
+2. 假账单默认包含两条示例数据，本月支出初始为 ¥1234.00；这是为了让查询和确认流程可演示。
+3. 本地对话和假账单保存在浏览器 localStorage，清空浏览器数据会恢复初始示例。
+4. 本轮已修改 `frontend/` 代码并完成本地 commit；用户已明确授权稍后 Push。
+5. 项目尚未部署，Push 不会让任何线上网站发生变化。
+
+### 建议 Claude 重点审查
+
+1. `frontend/src/utils/mockAI.js`：正则边界、分类优先级、查询与记账意图冲突。
+2. `frontend/src/stores/conversationStore.js`、`recordStore.js`：localStorage 持久化和数据一致性。
+3. `frontend/src/components/common/ConfirmCard.vue`：修改表单、金额校验和确认重复提交。
+4. `frontend/src/views/Home.vue`：自动滚动、思考状态、确认记账后的统计更新。
+5. Codex 是否遵守了阶段 1「不接真实 API」和设计系统规范。
+
+### 接手方第一步该做什么
+
+1. 按 `AGENTS.md` §0.1 对账，确认 `holder = claude`。
+2. 阅读本次代码和上面指出的重点文件。
+3. 独立执行 `npm ci`、`npm run build`，并在浏览器验证主要对话流程。
+4. 只提交复核结论和问题清单，不直接写实现修复；通过后把任务交回 Codex。
