@@ -4,18 +4,28 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#a855f7',
-          600: '#9333ea',
-          700: '#7e22ce',
-          800: '#6b21a8',
-          900: '#581c87',
+        // 背景色 - 米黄纸张质感
+        cream: {
+          DEFAULT: '#fffbf0',
+          dark: '#fff4d6',
         },
+        paper: '#fef8e8',
+
+        // 主色 - 粉橙色（温暖活力）
+        primary: {
+          50: '#fff7ed',
+          100: '#ffedd5',
+          200: '#fed7aa',
+          300: '#fdba74',
+          400: '#fb923c',
+          500: '#f97316',
+          600: '#ea580c',
+          700: '#c2410c',
+          800: '#9a3412',
+          900: '#7c2d12',
+        },
+
+        // 辅助色 - 柔和粉色（可爱）
         accent: {
           50: '#fff1f2',
           100: '#ffe4e6',
@@ -28,20 +38,38 @@ export default {
           800: '#9f1239',
           900: '#881337',
         },
+
+        // 支出 - 活力橙色
         expense: {
           light: '#fed7aa',
           DEFAULT: '#fb923c',
           dark: '#ea580c',
         },
+
+        // 收入 - 清新绿色
         income: {
           light: '#d1fae5',
           DEFAULT: '#10b981',
           dark: '#059669',
         },
+
+        // 警告/提醒
+        warning: {
+          light: '#fef3c7',
+          DEFAULT: '#fbbf24',
+          dark: '#f59e0b',
+        },
+
+        // 手绘边框色
+        hand: '#1f2937',
       },
       fontFamily: {
-        sans: ['Inter', 'PingFang SC', 'Microsoft YaHei', 'sans-serif'],
-        mono: ['JetBrains Mono', 'SF Mono', 'Consolas', 'monospace'],
+        sans: ['-apple-system', 'BlinkMacSystemFont', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', 'sans-serif'],
+        mono: ['SF Mono', 'Consolas', 'Monaco', 'monospace'],
+        handwriting: ['Ma Shan Zheng', 'Zhi Mang Xing', 'cursive'],
+      },
+      borderWidth: {
+        hand: '3px',
       },
     },
   },

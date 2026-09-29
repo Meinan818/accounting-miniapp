@@ -142,7 +142,7 @@
 
 ## 1. 项目定位与当前进度
 
-### 1.1 当前进度快照（更新于 2026-09-29 22:45）
+### 1.1 当前进度快照（更新于 2026-09-29 23:30）
 
 > ⚠️ **本节只写"git 查不到的事实"**（线上第几版、做过哪些验证、已知问题、待人工操作）。
 >
@@ -151,21 +151,41 @@
 
 | 项 | 现状 |
 |---|---|
-| 项目性质 | 个人记账 **Web 应用**，面向简历/作品集展示，不商业化 |
-| 预算 | 零预算（Supabase 免费额度 + Vercel 免费托管） |
+| 项目性质 | **对话式 AI 记账 Web 应用**（用户通过和 AI 聊天来记账），面向简历/作品集展示，不商业化 |
+| 核心交互 | 主页 = AI 对话界面，用户说"今天吃饭花了 35"，AI 识别后展示确认卡片，点确认即记账 |
+| 设计风格 | **手账风格**：米黄底色 + 手绘粗边框 + emoji 丰富 + 小黄鸡吉祥物 |
+| 预算 | 零预算（Supabase 免费额度 + Vercel 免费托管 + Claude API 需用户自费约 $5/月） |
 | 线上部署 | **尚未部署**（无线上地址，push 不影响任何线上网站） |
 | 远端仓库 | https://github.com/Meinan818/accounting-miniapp （仓库名含 `miniapp`，是旧的"小程序"路线遗留，暂不改） |
-| 当前阶段 | 里程碑 1「本地可运行版本」的准备阶段；**下一步是 Sprint 1.1：重建 Vite 项目** |
-| 路线变更 | **2026-09-29 用户拍板：从"微信小程序（uni-app）"改为"Web 应用（Vue 3 + Vite）"**。旧的 uni-app 代码仍在 `frontend/`，待删除 |
-| 已完成的验证 | **暂无**。项目刚初始化，还没有可运行的代码（旧的 uni-app 代码已作废，不作验证） |
-| 待人工操作 | ① 用户在 Supabase 控制台建项目并执行 `supabase/` 下三个 SQL；② 用户确认 Supabase 的 URL 与 anon key 填入 `.env` |
+| 当前阶段 | Sprint 1.1 已完成（Vite 项目已重建），**下一步是 Sprint 1.3：首页 AI 对话界面（先用假 AI 逻辑）** |
+| 路线变更 | **2026-09-29 用户三次拍板**：① uni-app 改为 Vue 3 Web 应用；② 先做前端+假数据，后接 Supabase；③ **改为对话式 AI 记账**（主页是聊天界面，不是传统记账表单） |
+| 已完成的验证 | Sprint 1.1：`npm run dev` 能启动、localhost:5173 能访问、5 个路由能切换、Tailwind 样式生效、控制台无报错（Codex 已验证） |
+| 待人工操作 | ① 用户在 Supabase 控制台建项目并执行 `supabase/` 下三个 SQL（阶段 2 才需要）；② 用户申请 Claude API key 填入 `.env`（阶段 2 才需要） |
 | 已知问题 | 见 §7 |
 
 ### 1.2 里程碑（详细计划见 `PROJECT_PLAN.md`）
 
-- **里程碑 1**（约 1 周）：本地可运行 MVP —— 项目初始化 → 认证 → 记账 → 账单列表 → 统计
-- **里程碑 2**（约 2 周）：云端完整版 —— 图表 → 分类管理 → 预算 → 个人中心 → 响应式
-- **里程碑 3**（约 1 周）：优化与发布 —— 票据/导出/吉祥物/PWA → **Vercel 部署** → 测试修复
+**开发策略**：阶段 1 先做前端+假数据，阶段 2 接入真实 Supabase 和 Claude API。
+
+- **阶段 1**（约 1 周）：前端页面 + 假数据
+  - Sprint 1.1 ✅：项目初始化（Vite + Vue 3 + Tailwind + 路由 + 5 个占位页）
+  - Sprint 1.3（2天）：首页 AI 对话界面 + 假 AI 逻辑
+  - Sprint 1.4（1天）：日历页面（手绘边框月历视图）
+  - Sprint 1.5（1天）：账单明细页（按日期分组）
+  - Sprint 1.6（1天）：统计页面（列表，不做图表）
+  - Sprint 1.7（0.5天）：个人中心页
+  - Sprint 1.8（0.5天）：底部导航
+
+- **阶段 2**（约 3-4 天）：接入真实后端
+  - Sprint 2.1（1天）：接入 Supabase（认证 + 账单 CRUD，替换所有假数据）
+  - Sprint 2.2（2-3天）：接入 Claude API（真实 AI 对话，替换假 AI 逻辑）
+
+- **阶段 3**（约 1 周）：高级功能与优化
+  - 图表可视化（ECharts）
+  - 语音输入（可选）
+  - 分类管理、预算功能
+  - 小黄鸡动画
+  - PWA 配置 + 部署到 Vercel
 
 ---
 
@@ -176,13 +196,14 @@
 | 前端框架 | Vue 3（Composition API + `<script setup>`） |
 | 构建 | Vite 5 |
 | 语言 | **JavaScript（不是 TypeScript）** |
-| 样式 | Tailwind CSS 3 |
+| 样式 | Tailwind CSS 3（手账风格：米黄底 + 手绘边框 + emoji） |
 | 路由 | Vue Router 4 |
 | 状态 | Pinia |
 | 图表 | ECharts |
-| 图标 | lucide-vue-next |
+| 图标 | lucide-vue-next + emoji（优先 emoji） |
 | 日期 | dayjs |
-| 后端 | Supabase（PostgreSQL + Auth + Storage，Realtime 可选） |
+| 后端 | Supabase（PostgreSQL + Auth + Storage） |
+| AI | Claude API（claude-3-5-sonnet-20241022）—— **阶段 2 接入** |
 | 部署 | Vercel（免费，接 GitHub 自动部署）—— **尚未配置** |
 
 设计规范见 `docs/DESIGN_SYSTEM.md`；代码规范见 `docs/CONVENTIONS.md`。
@@ -190,8 +211,6 @@
 ---
 
 ## 3. 本地运行与构建
-
-> ⚠️ **目前 `frontend/` 里还是旧的 uni-app 代码（作废）**。下列命令在 Codex 完成 Sprint 1.1（重建 Vite 项目）之后才成立。
 
 ```bash
 cd frontend
@@ -250,14 +269,79 @@ npm run preview             # 本地预览构建产物
 
 ## 6. 当前任务与下一步
 
-**Sprint 1.1：重建 Vite 项目**（负责人：Codex，先由 Claude 出方案——见 §6.1）
+### ✅ Sprint 1.1 已完成（Codex，2026-09-29）
 
-任务详情已归档在 `docs/archive/CODEX_TASKS.md`，包含逐步命令与代码片段。要点：
+- 已用 Vite 5 + Vue 3 重建前端项目
+- 已配置 Tailwind CSS（手账风格色板）、Vue Router、Pinia、Supabase 客户端
+- 已创建 5 个占位页面（Home、Calendar、Stats、Profile、Settings）
+- 已迁移 `.env.example` 到 `frontend/.env.example`
+- ✅ **Claude 审查通过**（2026-09-29）：项目结构、依赖、配置、路由守卫、Store、Supabase 客户端、占位页面、环境变量、git 提交均符合规范
 
-1. 删除（或先改名备份）旧的 uni-app 目录 `frontend/`。
-2. 用 `npm create vite@latest frontend -- --template vue` 重建。
-3. 装依赖：`vue-router@4`、`pinia`、`@supabase/supabase-js`、`tailwindcss@3 postcss autoprefixer`、`echarts`、`lucide-vue-next`、`dayjs`。
-4. 配置 Tailwind（色板见 `docs/DESIGN_SYSTEM.md`）、Vue Router、Pinia、Supabase 客户端。
+---
+
+### 🎯 Sprint 1.3：AI 对话界面（主页）—— **下一步任务**
+
+**目标**：实现对话式记账的核心界面，用户通过自然语言与 AI 对话来记账。
+
+**负责人**：Codex  
+**前置条件**：Sprint 1.1 已完成  
+**阶段定位**：阶段 1（前端 + 假 AI 逻辑）
+
+#### 功能要求
+
+1. **对话界面**（`frontend/src/views/Home.vue`）
+   - 聊天气泡：AI 在左（白底 + 小黄鸡头像），用户在右（橙底 + 用户头像）
+   - AI 确认卡片：粗黑手绘边框，显示识别结果（类型、金额、时间），两个按钮（修改 / 确认记账）
+   - 底部输入框：圆角输入框 + 语音按钮（占位）
+   - 小黄鸡吉祥物：默认显示 🐣 emoji，可根据状态切换表情
+
+2. **假 AI 逻辑**（`frontend/src/utils/mockAI.js`）
+   - 用正则 + 关键词匹配模拟 AI 理解（不调用真实 Claude API）
+   - 识别模式：
+     - 支出：`/花了?(\d+)/`、`/买.*(\d+)/`、`/(\d+)块/` → 提取金额
+     - 收入：`/收入.*(\d+)/`、`/赚了.*(\d+)/`、`/工资.*(\d+)/`
+     - 分类关键词：餐饮（吃饭/外卖）、交通（打车/地铁）、购物（买）、娱乐（电影/游戏）
+   - 返回格式：
+     ```javascript
+     {
+       type: 'record',  // 或 'chat'
+       data: {
+         recordType: 'expense',
+         amount: 35.00,
+         category: '餐饮',
+         time: '2026-09-29 12:30',
+         note: '中午吃饭'
+       },
+       reply: '好的，我帮你记录一下~'
+     }
+     ```
+
+3. **交互流程**
+   - 用户输入 → 假 AI 解析 → 显示 AI 确认卡片 → 用户点"确认记账"→ 保存到 Pinia Store（假数据，不存数据库）
+   - 用户点"修改"→ 弹出修改表单（金额 / 分类 / 时间 / 备注）
+   - AI 无法识别时 → 回复"我没听懂，可以再说一遍吗？"
+
+#### 技术细节
+
+- **组件拆分**：
+  - `ChatBubble.vue`（AI / 用户消息气泡）
+  - `ConfirmCard.vue`（AI 确认卡片）
+  - `ChatInput.vue`（底部输入框）
+- **Store**：`conversationStore.js`（消息历史）、`recordStore.js`（临时记录）
+- **样式**：严格遵循 `docs/DESIGN_SYSTEM.md`（米黄底、粗黑边框、圆润圆角、emoji 图标）
+
+#### 验证标准
+
+- [ ] 打开首页能看到对话界面（小黄鸡 + 输入框）
+- [ ] 输入"今天吃饭花了35块"→ AI 回复并显示确认卡片
+- [ ] 确认卡片正确显示：类型（餐饮🍔）、金额（¥35.00）、时间（今天 12:30）
+- [ ] 点击"确认记账"→ 保存到 Store，弹出成功提示
+- [ ] 点击"修改"→ 能修改金额 / 分类 / 时间
+- [ ] 输入不可识别内容 → AI 回复"我没听懂"
+- [ ] 对话记录能滚动，新消息自动滚到底部
+
+**详细设计规范**见 `docs/DESIGN_SYSTEM.md` § 对话界面设计；  
+**假 AI 逻辑示例**见 `PROJECT_PLAN.md` § Sprint 1.3.2。
 5. 建目录骨架与 5 个占位页面（Login / Home / Add / Stats / Profile）。
 
 **验收标准**：`npm run dev` 能起、能访问 `http://localhost:5173`、Tailwind 生效、路由能切换、控制台无报错。
@@ -268,10 +352,10 @@ npm run preview             # 本地预览构建产物
 
 | 项 | 说明 | 归属 |
 |---|---|---|
-| 旧 uni-app 代码 | `frontend/` 仍是作废的小程序代码，Sprint 1.1 时删除 | Codex |
-| `.env.example` 位置 | 现在在根目录，但 Vite 项目在 `frontend/`，应挪到 `frontend/.env.example` | Codex |
+| ~~旧 uni-app 代码~~ | ✅ 已删除（Sprint 1.1） | ~~Codex~~ |
+| ~~`.env.example` 位置~~ | ✅ 已迁移到 `frontend/.env.example`（Sprint 1.1） | ~~Codex~~ |
 | 仓库名 `accounting-miniapp` | 与 Web 路线不符，容易误导；改名要在 GitHub 设置里做，且会改远端地址 | 用户决定，暂不改 |
-| 未部署 | Vercel 还没配，上线属于里程碑 3 | 用户 + Codex |
+| 未部署 | Vercel 还没配，上线属于阶段 3 | 用户 + Codex |
 | 旧文档归档 | `docs/archive/UI_DESIGN.md` 是按小程序写的页面设计，Web 版页面布局待重写 | Claude |
 
 ---
@@ -313,3 +397,60 @@ npm run preview             # 本地预览构建产物
 | `docs/CONVENTIONS.md` | 命名、目录、Vue 写法、Tailwind 用法 |
 | `docs/DEVELOPMENT.md` | 环境搭建、调试技巧、常见问题 |
 | `docs/archive/` | 作废/一次性材料，只读 |
+
+---
+
+## 10. 协作规则（多 AI 共享项目）
+
+### 10.1 接手前必读
+
+1. **先读 `AGENTS.md`（本文件）**，再读 `.workbuddy/coop/state.json`。
+2. **检查轮值锁**：`state.json` 里的 `currentOwner` 是不是你？不是就别动代码。
+3. **读 BATON.md**：上一任留了什么话、有没有未完成的活、有没有坑。
+
+### 10.2 工作中
+
+- **只改你负责的部分**：Codex 改代码（`frontend/src/`、`package.json`），Claude 改文档（`docs/`、`supabase/`、`AGENTS.md`、`PROJECT_PLAN.md`）。
+- **改完必须 git commit**，提交信息遵循 §8。
+- **协同文件单独提交**：`.workbuddy/coop/` 下的 `state.json` / `BATON.md` 用 `chore(coop): 更新协作状态` 单独一个 commit，不与功能代码混在一起。
+
+### 10.3 交接时
+
+1. **更新 `state.json`**：
+   ```json
+   {
+     "currentOwner": "下一任的名字",
+     "lastHandoff": "2026-09-29T14:30:00+08:00",
+     "phase": "sprint-1.3",
+     "status": "in-progress"
+   }
+   ```
+2. **写 `BATON.md`**：告诉下一任"我做了什么、遇到什么问题、下一步该做什么"。
+3. **`chore(coop): 交接给 XXX` 提交**，然后 `git push`。
+
+### 10.4 冲突处理
+
+- 如果 `state.json` 显示别人在工作，但你收到用户指令 → 先问用户"要不要等 XXX 完成？"
+- 紧急情况（上一任卡住超过 1 天）→ 用户可以强制切换 owner，但要在 `BATON.md` 里说明原因。
+
+---
+
+## 11. 注意事项（重要，必读）
+
+1. **本项目是对话式 AI 记账应用**，不是传统的手动表单记账 —— 主页 = AI 对话界面。
+2. **JavaScript 不是 TypeScript**：不要写类型注解、接口定义，不要用 `.ts` / `.tsx` 后缀。
+3. **Tailwind 优先**：尽量用 Tailwind 原子类，少写 `<style>`；手绘边框用 `border-hand`（3px 粗黑线）。
+4. **emoji 优先**：图标优先用 emoji（🍔 🚗 🛍️），功能按钮才用 lucide-vue-next。
+5. **手账风格**：米黄底色、粗黑手绘边框、圆润圆角、小黄鸡吉祥物 🐣，参考 `docs/DESIGN_SYSTEM.md`。
+6. **阶段 1 用假数据和假 AI**：不调用真实 Supabase 和 Claude API，等阶段 2 再接。
+7. **`.env` 永不入库**：提交前必检查 `git status`，看到 `.env` 就立刻 `git restore` 或加进 `.gitignore`。
+8. **验证是义务**：改完代码必须 `npm run dev` 跑起来、在浏览器里点一遍，控制台无报错才算完成。
+9. **一个功能一个 commit**：不要攒一堆改动一起提交，也不要一个字母改一次就 commit。
+10. **如实汇报**：跑不起来就说明原因，不要假装验证过；不懂就问，不要瞎猜。
+
+---
+
+**最后更新**：2026-09-29  
+**当前版本**：v0.2（对话式 AI 记账 Web 应用）  
+**下一步**：Sprint 1.3 —— 实现 AI 对话界面（负责人：Codex）
+

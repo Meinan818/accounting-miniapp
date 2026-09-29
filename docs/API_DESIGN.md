@@ -627,4 +627,241 @@ try {
 
 ---
 
+## Claude AI 对话 API
+
+> **核心功能**：智账是对话式 AI 记账应用，用户通过自然语言和 AI 对话来记账和查询。
+
+### 1. Claude API 配置
+
+```javascript
+// api/claude.js
+
+const CLAUDE_API_KEY = import.meta.env.VITE_CLAUDE_API_KEY
+const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages'
+
+/**
+ * 调用 Claude API
+ * @param {Array} messages - 对话历史 [{ role: 'user'|'assistant', content: string }]
+ * @param {Object} systemContext - 系统上下文（用户数据、分类列表等）
+ */
+export async function callClaude(messages, systemContext) {
+  const response = await fetch(CLAUDE_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': CLAUDE_API_KEY,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 1024,
+      system: buildSystemPrompt(systemContext),
+      messages: messages,
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Claude API 错误: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data.content[0].text
+}
+```
+
+### 2. 系统提示词设计
+
+```javascript
+/**
+ * 构建系统提示词
+ * @param {Object} context - 用户上下文
+ */
+function buildSystemPrompt(context) {
+  const { monthlyStats, categories, recentRecords } = context
+
+  return `你是「智账」记账应用的 AI 助手，名字叫「小账」🐣。你的任务是：
+
+## 核心能力
+1. **理解用户的记账意图**：从自然语言中提取金额、分类、时间、备注
+2. **回答查询问题**：根据用户账单数据计算并回答
+3. **友好聊天**：语气可爱、简洁、像朋友
+
+## 可用的分类（${categories.length} 个）
+支出分类：${categories.filter(c => c.type === 'expense').map(c => `${c.name} ${c.icon || ''}`).join('、')}
+收入分类：${categories.filter(c => c.type === 'income').map(c => `${c.name} ${c.icon || ''}`).join('、')}
+
+## 当前用户数据
+- 本月总支出：¥${monthlyStats.expense.toFixed(2)}
+- 本月总收入：¥${monthlyStats.income.toFixed(2)}
+- 本月结余：¥${monthlyStats.balance.toFixed(2)}
+
+## 最近 5 条账单
+${recentRecords.map(r => `- ${r.date} ${r.category?.name} ${r.type === 'expense' ? '-' : '+'}¥${r.amount} ${r.remark || ''}`).join('\n')}
+
+## 响应格式
+你必须返回 **严格的 JSON 格式**，不要有任何其他文字。格式如下：
+
+### 记账类型
+{
+  "type": "record",
+  "intent": "add_expense" | "add_income",
+  "data": {
+    "amount": 数字,
+    "category": "分类名称（必须从上面列表选）",
+    "date": "YYYY-MM-DD（今天/昨天/具体日期）",
+    "time": "HH:MM:SS（默认当前时间）",
+    "remark": "用户提到的备注"
+  },
+  "reply": "你的回复文字，比如：好的，已帮你记录：餐饮支出 ¥35，需要修改吗？"
+}
+
+### 查询类型
+{
+  "type": "query",
+  "intent": "query_monthly" | "query_category" | "query_recent",
+  "reply": "根据上面的用户数据回答，比如：本月支出 ¥1234，餐饮占 40%"
+}
+
+### 闲聊类型
+{
+  "type": "chat",
+  "reply": "友好的回复，比如：你好呀！需要记账吗？"
+}
+
+## 示例
+
+用户："今天中午在麦当劳吃了个套餐，花了 35 块"
+你的响应：
+{
+  "type": "record",
+  "intent": "add_expense",
+  "data": {
+    "amount": 35,
+    "category": "餐饮",
+    "date": "2026-09-29",
+    "time": "12:30:00",
+    "remark": "麦当劳套餐"
+  },
+  "reply": "好的，已帮你记录：餐饮支出 ¥35.00，备注'麦当劳套餐'，需要修改吗？"
+}
+
+用户："我这个月餐饮花了多少？"
+你的响应：
+{
+  "type": "query",
+  "intent": "query_category",
+  "reply": "让我算算...本月餐饮支出 ¥520，占总支出的 42%，比上月多了 ¥80 哦~"
+}
+
+用户："你好"
+你的响应：
+{
+  "type": "chat",
+  "reply": "你好呀！今天花钱了吗？需要记一笔吗？"
+}
+
+## 注意事项
+- 时间理解："今天"用当前日期，"昨天"减 1 天，"上周"需要追问具体日期
+- 分类匹配：尽量从可用分类中选，找不到用"其他"
+- 金额单位：统一用元（¥），不要有"块""元"字
+- 回复语气：可爱、简洁、不超过 50 字
+- **必须返回纯 JSON**，不要有 \`\`\`json 或其他包装
+`
+}
+```
+
+### 3. 前端调用示例
+
+```javascript
+// 在对话界面使用
+
+import { callClaude } from '@/api/claude'
+import { getMonthlyStats, getRecords } from '@/api/stats'
+import { getCategories } from '@/api/category'
+
+// 用户发送消息
+async function sendMessage(userInput) {
+  // 1. 准备上下文数据
+  const monthlyStats = await getMonthlyStats(userId, currentMonth)
+  const recentRecords = await getRecords({ userId, page: 1, pageSize: 5 })
+  const categories = await getCategories()
+
+  const systemContext = {
+    monthlyStats,
+    categories,
+    recentRecords: recentRecords.records,
+  }
+
+  // 2. 构建对话历史（保留最近 10 条）
+  const messages = [
+    ...conversationHistory.slice(-10),
+    { role: 'user', content: userInput },
+  ]
+
+  // 3. 调用 Claude API
+  const aiResponse = await callClaude(messages, systemContext)
+
+  // 4. 解析 JSON 响应
+  let parsedResponse
+  try {
+    parsedResponse = JSON.parse(aiResponse)
+  } catch (error) {
+    console.error('AI 响应解析失败:', aiResponse)
+    parsedResponse = {
+      type: 'chat',
+      reply: '抱歉，我没理解，能再说一遍吗？',
+    }
+  }
+
+  // 5. 根据类型处理
+  if (parsedResponse.type === 'record') {
+    // 展示确认卡片，等用户点"确认记账"后调用 createRecord
+    showConfirmCard(parsedResponse.data, parsedResponse.reply)
+  } else if (parsedResponse.type === 'query' || parsedResponse.type === 'chat') {
+    // 直接显示回复
+    addAIMessage(parsedResponse.reply)
+  }
+
+  // 6. 更新对话历史
+  conversationHistory.push(
+    { role: 'user', content: userInput },
+    { role: 'assistant', content: parsedResponse.reply }
+  )
+}
+```
+
+### 4. 错误处理
+
+```javascript
+// api/claude.js
+
+export async function callClaudeWithRetry(messages, systemContext, retries = 2) {
+  try {
+    return await callClaude(messages, systemContext)
+  } catch (error) {
+    if (retries > 0 && error.message.includes('rate_limit')) {
+      // 遇到速率限制，等待后重试
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      return callClaudeWithRetry(messages, systemContext, retries - 1)
+    }
+    
+    // 其他错误，返回友好的兜底响应
+    console.error('Claude API 调用失败:', error)
+    return JSON.stringify({
+      type: 'chat',
+      reply: '抱歉，我现在有点累了，稍后再试试吧~',
+    })
+  }
+}
+```
+
+### 5. 成本控制建议
+
+- **缓存分类和统计数据**：避免每次对话都重新获取
+- **限制对话历史**：只保留最近 10 条，减少 token 消耗
+- **客户端节流**：用户输入间隔 < 1 秒不触发 API 调用
+- **本地意图识别**：简单的"你好""谢谢"等直接本地回复，不调 API
+
+---
+
 **最后更新**: 2026-09-29
