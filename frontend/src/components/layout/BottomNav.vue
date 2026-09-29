@@ -15,7 +15,7 @@ defineProps({
   <nav class="bottom-wave fixed bottom-0 left-0 right-0 z-30 h-24 bg-warning text-hand">
     <div class="relative mx-auto flex h-full max-w-2xl items-end justify-around px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       <router-link
-        to="/stats"
+        to="/bills"
         class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold"
         :class="active === 'detail' ? 'text-primary-700' : 'text-hand'"
       >

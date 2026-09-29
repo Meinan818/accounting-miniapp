@@ -28,6 +28,12 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/bills',
+    name: 'Bills',
+    component: () => import('@/views/Bills.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/stats',
     name: 'Stats',
     component: () => import('@/views/Stats.vue'),
