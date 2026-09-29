@@ -98,8 +98,22 @@ function extractTime(text) {
     return dayjs().format('HH:mm')
   }
 
-  const hour = Number(matched[1])
+  let hour = Number(matched[1])
   const minute = Number(matched[2] || 0)
+  const isAfternoonOrEvening = /下午|傍晚|晚上/.test(text)
+  const isNoon = /中午/.test(text)
+
+  if (isAfternoonOrEvening && hour < 12) {
+    hour += 12
+  }
+
+  if (isNoon && hour < 11) {
+    hour += 12
+  }
+
+  if (/凌晨/.test(text) && hour === 12) {
+    hour = 0
+  }
 
   if (hour > 23 || minute > 59) {
     return dayjs().format('HH:mm')
