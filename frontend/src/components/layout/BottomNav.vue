@@ -16,7 +16,7 @@ defineProps({
     <div class="relative mx-auto flex h-full max-w-2xl items-end justify-around px-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       <router-link
         to="/bills"
-        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold"
+        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold transition-all duration-200 active:scale-95"
         :class="active === 'detail' ? 'text-primary-700' : 'text-hand'"
       >
         <ScrollText :size="28" :stroke-width="2" />
@@ -25,7 +25,7 @@ defineProps({
 
       <router-link
         to="/"
-        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold"
+        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold transition-all duration-200 active:scale-95"
         :class="active === 'bill' ? 'text-primary-700' : 'text-hand'"
       >
         <ReceiptText :size="28" :stroke-width="2" />
@@ -42,7 +42,7 @@ defineProps({
 
       <router-link
         to="/stats"
-        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold"
+        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold transition-all duration-200 active:scale-95"
         :class="active === 'saving' ? 'text-primary-700' : 'text-hand'"
       >
         <PiggyBank :size="28" :stroke-width="2" />
@@ -51,7 +51,7 @@ defineProps({
 
       <router-link
         to="/profile"
-        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold"
+        class="flex w-16 flex-col items-center gap-0.5 text-xs font-semibold transition-all duration-200 active:scale-95"
         :class="active === 'profile' ? 'text-primary-700' : 'text-hand'"
       >
         <UserRound :size="28" :stroke-width="2" />

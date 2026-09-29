@@ -53,6 +53,21 @@
   animation: message-slide-up 0.28s ease both;
 }
 
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
 .mascot-bob {
   animation: mascot-bob 2.4s ease-in-out infinite;
 }
@@ -84,5 +99,10 @@
   .message-enter,
   .mascot-bob {
     animation: none;
+  }
+
+  .page-enter-active,
+  .page-leave-active {
+    transition: none;
   }
 }
