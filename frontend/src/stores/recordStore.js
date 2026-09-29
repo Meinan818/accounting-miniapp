@@ -68,6 +68,13 @@ export const useRecordStore = defineStore('record', () => {
       return summary
     }, {}))
 
+  const categoryIncome = computed(() => monthRecords.value
+    .filter((record) => record.type === 'income')
+    .reduce((summary, record) => {
+      summary[record.category] = (summary[record.category] || 0) + Number(record.amount || 0)
+      return summary
+    }, {}))
+
   function addRecord(record) {
     const newRecord = {
       ...record,
@@ -95,6 +102,7 @@ export const useRecordStore = defineStore('record', () => {
     monthExpense,
     monthIncome,
     categoryExpenses,
+    categoryIncome,
     addRecord,
     clearRecords,
   }

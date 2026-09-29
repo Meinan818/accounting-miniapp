@@ -113,10 +113,16 @@ export function getFakeAIResponse(input, summary = {}) {
     const categoryMeta = getCategoryOptions(type).find((item) => matchesCategory(text, item))
 
     if (categoryMeta) {
-      const categoryTotal = summary.categoryExpenses?.[categoryMeta.label] || 0
+      const isIncome = type === 'income'
+      const categorySource = isIncome ? summary.categoryIncome : summary.categoryExpenses
+      const categoryTotal = categorySource?.[categoryMeta.label] || 0
+      const reply = isIncome
+        ? `本月${categoryMeta.label}收入合计 ¥${categoryTotal.toFixed(2)}。`
+        : `本月${categoryMeta.label}共花了 ¥${categoryTotal.toFixed(2)}。`
+
       return {
         type: 'query',
-        reply: `本月${categoryMeta.label}共花了 ${summary.categoryExpenses ? `¥${categoryTotal.toFixed(2)}` : '¥0.00'}。`,
+        reply,
       }
     }
 

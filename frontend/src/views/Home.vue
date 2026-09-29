@@ -68,6 +68,7 @@ async function handleSend(userInput) {
     monthExpense: recordStore.monthExpense,
     monthIncome: recordStore.monthIncome,
     categoryExpenses: recordStore.categoryExpenses,
+    categoryIncome: recordStore.categoryIncome,
   })
 
   if (response.type === 'record') {
