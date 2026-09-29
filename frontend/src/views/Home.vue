@@ -1,219 +1,184 @@
 <script setup>
 // 1. 导入
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
 import dayjs from 'dayjs'
-import ChatBubble from '@/components/common/ChatBubble.vue'
-import ChatInput from '@/components/common/ChatInput.vue'
-import ConfirmCard from '@/components/common/ConfirmCard.vue'
-import MascotChicken from '@/components/mascot/MascotChicken.vue'
-import { useConversationStore } from '@/stores/conversationStore'
+import { ChevronDown, PawPrint } from 'lucide-vue-next'
+import CalendarCard from '@/components/calendar/CalendarCard.vue'
+import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
-import { getFakeAIResponse } from '@/utils/mockAI'
 
 // 2. 组合式函数
-const conversationStore = useConversationStore()
 const recordStore = useRecordStore()
 
 // 3. 响应式数据
-const messagesContainer = ref(null)
-let moodTimer = null
+const today = dayjs().format('YYYY-MM-DD')
+const todayMonth = today.slice(0, 7)
+const calendarMonth = ref(todayMonth)
+const selectedDate = ref(today)
+const quickTip = ref('')
+let quickTipTimer = null
+
+const quickActions = [
+  { icon: '🐣', label: '小账铺', tip: '小账铺正在装修中' },
+  { icon: '🧾', label: '小票', tip: '小票夹正在整理中' },
+  { icon: '📅', label: '签到', tip: '签到奖励正在准备中' },
+  { icon: '🪙', label: '攒钱', tip: '攒钱计划正在准备中' },
+]
 
 // 4. 计算属性
-const monthExpenseText = computed(() => formatCurrency(recordStore.monthExpense))
+const visibleMonthRecords = computed(() => recordStore.records.filter((record) => (
+  record.date?.startsWith(calendarMonth.value)
+)))
 
-// 5. 方法
-function scrollToBottom() {
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-    }
-  })
-}
+const monthIncome = computed(() => visibleMonthRecords.value
+  .filter((record) => record.type === 'income')
+  .reduce((total, record) => total + Number(record.amount || 0), 0))
 
-function wait(milliseconds) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, milliseconds)
-  })
-}
+const monthExpense = computed(() => visibleMonthRecords.value
+  .filter((record) => record.type === 'expense')
+  .reduce((total, record) => total + Number(record.amount || 0), 0))
 
-function resetMoodLater() {
-  if (moodTimer) {
-    window.clearTimeout(moodTimer)
+const selectedRecords = computed(() => recordStore.records
+  .filter((record) => record.date === selectedDate.value)
+  .sort((left, right) => String(left.time).localeCompare(String(right.time))))
+
+const selectedDateLabel = computed(() => {
+  const date = dayjs(selectedDate.value)
+
+  if (date.isSame(dayjs(), 'day')) {
+    return `今天 · ${date.format('M月D日')}`
   }
 
-  moodTimer = window.setTimeout(() => {
-    conversationStore.setMascotMood('happy')
+  return date.format('M月D日 dddd')
+})
+
+// 5. 方法
+function handleMonthChange(month) {
+  calendarMonth.value = month
+  selectedDate.value = month === todayMonth ? today : `${month}-01`
+}
+
+function handleQuickAction(action) {
+  quickTip.value = action.tip
+
+  if (quickTipTimer) {
+    window.clearTimeout(quickTipTimer)
+  }
+
+  quickTipTimer = window.setTimeout(() => {
+    quickTip.value = ''
   }, 1800)
 }
 
-async function handleSend(userInput) {
-  const text = String(userInput || '').trim()
-
-  if (!text || conversationStore.isThinking) {
-    return
-  }
-
-  conversationStore.addMessage({
-    role: 'user',
-    kind: 'text',
-    content: text,
-  })
-  conversationStore.setThinking(true)
-  conversationStore.setMascotMood('thinking')
-  scrollToBottom()
-
-  await wait(900)
-
-  const response = getFakeAIResponse(text, {
-    monthExpense: recordStore.monthExpense,
-    monthIncome: recordStore.monthIncome,
-    categoryExpenses: recordStore.categoryExpenses,
-    categoryIncome: recordStore.categoryIncome,
-  })
-
-  if (response.type === 'record') {
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'text',
-      content: response.reply,
-    })
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'record',
-      content: response.reply,
-      record: response.record,
-    })
-    conversationStore.setMascotMood('happy')
-  } else if (response.type === 'query') {
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'text',
-      content: response.reply,
-    })
-    conversationStore.setMascotMood('success')
-    resetMoodLater()
-  } else {
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'text',
-      content: response.reply,
-    })
-    conversationStore.setMascotMood('confused')
-    resetMoodLater()
-  }
-
-  conversationStore.setThinking(false)
-  scrollToBottom()
+function getRecordSign(record) {
+  return record.type === 'income' ? '+' : '-'
 }
 
-function handleUpdateRecord(messageId, updatedRecord) {
-  conversationStore.updateRecord(messageId, updatedRecord)
-  conversationStore.addMessage({
-    role: 'assistant',
-    kind: 'text',
-    content: '已经帮你改好啦，再核对一下就可以记账了 ✨',
-  })
-  conversationStore.setMascotMood('happy')
-  scrollToBottom()
-}
-
-function handleConfirmRecord(messageId, record) {
-  const message = conversationStore.messages.find((item) => item.id === messageId)
-
-  if (!message || message.confirmed) {
-    return
-  }
-
-  recordStore.addRecord(record)
-  conversationStore.markRecordConfirmed(messageId)
-
-  const typeLabel = record.type === 'income' ? '收入' : '支出'
-  const isCurrentMonth = dayjs(record.date).format('YYYY-MM') === dayjs().format('YYYY-MM')
-  let successMessage
-
-  if (isCurrentMonth) {
-    const categorySource = record.type === 'income'
-      ? recordStore.categoryIncome
-      : recordStore.categoryExpenses
-    const updatedTotal = categorySource[record.category] || record.amount
-    successMessage = `✅ 记账成功！本月${record.category}${typeLabel}已累计 ${formatCurrency(updatedTotal)}。`
-  } else {
-    successMessage = `✅ 记账成功！已记录一笔${record.category}${typeLabel} ${formatCurrency(record.amount)}。`
-  }
-
-  conversationStore.addMessage({
-    role: 'assistant',
-    kind: 'text',
-    content: successMessage,
-  })
-  conversationStore.setMascotMood('success')
-  resetMoodLater()
-  scrollToBottom()
-}
-
-function handleVoice() {
-  conversationStore.setMascotMood('confused')
-  resetMoodLater()
-}
-
-// 6. 监听
-watch(
-  () => [conversationStore.messages.length, conversationStore.isThinking],
-  scrollToBottom,
-  { flush: 'post' },
-)
-
-// 7. 生命周期
-onMounted(scrollToBottom)
-
+// 6. 生命周期
 onBeforeUnmount(() => {
-  if (moodTimer) {
-    window.clearTimeout(moodTimer)
+  if (quickTipTimer) {
+    window.clearTimeout(quickTipTimer)
   }
 })
 </script>
 
 <template>
-  <div class="paper-surface flex h-[100dvh] flex-col overflow-hidden bg-cream">
-    <header class="border-b-[3px] border-hand bg-cream-dark/90 px-4 py-3 backdrop-blur">
-      <div class="mx-auto flex max-w-2xl items-center justify-between gap-4">
-        <div>
-          <h1 class="text-xl font-bold text-gray-900">智账 🐣</h1>
-          <p class="text-xs text-gray-500">和小账聊聊今天的花销</p>
-        </div>
-        <div class="rounded-xl border-2 border-hand bg-white px-3 py-2 text-right shadow-sm">
-          <p class="text-xs text-gray-500">本月支出</p>
-          <p class="font-mono text-lg font-bold text-expense-dark">{{ monthExpenseText }}</p>
-        </div>
-      </div>
-    </header>
+  <div class="paper-surface relative min-h-[100dvh] overflow-x-hidden px-4 pb-36 pt-5">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden text-warning/20">
+      <PawPrint class="absolute left-8 top-36 h-12 w-12 rotate-[-20deg]" />
+      <PawPrint class="absolute right-12 top-24 h-8 w-8 rotate-[18deg]" />
+      <PawPrint class="absolute left-1/2 top-[34rem] h-10 w-10 rotate-[10deg]" />
+      <PawPrint class="absolute right-8 top-[44rem] h-12 w-12 rotate-[-12deg]" />
+    </div>
 
-    <main ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-5">
-      <div class="mx-auto flex max-w-2xl flex-col gap-4" aria-live="polite">
-        <template v-for="message in conversationStore.messages" :key="message.id">
-          <ChatBubble v-if="message.kind === 'text'" :message="message" />
-          <ConfirmCard
-            v-else-if="message.kind === 'record'"
-            :confirmed="message.confirmed"
-            :record="message.record"
-            @confirm="handleConfirmRecord(message.id, $event)"
-            @update="handleUpdateRecord(message.id, $event)"
-          />
-        </template>
-
-        <div v-if="conversationStore.isThinking" class="message-enter flex items-start gap-2">
-          <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-xl">
-            🐣
-          </div>
-          <div class="rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-gray-500 shadow-sm">
-            小账正在思考...🤔
-          </div>
+    <main class="relative z-10 mx-auto max-w-2xl">
+      <header class="mb-5 flex items-center justify-between">
+        <button
+          type="button"
+          class="flex items-center gap-1 text-2xl font-bold text-gray-900"
+          aria-label="切换账簿"
+        >
+          日常开销
+          <ChevronDown :size="24" :stroke-width="2.5" />
+        </button>
+        <div class="flex h-11 w-11 items-center justify-center rounded-full border-2 border-hand bg-white text-2xl shadow-sm">
+          🐣
         </div>
-      </div>
+      </header>
+
+      <CalendarCard
+        :month="calendarMonth"
+        :selected-date="selectedDate"
+        :records="recordStore.records"
+        :income="monthIncome"
+        :expense="monthExpense"
+        @update:month="handleMonthChange"
+        @update:selected-date="selectedDate = $event"
+      />
+
+      <section class="mt-5">
+        <div class="hide-scrollbar flex gap-3 overflow-x-auto pb-2">
+          <button
+            v-for="action in quickActions"
+            :key="action.label"
+            type="button"
+            class="flex min-w-[132px] items-center gap-3 whitespace-nowrap rounded-xl border-[3px] border-hand bg-white px-4 py-3 text-left shadow-[3px_4px_0_rgba(31,41,55,0.12)] transition-transform active:scale-95"
+            @click="handleQuickAction(action)"
+          >
+            <span class="text-2xl">{{ action.icon }}</span>
+            <span class="font-semibold text-gray-900">{{ action.label }}</span>
+          </button>
+        </div>
+        <p v-if="quickTip" class="mt-1 text-center text-xs font-medium text-primary-600">
+          {{ quickTip }}
+        </p>
+      </section>
+
+      <section class="mt-7">
+        <div class="mb-3 flex items-end justify-between">
+          <div>
+            <p class="text-xs font-medium text-gray-400">当天账单</p>
+            <h2 class="text-xl font-bold text-gray-900">{{ selectedDateLabel }}</h2>
+          </div>
+          <span class="rounded-full bg-white px-3 py-1 text-xs text-gray-500 shadow-sm">
+            {{ selectedRecords.length }} 笔
+          </span>
+        </div>
+
+        <div v-if="selectedRecords.length" class="space-y-3">
+          <article
+            v-for="record in selectedRecords"
+            :key="record.id"
+            class="flex items-center justify-between rounded-xl border-2 border-hand bg-white px-4 py-3 shadow-[2px_3px_0_rgba(31,41,55,0.1)]"
+          >
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 items-center justify-center rounded-full bg-cream-dark text-2xl">
+                {{ record.icon || '📝' }}
+              </div>
+              <div>
+                <p class="font-semibold text-gray-900">{{ record.category }}</p>
+                <p class="text-xs text-gray-500">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>
+              </div>
+            </div>
+            <p
+              class="font-mono text-lg font-bold"
+              :class="record.type === 'income' ? 'text-income-dark' : 'text-accent-500'"
+            >
+              {{ getRecordSign(record) }}{{ formatCurrency(record.amount) }}
+            </p>
+          </article>
+        </div>
+
+        <div v-else class="flex flex-col items-center py-10 text-center">
+          <div class="mb-3 text-5xl">🐣</div>
+          <p class="font-semibold text-gray-600">当前选择日期没有账单记录</p>
+          <p class="mt-1 text-sm text-gray-400">点下面中间的 +，和小账说一笔</p>
+        </div>
+      </section>
     </main>
 
-    <MascotChicken :mood="conversationStore.mascotMood" />
-    <ChatInput :disabled="conversationStore.isThinking" @send="handleSend" @voice="handleVoice" />
+
+    <BottomNav active="bill" />
   </div>
 </template>
