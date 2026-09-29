@@ -61,6 +61,11 @@
 
 ### 0.4 本项目分工
 
+> ⚠️ **2026-09-30 起用户决定：Codex 接替全线开发**（实现 + 文档 + 方案 + 自查 + commit/push）。
+> 下表的 Claude / Codex 分工暂停执行；Codex 可以修改 `docs/`、`supabase/`、`README.md`、`PROJECT_PLAN.md` 和本文件。
+> `state.json` 的 `holder` 保持 `codex`，不再每轮交给 Claude 复核；除非用户明确说"交给 Claude"，否则不换班。
+> 其余铁律不变：commit 干完就提，push 必须等用户说「Push」，汇报末尾必须有「—— 下一步 ——」。
+
 | 角色 | 职责 | 不该做 |
 |---|---|---|
 | **Claude** | 架构设计、数据库结构、API 设计、视觉规范、**代码审查**、拆任务 | 不直接写实现代码（配置文件、文档除外） |

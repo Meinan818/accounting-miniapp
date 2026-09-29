@@ -236,3 +236,67 @@ Sprint 1.3「AI 对话界面」已实现：
 2. 阅读本次代码和上面指出的重点文件。
 3. 独立执行 `npm ci`、`npm run build`，并在浏览器验证主要对话流程。
 4. 只提交复核结论和问题清单，不直接写实现修复；通过后把任务交回 Codex。
+
+---
+
+## 2026-09-30 00:30 · Claude → Codex（全线交接，Claude 退出轮值）
+
+**上一任**：Claude
+**交给**：Codex
+**分支**：main
+**用户决定**：从现在起 Codex 接替全线开发（实现 + 文档 + 自查 + commit/push）。AGENTS.md §0.4 已加说明，Codex 现在可以改 `docs/`、`supabase/`、`PROJECT_PLAN.md`、`AGENTS.md`。
+
+### ⚠️ 第一件事：修复我留下的环境问题（我的失误，务必先做）
+
+我在自己的 Linux 沙箱里尝试 `npm ci` 时出错（node_modules 里是 Windows 版 esbuild.exe，沙箱读不了），随后执行了 `rm -rf node_modules package-lock.json`：
+- **`frontend/package-lock.json` 被删掉了**（git status 显示 `D`，未提交，git 里有原版）；
+- `node_modules` 删了一半，又被两次超时的 `npm install` 装进了部分 Linux 版依赖，**现在是残缺混杂状态**。
+
+在 Windows 上按顺序执行：
+```powershell
+cd E:\项目\未定项目
+git restore frontend/package-lock.json
+Remove-Item -Recurse -Force frontend\node_modules
+cd frontend
+npm ci
+npm run build
+```
+`git status --short` 里其余 `frontend/` 文件的 `M` 仍然只是换行符（CRLF/LF）差异，不是实质改动。
+
+### Sprint 1.3 复核结论：**有条件通过**
+
+- 我**只完成了读代码复核**；`npm ci` / `npm run build` / 浏览器验证**都没跑成**（原因见上），不能替 Codex 的验证结果背书。
+- 读代码未发现阻塞性问题：结构清晰、遵守 `<script setup>`、未调用真实 API、手账风格（米黄底、3px 黑边、emoji）落实到位；重复确认记账已有防护（`message.confirmed` 检查 + 确认后按钮隐藏）。
+
+### 问题清单（按优先级）
+
+**P1 — 建议本轮修**
+
+1. **收入分类查询答非所问**（`mockAI.js` 查询分支）：问"本月工资收入多少"会匹配到收入分类"工资"，但取的是 `categoryExpenses`（只有支出），回复成"本月工资共花了 ¥0.00"。需要收入分类汇总 + 文案区分"收入/花了"。
+2. **分类优先级错误**（`detectCategory` 按数组顺序取第一个命中）：「买药30」→ 购物（应为医疗）；「买书50」→ 购物（应为学习）；「打车去吃饭30」→ 餐饮（有争议）。建议改为"最长/最具体关键词优先"，或把"买"这种泛词降级为兜底。
+3. **下午/晚上时间没处理**（`extractTime`）：「下午3点打车20」→ 03:00。需识别 下午/晚上/傍晚 +12。
+4. **记账成功文案对收入/非本月记录不对**（`Home.vue` `handleConfirmRecord`）：收入用的是 `categoryExpenses`，会退回显示单笔金额当"累计"；把日期改到上个月再确认，也会显示错误累计。
+5. **修改表单允许空日期/时间**（`ConfirmCard.vue` `saveChanges`）：日期清空后能保存，记录不会计入本月统计。需校验。
+
+**P2 — 可以排到下个 Sprint**
+
+6. 「给妈妈发红包200」被识别为**收入**（关键词"红包"），发/给 + 红包应为支出。
+7. 「看看这件衣服买了200」因含"看看"被当成**查询**，不记账；查询与记账意图冲突时建议以"有金额 + 记账动词"优先。
+8. 金额带千分位「1,200块」只取到 200。
+9. 修改分类后 `record.icon` 没更新（`saveChanges` 沿用旧 icon）；显示层用 `getCategoryMeta` 所以看不出来，但存进 recordStore 的数据是错的。
+10. localStorage：`JSON.parse` 结果未校验是否为数组；`setItem` 未捕获配额异常；对话记录无上限会无限增长（建议保留最近 200 条）。两个 key 分开存，清掉一个会出现"卡片显示已记账但账单不存在"，阶段 1 可接受，阶段 2 接 Supabase 时要以数据库为准。
+11. 示例账单让本月支出初始就是 ¥1234，用户会以为是自己的数据。建议加"示例"标记或提供清空入口。
+
+**设计 / 移动端**
+
+12. 小黄鸡 `fixed bottom-24 left-4` 在手机窄屏会**盖住左侧 AI 气泡的头像和文字**（虽然 `pointer-events-none` 不挡点击，但挡视线）。建议消息区底部留出 padding，或手机上缩小/移到输入框上方右侧。
+13. `confused` 和 `thinking` 都是 🤔，设计系统里还有 😰（紧张）、💪（鼓励）未用上，可以区分。
+
+### 接手方第一步该做什么
+
+1. 按上面 PowerShell 命令恢复 `package-lock.json` 并重装依赖，确认 `npm run build` 通过。
+2. 修 P1 五项，逐项在浏览器里验证（输入示例都写在上面了）。
+3. 一个修复一个 commit（`fix(chat): ...`），完成后按 AGENTS.md §0.6 给用户汇报。
+4. 然后按 `PROJECT_PLAN.md` 继续 Sprint 1.4。Push 仍然要等用户说「Push」。
+
+—— Claude（本项目轮值到此结束）
