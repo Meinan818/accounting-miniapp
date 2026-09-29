@@ -69,6 +69,16 @@ function saveChanges() {
     return
   }
 
+  if (!form.value.date) {
+    errorMessage.value = '请选择日期'
+    return
+  }
+
+  if (!form.value.time) {
+    errorMessage.value = '请选择时间'
+    return
+  }
+
   emit('update', {
     ...props.record,
     ...form.value,
