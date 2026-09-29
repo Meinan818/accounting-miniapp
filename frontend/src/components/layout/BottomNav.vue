@@ -1,6 +1,11 @@
 <script setup>
 // 1. 导入
-import { Plus } from 'lucide-vue-next'
+import navBillNotebook from '@/assets/design/nav-bill-notebook.png'
+import navDetailPig from '@/assets/design/nav-detail-pig.png'
+import navProfileDog from '@/assets/design/nav-profile-dog.png'
+import navSavingJar from '@/assets/design/nav-saving-jar.png'
+import pawPrints from '@/assets/design/paw-prints.png'
+import plusGlow from '@/assets/design/plus-glow.png'
 
 // 2. Props
 defineProps({
@@ -11,10 +16,10 @@ defineProps({
 })
 
 const navItems = [
-  { key: 'detail', label: '明细', icon: '🐷', to: '/bills' },
-  { key: 'bill', label: '账单', icon: '📒', to: '/' },
-  { key: 'saving', label: '攒钱', icon: '🫙', to: '/stats' },
-  { key: 'profile', label: '我的', icon: '🐶', to: '/profile' },
+  { key: 'detail', label: '明细', image: navDetailPig, to: '/bills' },
+  { key: 'bill', label: '账单', image: navBillNotebook, to: '/' },
+  { key: 'saving', label: '攒钱', image: navSavingJar, to: '/stats' },
+  { key: 'profile', label: '我的', image: navProfileDog, to: '/profile' },
 ]
 </script>
 
@@ -27,7 +32,7 @@ const navItems = [
           class="relative flex w-16 flex-col items-center gap-0.5 text-xs font-semibold transition-all duration-200 active:scale-95"
           :class="active === item.key ? 'text-primary-700' : 'text-hand'"
         >
-          <span class="text-3xl leading-none drop-shadow-[0_2px_0_rgba(31,41,55,0.14)]">{{ item.icon }}</span>
+          <img :src="item.image" alt="" class="h-12 w-12 object-contain drop-shadow-[0_2px_0_rgba(31,41,55,0.12)]" />
           <span>{{ item.label }}</span>
           <span
             v-if="active === item.key"
@@ -38,15 +43,14 @@ const navItems = [
         <router-link
           v-if="index === 1"
           to="/chat"
-          class="absolute -top-8 left-1/2 flex h-24 w-24 -translate-x-1/2 items-center justify-center rounded-full border-[4px] border-hand bg-[#ffe79a] text-hand shadow-[0_6px_0_rgba(31,41,55,0.22)] transition-all duration-200 active:scale-95"
+          class="absolute -top-12 left-1/2 flex h-32 w-32 -translate-x-1/2 items-center justify-center transition-all duration-200 active:scale-95"
           aria-label="打开 AI 记账"
         >
-          <span class="absolute inset-2 rounded-full border-2 border-warning/80" />
-          <Plus :size="50" :stroke-width="3" />
+          <img :src="plusGlow" alt="" class="h-full w-full object-contain drop-shadow-md" />
         </router-link>
       </template>
 
-      <span class="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 text-xl opacity-30">🐾</span>
+      <img :src="pawPrints" alt="" class="pointer-events-none absolute bottom-1 left-1/2 h-7 w-10 -translate-x-1/2 object-contain opacity-35" />
     </div>
   </nav>
 </template>

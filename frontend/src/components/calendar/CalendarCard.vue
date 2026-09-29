@@ -3,6 +3,10 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import calendarClip from '@/assets/design/calendar-clip.png'
+import expenseCoin from '@/assets/design/expense-coin.png'
+import incomeCash from '@/assets/design/income-cash.png'
+import monthPill from '@/assets/design/month-pill.png'
 
 // 2. Props
 const props = defineProps({
@@ -101,7 +105,10 @@ function getDayNumberClass(cell) {
         <ChevronLeft :size="32" :stroke-width="2.4" />
       </button>
 
-      <h2 class="rounded-full bg-cream-dark/80 px-6 py-2 text-2xl font-bold text-gray-900">{{ monthTitle }}</h2>
+      <h2 class="relative flex h-11 w-52 items-center justify-center text-2xl font-bold text-gray-900">
+        <img :src="monthPill" alt="" class="absolute inset-0 h-full w-full object-fill" />
+        <span class="relative">{{ monthTitle }}</span>
+      </h2>
 
       <button
         type="button"
@@ -139,14 +146,14 @@ function getDayNumberClass(cell) {
     <div class="mt-5 border-t border-dashed border-gray-300 pt-4">
       <div class="grid grid-cols-2 gap-3">
         <div class="flex items-center gap-3 rounded-2xl bg-income-light/70 px-4 py-3">
-          <span class="text-3xl">💵</span>
+          <img :src="incomeCash" alt="" class="h-12 w-12 object-contain" />
           <div>
             <p class="text-xs text-gray-600">本月收入</p>
             <p class="font-mono text-lg font-bold text-income-dark">{{ `¥${income.toFixed(2)}` }}</p>
           </div>
         </div>
         <div class="flex items-center gap-3 rounded-2xl bg-accent-100/80 px-4 py-3">
-          <span class="text-3xl">🪙</span>
+          <img :src="expenseCoin" alt="" class="h-12 w-12 object-contain" />
           <div>
             <p class="text-xs text-gray-600">本月支出</p>
             <p class="font-mono text-lg font-bold text-accent-500">{{ `¥${expense.toFixed(2)}` }}</p>

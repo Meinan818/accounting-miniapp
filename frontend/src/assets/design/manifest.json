@@ -1,0 +1,202 @@
+{
+  "source": "asset-sheet-alpha.png",
+  "grid": "4x4",
+  "source_size": [
+    1254,
+    1254
+  ],
+  "assets": [
+    {
+      "filename": "chick-avatar.png",
+      "purpose": "顶部小黄鸡头像",
+      "row": 0,
+      "column": 0,
+      "bbox": [
+        0,
+        0,
+        314,
+        314
+      ]
+    },
+    {
+      "filename": "title-brush.png",
+      "purpose": "标题刷色背景",
+      "row": 0,
+      "column": 1,
+      "bbox": [
+        314,
+        0,
+        627,
+        314
+      ]
+    },
+    {
+      "filename": "calendar-clip.png",
+      "purpose": "日历夹子",
+      "row": 0,
+      "column": 2,
+      "bbox": [
+        627,
+        0,
+        940,
+        314
+      ]
+    },
+    {
+      "filename": "month-pill.png",
+      "purpose": "月份胶囊背景",
+      "row": 0,
+      "column": 3,
+      "bbox": [
+        940,
+        0,
+        1254,
+        314
+      ]
+    },
+    {
+      "filename": "cat-peek.png",
+      "purpose": "探头小猫",
+      "row": 1,
+      "column": 0,
+      "bbox": [
+        0,
+        314,
+        314,
+        627
+      ]
+    },
+    {
+      "filename": "bear-peek.png",
+      "purpose": "探头小熊",
+      "row": 1,
+      "column": 1,
+      "bbox": [
+        314,
+        314,
+        627,
+        627
+      ]
+    },
+    {
+      "filename": "plant-sprout.png",
+      "purpose": "植物嫩芽",
+      "row": 1,
+      "column": 2,
+      "bbox": [
+        627,
+        314,
+        940,
+        627
+      ]
+    },
+    {
+      "filename": "paw-prints.png",
+      "purpose": "猫爪印",
+      "row": 1,
+      "column": 3,
+      "bbox": [
+        940,
+        314,
+        1254,
+        627
+      ]
+    },
+    {
+      "filename": "nav-detail-pig.png",
+      "purpose": "明细导航小猪",
+      "row": 2,
+      "column": 0,
+      "bbox": [
+        0,
+        627,
+        314,
+        940
+      ]
+    },
+    {
+      "filename": "nav-bill-notebook.png",
+      "purpose": "账单导航笔记本",
+      "row": 2,
+      "column": 1,
+      "bbox": [
+        314,
+        627,
+        627,
+        940
+      ]
+    },
+    {
+      "filename": "nav-saving-jar.png",
+      "purpose": "攒钱导航玻璃罐",
+      "row": 2,
+      "column": 2,
+      "bbox": [
+        627,
+        627,
+        940,
+        940
+      ]
+    },
+    {
+      "filename": "nav-profile-dog.png",
+      "purpose": "我的导航小狗",
+      "row": 2,
+      "column": 3,
+      "bbox": [
+        940,
+        627,
+        1254,
+        940
+      ]
+    },
+    {
+      "filename": "plus-glow.png",
+      "purpose": "中央加号光晕",
+      "row": 3,
+      "column": 0,
+      "bbox": [
+        0,
+        940,
+        314,
+        1254
+      ]
+    },
+    {
+      "filename": "income-cash.png",
+      "purpose": "收入钞票",
+      "row": 3,
+      "column": 1,
+      "bbox": [
+        314,
+        940,
+        627,
+        1254
+      ]
+    },
+    {
+      "filename": "expense-coin.png",
+      "purpose": "支出金币",
+      "row": 3,
+      "column": 2,
+      "bbox": [
+        627,
+        940,
+        940,
+        1254
+      ]
+    },
+    {
+      "filename": "leaves.png",
+      "purpose": "背景叶片",
+      "row": 3,
+      "column": 3,
+      "bbox": [
+        940,
+        940,
+        1254,
+        1254
+      ]
+    }
+  ]
+}

@@ -2,7 +2,14 @@
 // 1. 导入
 import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
-import { ChevronDown, PawPrint } from 'lucide-vue-next'
+import { ChevronDown } from 'lucide-vue-next'
+import bearPeek from '@/assets/design/bear-peek.png'
+import catPeek from '@/assets/design/cat-peek.png'
+import chickAvatar from '@/assets/design/chick-avatar.png'
+import leaves from '@/assets/design/leaves.png'
+import pawPrints from '@/assets/design/paw-prints.png'
+import plantSprout from '@/assets/design/plant-sprout.png'
+import titleBrush from '@/assets/design/title-brush.png'
 import CalendarCard from '@/components/calendar/CalendarCard.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
@@ -68,18 +75,19 @@ function getRecordSign(record) {
 
     <main class="relative z-10 mx-auto max-w-2xl">
       <header class="mb-5 flex items-center justify-between">
-        <div class="rounded-[45%_55%_48%_52%] bg-warning/45 px-4 py-2 shadow-sm">
+        <div class="relative">
+          <img :src="titleBrush" alt="" class="absolute -left-2 -top-2 h-[4.2rem] w-[14rem] object-fill opacity-95" />
           <button
             type="button"
-            class="flex items-center gap-1 text-2xl font-black text-gray-900"
+            class="relative flex items-center gap-1 px-5 py-3 text-2xl font-black text-gray-900"
             aria-label="切换账簿"
           >
             日常开销
             <ChevronDown :size="25" :stroke-width="2.8" />
           </button>
         </div>
-        <div class="flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-hand bg-white text-3xl shadow-md">
-          🐣
+        <div class="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-[3px] border-hand bg-white shadow-md">
+          <img :src="chickAvatar" alt="小黄鸡" class="h-16 w-16 object-contain" />
         </div>
       </header>
 
@@ -136,10 +144,12 @@ function getRecordSign(record) {
       </section>
     </main>
 
-    <div class="pointer-events-none fixed bottom-24 left-1/2 z-20 flex w-[min(94vw,38rem)] -translate-x-1/2 items-end justify-between px-6">
-      <span class="text-6xl drop-shadow-sm">🐱</span>
-      <span class="mb-3 text-4xl">🌱</span>
-      <span class="text-6xl drop-shadow-sm">🐻</span>
+    <div class="pointer-events-none fixed bottom-16 left-1/2 z-0 flex w-[min(98vw,40rem)] -translate-x-1/2 items-end justify-between px-2">
+      <img :src="leaves" alt="" class="mb-7 h-16 w-16 object-contain opacity-90" />
+      <img :src="catPeek" alt="" class="h-24 w-24 object-contain drop-shadow-sm" />
+      <img :src="plantSprout" alt="" class="mb-3 h-14 w-14 object-contain" />
+      <img :src="bearPeek" alt="" class="h-24 w-24 object-contain drop-shadow-sm" />
+      <img :src="leaves" alt="" class="mb-7 h-16 w-16 -scale-x-100 object-contain opacity-90" />
     </div>
 
     <BottomNav active="bill" />
