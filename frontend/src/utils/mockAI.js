@@ -4,10 +4,10 @@ export const CATEGORY_OPTIONS = {
   expense: [
     { label: '餐饮', icon: '🍔', keywords: ['吃', '饭', '外卖', '早餐', '午餐', '晚餐', '奶茶', '咖啡', '火锅', '烧烤'] },
     { label: '交通', icon: '🚗', keywords: ['打车', '地铁', '公交', '加油', '停车', '高铁', '机票', '车费'] },
-    { label: '购物', icon: '🛍️', keywords: ['购物', '买', '衣服', '鞋', '淘宝', '京东', '超市', '日用品'] },
+    { label: '购物', icon: '🛍️', keywords: ['购物', '购买', '买东西', '衣服', '鞋', '淘宝', '京东', '超市', '日用品'] },
     { label: '娱乐', icon: '🎮', keywords: ['电影', '游戏', '唱歌', 'ktv', '娱乐', '会员'] },
     { label: '住房', icon: '🏠', keywords: ['房租', '水费', '电费', '燃气', '物业'] },
-    { label: '医疗', icon: '💊', keywords: ['医院', '看病', '买药', '体检'] },
+    { label: '医疗', icon: '💊', keywords: ['医院', '看病', '买药', '药', '体检'] },
     { label: '学习', icon: '📚', keywords: ['书', '课程', '培训', '学习', '考试'] },
     { label: '其他', icon: '📝', keywords: [] },
   ],
@@ -28,11 +28,29 @@ function getCategoryOptions(type) {
   return CATEGORY_OPTIONS[type] || CATEGORY_OPTIONS.expense
 }
 
-function matchesCategory(text, category) {
+function getCategoryMatchScore(text, category) {
   const normalizedText = text.toLowerCase()
+  const label = category.label.toLowerCase()
+  const scores = category.keywords
+    .filter((keyword) => normalizedText.includes(keyword.toLowerCase()))
+    .map((keyword) => keyword.length)
 
-  return normalizedText.includes(category.label.toLowerCase())
-    || category.keywords.some((keyword) => normalizedText.includes(keyword.toLowerCase()))
+  if (normalizedText.includes(label)) {
+    scores.push(label.length + 2)
+  }
+
+  return scores.length ? Math.max(...scores) : 0
+}
+
+function findCategoryMatch(text, type) {
+  return getCategoryOptions(type)
+    .map((category, index) => ({
+      category,
+      index,
+      score: getCategoryMatchScore(text, category),
+    }))
+    .filter((item) => item.score > 0)
+    .sort((left, right) => right.score - left.score || left.index - right.index)[0]?.category
 }
 
 export function getCategoryMeta(category, type = 'expense') {
@@ -45,7 +63,7 @@ function detectRecordType(text) {
 }
 
 function detectCategory(text, type) {
-  const matched = getCategoryOptions(type).find((item) => matchesCategory(text, item))
+  const matched = findCategoryMatch(text, type)
 
   return matched || getCategoryOptions(type).at(-1)
 }
@@ -110,7 +128,7 @@ export function getFakeAIResponse(input, summary = {}) {
 
   if (isQuery) {
     const type = /收入/.test(text) ? 'income' : 'expense'
-    const categoryMeta = getCategoryOptions(type).find((item) => matchesCategory(text, item))
+    const categoryMeta = findCategoryMatch(text, type)
 
     if (categoryMeta) {
       const isIncome = type === 'income'
