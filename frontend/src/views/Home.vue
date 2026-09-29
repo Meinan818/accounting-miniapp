@@ -1,6 +1,6 @@
 <script setup>
 // 1. 导入
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronDown, PawPrint } from 'lucide-vue-next'
 import CalendarCard from '@/components/calendar/CalendarCard.vue'
@@ -16,15 +16,6 @@ const today = dayjs().format('YYYY-MM-DD')
 const todayMonth = today.slice(0, 7)
 const calendarMonth = ref(todayMonth)
 const selectedDate = ref(today)
-const quickTip = ref('')
-let quickTipTimer = null
-
-const quickActions = [
-  { icon: '🐣', label: '小账铺', tip: '小账铺正在装修中' },
-  { icon: '🧾', label: '小票', tip: '小票夹正在整理中' },
-  { icon: '📅', label: '签到', tip: '签到奖励正在准备中' },
-  { icon: '🪙', label: '攒钱', tip: '攒钱计划正在准备中' },
-]
 
 // 4. 计算属性
 const visibleMonthRecords = computed(() => recordStore.records.filter((record) => (
@@ -59,50 +50,35 @@ function handleMonthChange(month) {
   selectedDate.value = month === todayMonth ? today : `${month}-01`
 }
 
-function handleQuickAction(action) {
-  quickTip.value = action.tip
-
-  if (quickTipTimer) {
-    window.clearTimeout(quickTipTimer)
-  }
-
-  quickTipTimer = window.setTimeout(() => {
-    quickTip.value = ''
-  }, 1800)
-}
-
 function getRecordSign(record) {
   return record.type === 'income' ? '+' : '-'
 }
-
-// 6. 生命周期
-onBeforeUnmount(() => {
-  if (quickTipTimer) {
-    window.clearTimeout(quickTipTimer)
-  }
-})
 </script>
 
 <template>
-  <div class="paper-surface relative min-h-[100dvh] overflow-x-hidden px-4 pb-36 pt-5">
-    <div class="pointer-events-none absolute inset-0 overflow-hidden text-warning/20">
-      <PawPrint class="absolute left-8 top-36 h-12 w-12 rotate-[-20deg]" />
-      <PawPrint class="absolute right-12 top-24 h-8 w-8 rotate-[18deg]" />
-      <PawPrint class="absolute left-1/2 top-[34rem] h-10 w-10 rotate-[10deg]" />
-      <PawPrint class="absolute right-8 top-[44rem] h-12 w-12 rotate-[-12deg]" />
+  <div class="paper-surface relative min-h-[100dvh] overflow-x-hidden px-4 pb-48 pt-5">
+    <div class="pointer-events-none absolute inset-0 overflow-hidden">
+      <div class="absolute -left-20 -top-12 h-44 w-72 rounded-[50%] bg-warning/20 blur-sm" />
+      <div class="absolute -right-16 top-24 h-36 w-56 rounded-[50%] bg-accent-100/70 blur-sm" />
+      <div class="absolute -left-14 top-[34rem] h-36 w-52 rounded-[50%] bg-income-light/50 blur-sm" />
+      <PawPrint class="absolute left-8 top-36 h-12 w-12 rotate-[-20deg] text-warning/20" />
+      <PawPrint class="absolute right-12 top-24 h-8 w-8 rotate-[18deg] text-warning/20" />
+      <PawPrint class="absolute left-1/2 top-[35rem] h-10 w-10 rotate-[10deg] text-warning/20" />
     </div>
 
     <main class="relative z-10 mx-auto max-w-2xl">
       <header class="mb-5 flex items-center justify-between">
-        <button
-          type="button"
-          class="flex items-center gap-1 text-2xl font-bold text-gray-900"
-          aria-label="切换账簿"
-        >
-          日常开销
-          <ChevronDown :size="24" :stroke-width="2.5" />
-        </button>
-        <div class="flex h-11 w-11 items-center justify-center rounded-full border-2 border-hand bg-white text-2xl shadow-sm">
+        <div class="rounded-[45%_55%_48%_52%] bg-warning/45 px-4 py-2 shadow-sm">
+          <button
+            type="button"
+            class="flex items-center gap-1 text-2xl font-black text-gray-900"
+            aria-label="切换账簿"
+          >
+            日常开销
+            <ChevronDown :size="25" :stroke-width="2.8" />
+          </button>
+        </div>
+        <div class="flex h-14 w-14 items-center justify-center rounded-full border-[3px] border-hand bg-white text-3xl shadow-md">
           🐣
         </div>
       </header>
@@ -117,26 +93,8 @@ onBeforeUnmount(() => {
         @update:selected-date="selectedDate = $event"
       />
 
-      <section class="mt-5">
-        <div class="hide-scrollbar flex gap-3 overflow-x-auto pb-2">
-          <button
-            v-for="action in quickActions"
-            :key="action.label"
-            type="button"
-            class="flex min-w-[132px] items-center gap-3 whitespace-nowrap rounded-xl border-[3px] border-hand bg-white px-4 py-3 text-left shadow-[3px_4px_0_rgba(31,41,55,0.12)] transition-transform active:scale-95"
-            @click="handleQuickAction(action)"
-          >
-            <span class="text-2xl">{{ action.icon }}</span>
-            <span class="font-semibold text-gray-900">{{ action.label }}</span>
-          </button>
-        </div>
-        <p v-if="quickTip" class="mt-1 text-center text-xs font-medium text-primary-600">
-          {{ quickTip }}
-        </p>
-      </section>
-
       <section class="mt-7">
-        <div class="mb-3 flex items-end justify-between">
+        <div class="mb-3 flex items-end justify-between px-1">
           <div>
             <p class="text-xs font-medium text-gray-400">当天账单</p>
             <h2 class="text-xl font-bold text-gray-900">{{ selectedDateLabel }}</h2>
@@ -150,7 +108,7 @@ onBeforeUnmount(() => {
           <article
             v-for="record in selectedRecords"
             :key="record.id"
-            class="flex items-center justify-between rounded-xl border-2 border-hand bg-white px-4 py-3 shadow-[2px_3px_0_rgba(31,41,55,0.1)]"
+            class="flex items-center justify-between rounded-2xl border-[2.5px] border-hand bg-white px-4 py-3 shadow-[3px_4px_0_rgba(31,41,55,0.12)]"
           >
             <div class="flex items-center gap-3">
               <div class="flex h-11 w-11 items-center justify-center rounded-full bg-cream-dark text-2xl">
@@ -178,6 +136,11 @@ onBeforeUnmount(() => {
       </section>
     </main>
 
+    <div class="pointer-events-none fixed bottom-24 left-1/2 z-20 flex w-[min(94vw,38rem)] -translate-x-1/2 items-end justify-between px-6">
+      <span class="text-6xl drop-shadow-sm">🐱</span>
+      <span class="mb-3 text-4xl">🌱</span>
+      <span class="text-6xl drop-shadow-sm">🐻</span>
+    </div>
 
     <BottomNav active="bill" />
   </div>

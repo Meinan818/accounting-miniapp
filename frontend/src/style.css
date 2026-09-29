@@ -22,10 +22,15 @@
 .paper-surface {
   background-color: #fffbf0;
   background-image:
-    radial-gradient(circle at 18% 20%, rgba(251, 191, 36, 0.12) 0 2px, transparent 3px),
-    radial-gradient(circle at 80% 62%, rgba(251, 191, 36, 0.1) 0 2px, transparent 3px),
-    radial-gradient(rgba(31, 41, 55, 0.06) 0.7px, transparent 0.7px);
-  background-size: 180px 180px, 220px 220px, 18px 18px;
+    radial-gradient(ellipse at 12% 4%, rgba(251, 191, 36, 0.18) 0 72px, transparent 73px),
+    radial-gradient(ellipse at 90% 18%, rgba(253, 164, 175, 0.13) 0 84px, transparent 85px),
+    radial-gradient(ellipse at 8% 56%, rgba(209, 250, 229, 0.35) 0 68px, transparent 69px),
+    radial-gradient(rgba(31, 41, 55, 0.045) 0.7px, transparent 0.7px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 20px 20px;
+}
+
+.bottom-wave {
+  background: linear-gradient(180deg, #f8d05b 0%, #f2ba3f 100%);
 }
 
 .bottom-wave::before {
