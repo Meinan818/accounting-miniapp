@@ -4,15 +4,15 @@
   "holder": "codex",
   "since": "2026-09-30T03:17:08+08:00",
   "branch": "codex/home-asset-pack",
-  "task": "codex/home-asset-pack 素材包分支：首页、日历卡和底部导航已替换素材；首页装饰已简化，中央加号比例已收敛，等待用户验收",
+  "task": "首页视觉重构 Step 1 已完成：建立了 390×844 视觉基准、原稿差异表和 home-visual-tokens.css；未改页面结构、路由、Pinia、localStorage、AI 逻辑或素材",
   "blocked": false,
   "blockedReason": "",
-  "nextCheckpoint": "用户验收 codex/home-asset-pack 分支最新首页效果；确认后合并 main 或继续调整。当前分支最新提交尚未 Push",
+  "nextCheckpoint": "等待用户确认 Step 1 基准和设计 token；确认后才进入 Step 2 素材整理，当前分支未 Push",
   "_nextAI说明": "下一个该接手的 AI。AI 汇报末尾的「—— 下一步 ——」区块必须和这里一致。",
   "nextAI": "codex",
   "nextAIReason": "用户决定由 Codex 负责全线开发，并要求在独立分支整合素材包",
   "onlineVersion": "无（项目尚未部署，Push 只更新 GitHub 代码）",
-  "pendingUserDecision": "需要用户验收首页素材和装饰调整；之后决定合并主线、继续优化或 Push。",
+  "pendingUserDecision": "用户确认 Step 1 的视觉基准和 token 后，是否开始 Step 2。",
   "_字段纪律": "本文件只记 git 查不到的状态（谁在轮值、线上第几版、待用户决策什么）。不要记 localMain / aheadOfOriginMain 这类提交号——现场跑 git log 即可，记进来必然过期。",
-  "updatedAt": "2026-09-30T20:40:48+08:00"
+  "updatedAt": "2026-09-30T21:06:28+08:00"
 }

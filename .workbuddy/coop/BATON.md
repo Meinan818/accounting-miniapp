@@ -630,3 +630,37 @@ npm run build
 1. 用户验收本分支最新首页效果。
 2. 用户确认后可合并到 main；是否 Push 仍需用户明确说 `Push`。
 3. 如继续优化，优先替换日历外框、日期格子和波浪结构。
+
+---
+
+## 2026-09-30 21:06:28+08:00 · Codex（首页视觉重构 Step 1）
+
+**分支**：`codex/home-asset-pack`
+**Push 状态**：未 Push
+
+### 完成的工作
+
+1. 以用户提供的产品原稿截图为唯一视觉基准。
+2. 记录原稿尺寸 `961 × 1637`、390×844 开发视口以及两者比例差异。
+3. 新增 `frontend/src/styles/home-visual-tokens.css`，集中记录颜色、页面、日历、网格、底部导航、中央按钮、安全区和阴影参数。
+4. 在 `frontend/src/style.css` 顶部导入 token 文件，但没有让首页使用这些变量，所以页面外观不变。
+5. 新增 `docs/HOME_VISUAL_BASELINE.md`，记录原稿与当前实现的差异和估算值。
+6. 没有修改 `Home.vue`、`CalendarCard.vue`、`BottomNav.vue`、路由、Pinia、localStorage、假账单或 AI 逻辑。
+7. 没有生成或替换任何图片素材。
+
+### 真实验证
+
+- `npm run dev`：失败，原因是这台电脑的 Windows 应用控制策略拦截未签名的本地加速程序。
+- 本地静态预览：`python -m http.server 4173 --directory dist` 启动成功，访问返回 HTTP 200。
+- 手机尺寸截图：390×844 首页已截图并显示在会话中；因为 Step 1 没有让页面使用新 token，视觉与修改前一致。
+- CSS 文件已通过 PostCSS 解析检查。
+
+### 已知限制
+
+- 标准 Vite 开发服务器目前无法在这台电脑上启动，必须先解决 Windows 应用控制策略或使用替代构建环境。
+- 当前截图来自已构建的 `dist`，没有体现 token 文件本身，因为 Step 1 不接入视觉变量。
+
+### 下一步
+
+1. 等用户确认 Step 1 的视觉基准和 token。
+2. 用户明确确认后，才进入 Step 2 素材分析，不自动继续。
