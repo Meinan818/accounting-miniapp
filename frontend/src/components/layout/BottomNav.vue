@@ -40,17 +40,18 @@ const navItems = [
           />
         </router-link>
 
+        <!-- 缩小中央加号光晕：从 32 改为 24，位置也上移一点 -->
         <router-link
           v-if="index === 1"
           to="/chat"
-          class="absolute -top-12 left-1/2 flex h-32 w-32 -translate-x-1/2 items-center justify-center transition-all duration-200 active:scale-95"
+          class="absolute -top-10 left-1/2 flex h-24 w-24 -translate-x-1/2 items-center justify-center transition-all duration-200 active:scale-95"
           aria-label="打开 AI 记账"
         >
           <img :src="plusGlow" alt="" class="h-full w-full object-contain drop-shadow-md" />
         </router-link>
       </template>
 
-      <img :src="pawPrints" alt="" class="pointer-events-none absolute bottom-1 left-1/2 h-7 w-10 -translate-x-1/2 object-contain opacity-35" />
+      <img :src="pawPrints" alt="" class="pointer-events-none absolute bottom-1 left-1/2 h-6 w-9 -translate-x-1/2 object-contain opacity-30" />
     </div>
   </nav>
 </template>

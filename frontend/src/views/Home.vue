@@ -7,7 +7,6 @@ import bearPeek from '@/assets/design/bear-peek.png'
 import catPeek from '@/assets/design/cat-peek.png'
 import chickAvatar from '@/assets/design/chick-avatar.png'
 import leaves from '@/assets/design/leaves.png'
-import pawPrints from '@/assets/design/paw-prints.png'
 import plantSprout from '@/assets/design/plant-sprout.png'
 import titleBrush from '@/assets/design/title-brush.png'
 import CalendarCard from '@/components/calendar/CalendarCard.vue'
@@ -64,13 +63,10 @@ function getRecordSign(record) {
 
 <template>
   <div class="paper-surface relative min-h-[100dvh] overflow-x-hidden px-4 pb-48 pt-5">
+    <!-- 背景装饰：简化，去掉多余爪印 -->
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div class="absolute -left-20 -top-12 h-44 w-72 rounded-[50%] bg-warning/20 blur-sm" />
-      <div class="absolute -right-16 top-24 h-36 w-56 rounded-[50%] bg-accent-100/70 blur-sm" />
-      <div class="absolute -left-14 top-[34rem] h-36 w-52 rounded-[50%] bg-income-light/50 blur-sm" />
-      <PawPrint class="absolute left-8 top-36 h-12 w-12 rotate-[-20deg] text-warning/20" />
-      <PawPrint class="absolute right-12 top-24 h-8 w-8 rotate-[18deg] text-warning/20" />
-      <PawPrint class="absolute left-1/2 top-[35rem] h-10 w-10 rotate-[10deg] text-warning/20" />
+      <div class="absolute -left-20 -top-12 h-44 w-72 rounded-[50%] bg-warning/15 blur-sm" />
+      <div class="absolute -right-16 top-32 h-36 w-56 rounded-[50%] bg-accent-100/60 blur-sm" />
     </div>
 
     <main class="relative z-10 mx-auto max-w-2xl">
@@ -144,12 +140,14 @@ function getRecordSign(record) {
       </section>
     </main>
 
-    <div class="pointer-events-none fixed bottom-16 left-1/2 z-0 flex w-[min(98vw,40rem)] -translate-x-1/2 items-end justify-between px-2">
-      <img :src="leaves" alt="" class="mb-7 h-16 w-16 object-contain opacity-90" />
-      <img :src="catPeek" alt="" class="h-24 w-24 object-contain drop-shadow-sm" />
-      <img :src="plantSprout" alt="" class="mb-3 h-14 w-14 object-contain" />
-      <img :src="bearPeek" alt="" class="h-24 w-24 object-contain drop-shadow-sm" />
-      <img :src="leaves" alt="" class="mb-7 h-16 w-16 -scale-x-100 object-contain opacity-90" />
+    <!-- 底部装饰：重新布局，避免拥挤 -->
+    <div class="pointer-events-none fixed bottom-20 left-0 right-0 z-0">
+      <div class="relative mx-auto flex w-[min(98vw,40rem)] items-end justify-between px-4">
+        <img :src="catPeek" alt="" class="h-20 w-20 object-contain drop-shadow-sm" />
+        <img :src="leaves" alt="" class="mb-4 h-12 w-12 object-contain opacity-80" />
+        <img :src="plantSprout" alt="" class="mb-2 h-14 w-14 object-contain opacity-90" />
+        <img :src="bearPeek" alt="" class="h-20 w-20 object-contain drop-shadow-sm" />
+      </div>
     </div>
 
     <BottomNav active="bill" />

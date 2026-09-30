@@ -92,8 +92,9 @@ function getDayNumberClass(cell) {
 
 <template>
   <section class="relative rounded-[30px] border-[3px] border-hand bg-white/95 p-5 pt-7 shadow-[5px_6px_0_rgba(31,41,55,0.12)]">
-    <span class="absolute -top-3 left-16 h-9 w-5 rounded-full border-[3px] border-hand bg-warning/70" />
-    <span class="absolute -top-3 right-16 h-9 w-5 rounded-full border-[3px] border-hand bg-warning/70" />
+    <!-- 调整夹子位置和样式 -->
+    <span class="absolute -top-4 left-20 h-10 w-6 rounded-full border-[3px] border-hand bg-warning/80 shadow-sm" />
+    <span class="absolute -top-4 right-20 h-10 w-6 rounded-full border-[3px] border-hand bg-warning/80 shadow-sm" />
 
     <div class="mb-4 flex items-center justify-between">
       <button
