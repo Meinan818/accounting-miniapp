@@ -1,0 +1,74 @@
+/*
+ * 智账首页视觉基准 tokens
+ *
+ * Step 1 只建立统一参数，不直接改变首页外观。
+ * 颜色取自已确认的产品原稿截图，属于估算值；
+ * 像素值来自“原稿比例 + 390×844 视口”的换算，后续实施时再逐项校准。
+ */
+:root {
+  /* 参考画布 */
+  --zz-home-reference-width: 961;
+  --zz-home-reference-height: 1637;
+  --zz-home-reference-ratio: 0.587;
+  --zz-home-viewport-width: 390;
+  --zz-home-viewport-height: 844;
+  --zz-home-scaled-canvas-height: 664;
+
+  /* 颜色 */
+  --zz-home-bg: #fdfaf3;
+  --zz-home-bg-alt: #f7f0e7;
+  --zz-home-ink: #3c261a;
+  --zz-home-ink-soft: #6b4a36;
+  --zz-home-title-brush: #fceed4;
+  --zz-home-yellow: #fed76e;
+  --zz-home-yellow-soft: #f7d574;
+  --zz-home-pink: #f58088;
+  --zz-home-pink-soft: #f6a4a9;
+  --zz-home-green: #318842;
+  --zz-home-green-soft: #eff3dd;
+  --zz-home-income-panel: #eff3dd;
+  --zz-home-expense-panel: #fde8e0;
+
+  /* 页面与顶部 */
+  --zz-home-page-x: 16px;
+  --zz-home-content-width: 100%;
+  --zz-home-header-height: 88px;
+  --zz-home-header-gap: 16px;
+
+  /* 日历卡片与夹子 */
+  --zz-home-calendar-width: calc(100% - 32px);
+  --zz-home-calendar-top: 70px;
+  --zz-home-calendar-height: 425px;
+  --zz-home-calendar-radius: 16px;
+  --zz-home-calendar-border: 2px;
+  --zz-home-calendar-padding: 16px;
+  --zz-home-clip-width: 24px;
+  --zz-home-clip-height: 42px;
+
+  /* 日期网格 */
+  --zz-home-grid-gap-x: 3px;
+  --zz-home-grid-gap-y: 5px;
+  --zz-home-cell-width: 43px;
+  --zz-home-cell-height: 27px;
+  --zz-home-cell-ratio: 1.55;
+  --zz-home-cell-radius: 6px;
+
+  /* 月度汇总 */
+  --zz-home-summary-height: 72px;
+  --zz-home-summary-gap: 8px;
+  --zz-home-summary-radius: 12px;
+
+  /* 底部插画与导航 */
+  --zz-home-scene-top: auto;
+  --zz-home-scene-height: 150px;
+  --zz-home-bottom-nav-height: 108px;
+  --zz-home-nav-icon: 44px;
+  --zz-home-plus-diameter: 78px;
+  --zz-home-plus-overlap: 42px;
+  --zz-home-safe-area: env(safe-area-inset-bottom, 0px);
+
+  /* 阴影与描边 */
+  --zz-home-shadow-x: 3px;
+  --zz-home-shadow-y: 3px;
+  --zz-home-shadow-color: rgba(60, 38, 26, 0.12);
+}
