@@ -14,5 +14,5 @@
   "onlineVersion": "无（项目尚未部署，Push 只更新 GitHub 代码）",
   "pendingUserDecision": "是否按 docs/HOME_ASSET_FINAL_PRODUCTION.md 开始第一批 6 组素材制作；不自动进入页面改造",
   "_字段纪律": "本文件只记 git 查不到的状态（谁在轮值、线上第几版、待用户决策什么）。不要记 localMain / aheadOfOriginMain 这类提交号——现场跑 git log 即可，记进来必然过期。",
-  "updatedAt": "2026-10-01T15:11:37+08:00"
+  "updatedAt": "2026-10-01T15:22:51+08:00"
 }
