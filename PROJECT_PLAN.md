@@ -621,4 +621,4 @@ function getFakeAIResponse(userInput) {
 
 ---
 **最后更新**: 2026-10-01
-**当前阶段**: 阶段 1；当前优先完成首页视觉素材路线，确认后按 `docs/HOME_ASSET_FINAL_PRODUCTION.md` 制作第一批 6 组素材，暂不直接改页面；该路线结束后继续 Sprint 1.6 统计页面
+**当前阶段**: 阶段 1；下一步先按 `docs/HOME_ASSET_FINAL_PRODUCTION.md` 检查第一批修正版素材，再分段确认接入方案；确认前不修改页面。需要生图时使用本机全局 Kitool 技能，先核实当前能力能否满足真实透明要求。首页视觉路线结束后继续 Sprint 1.6 统计页面；已发生的验证与交付状态见 AGENTS.md 和交接记录
