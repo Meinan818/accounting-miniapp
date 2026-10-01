@@ -4,15 +4,15 @@
   "holder": "codex",
   "since": "2026-09-30T03:17:08+08:00",
   "branch": "codex/home-asset-pack",
-  "task": "首页视觉规划 Step 1～4 已完成并保存；第一批 6 组素材和页面改造尚未开始；2026-10-01 完成交接对账，并通过当前 FlClash 代理只读确认 GitHub 连接和目标路线版本一致",
+  "task": "Step 4 和第一批制作方案已获用户确认；外部6张素材已检查但未接入，4张需修正。Kitool新全局配置已在其他对话成功文字生图，本次核实成品；日历外框仍未生成，首页改造未开始",
   "blocked": false,
   "blockedReason": "",
-  "nextCheckpoint": "等待用户确认第一批 6 组素材制作；最终边界以 docs/HOME_ASSET_FINAL_PRODUCTION.md 为准，确认前不生成图片、不改页面",
+  "nextCheckpoint": "先取得并检查第一批合格修正版素材，再确认接入方案。后续生图按本机gpt-image技能的新配置执行，不重复安装或配置密钥；透明输出和参考图编辑仍需验证。当前只存档，不自动生图或改页面",
   "_nextAI说明": "下一个该接手的 AI。AI 汇报末尾的「—— 下一步 ——」区块必须和这里一致。",
   "nextAI": "codex",
-  "nextAIReason": "Codex 继续负责全线开发；下一步先确认最终清单，再制作第一批 6 组素材",
+  "nextAIReason": "Codex 继续负责；记录已存档，下一步先完成合格素材并确认接入方案，当前无需用户外部操作",
   "onlineVersion": "无（项目尚未部署，Push 只更新 GitHub 代码）",
-  "pendingUserDecision": "是否按 docs/HOME_ASSET_FINAL_PRODUCTION.md 开始第一批 6 组素材制作；不自动进入页面改造",
+  "pendingUserDecision": "第一批制作方案已确认；待修正版合格后确认接入范围和页面改造方案，不自动生成图片或修改页面",
   "_字段纪律": "本文件只记 git 查不到的状态（谁在轮值、线上第几版、待用户决策什么）。不要记 localMain / aheadOfOriginMain 这类提交号——现场跑 git log 即可，记进来必然过期。",
-  "updatedAt": "2026-10-01T15:54:25+08:00"
+  "updatedAt": "2026-10-01T19:49:57+08:00"
 }
