@@ -49,7 +49,7 @@
 
 - **同一时刻只有一个 AI 改代码。** 唯一的通信媒介是**本仓库的文件 + git**，两个 AI 互相看不见对方的对话。
 - `holder` 不是你就**不要动代码**（"我就改一行"也不行）。
-- **方案设计 / 架构取舍 / 代码审查 → Claude；按方案写代码 / 跑验证 / commit 与 push → Codex**（§0.4）。
+- **当前由 Codex 负责方案、实现、自查和发布执行**（§0.4）；除非用户明确要求交给 Claude，否则不换班。
 - 小改动（改字段、修一个明确 bug）**不必换班**——换班成本高于收益，谁在轮值谁做。
 
 ### 0.3 换班流程（由交出方执行）
@@ -111,6 +111,8 @@
 
 ### 0.7 判断下一步该找谁
 
+> 以下换班表是历史分工参考，当前暂停执行；以 §0.4 的 Codex 全线开发规则为准。
+
 | 刚做完的活 | 下一步找谁 | 为什么 |
 |---|---|---|
 | 写好了代码 / 修好了 bug / 跑完了测试 | **Claude 复核** | 需要一双没参与写的眼睛 |
@@ -147,7 +149,7 @@
 
 ## 1. 项目定位与当前进度
 
-### 1.1 当前进度快照（更新于 2026-09-29 23:30）
+### 1.1 当前进度快照（更新于 2026-10-01）
 
 > ⚠️ **本节只写"git 查不到的事实"**（线上第几版、做过哪些验证、已知问题、待人工操作）。
 >
@@ -162,10 +164,11 @@
 | 预算 | 零预算（Supabase 免费额度 + Vercel 免费托管 + Claude API 需用户自费约 $5/月） |
 | 线上部署 | **尚未部署**（无线上地址，push 不影响任何线上网站） |
 | 远端仓库 | https://github.com/Meinan818/accounting-miniapp （仓库名含 `miniapp`，是旧的"小程序"路线遗留，暂不改） |
-| 当前阶段 | Sprint 1.5 已完成：账单明细页、日期分组和 10 条假账单已实现；**下一步是 Sprint 1.6：统计页面** |
+| 当前阶段 | 功能开发完成到 Sprint 1.5；首页视觉规划已完成 Step 1～4，最终清单见 `docs/HOME_ASSET_FINAL_PRODUCTION.md`。新素材尚未制作，页面尚未按新规格改造；下一步先确认第一批 6 组素材制作，再恢复 Sprint 1.6 统计页面 |
 | 路线变更 | **2026-09-29 用户三次拍板**：① uni-app 改为 Vue 3 Web 应用；② 先做前端+假数据，后接 Supabase；③ **改为对话式 AI 记账**；④ 2026-09-30 首页改为手账日历，AI 对话从中央加号进入 |
 | 已完成的验证 | Sprint 1.1：项目重建、路由和 Tailwind 已通过浏览器验证；Sprint 1.3：对话、识别、修改、确认、查询和本地持久化已通过浏览器回归；P1 五项修复后浏览器错误为 0；Sprint 1.4 日历、月份切换、日期账单和 AI 对话入口已通过手机尺寸浏览器验证；Sprint 1.5 账单分组、收支颜色、月份切换和空状态已验证 |
 | 待人工操作 | ① 用户在 Supabase 控制台建项目并执行 `supabase/` 下三个 SQL（阶段 2 才需要）；② 用户申请 Claude API key 填入 `.env`（阶段 2 才需要） |
+| 本次接手核查 | 2026-10-01：`npm run build` 成功，Vite 5.4.21 转换 1833 个模块；旧电脑的构建拦截本次未复现。未重测开发服务器和浏览器，不将历史页面回归算作本次验证 |
 | 已知问题 | 见 §7 |
 
 ### 1.2 里程碑（详细计划见 `PROJECT_PLAN.md`）
@@ -239,18 +242,18 @@ npm run preview             # 本地预览构建产物
 ├── CLAUDE.md                  ← 只是指向 AGENTS.md 的指针，不写规则
 ├── README.md                  ← 给人看：项目是什么 + 怎么跑起来
 ├── PROJECT_PLAN.md            ← 计划与里程碑（只写"计划"，不写"已发生的事实"）
-├── .env.example               ← ⚠️ 待挪到 frontend/.env.example（见 §7）
+├── frontend/                 ← Vue 前端；环境变量模板在 frontend/.env.example
 ├── .workbuddy/
 │   ├── coop/                  ← 轮值锁与交接：state.json / BATON.md / 接手提示词.md
 │   └── memory/                ← AI 私有工作日志（.gitignore 忽略，不入库）
-├── docs/                      ← 技术文档（Claude 维护，Codex 不改）
+├── docs/                      ← 技术文档（当前由 Codex 维护）
 │   ├── DATABASE_DESIGN.md
 │   ├── API_DESIGN.md
 │   ├── DESIGN_SYSTEM.md       ← 唯一视觉规范
 │   ├── CONVENTIONS.md         ← 代码规范（命名 / 目录 / Vue 写法 / Tailwind）
 │   ├── DEVELOPMENT.md         ← Web 版开发指南
 │   └── archive/               ← 一次性材料与作废文档，只读
-└── supabase/                  ← SQL（Claude 维护，Codex 不改）
+└── supabase/                  ← SQL（当前由 Codex 维护；实际执行需用户确认）
     ├── schema.sql             ← 表结构
     ├── seed.sql               ← 初始数据（35 条预设分类）
     └── rls_policies.sql       ← 行级安全策略
@@ -405,44 +408,20 @@ npm run preview             # 本地预览构建产物
 
 ---
 
-## 10. 协作规则（多 AI 共享项目）
+## 10. 协作规则入口
 
-### 10.1 接手前必读
+协作规则统一见第 0 节，不在本节重复维护。
 
-1. **先读 `AGENTS.md`（本文件）**，再读 `.workbuddy/coop/state.json`。
-2. **检查轮值锁**：`state.json` 里的 `currentOwner` 是不是你？不是就别动代码。
-3. **读 BATON.md**：上一任留了什么话、有没有未完成的活、有没有坑。
-
-### 10.2 工作中
-
-- **只改你负责的部分**：Codex 改代码（`frontend/src/`、`package.json`），Claude 改文档（`docs/`、`supabase/`、`AGENTS.md`、`PROJECT_PLAN.md`）。
-- **改完必须 git commit**，提交信息遵循 §8。
-- **协同文件单独提交**：`.workbuddy/coop/` 下的 `state.json` / `BATON.md` 用 `chore(coop): 更新协作状态` 单独一个 commit，不与功能代码混在一起。
-
-### 10.3 交接时
-
-1. **更新 `state.json`**：
-   ```json
-   {
-     "currentOwner": "下一任的名字",
-     "lastHandoff": "2026-09-29T14:30:00+08:00",
-     "phase": "sprint-1.3",
-     "status": "in-progress"
-   }
-   ```
-2. **写 `BATON.md`**：告诉下一任"我做了什么、遇到什么问题、下一步该做什么"。
-3. **`chore(coop): 交接给 XXX` 提交**，然后 `git push`。
-
-### 10.4 冲突处理
-
-- 如果 `state.json` 显示别人在工作，但你收到用户指令 → 先问用户"要不要等 XXX 完成？"
-- 紧急情况（上一任卡住超过 1 天）→ 用户可以强制切换 owner，但要在 `BATON.md` 里说明原因。
+- 当前轮值字段是 `holder`，不使用旧版 `currentOwner`。
+- 当前分工按 §0.4：Codex 全线开发，除非用户明确要求，否则不交给 Claude。
+- 本地快照和 Push 按 §0.5：完成后保存本地快照；只有用户明确说「Push / 推送」才发布到 GitHub。
+- 交接按 §0.3 和 §0.6：记录已核查事实、未完成事项和下一步，不补写未经验证的结果。
 
 ---
 
 ## 11. 注意事项（重要，必读）
 
-1. **本项目是对话式 AI 记账应用**，不是传统的手动表单记账 —— 主页 = AI 对话界面。
+1. **本项目是对话式 AI 记账应用**：主页是手账日历，中央加号进入 `/chat` 的 AI 对话。
 2. **JavaScript 不是 TypeScript**：不要写类型注解、接口定义，不要用 `.ts` / `.tsx` 后缀。
 3. **Tailwind 优先**：尽量用 Tailwind 原子类，少写 `<style>`；手绘边框用 `border-hand`（3px 粗黑线）。
 4. **emoji 优先**：图标优先用 emoji（🍔 🚗 🛍️），功能按钮才用 lucide-vue-next。
@@ -455,6 +434,6 @@ npm run preview             # 本地预览构建产物
 
 ---
 
-**最后更新**：2026-09-30
+**最后更新**：2026-10-01
 **当前版本**：v0.5（手账日历 + AI 对话 + 账单明细）
-**下一步**：Sprint 1.6 —— 统计页面（负责人：Codex）
+**下一步**：确认首页第一批 6 组素材制作，依据 `docs/HOME_ASSET_FINAL_PRODUCTION.md`；首页视觉工作结束后继续 Sprint 1.6（负责人：Codex）

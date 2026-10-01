@@ -620,5 +620,5 @@ function getFakeAIResponse(userInput) {
 - [ ] Lighthouse 性能、可访问性和最佳实践检查
 
 ---
-**最后更新**: 2026-09-30
-**当前阶段**: 阶段 1 - Sprint 1.5 账单明细页已完成，下一步 Sprint 1.6 统计页面
+**最后更新**: 2026-10-01
+**当前阶段**: 阶段 1；当前优先完成首页视觉素材路线，确认后按 `docs/HOME_ASSET_FINAL_PRODUCTION.md` 制作第一批 6 组素材，暂不直接改页面；该路线结束后继续 Sprint 1.6 统计页面
