@@ -111,4 +111,4 @@ VITE_SUPABASE_ANON_KEY=你的匿名密钥
 3. Sprint 1.6：统计页面
 4. Sprint 1.7：个人中心
 5. Sprint 1.8：底部导航
-6. 阶段 2：接入 Supabase 和真实 Claude API
+6. 阶段 2：接入 Supabase 和真实AI
