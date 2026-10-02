@@ -6,9 +6,8 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Environment variables
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
 
 # Editor directories and files
 .idea
@@ -20,10 +19,10 @@ pnpm-debug.log*
 *.sw?
 .DS_Store
 
-# uni-app
-unpackage/
+# Build output
 dist/
-.hbuilderx/
+target/
+*.class
 
 # Build files
 *.map
@@ -37,11 +36,8 @@ logs
 *.temp
 .cache/
 
-# Supabase local
-.supabase/
-
 # OS files
 Thumbs.db
 
-# AI 私有工作日志（协同机制的一部分，只在本机留存，不入库）
+# 本机内部材料
 .workbuddy/memory/

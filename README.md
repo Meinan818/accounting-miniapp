@@ -27,7 +27,7 @@ npm run dev
 npm run build
 ```
 
-当前演示不需要创建Supabase项目、执行旧SQL或填写AI密钥；现有Supabase客户端/环境模板属于遗留占位，后续前端服务整理时移除。真实密钥不能放在前端环境变量里。
+当前演示不需要创建外部项目、执行旧SQL或填写AI密钥；旧Supabase占位代码和依赖已移除。真实密钥不能放在前端环境变量里。
 
 ## 目标技术路线
 
@@ -57,7 +57,7 @@ npm run build
 frontend/                   现有前端
 docs/                       当前设计与开发资料
 docs/archive/supabase-route/ 作废路线资料和未执行SQL
-.workbuddy/coop/             实际进度与交接
+.workbuddy/handoff/          实际进度与交接
 .workbuddy/memory/           E盘内部材料，不入Git
 ```
 

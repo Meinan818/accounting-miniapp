@@ -1,3 +1,5 @@
+> 历史记录：此文件保留旧路线/协作经过，不作为当前任务书。当前任务与新对话接手入口见.workbuddy/handoff/，项目规则见AGENTS.md。
+
 # 交接棒 BATON
 
 **上一任**：Claude  

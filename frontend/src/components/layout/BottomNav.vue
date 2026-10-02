@@ -1,11 +1,11 @@
 <script setup>
 // 1. 导入
-import navBillNotebook from '@/assets/design/nav-bill-notebook.png'
-import navDetailPig from '@/assets/design/nav-detail-pig.png'
-import navProfileDog from '@/assets/design/nav-profile-dog.png'
-import navSavingJar from '@/assets/design/nav-saving-jar.png'
-import pawPrints from '@/assets/design/paw-prints.png'
-import plusGlow from '@/assets/design/plus-glow.png'
+import navBillNotebook from '@/assets/design/navigation/nav-bill-notebook.png'
+import navDetailPig from '@/assets/design/navigation/nav-detail-pig.png'
+import navProfileDog from '@/assets/design/navigation/nav-profile-dog.png'
+import navSavingJar from '@/assets/design/navigation/nav-saving-jar.png'
+import pawPrints from '@/assets/design/navigation/paw-prints.png'
+import plusGlow from '@/assets/design/navigation/plus-glow.png'
 import bottomWave from '@/assets/design/navigation/bottom-wave.png'
 import plusButton from '@/assets/design/navigation/plus-button.png'
 

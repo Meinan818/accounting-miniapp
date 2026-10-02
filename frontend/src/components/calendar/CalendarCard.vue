@@ -5,9 +5,9 @@ import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import calendarClip from '@/assets/design/calendar/calendar-clip.png'
 import calendarFrame from '@/assets/design/calendar/calendar-frame.png'
-import expenseCoin from '@/assets/design/expense-coin.png'
-import incomeCash from '@/assets/design/income-cash.png'
-import monthPill from '@/assets/design/month-pill.png'
+import expenseCoin from '@/assets/design/calendar/expense-coin.png'
+import incomeCash from '@/assets/design/calendar/income-cash.png'
+import monthPill from '@/assets/design/calendar/month-pill.png'
 
 // 2. Props
 const props = defineProps({

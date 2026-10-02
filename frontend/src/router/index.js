@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { isSupabaseConfigured } from '@/api/supabase'
-import { useUserStore } from '@/stores/user'
 
 const routes = [
   {
@@ -56,20 +54,6 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to) => {
-  const userStore = useUserStore()
-  const requiresAuth = to.meta.requiresAuth
-
-  // Supabase 尚未配置时允许浏览占位页面，配置完成后自动启用登录守卫。
-  if (requiresAuth && isSupabaseConfigured && !userStore.isLoggedIn) {
-    return { name: 'Login' }
-  }
-
-  if (to.name === 'Login' && isSupabaseConfigured && userStore.isLoggedIn) {
-    return { name: 'Home' }
-  }
-
-  return true
-})
+// 当前为公开演示模式；requiresAuth预留给后续Java认证，未接入前不伪造登录。
 
 export default router
