@@ -1,114 +1,72 @@
-# 智账 (ZhiZhang)
+# 智账（ZhiZhang）
 
-一个**手账风格 + AI 对话**的个人记账 Web 应用。用户直接用自然语言告诉 AI 花了什么钱，AI 整理成确认卡片，确认后完成记账。
+手账风格的个人记账Web应用：用日历查看账单，通过对话或手动输入整理账单，确认后查看明细、统计与预算。
 
-## 当前状态
+项目目标为 **Vue前端 + Java后端 + MySQL** 的完整全栈应用。2026-10-02调整路线，长期打磨、不设固定期限；当前先继续完善前端，Java后端尚未建立。
 
-- ✅ Vite 5 + Vue 3 + Tailwind CSS 基础项目
-- ✅ 首页手账日历、月度收支和日期账单列表
-- ✅ 中央 + 打开 AI 对话和确认卡片，可修改金额、类型、分类、日期、时间和备注
-- ✅ 账单明细页：按日期分组、月度收支总览和 10 条假账单
-- ✅ 支出、收入、分类和月度统计的假 AI 识别
-- ✅ 对话和假账单使用 Pinia + localStorage 持久化
-- ✅ 小黄鸡、猫熊、植物、导航动物等手账素材包已接入
-- ✅ 手账风格视觉和波浪底栏
-- ✅ Sprint 1.3 复核问题 P1 五项已修复
-- ⏳ 尚未接入 Supabase 和真实 Claude API
-- ⏳ 尚未部署到 Vercel
+## 当前可用范围
 
-当前仍处于**阶段 1：前端 + 假数据**。真实后端和真实 AI 将在后续阶段接入。
+- Vue3/Vite/Tailwind前端工程，首页日历、月份切换、当天账单、按日期分组的明细。
+- 模拟AI识别收支/分类与查询，确认卡片支持修改，账单与对话保存在浏览器本地。
+- 第一批首页素材已接入；用户反馈底部角色贴合、导航背景与日期区视觉待修正，整页尚未验收通过。
+- 统计、个人中心、手动记账等内容按新计划逐步完善；真实Java认证、数据库与AI尚未接入。
+- 当前是演示数据，不是线上完整服务，项目尚未部署。
 
-## 已实现功能
+## 运行当前前端
 
-- 输入“今天吃饭花了35块”，AI 识别并生成餐饮支出确认卡片。
-- 输入“工资收入8000”，AI 识别工资收入。
-- 输入“本月花了多少”“餐饮花了多少”，返回假账单统计。
-- 支持下午、傍晚、晚上的时间识别。
-- 支持修改账单后再确认。
-- 确认后保存到本地假数据，并更新顶部月度统计。
-- 对话记录和新消息自动滚动。
-- 无法识别时给出示例引导。
-
-## 技术栈
-
-| 层 | 技术 |
-|---|---|
-| 前端 | Vue 3 + Composition API |
-| 构建 | Vite 5 |
-| 样式 | Tailwind CSS 3 |
-| 路由 | Vue Router 4 |
-| 状态 | Pinia |
-| 日期 | dayjs |
-| 图标 | lucide-vue-next + emoji |
-| 后端（后续） | Supabase |
-| AI（后续） | Claude API |
-| 部署（后续） | Vercel |
-
-## 本地运行
+现有依赖已存在时：
 
 ```powershell
-cd E:\项目\未定项目\frontend
-npm ci
+cd E:\XiangMu\未定项目\frontend
 npm run dev
 ```
 
-浏览器打开：
-
-`http://localhost:5173`
-
-生产构建：
+启动后自行打开终端给出的本地链接，通常是 http://localhost:5173 。构建检查：
 
 ```powershell
 npm run build
 ```
 
-## 环境变量
+当前演示不需要创建Supabase项目、执行旧SQL或填写AI密钥；现有Supabase客户端/环境模板属于遗留占位，后续前端服务整理时移除。真实密钥不能放在前端环境变量里。
 
-模板位于 `frontend/.env.example`。
+## 目标技术路线
 
-阶段 1 不要求配置 `.env`。阶段 2 接入 Supabase 时，再创建 `frontend/.env`：
+| 部分 | 方案 |
+|---|---|
+| 现有前端 | Vue3、JavaScript、Vite、Tailwind、Vue Router、Pinia、dayjs |
+| 目标后端 | Java21、Spring Boot；一个应用按业务模块组织 |
+| 数据库 | MySQL8，Java侧校验用户归属和金额 |
+| 认证与访问 | Spring Security、MyBatis/MyBatis-Plus，后端阶段确定并引入 |
+| AI | Java后端调用，提供方/模型/费用后续确认，Spring AI作为候选 |
+| 部署 | 本地优先，前端静态服务与Java运行环境/MySQL分别规划，费用和上线另行批准 |
 
-```env
-VITE_SUPABASE_URL=你的项目地址
-VITE_SUPABASE_ANON_KEY=你的匿名密钥
-```
+后端选型属于计划，不表示目录、接口、数据库和依赖已经建立。
 
-真实 `.env` 不得提交到 Git。
+## 开发顺序
 
-## 目录结构
+1. 前端打磨：先修首页视觉，再完成账单输入/编辑/删除、统计、个人中心及服务边界。
+2. Java基础：数据库和接口设计、工程、登录/权限、账单与统计。
+3. 前后端贯通：逐条替换演示数据来源，再接真实AI。
+4. 持续优化：分类预算、导出票据、测试/性能、部署与备份恢复。
+
+每一段以验收推进，不按旧三周时间表赶工。页面接入后提供可打开的验收链接，未接入素材默认只报进度。
+
+## 目录与文档
 
 ```text
-未定项目/
-├── frontend/                 # Vue 3 + Vite 前端
-│   └── src/
-│       ├── components/       # 对话、确认卡片、吉祥物等组件
-│       ├── stores/           # 对话和假账单状态
-│       ├── utils/            # 假 AI、格式化和日期处理
-│       ├── views/            # 页面
-│       ├── router/           # 路由
-│       └── api/              # Supabase 客户端骨架
-├── supabase/                 # 数据库结构、种子数据和 RLS
-├── docs/                     # 设计、开发和接口文档
-├── PROJECT_PLAN.md           # 开发计划
-└── AGENTS.md                 # AI 开发与交接规则
+frontend/                   现有前端
+docs/                       当前设计与开发资料
+docs/archive/supabase-route/ 作废路线资料和未执行SQL
+.workbuddy/coop/             实际进度与交接
+.workbuddy/memory/           E盘内部材料，不入Git
 ```
 
-## 主要文档
+backend/在后端阶段建立，本轮没有创建。
 
-- [PROJECT_PLAN.md](./PROJECT_PLAN.md)：阶段和 Sprint 计划
-- [docs/DESIGN_SYSTEM.md](./docs/DESIGN_SYSTEM.md)：手账风格设计规范
-- [docs/CONVENTIONS.md](./docs/CONVENTIONS.md)：代码规范
-- [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)：开发与调试说明
-- [docs/API_DESIGN.md](./docs/API_DESIGN.md)：接口设计
-- [docs/DATABASE_DESIGN.md](./docs/DATABASE_DESIGN.md)：数据库设计
+- [PROJECT_PLAN.md](./PROJECT_PLAN.md)：Java全栈阶段与验收目标。
+- [AGENTS.md](./AGENTS.md)：唯一项目规则、当前事实与下一步。
+- [docs/DESIGN_SYSTEM.md](./docs/DESIGN_SYSTEM.md)：手账视觉方向。
+- [docs/CONVENTIONS.md](./docs/CONVENTIONS.md)：当前前端代码写法。
+- [docs/DEVELOPMENT.md](./docs/DEVELOPMENT.md)：运行与开发说明。
 
-## 下一阶段
-
-按 `PROJECT_PLAN.md` 继续：
-
-1. Sprint 1.4：日历页面
-2. Sprint 1.5：账单明细页
-3. Sprint 1.6：统计页面
-4. Sprint 1.7：个人中心
-5. Sprint 1.8：底部导航
-6. 阶段 2：接入 Supabase 和真实AI
+旧Supabase接口、数据库设计与SQL只作历史参考，不能用于MySQL，也不能沿用前端AI密钥示例。

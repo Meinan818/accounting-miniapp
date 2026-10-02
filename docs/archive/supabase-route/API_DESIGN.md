@@ -1,3 +1,5 @@
+> 历史归档：2026-10-02 用户改为 Vue + Java + MySQL 路线，本文件不再作为实施依据。禁止按本文配置 Supabase 或把 AI 密钥放进前端；当前计划见根目录 PROJECT_PLAN.md，规则与事实见 AGENTS.md。
+
 # API 接口设计文档
 
 ## 概述

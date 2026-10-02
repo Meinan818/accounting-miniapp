@@ -1,139 +1,67 @@
-# 智账 — 开发指南（docs/DEVELOPMENT.md）
+# 智账 — 当前开发指南
 
-> 适用路线：**Web 应用**（Vue 3 + Vite + Tailwind CSS + Supabase），部署到 Vercel。
-> 旧版（微信小程序 / uni-app / HBuilderX）指南已作废，见 `docs/archive/DEVELOPMENT-miniprogram.md`。
-> AI 协作规则见根目录 `AGENTS.md`；代码规范见 `docs/CONVENTIONS.md`。
+> 当前工作：Vue3前端打磨。目标为Java + MySQL后端，后端尚未建立。
+> 项目规则/事实见AGENTS.md，阶段计划见PROJECT_PLAN.md。旧Supabase指南在docs/archive/supabase-route/，不能作为当前操作入口。
 
-## 一、环境搭建
+## 一、运行前端
 
-### 1. 安装 Node.js
-
-需要 **Node.js 18 或更高**（Vite 5 的要求）：
-
-```bash
-node -v    # 应 ≥ v18
-npm -v
+```powershell
+cd E:\XiangMu\未定项目\frontend
+npm run dev
 ```
 
-### 2. 编辑器
+自行打开实际输出的本地地址，不由AI主动切换浏览器。PowerShell参数转发异常时可以直接调用已安装Vite：
 
-推荐 VS Code，装两个插件：**Vue - Official**（Vue 语言支持）、**Tailwind CSS IntelliSense**。
-
-## 二、项目初始化
-
-> ⚠️ 目前 `frontend/` 还是作废的 uni-app 代码，需要先按 `docs/archive/CODEX_TASKS.md` 重建为 Vite 项目（Sprint 1.1 的任务）。下面的命令在重建之后才成立。
-
-```bash
-cd frontend
-npm install
+```powershell
+node .\node_modules\vite\bin\vite.js --host 127.0.0.1 --port 5173 --strictPort
 ```
 
-网络慢时先切国内镜像：
+构建：
 
-```bash
-npm config set registry https://registry.npmmirror.com
+```powershell
+npm run build
 ```
 
-## 三、配置 Supabase
+当前没有lint/typecheck/固定单元测试脚本，不假装运行。新增检查按实际任务说明；不未经需要安装第三方依赖或重装整个工程。
 
-### 1. 建项目并拿凭证
+## 二、演示数据与配置
 
-1. 访问 https://app.supabase.com ，用 GitHub 账号登录。
-2. New Project：名称 `accounting-app`；数据库密码设强密码并**记下来**；Region 选 `Northeast Asia (Tokyo)` 或最近的。
-3. 等项目创建完成（约 2 分钟）。
-4. Settings → API，复制 **Project URL** 和 **anon public key**。
+- 当前账单和对话保存在浏览器本地，换浏览器或地址可能看到不同数据；不要把演示数据称为真实账户账单。
+- 当前不需要外部密钥；不要去Supabase建库或执行归档SQL。
+- frontend/src/api/supabase.js、登录状态骨架、依赖和环境模板属于历史占位，计划在A5统一整理服务边界时移除，本轮保留运行代码。
+- 后续页面通过统一数据服务访问Java接口，不在组件里直接写数据库操作。
+- 数据库密码和AI密钥只留在后端环境，不进VITE_变量、源码、日志或提交；前端可以包含公开服务地址。
+- 金额、日期、统计、确认状态统一口径，新增/修改/删除后所有页面的数据能对上。
 
-### 2. 配置环境变量
+## 三、验证页面
 
-在 **`frontend/`** 目录下创建 `.env`（不是项目根目录）：
+先运行构建与相关已有检查，再在浏览器实际操作受影响路径，检查控制台和请求状态；修改视觉时同时检查手机与电脑尺寸。
 
-```
-VITE_SUPABASE_URL=你的 Project URL
-VITE_SUPABASE_ANON_KEY=你的 anon key
-```
+接入后的页面给用户1–3分钟验收路径：“打开链接 → 点什么 → 预期结果”。技术检查不能替代用户观感确认；用户反馈问题继续修，未通过的整页不标为完成。
 
-- 变量名必须以 `VITE_` 开头，否则前端读不到；**改完必须重启 dev server**。
-- `.env` 已在 `.gitignore` 中，**永不入库**。
-- 只放 anon key；`service_role` key **严禁**出现在前端代码或任何文档里。
+浏览器脚本和证据可按需要使用项目.workbuddy/memory/内现有材料；所有新截图、日志、临时文件、备份和缓存优先用E盘项目路径。需要安装工具或更改系统设置先明确必要性，不写入工具默认C盘目录。
 
-### 3. 初始化数据库
+## 四、后端开工前再完成
 
-在 Supabase Dashboard → 左侧 SQL Editor → New Query，**按顺序**执行项目 `supabase/` 下的三个文件：
+1. 核实JDK、Maven及Spring Boot/数据访问/AI组件兼容版本；仅安装了MySQL客户端不代表服务已可连接。
+2. 写正式MySQL模型与Java接口约定，建立backend/，再给经过验证的后端启动命令。
+3. 在本地验证注册登录、数据归属、账单和统计，再逐条与前端联通。
 
-| 顺序 | 文件 | 作用 |
-|---|---|---|
-| 1 | `supabase/schema.sql` | 建 5 张表（users / categories / records / budgets / accounts） |
-| 2 | `supabase/seed.sql` | 插入初始数据（35 条预设分类） |
-| 3 | `supabase/rls_policies.sql` | 配置行级安全策略（用户只能访问自己的数据） |
+旧SQL使用PostgreSQL和Supabase Auth，不能直接搬到MySQL。新的数据库模型、Java分层和认证方案在后端阶段按批准范围设计。
 
-**验证**：左侧 Table Editor 应能看到 5 张表，`categories` 有 35 条数据。
+## 五、常见排查
 
-> 这一步是**人工操作**，AI 做不了，也不要假装完成。
-
-### 4. 配置 Storage（可选，里程碑 3 做票据上传时再配）
-
-建一个 Bucket（建议名 `receipts`）存票据照片，并配 RLS 策略允许用户上传/删除自己的文件、所有人可读。策略写法参考 `supabase/rls_policies.sql` 的风格。
-
-## 四、启动项目
-
-```bash
-cd frontend
-
-npm run dev        # 开发服务器，默认 http://localhost:5173
-npm run build      # 生产构建，产物在 frontend/dist
-npm run preview    # 本地预览构建产物
-```
-
-## 五、开发流程
-
-1. 读 `docs/DESIGN_SYSTEM.md` 了解视觉规范，读 `docs/CONVENTIONS.md` 了解写法。
-2. 按 `docs/CONVENTIONS.md` 的目录结构新建页面 / 组件。
-3. 调数据用 `src/api/` 下封装好的方法，**不要在组件里直接写 Supabase 查询**。
-4. 本地在浏览器里**亲手点一遍**（验收要求见 `AGENTS.md` 第 8 节）。
-5. 提交（一个功能一个 commit，格式见 `docs/CONVENTIONS.md`）。
-
-## 六、调试技巧
-
-| 要查什么 | 去哪看 |
+| 问题 | 先检查 |
 |---|---|
-| 组件状态 / 响应式数据 | Vue DevTools（浏览器插件） |
-| 网络请求与状态码 | DevTools → Network，筛 `supabase.co` |
-| 运行时错误 | DevTools → Console |
-| 数据到底写没写进去 | Supabase Table Editor 直接看表 |
-| RLS 是否拦住了查询 | SQL Editor 里用 `select auth.uid()` 对照策略条件 |
-| 环境变量读没读到 | Console 打印 `import.meta.env.VITE_SUPABASE_URL` |
+| 本地链接打不开 | 服务是否运行、实际地址/端口，重新请求核实，不沿用旧HTTP200记录 |
+| 图片或模块404 | 导入路径、文件存在与Vite编译输出，保护源素材 |
+| 页面可点但观感不对 | 当前页面截图与原型对照，不只检查编译 |
+| 刷新后数据变化 | 当前浏览器地址、本地存储内容与演示标记，先不自动清数据 |
+| 样式未更新 | 文件位置、Tailwind扫描范围和控制台，必要时重启服务 |
+| 未来后端失败 | Java日志、接口响应、登录状态、数据库连接；不输出密钥 |
 
-热更新不工作时：确认文件在 `frontend/src/` 下，然后重启 dev server。
+## 六、后续部署
 
-## 七、常见问题
+前端可静态托管，Java应用与MySQL需要相应运行环境；方案按预算确认。前端发布不代表Java服务已上线。
 
-**Q1：`npm install` 失败**
-切镜像后重试：`npm config set registry https://registry.npmmirror.com`；必要时删掉 `node_modules` 和 `package-lock.json` 再装。
-
-**Q2：报 `Cannot find module`**
-依赖没装全，或路径别名没配。检查 `vite.config.js` 里的 `@` → `./src` 别名和 `node_modules` 是否存在。
-
-**Q3：Supabase 请求失败 / 网络错误**
-检查 `frontend/.env` 是否存在、变量名是否以 `VITE_` 开头、是否重启过 dev server。
-
-**Q4：查询成功但返回空数组**
-多半是 RLS 策略问题。检查 `supabase/rls_policies.sql` 是否执行成功、策略里的 `auth.uid()` 条件是否匹配当前登录用户。
-
-**Q5：Tailwind 样式不生效**
-检查 `tailwind.config.js` 的 `content` 是否覆盖所有 `.vue` 文件，以及 `src/style.css` 里是否有 `@tailwind` 三行指令。
-
-**Q6：环境变量改了但没变化**
-Vite 只在启动时读取 `.env`，**必须重启** dev server。
-
-**Q7：注册后登录提示邮箱未验证**
-Supabase 默认开启邮箱验证。演示阶段可在 Dashboard → Authentication → Providers → Email 里关掉 "Confirm email"。
-
-## 八、打包与部署（里程碑 3）
-
-1. 把仓库推到 GitHub（`main` 分支）。
-2. Vercel 里 New Project → 导入该仓库。
-3. Root Directory 设为 `frontend`；Build Command `npm run build`；Output Directory `dist`。
-4. 在 Vercel 的环境变量里配置 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`。
-5. 之后每次 push 到 `main`，Vercel 会自动重新构建并上线（约 1–2 分钟）。
-
-> push 到 `main` 等于线上发布，**必须先由用户明确说「Push」才推**。规则见 `AGENTS.md` 第 0.5 节。
+本地保存、Push和部署分开，Push/部署必须用户明确授权；发布后验证真实页面和接口。当前未部署，不提供虚构线上地址。

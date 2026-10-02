@@ -1,7 +1,7 @@
 # 智账 — 代码规范（docs/CONVENTIONS.md）
 
 > 本文件只讲**怎么写代码**。AI 协作规则、提交与发布节奏见根目录 `AGENTS.md`。
-> 视觉规范见 `docs/DESIGN_SYSTEM.md`。原 `CLAUDE.md` 里的这部分内容已搬到这里。
+> 视觉规范见 `docs/DESIGN_SYSTEM.md`。当前先开发Vue前端，Java/MySQL后端规范在后端阶段补充；本轮不新建Java工程。原 `CLAUDE.md` 里的这部分内容已搬到这里。
 
 ## 一、命名约定
 
@@ -26,7 +26,7 @@ src/
 │   ├── record/         # 账单相关组件
 │   ├── chart/          # 图表组件
 │   └── mascot/         # 吉祥物组件
-├── api/                # API 封装：supabase.js / auth.js / record.js / category.js
+├── api/                # 数据服务入口：当前有历史占位，后续演示实现/Java HTTP实现统一在此封装
 ├── stores/             # Pinia：user.js / record.js / category.js
 ├── router/index.js
 ├── utils/              # date.js / format.js / validator.js
@@ -140,6 +140,6 @@ feat(record): 实现账单列表页面
 
 ## 六、安全底线
 
-- 前端**只允许**放 Supabase anon / publishable key；**service_role / secret key 严禁**出现在前端代码、文档、提交信息或聊天里。
+- 前端只放公开服务地址；数据库密码、AI密钥与其他秘密仅保存在Java后端运行环境，不进前端VITE_变量、源码、日志或提交。现有Supabase占位模块后续移除，不作为新接口示例。
 - `.env` 不进 Git；只提交只含变量名的 `.env.example`。
 - 提交前用 `git status --short` 确认待提交列表里没有任何 `.env` 文件。
