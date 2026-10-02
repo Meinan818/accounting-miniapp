@@ -1,9 +1,8 @@
 /*
- * 智账首页视觉基准 tokens
+ * 喵子智账首页视觉基准，与已确认的聊天页配色/字形一致。
  *
  * 首页日历与首页专用导航使用；不改其他页面的共用样式。
- * 颜色取自已确认的产品原稿截图，属于估算值；
- * 像素值来自“原稿比例 + 390×844 视口”的换算，后续实施时再逐项校准。
+ * 原稿参考比例保留作历史对照，不再要求新版套用旧波浪/外框素材。
  */
 :root {
   /* 参考画布 */
@@ -18,21 +17,23 @@
   --zz-home-bg: #fdfaf3;
   --zz-home-bg-alt: #f7f0e7;
   --zz-home-ink: #3c261a;
-  --zz-home-ink-soft: #6b4a36;
+  --zz-home-ink-soft: #79634f;
+  --zz-home-line: #d9cbb6;
+  --zz-home-font: "Microsoft YaHei UI Light", "Microsoft YaHei UI", "微软雅黑", sans-serif;
   --zz-home-title-brush: #fceed4;
   --zz-home-yellow: #fed76e;
   --zz-home-yellow-soft: #f7d574;
-  --zz-home-pink: #f58088;
-  --zz-home-pink-soft: #f6a4a9;
-  --zz-home-green: #318842;
+  --zz-home-pink: #9d6865;
+  --zz-home-pink-soft: #f8dfda;
+  --zz-home-green: #58705a;
   --zz-home-green-soft: #eff3dd;
   --zz-home-income-panel: #eff3dd;
-  --zz-home-expense-panel: #fde8e0;
-  --zz-home-paper: #fffaf0;
+  --zz-home-expense-panel: #f8dfda;
+  --zz-home-paper: #fffdf8;
   --zz-home-paper-grain: rgba(107, 74, 54, 0.045);
   --zz-home-day-bg: #f5efe4;
   --zz-home-day-outside-bg: #f9f4e9;
-  --zz-home-day-muted: #c4b7a6;
+  --zz-home-day-muted: #867666;
 
   /* 页面与顶部 */
   --zz-home-page-x: 16px;
@@ -51,8 +52,8 @@
   --zz-home-clip-height: 42px;
 
   /* 日期网格 */
-  --zz-home-grid-gap-x: 5px;
-  --zz-home-grid-gap-y: 6px;
+  --zz-home-grid-gap-x: 2px;
+  --zz-home-grid-gap-y: 4px;
   --zz-home-cell-width: 43px;
   --zz-home-cell-height: 27px;
   --zz-home-cell-ratio: 1.55;
@@ -66,7 +67,7 @@
   /* 底部插画与导航 */
   --zz-home-scene-top: auto;
   --zz-home-scene-height: 150px;
-  --zz-home-bottom-nav-height: 132px;
+  --zz-home-bottom-nav-height: 86px;
   --zz-home-nav-icon: 44px;
   --zz-home-plus-diameter: 78px;
   --zz-home-plus-overlap: 42px;

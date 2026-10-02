@@ -2,13 +2,8 @@
 // 1. 导入
 import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
-import { ChevronDown } from 'lucide-vue-next'
-import bearPeek from '@/assets/design/decoration/bear-peek.png'
-import catPeek from '@/assets/design/decoration/cat-peek.png'
-import chickAvatar from '@/assets/design/mascot/chick-avatar.png'
-import leaves from '@/assets/design/decoration/leaves.png'
-import plantSprout from '@/assets/design/decoration/plant-sprout.png'
-import titleBrush from '@/assets/design/decoration/title-brush.png'
+import { ReceiptText } from 'lucide-vue-next'
+import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
 import CalendarCard from '@/components/calendar/CalendarCard.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
@@ -62,29 +57,15 @@ function getRecordSign(record) {
 </script>
 
 <template>
-  <div class="journal-home relative min-h-[100dvh] overflow-x-hidden px-4 pt-4">
-    <!-- 背景装饰：简化，去掉多余爪印 -->
-    <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div class="absolute -left-20 -top-12 h-44 w-72 rounded-[50%] bg-warning/15 blur-sm" />
-      <div class="absolute -right-16 top-32 h-36 w-56 rounded-[50%] bg-accent-100/60 blur-sm" />
-    </div>
-
-    <main class="relative z-10 mx-auto max-w-[var(--zz-home-content-width)]">
-      <header class="mb-6 flex items-center justify-between">
-        <div class="relative">
-          <img :src="titleBrush" alt="" class="absolute -left-2 -top-2 h-[4.2rem] w-[14rem] object-fill opacity-95" />
-          <button
-            type="button"
-            class="relative flex items-center gap-1 px-2 py-2 text-3xl font-black text-[var(--zz-home-ink)]"
-            aria-label="切换账簿"
-          >
-            日常开销
-            <ChevronDown :size="25" :stroke-width="2.8" />
-          </button>
+  <div class="journal-home">
+    <main class="home-content">
+      <header class="home-header">
+        <img :src="miaoAvatar" alt="手绘猫猫喵子" class="home-header-cat" />
+        <div>
+          <h1 class="home-title">喵子智账</h1>
+          <p class="home-subtitle">日常开销 · 本地演示</p>
         </div>
-        <div class="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[var(--zz-home-ink)] bg-[var(--zz-home-paper)] shadow-sm">
-          <img :src="chickAvatar" alt="小黄鸡" class="h-16 w-16 object-contain" />
-        </div>
+        <span class="home-header-note">每一笔，都好好记下</span>
       </header>
 
       <CalendarCard
@@ -97,13 +78,13 @@ function getRecordSign(record) {
         @update:selected-date="selectedDate = $event"
       />
 
-      <section class="mt-6" aria-label="当天账单">
-        <div class="mb-3 flex items-end justify-between px-1">
+      <section class="home-ledger" aria-label="当天账单">
+        <div class="home-ledger-heading">
           <div>
-            <p class="text-xs font-medium text-gray-400">当天账单</p>
-            <h2 class="text-xl font-bold text-gray-900">{{ selectedDateLabel }}</h2>
+            <p class="home-subtitle">当天的小账单</p>
+            <h2>{{ selectedDateLabel }}</h2>
           </div>
-          <span class="rounded-full bg-white px-3 py-1 text-xs text-gray-500 shadow-sm">
+          <span class="home-count">
             {{ selectedRecords.length }} 笔
           </span>
         </div>
@@ -112,43 +93,33 @@ function getRecordSign(record) {
           <article
             v-for="record in selectedRecords"
             :key="record.id"
-            class="flex items-center justify-between rounded-2xl border-[2.5px] border-hand bg-white px-4 py-3 shadow-[3px_4px_0_rgba(31,41,55,0.12)]"
+            class="home-record"
           >
-            <div class="flex items-center gap-3">
-              <div class="flex h-11 w-11 items-center justify-center rounded-full bg-cream-dark text-2xl">
-                {{ record.icon || '📝' }}
-              </div>
-              <div>
-                <p class="font-semibold text-gray-900">{{ record.category }}</p>
-                <p class="text-xs text-gray-500">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>
+            <div class="home-record-main">
+              <span class="home-record-stamp" aria-hidden="true"><ReceiptText :size="20" :stroke-width="1.5" /></span>
+              <div class="home-record-text">
+                <p>{{ record.category }}</p>
+                <p class="home-subtitle">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>
               </div>
             </div>
             <p
-              class="font-mono text-lg font-bold"
-              :class="record.type === 'income' ? 'text-income-dark' : 'text-accent-500'"
+              class="home-record-amount"
+              :class="record.type === 'income' ? 'home-amount-income' : 'home-amount-expense'"
             >
               {{ getRecordSign(record) }}{{ formatCurrency(record.amount) }}
             </p>
           </article>
         </div>
 
-        <div v-else class="flex flex-col items-center py-4 text-center">
-          <img :src="chickAvatar" alt="" class="mb-2 h-10 w-10 object-contain" />
-          <p class="font-semibold text-gray-600">当前选择日期没有账单记录</p>
-          <p class="mt-1 text-sm text-gray-400">点下面中间的 +，和小账说一笔</p>
+        <div v-else class="home-empty">
+          <img :src="miaoAvatar" alt="" />
+          <div>
+            <p>这天还没有小账单</p>
+            <p class="home-subtitle">点下面的 +，和喵子聊着记一笔</p>
+          </div>
         </div>
       </section>
     </main>
-
-    <!-- 底部装饰：重新布局，避免拥挤 -->
-    <div class="home-scene pointer-events-none fixed left-0 right-0 z-20" aria-hidden="true">
-      <div class="relative mx-auto h-24 max-w-[var(--zz-home-content-width)]">
-        <img :src="leaves" alt="" class="absolute -left-1 bottom-1 h-14 w-14 object-contain opacity-80" />
-        <img :src="plantSprout" alt="" class="absolute bottom-3 right-[29%] h-12 w-12 object-contain" />
-        <img :src="catPeek" alt="" class="absolute bottom-0 left-[7%] w-[26%] object-contain" />
-        <img :src="bearPeek" alt="" class="absolute bottom-0 right-[7%] w-[26%] object-contain" />
-      </div>
-    </div>
 
     <BottomNav active="bill" home-appearance />
   </div>
@@ -156,16 +127,37 @@ function getRecordSign(record) {
 
 <style scoped>
 .journal-home {
+  min-height: 100dvh;
+  padding: 18px 16px calc(var(--zz-home-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px));
   background-color: var(--zz-home-bg);
-  background-image: radial-gradient(var(--zz-home-paper-grain) 0.5px, transparent 0.9px);
-  background-size: 5px 5px;
-  padding-bottom: calc(var(--zz-home-bottom-nav-height) + 140px + env(safe-area-inset-bottom, 0px));
+  color: var(--zz-home-ink);
+  font-family: var(--zz-home-font);
+  font-weight: 400;
 }
-.home-scene {
-  bottom: calc(var(--zz-home-bottom-nav-height) - 20px + env(safe-area-inset-bottom, 0px));
-  padding-top: 14px;
-  background: linear-gradient(transparent, var(--zz-home-bg) 14px);
-  max-width: var(--zz-home-content-width);
-  margin-inline: auto;
+.home-content { max-width: var(--zz-home-content-width); margin-inline: auto; }
+.home-header { display: flex; align-items: center; gap: 10px; margin-bottom: 26px; }
+.home-header-cat { width: 66px; height: 62px; object-fit: contain; flex-shrink: 0; transform: rotate(-5deg); }
+.home-title { position: relative; isolation: isolate; width: fit-content; font-size: 24px; font-weight: 400; letter-spacing: 1px; white-space: nowrap; }
+.home-title::before { content: ''; position: absolute; inset: 9px -5px 1px; z-index: -1; border-radius: 62% 45% 58% 42%; background: var(--zz-home-title-brush); transform: rotate(-2deg); }
+.home-subtitle { margin-top: 5px; font-size: 12px; color: var(--zz-home-ink-soft); overflow-wrap: anywhere; }
+.home-header-note { margin-left: auto; padding: 5px 8px; border-radius: 9px 6px 8px 5px; background: var(--zz-home-title-brush); color: var(--zz-home-ink-soft); font-size: 11px; transform: rotate(3deg); }
+.home-ledger { margin-top: 25px; }
+.home-ledger-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 13px; }
+.home-ledger-heading h2 { font-size: 18px; font-weight: 400; margin-top: 3px; }
+.home-count { padding: 4px 10px; border: 1px solid var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-paper); font-size: 12px; color: var(--zz-home-ink-soft); white-space: nowrap; }
+.home-record { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1.5px solid var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); padding: 13px; box-shadow: 3px 4px 0 var(--zz-home-title-brush); }
+.home-record-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.home-record-stamp { display: grid; place-items: center; flex: 0 0 36px; height: 38px; border: 1px dashed var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-title-brush); }
+.home-record-text { min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+.home-record-amount { flex-shrink: 0; max-width: 43%; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.home-amount-income { color: var(--zz-home-green); }
+.home-amount-expense { color: var(--zz-home-pink); }
+.home-empty { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 14px; border: 1px dashed var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); font-size: 14px; }
+.home-empty img { width: 54px; height: 48px; object-fit: contain; flex-shrink: 0; }
+@media (max-width: 359px) {
+  .journal-home { padding-inline: 12px; }
+  .home-header { gap: 8px; }
+  .home-header-cat { width: 56px; height: 53px; }
+  .home-header-note { display: none; }
 }
 </style>

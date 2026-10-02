@@ -3,11 +3,6 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
-import calendarClip from '@/assets/design/calendar/calendar-clip.png'
-import calendarFrame from '@/assets/design/calendar/calendar-frame.png'
-import expenseCoin from '@/assets/design/calendar/expense-coin.png'
-import incomeCash from '@/assets/design/calendar/income-cash.png'
-import monthPill from '@/assets/design/calendar/month-pill.png'
 
 // 2. Props
 const props = defineProps({
@@ -59,12 +54,12 @@ function selectDate(cell) {
 }
 
 function getDayClass(cell) {
-  if (cell.isToday) {
-    return 'calendar-day-today'
-  }
-
   if (cell.isSelected) {
     return 'calendar-day-selected'
+  }
+
+  if (cell.isToday) {
+    return 'calendar-day-today'
   }
 
   if (!cell.isCurrentMonth) {
@@ -79,51 +74,42 @@ function getDayNumberClass(cell) {
     return ''
   }
 
-  if (cell.weekday === 0) {
-    return 'text-[var(--zz-home-pink)]'
+  if (cell.weekday === 0 || cell.weekday === 6) {
+    return 'calendar-weekend'
   }
 
-  if (cell.weekday === 6) {
-    return 'text-blue-500'
-  }
-
-  return 'text-[var(--zz-home-ink)]'
+  return ''
 }
 </script>
 
 <template>
   <section class="journal-calendar relative flex flex-col" aria-label="记账日历">
-    <img :src="calendarFrame" alt="" class="pointer-events-none absolute inset-0 h-full w-full" />
-    <img :src="calendarClip" alt="" class="calendar-clip pointer-events-none absolute left-[9%]" />
-    <img :src="calendarClip" alt="" class="calendar-clip pointer-events-none absolute right-[9%] -scale-x-100" />
-
-    <div class="relative mb-3 flex items-center justify-between">
+    <div class="calendar-heading">
       <button
         type="button"
-        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--zz-home-ink)] transition-all hover:bg-cream-dark active:scale-95"
+        class="calendar-month-button active:scale-95"
         aria-label="上个月"
         @click="changeMonth(-1)"
       >
-        <ChevronLeft :size="32" :stroke-width="2.4" />
+        <ChevronLeft :size="22" :stroke-width="1.5" />
       </button>
 
-      <h2 class="relative flex h-11 w-[65%] items-center justify-center text-xl font-black text-[var(--zz-home-ink)] sm:text-2xl">
-        <img :src="monthPill" alt="" class="absolute inset-0 h-full w-full object-fill" />
-        <span class="relative">{{ monthTitle }}</span>
+      <h2 class="calendar-month-title">
+        {{ monthTitle }}
       </h2>
 
       <button
         type="button"
-        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--zz-home-ink)] transition-all hover:bg-cream-dark active:scale-95"
+        class="calendar-month-button active:scale-95"
         aria-label="下个月"
         @click="changeMonth(1)"
       >
-        <ChevronRight :size="32" :stroke-width="2.4" />
+        <ChevronRight :size="22" :stroke-width="1.5" />
       </button>
     </div>
 
-    <div class="relative mb-2 grid grid-cols-7 text-center text-sm font-semibold">
-      <span v-for="(weekday, index) in weekdays" :key="weekday" :class="index === 0 ? 'text-accent-500' : index === 6 ? 'text-blue-500' : 'text-gray-600'">
+    <div class="calendar-weekdays">
+      <span v-for="(weekday, index) in weekdays" :key="weekday" :class="{ 'calendar-weekend': index === 0 || index === 6 }">
         {{ weekday }}
       </span>
     </div>
@@ -133,7 +119,7 @@ function getDayNumberClass(cell) {
         v-for="cell in calendarCells"
         :key="cell.date"
         type="button"
-        class="calendar-day relative flex items-center justify-center text-sm font-bold transition-all active:scale-95"
+        class="calendar-day relative flex items-center justify-center active:scale-95"
         :class="getDayClass(cell)"
         :aria-label="cell.date"
         :aria-pressed="cell.isSelected"
@@ -141,27 +127,26 @@ function getDayNumberClass(cell) {
         @click="selectDate(cell)"
       >
         <span :class="getDayNumberClass(cell)">{{ cell.day }}</span>
+        <span v-if="cell.isToday" class="calendar-today-label" aria-hidden="true">今</span>
         <span
           v-if="cell.hasRecord"
-          class="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-warning-dark"
+          class="calendar-record-dot"
         />
       </button>
     </div>
 
-    <div class="relative mt-auto pt-4">
+    <div class="calendar-totals">
       <div class="grid grid-cols-2 gap-2">
-        <div class="calendar-summary flex min-w-0 items-center gap-1.5 rounded-[22px] bg-[var(--zz-home-income-panel)] px-2 py-3">
-          <img :src="incomeCash" alt="" class="h-9 w-9 shrink-0 object-contain" />
+        <div class="calendar-summary calendar-summary-income">
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月收入</p>
-            <p class="calendar-amount font-bold text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
+            <p class="calendar-amount text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
           </div>
         </div>
-        <div class="calendar-summary flex min-w-0 items-center gap-1.5 rounded-[22px] bg-[var(--zz-home-expense-panel)] px-2 py-3">
-          <img :src="expenseCoin" alt="" class="h-9 w-9 shrink-0 object-contain" />
+        <div class="calendar-summary calendar-summary-expense">
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月支出</p>
-            <p class="calendar-amount font-bold text-[var(--zz-home-pink)]">{{ `¥${expense.toFixed(2)}` }}</p>
+            <p class="calendar-amount text-[var(--zz-home-pink)]">{{ `¥${expense.toFixed(2)}` }}</p>
           </div>
         </div>
       </div>
@@ -173,24 +158,34 @@ function getDayNumberClass(cell) {
 .journal-calendar {
   width: 100%;
   min-width: 0;
-  aspect-ratio: 1034 / 1255;
-  min-height: 390px;
-  padding: 22px 19px 22px;
-  border-radius: 30px;
+  padding: 22px 14px 16px;
+  border: 1.5px solid var(--zz-home-line);
+  border-radius: 16px 19px 20px 15px;
   background-color: var(--zz-home-paper);
-  background-image: radial-gradient(var(--zz-home-paper-grain) 0.5px, transparent 0.9px);
-  background-size: 5px 5px;
-  box-shadow: 4px 5px 0 var(--zz-home-shadow-color);
+  box-shadow: 3px 4px 0 var(--zz-home-title-brush);
 }
-.calendar-clip { top: -14px; width: 21px; height: 34px; }
-.calendar-grid { flex: 1; grid-template-rows: repeat(6, minmax(28px, 1fr)); gap: var(--zz-home-grid-gap-y) var(--zz-home-grid-gap-x); }
-.calendar-day { min-height: 28px; border-radius: 8px; }
-.calendar-day-normal { background: var(--zz-home-day-bg); }
+.journal-calendar::before { content: ''; position: absolute; width: 76px; height: 20px; top: -9px; left: calc(50% - 38px); border: 1px dashed var(--zz-home-line); border-radius: 2px 4px 3px 2px; background: var(--zz-home-pink-soft); transform: rotate(-4deg); pointer-events: none; }
+.calendar-heading { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 12px; }
+.calendar-month-button { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px 11px 15px 12px; color: var(--zz-home-ink); }
+.calendar-month-button:hover { background: var(--zz-home-title-brush); }
+.calendar-month-title { padding: 5px 12px; min-width: 0; font-size: 18px; font-weight: 400; border-radius: 14px 11px 15px 12px; background: var(--zz-home-title-brush); color: var(--zz-home-ink); }
+.calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; gap: 2px; margin-bottom: 8px; font-size: 12px; color: var(--zz-home-ink-soft); }
+.calendar-weekend { color: var(--zz-home-pink); }
+.calendar-grid { grid-template-rows: repeat(6, minmax(38px, 1fr)); gap: var(--zz-home-grid-gap-y) var(--zz-home-grid-gap-x); }
+.calendar-day { min-width: 0; min-height: 38px; gap: 2px; border: 1px solid transparent; border-radius: 13px 10px 14px 11px; font-size: 14px; font-weight: 400; color: var(--zz-home-ink); }
+.calendar-day-normal { background: transparent; }
 .calendar-day-normal:hover { background: var(--zz-home-title-brush); }
-.calendar-day-outside { background: var(--zz-home-day-outside-bg); color: var(--zz-home-day-muted); }
+.calendar-day-outside { background: transparent; color: var(--zz-home-day-muted); }
 .calendar-day-outside span { color: inherit; }
-.calendar-day-today { background: var(--zz-home-pink); color: white; }
-.calendar-day-selected { background: var(--zz-home-title-brush); outline: 2px solid var(--zz-home-pink); outline-offset: -2px; }
-.calendar-amount { font-size: clamp(13px, 4vw, 20px); overflow-wrap: anywhere; line-height: 1.3; }
+.calendar-day-today { border-color: var(--zz-home-line); background: var(--zz-home-title-brush); }
+.calendar-day-selected { border-color: var(--zz-home-line); background: var(--zz-home-pink-soft); }
+.calendar-today-label { font-size: 11px; color: var(--zz-home-ink-soft); }
+.calendar-record-dot { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--zz-home-ink-soft); }
+.calendar-totals { margin-top: 17px; padding-top: 14px; border-top: 1px dashed var(--zz-home-line); }
+.calendar-summary { min-width: 0; padding: 10px 12px; border-radius: 14px 11px 15px 12px; }
+.calendar-summary-income { background: var(--zz-home-income-panel); }
+.calendar-summary-expense { background: var(--zz-home-expense-panel); }
+.calendar-amount { margin-top: 3px; font-size: clamp(14px, 4vw, 19px); font-weight: 400; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.4; }
 button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 2px; }
+@media (pointer: coarse) { .calendar-day { min-height: 42px; } }
 </style>

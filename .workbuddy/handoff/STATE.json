@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "用户授权先commit当前聊天页，再按已提出方案重设计首页；聊天页构建和22项回归已重新通过",
-  "stage": "home_visual_in_progress",
+  "currentTask": "用户授权保存首页改动并本地合并回主线；合并前构建及40项浏览器检查重新通过",
+  "stage": "mainline_merge_in_progress",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "按聊天页同款猫猫手账风格重设计首页，检查日历、导航与聊天入账后的联动",
-  "nextStepReason": "首页风格统一范围已明确批准；先保存聊天页回退点，再调整首页外观，不修改业务数据或后端",
-  "pendingUserDecision": "首页重设计后的页面观感；后续首页代码commit与Push仍各按保存节点授权",
+  "nextStep": "保存首页快照并本地快进合并，核对源码与工作区后从主线继续前端",
+  "nextStepReason": "本地主线为功能路线的祖先，未分叉；保留所有历史与原分支，无需重写提交，不访问GitHub",
+  "pendingUserDecision": "首页实际观感尚未明确通过；新业务范围与Push仍各需明确确认",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-02"
 }
