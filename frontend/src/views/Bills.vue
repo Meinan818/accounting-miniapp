@@ -98,7 +98,7 @@ function getSign(record) {
         <img :src="miaoWriting" alt="猫猫抱着账本陪你看明细" class="bills-header-cat" />
         <div class="bills-heading-text">
           <h1 class="bills-title">账单明细</h1>
-          <p class="bills-subtitle">喵子智账 · 本地演示</p>
+          <p class="bills-subtitle">喵叽智账 · 本地演示</p>
         </div>
       </header>
 

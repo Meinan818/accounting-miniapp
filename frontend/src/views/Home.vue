@@ -63,7 +63,7 @@ function getRecordSign(record) {
       <header class="home-header">
         <img :src="miaoAvatar" alt="手绘猫猫" class="home-header-cat" />
         <div>
-          <h1 class="home-title">喵子智账</h1>
+          <h1 class="home-title">喵叽智账</h1>
           <p class="home-subtitle">日常开销 · 本地演示</p>
         </div>
         <span class="home-header-note">每一笔，都好好记下</span>

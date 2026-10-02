@@ -10,7 +10,7 @@ import { WalletCards } from 'lucide-vue-next'
           <WalletCards :size="32" />
         </div>
       </div>
-      <h1 class="mb-2 text-center text-3xl font-bold text-gray-900">智账</h1>
+      <h1 class="mb-2 text-center text-3xl font-bold text-gray-900">喵叽智账</h1>
       <p class="mb-8 text-center text-gray-600">让记账变得优雅又有趣</p>
 
       <div class="rounded-xl bg-primary-50 p-6 text-center text-primary-700">

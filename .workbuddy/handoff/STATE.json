@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "已恢复上一轮最新反馈：猫无默认名字、自称本喵，猫耳/爪印聊天气泡与固定原猫头头像已验证；毛茸茸头像仅提示词，未生成",
-  "stage": "chat_persona_avatar_review",
+  "currentTask": "毛茸茸头像已通过并接入；品牌统一为喵叽智账，聊天标题为和小宝聊聊今天的开销，包名/锁文件/有效文档一致；最终构建与53项回归通过",
+  "stage": "brand_avatar_ready_to_save",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "申请1次毛茸茸猫头头像候选图生成授权；生成后展示供用户审核，通过后才能接入",
-  "nextStepReason": "用户最新反馈优先；先改善聊天观感，不把应用名称当猫名，不未经审核接入新图片",
-  "pendingUserDecision": "1张毛茸茸头像的实验参考生图授权、生成后画风审核；现有气泡实际观感仍待确认，用户已授权本轮commit与Push",
+  "nextStep": "授权commit保存本轮头像、聊天标题及品牌统一；随后提出A1多笔草稿/连续追问/纠正最小方案，确认后实施",
+  "nextStepReason": "头像画风已通过且接入验证，当前名称与用户纠正一致；先保存独立成果，后续回到聊天记账主线，不扩大到命名功能或后端",
+  "pendingUserDecision": "本轮头像/品牌/标题统一的commit；页面观感有反馈可继续调整，Push单独确认",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-02"
 }

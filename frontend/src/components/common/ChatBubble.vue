@@ -1,7 +1,7 @@
 <script setup>
 // 1. 导入
 import { computed } from 'vue'
-import catAvatar from '@/assets/design/mascot/miao-avatar.png'
+import catAvatar from '@/assets/design/mascot/miao-avatar-fluffy-v1.png'
 
 // 2. Props
 const props = defineProps({

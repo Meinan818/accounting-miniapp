@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import ChatBubble from '@/components/common/ChatBubble.vue'
 import ChatInput from '@/components/common/ChatInput.vue'
 import ConfirmCard from '@/components/common/ConfirmCard.vue'
-import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
+import miaoAvatar from '@/assets/design/mascot/miao-avatar-fluffy-v1.png'
 import miaoThinking from '@/assets/design/mascot/poses/miao-thinking.png'
 import { useConversationStore } from '@/stores/conversationStore'
 import { useRecordStore } from '@/stores/recordStore'
@@ -16,6 +16,9 @@ import { getFakeAIResponse } from '@/utils/mockAI'
 // 2. 组合式函数
 const conversationStore = useConversationStore()
 const recordStore = useRecordStore()
+
+// Temporary display name; user naming is planned, not implemented.
+const catDisplayName = '小宝'
 
 // 3. 响应式数据
 const messagesContainer = ref(null)
@@ -190,8 +193,10 @@ onBeforeUnmount(() => {
           </router-link>
           <img :src="miaoAvatar" alt="手绘猫猫" class="miao-header-cat" />
           <div class="min-w-0">
-            <h1 class="miao-title">喵子智账</h1>
-            <p class="miao-subtitle">聊聊今天的小开销</p>
+            <h1 class="miao-chat-heading">
+              <span class="miao-title">和{{ catDisplayName }}聊聊</span>
+              <span class="miao-subtitle">今天的开销</span>
+            </h1>
           </div>
         </div>
       </div>
@@ -250,9 +255,10 @@ onBeforeUnmount(() => {
 .miao-brand { display: flex; align-items: center; gap: 9px; }
 .miao-back { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border: 1px solid var(--miao-line); border-radius: 16px 13px 17px 14px; background: var(--miao-white); }
 .miao-header-cat { width: 66px; height: 62px; object-fit: contain; flex-shrink: 0; transform: rotate(-5deg); }
-.miao-title { position: relative; isolation: isolate; width: fit-content; font-size: 24px; font-weight: 400; letter-spacing: 1px; white-space: nowrap; }
+.miao-chat-heading { font-weight: 400; }
+.miao-title { display: block; position: relative; isolation: isolate; width: fit-content; font-size: 24px; font-weight: 400; letter-spacing: 1px; white-space: nowrap; }
 .miao-title::before { content: ''; position: absolute; inset: 9px -5px 1px; z-index: -1; border-radius: 62% 45% 58% 42%; background: var(--miao-yellow); transform: rotate(-2deg); }
-.miao-subtitle { margin-top: 5px; font-size: 12px; color: var(--miao-soft); }
+.miao-subtitle { display: block; margin-top: 5px; font-size: 12px; color: var(--miao-soft); }
 .miao-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 5px 12px; padding: 9px 16px; font-size: 12px; background: var(--miao-yellow); }
 .miao-summary p { display: flex; align-items: center; gap: 8px; }
 .miao-summary p span { font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
