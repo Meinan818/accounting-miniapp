@@ -3,7 +3,8 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
-import calendarClip from '@/assets/design/calendar-clip.png'
+import calendarClip from '@/assets/design/calendar/calendar-clip.png'
+import calendarFrame from '@/assets/design/calendar/calendar-frame.png'
 import expenseCoin from '@/assets/design/expense-coin.png'
 import incomeCash from '@/assets/design/income-cash.png'
 import monthPill from '@/assets/design/month-pill.png'
@@ -59,18 +60,18 @@ function selectDate(cell) {
 
 function getDayClass(cell) {
   if (cell.isToday) {
-    return 'bg-accent-400 text-white shadow-[inset_0_-4px_0_rgba(255,255,255,0.22)]'
+    return 'calendar-day-today'
   }
 
   if (cell.isSelected) {
-    return 'border-2 border-primary-400 bg-primary-50 text-primary-700'
+    return 'calendar-day-selected'
   }
 
   if (!cell.isCurrentMonth) {
-    return 'bg-[#faf6ee] text-gray-300'
+    return 'calendar-day-outside'
   }
 
-  return 'bg-[#f4f0e9] text-gray-900 hover:bg-primary-50'
+  return 'calendar-day-normal'
 }
 
 function getDayNumberClass(cell) {
@@ -79,41 +80,41 @@ function getDayNumberClass(cell) {
   }
 
   if (cell.weekday === 0) {
-    return 'text-accent-500'
+    return 'text-[var(--zz-home-pink)]'
   }
 
   if (cell.weekday === 6) {
     return 'text-blue-500'
   }
 
-  return 'text-gray-900'
+  return 'text-[var(--zz-home-ink)]'
 }
 </script>
 
 <template>
-  <section class="relative rounded-[30px] border-[3px] border-hand bg-white/95 p-5 pt-7 shadow-[5px_6px_0_rgba(31,41,55,0.12)]">
-    <!-- 调整夹子位置和样式 -->
-    <span class="absolute -top-4 left-20 h-10 w-6 rounded-full border-[3px] border-hand bg-warning/80 shadow-sm" />
-    <span class="absolute -top-4 right-20 h-10 w-6 rounded-full border-[3px] border-hand bg-warning/80 shadow-sm" />
+  <section class="journal-calendar relative flex flex-col" aria-label="记账日历">
+    <img :src="calendarFrame" alt="" class="pointer-events-none absolute inset-0 h-full w-full" />
+    <img :src="calendarClip" alt="" class="calendar-clip pointer-events-none absolute left-[9%]" />
+    <img :src="calendarClip" alt="" class="calendar-clip pointer-events-none absolute right-[9%] -scale-x-100" />
 
-    <div class="mb-4 flex items-center justify-between">
+    <div class="relative mb-3 flex items-center justify-between">
       <button
         type="button"
-        class="flex h-11 w-11 items-center justify-center rounded-full text-hand transition-all hover:bg-cream-dark active:scale-95"
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--zz-home-ink)] transition-all hover:bg-cream-dark active:scale-95"
         aria-label="上个月"
         @click="changeMonth(-1)"
       >
         <ChevronLeft :size="32" :stroke-width="2.4" />
       </button>
 
-      <h2 class="relative flex h-11 w-52 items-center justify-center text-2xl font-bold text-gray-900">
+      <h2 class="relative flex h-11 w-[65%] items-center justify-center text-xl font-black text-[var(--zz-home-ink)] sm:text-2xl">
         <img :src="monthPill" alt="" class="absolute inset-0 h-full w-full object-fill" />
         <span class="relative">{{ monthTitle }}</span>
       </h2>
 
       <button
         type="button"
-        class="flex h-11 w-11 items-center justify-center rounded-full text-hand transition-all hover:bg-cream-dark active:scale-95"
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[var(--zz-home-ink)] transition-all hover:bg-cream-dark active:scale-95"
         aria-label="下个月"
         @click="changeMonth(1)"
       >
@@ -121,46 +122,75 @@ function getDayNumberClass(cell) {
       </button>
     </div>
 
-    <div class="mb-2 grid grid-cols-7 text-center text-base font-semibold">
+    <div class="relative mb-2 grid grid-cols-7 text-center text-sm font-semibold">
       <span v-for="(weekday, index) in weekdays" :key="weekday" :class="index === 0 ? 'text-accent-500' : index === 6 ? 'text-blue-500' : 'text-gray-600'">
         {{ weekday }}
       </span>
     </div>
 
-    <div class="grid grid-cols-7 gap-x-1.5 gap-y-2">
+    <div class="calendar-grid relative grid grid-cols-7">
       <button
         v-for="cell in calendarCells"
         :key="cell.date"
         type="button"
-        class="relative flex aspect-square items-center justify-center rounded-[14px] text-base font-bold transition-all active:scale-95"
+        class="calendar-day relative flex items-center justify-center text-sm font-bold transition-all active:scale-95"
         :class="getDayClass(cell)"
+        :aria-label="cell.date"
+        :aria-pressed="cell.isSelected"
+        :aria-current="cell.isToday ? 'date' : undefined"
         @click="selectDate(cell)"
       >
         <span :class="getDayNumberClass(cell)">{{ cell.day }}</span>
         <span
           v-if="cell.hasRecord"
-          class="absolute bottom-1.5 h-1.5 w-1.5 rounded-full bg-warning-dark"
+          class="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-warning-dark"
         />
       </button>
     </div>
 
-    <div class="mt-5 border-t border-dashed border-gray-300 pt-4">
-      <div class="grid grid-cols-2 gap-3">
-        <div class="flex items-center gap-3 rounded-2xl bg-income-light/70 px-4 py-3">
-          <img :src="incomeCash" alt="" class="h-12 w-12 object-contain" />
-          <div>
-            <p class="text-xs text-gray-600">本月收入</p>
-            <p class="font-mono text-lg font-bold text-income-dark">{{ `¥${income.toFixed(2)}` }}</p>
+    <div class="relative mt-auto pt-4">
+      <div class="grid grid-cols-2 gap-2">
+        <div class="calendar-summary flex min-w-0 items-center gap-1.5 rounded-[22px] bg-[var(--zz-home-income-panel)] px-2 py-3">
+          <img :src="incomeCash" alt="" class="h-9 w-9 shrink-0 object-contain" />
+          <div class="min-w-0">
+            <p class="text-xs text-[var(--zz-home-ink-soft)]">本月收入</p>
+            <p class="calendar-amount font-bold text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
           </div>
         </div>
-        <div class="flex items-center gap-3 rounded-2xl bg-accent-100/80 px-4 py-3">
-          <img :src="expenseCoin" alt="" class="h-12 w-12 object-contain" />
-          <div>
-            <p class="text-xs text-gray-600">本月支出</p>
-            <p class="font-mono text-lg font-bold text-accent-500">{{ `¥${expense.toFixed(2)}` }}</p>
+        <div class="calendar-summary flex min-w-0 items-center gap-1.5 rounded-[22px] bg-[var(--zz-home-expense-panel)] px-2 py-3">
+          <img :src="expenseCoin" alt="" class="h-9 w-9 shrink-0 object-contain" />
+          <div class="min-w-0">
+            <p class="text-xs text-[var(--zz-home-ink-soft)]">本月支出</p>
+            <p class="calendar-amount font-bold text-[var(--zz-home-pink)]">{{ `¥${expense.toFixed(2)}` }}</p>
           </div>
         </div>
       </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+.journal-calendar {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1034 / 1255;
+  min-height: 390px;
+  padding: 22px 19px 22px;
+  border-radius: 30px;
+  background-color: var(--zz-home-paper);
+  background-image: radial-gradient(var(--zz-home-paper-grain) 0.5px, transparent 0.9px);
+  background-size: 5px 5px;
+  box-shadow: 4px 5px 0 var(--zz-home-shadow-color);
+}
+.calendar-clip { top: -14px; width: 21px; height: 34px; }
+.calendar-grid { flex: 1; grid-template-rows: repeat(6, minmax(28px, 1fr)); gap: var(--zz-home-grid-gap-y) var(--zz-home-grid-gap-x); }
+.calendar-day { min-height: 28px; border-radius: 8px; }
+.calendar-day-normal { background: var(--zz-home-day-bg); }
+.calendar-day-normal:hover { background: var(--zz-home-title-brush); }
+.calendar-day-outside { background: var(--zz-home-day-outside-bg); color: var(--zz-home-day-muted); }
+.calendar-day-outside span { color: inherit; }
+.calendar-day-today { background: var(--zz-home-pink); color: white; }
+.calendar-day-selected { background: var(--zz-home-title-brush); outline: 2px solid var(--zz-home-pink); outline-offset: -2px; }
+.calendar-amount { font-size: clamp(13px, 4vw, 20px); overflow-wrap: anywhere; line-height: 1.3; }
+button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 2px; }
+</style>

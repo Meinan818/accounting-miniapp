@@ -1,7 +1,7 @@
 /*
  * 智账首页视觉基准 tokens
  *
- * Step 1 只建立统一参数，不直接改变首页外观。
+ * 首页日历与首页专用导航使用；不改其他页面的共用样式。
  * 颜色取自已确认的产品原稿截图，属于估算值；
  * 像素值来自“原稿比例 + 390×844 视口”的换算，后续实施时再逐项校准。
  */
@@ -28,10 +28,15 @@
   --zz-home-green-soft: #eff3dd;
   --zz-home-income-panel: #eff3dd;
   --zz-home-expense-panel: #fde8e0;
+  --zz-home-paper: #fffaf0;
+  --zz-home-paper-grain: rgba(107, 74, 54, 0.045);
+  --zz-home-day-bg: #f5efe4;
+  --zz-home-day-outside-bg: #f9f4e9;
+  --zz-home-day-muted: #c4b7a6;
 
   /* 页面与顶部 */
   --zz-home-page-x: 16px;
-  --zz-home-content-width: 100%;
+  --zz-home-content-width: 480px;
   --zz-home-header-height: 88px;
   --zz-home-header-gap: 16px;
 
@@ -46,8 +51,8 @@
   --zz-home-clip-height: 42px;
 
   /* 日期网格 */
-  --zz-home-grid-gap-x: 3px;
-  --zz-home-grid-gap-y: 5px;
+  --zz-home-grid-gap-x: 5px;
+  --zz-home-grid-gap-y: 6px;
   --zz-home-cell-width: 43px;
   --zz-home-cell-height: 27px;
   --zz-home-cell-ratio: 1.55;
@@ -61,7 +66,7 @@
   /* 底部插画与导航 */
   --zz-home-scene-top: auto;
   --zz-home-scene-height: 150px;
-  --zz-home-bottom-nav-height: 108px;
+  --zz-home-bottom-nav-height: 132px;
   --zz-home-nav-icon: 44px;
   --zz-home-plus-diameter: 78px;
   --zz-home-plus-overlap: 42px;
