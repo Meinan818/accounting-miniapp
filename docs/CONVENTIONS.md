@@ -1,4 +1,4 @@
-# 智账 — 代码规范（docs/CONVENTIONS.md）
+# 喵子智账 — 代码规范（docs/CONVENTIONS.md）
 
 > 本文件只讲**怎么写代码**。AI 协作规则、提交与发布节奏见根目录 `AGENTS.md`。
 > 视觉规范见 `docs/DESIGN_SYSTEM.md`。当前先开发Vue前端，Java/MySQL后端规范在后端阶段补充；原 `CLAUDE.md` 中仍适用的约定已搬到这里。
