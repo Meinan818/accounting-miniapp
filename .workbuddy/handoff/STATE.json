@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "用户授权保存首页改动并本地合并回主线；合并前构建及40项浏览器检查重新通过",
-  "stage": "mainline_merge_in_progress",
+  "currentTask": "首页与聊天外观已保存，本地主线合并工作完成；继续前端，未新增聊天业务或后端",
+  "stage": "frontend_ready",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "保存首页快照并本地快进合并，核对源码与工作区后从主线继续前端",
-  "nextStepReason": "本地主线为功能路线的祖先，未分叉；保留所有历史与原分支，无需重写提交，不访问GitHub",
-  "pendingUserDecision": "首页实际观感尚未明确通过；新业务范围与Push仍各需明确确认",
+  "nextStep": "从主线继续前端，先提出多笔草稿、连续追问和对话纠正的最小交互方案",
+  "nextStepReason": "用户要求后续从主线开发；核心仍是像聊天一样记账，现有实现只有模拟单笔识别，需要先明确连续对话前端体验再实施",
+  "pendingUserDecision": "首页实际观感仍未明确通过；下一轮交互实施范围与Push分别确认",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-02"
 }
