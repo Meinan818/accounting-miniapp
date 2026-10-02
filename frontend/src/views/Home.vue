@@ -1,4 +1,5 @@
 <script setup>
+import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
@@ -9,6 +10,7 @@ import CalendarCard from '@/components/calendar/CalendarCard.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
+import { sumAmounts } from '@/utils/money'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
@@ -24,13 +26,8 @@ const visibleMonthRecords = computed(() => recordStore.records.filter((record) =
   record.date?.startsWith(calendarMonth.value)
 )))
 
-const monthIncome = computed(() => visibleMonthRecords.value
-  .filter((record) => record.type === 'income')
-  .reduce((total, record) => total + Number(record.amount || 0), 0))
-
-const monthExpense = computed(() => visibleMonthRecords.value
-  .filter((record) => record.type === 'expense')
-  .reduce((total, record) => total + Number(record.amount || 0), 0))
+const monthIncome = computed(() => sumAmounts(visibleMonthRecords.value, 'income'))
+const monthExpense = computed(() => sumAmounts(visibleMonthRecords.value, 'expense'))
 
 const selectedRecords = computed(() => recordStore.records
   .filter((record) => record.date === selectedDate.value)
@@ -68,6 +65,9 @@ function getRecordSign(record) {
         </div>
         <span class="home-header-note">每一笔，都好好记下</span>
       </header>
+
+      <ManualEntry class="home-manual-link" />
+      <p v-if="recordStore.storageError" class="home-storage-error" role="alert">{{ recordStore.storageError }}</p>
 
       <CalendarCard
         :month="calendarMonth"
@@ -127,6 +127,8 @@ function getRecordSign(record) {
 </template>
 
 <style scoped>
+.home-manual-link { margin-bottom: 18px; }
+.home-storage-error { font-size: 12px; color: #aa594d; margin-bottom: 12px; }
 .journal-home {
   min-height: 100dvh;
   padding: 18px 16px calc(var(--zz-home-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px));

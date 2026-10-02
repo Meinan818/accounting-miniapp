@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "首页保留原猫图；旧导航分支和6处图引用已清除，19张淘汰图归档/5张预留猫图分类；构建、53项浏览器及7项素材检查通过，用户已授权本地commit",
-  "stage": "asset_cleanup_verified",
+  "currentTask": "手账贴纸入口与明细整行编辑已获用户满意确认，用户授权本地commit保存A1及相关UI/测试/文档",
+  "stage": "manual_entry_bills_ui_accepted_local_save",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "提出A1多笔草稿、连续追问与对话纠正的最小交互方案，确认范围后实施",
-  "nextStepReason": "首页头像选择已明确，旧素材已分类且相关页面/数据回归通过；继续聊天记账主线，不再围绕已认可头像重复验收",
-  "pendingUserDecision": "A1最小方案的实施范围；远端备份Push须另行授权",
+  "nextStep": "继续验收A1聊天业务路径（多笔、追问、纠正、确认保存），再确认后续A2范围；远端备份另行授权Push",
+  "nextStepReason": "入口与编辑面板已人工认可，不重复验收该外观；A1整体交互尚不能由UI满意或技术检查替代，先验证主线再扩展",
+  "pendingUserDecision": "A1整体交互反馈、后续A2范围；Push仍需单独授权",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }

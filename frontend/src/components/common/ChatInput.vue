@@ -70,8 +70,8 @@ onBeforeUnmount(() => {
       <input
         v-model="text"
         class="min-w-0 flex-1 bg-transparent py-2 text-base text-gray-900 outline-none placeholder:text-gray-400"
-        maxlength="120"
-        placeholder="说说今天花了什么钱..."
+        :maxlength="catAppearance ? 400 : 120"
+        :placeholder="catAppearance ? '午饭25，咖啡18…' : '说说今天花了什么钱...'"
         :aria-label="catAppearance ? '给猫猫发消息' : '发送记账消息'"
         type="text"
         @keydown.enter="handleEnter"

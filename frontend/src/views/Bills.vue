@@ -1,6 +1,10 @@
 <script setup>
+import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import RecordEditor from '@/components/record/RecordEditor.vue'
+import { sumAmounts, legacyCents } from '@/utils/money'
 import dayjs from 'dayjs'
 import { ArrowLeft, ChevronLeft, ChevronRight, ReceiptText } from 'lucide-vue-next'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
@@ -13,7 +17,13 @@ import { formatCurrency } from '@/utils/format'
 const recordStore = useRecordStore()
 
 // 3. 响应式数据
-const selectedMonth = ref(dayjs().format('YYYY-MM'))
+const route = useRoute()
+const initialMonth = typeof route.query.month === 'string' && /^\d{4}-(?:0[1-9]|1[0-2])$/.test(route.query.month) ? route.query.month : dayjs().format('YYYY-MM')
+const selectedMonth = ref(initialMonth)
+const editingRecord = ref(null)
+const saving = ref(false)
+const saveError = ref('')
+const notice = ref('')
 
 // 4. 计算属性
 const monthTitle = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY年M月'))
@@ -25,15 +35,9 @@ const monthRecords = computed(() => recordStore.records
     return rightKey.localeCompare(leftKey)
   }))
 
-const monthIncome = computed(() => monthRecords.value
-  .filter((record) => record.type === 'income')
-  .reduce((total, record) => total + Number(record.amount || 0), 0))
-
-const monthExpense = computed(() => monthRecords.value
-  .filter((record) => record.type === 'expense')
-  .reduce((total, record) => total + Number(record.amount || 0), 0))
-
-const monthBalance = computed(() => monthIncome.value - monthExpense.value)
+const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
+const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
+const monthBalance = computed(() => (legacyCents(monthIncome.value) - legacyCents(monthExpense.value)) / 100)
 
 const groupedRecords = computed(() => {
   const groups = new Map()
@@ -49,15 +53,20 @@ const groupedRecords = computed(() => {
   return [...groups.entries()].map(([date, records]) => ({
     date,
     label: getDateLabel(date),
-    income: records
-      .filter((record) => record.type === 'income')
-      .reduce((total, record) => total + Number(record.amount || 0), 0),
-    expense: records
-      .filter((record) => record.type === 'expense')
-      .reduce((total, record) => total + Number(record.amount || 0), 0),
+    income: sumAmounts(records, 'income'),
+    expense: sumAmounts(records, 'expense'),
     records,
   }))
 })
+
+function edit(record) { editingRecord.value = { ...record }; saveError.value = ''; notice.value = '' }
+function saveEdit(input) {
+  if (saving.value || !editingRecord.value) return
+  saving.value = true
+  try { const updated = recordStore.updateRecord(editingRecord.value.id, input); selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。' }
+  catch (e) { saveError.value = e.message }
+  finally { saving.value = false }
+}
 
 // 5. 方法
 function changeMonth(offset) {
@@ -102,6 +111,10 @@ function getSign(record) {
         </div>
       </header>
 
+      <ManualEntry class="bills-manual-link" />
+      <p v-if="recordStore.storageError" class="bills-alert" role="alert">{{ recordStore.storageError }}</p>
+      <p v-if="notice" class="bills-notice" role="status">{{ notice }}</p>
+
       <section class="bills-summary" aria-label="月度账单汇总">
         <div class="bills-month">
           <button
@@ -139,7 +152,8 @@ function getSign(record) {
         </dl>
       </section>
 
-      <p class="bills-storage-note">账单保存在当前浏览器，记下后会同步到这里</p>
+      <p class="bills-storage-note">账单保存在当前浏览器；这里的修改会同步到首页和聊天查询</p>
+      <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
 
       <section v-if="groupedRecords.length" class="bills-groups" aria-label="按日账单">
         <div v-for="group in groupedRecords" :key="group.date" class="bills-day-group">
@@ -159,7 +173,14 @@ function getSign(record) {
             <article
               v-for="record in group.records"
               :key="record.id"
+              :data-record-id="record.id"
               class="bills-record"
+              role="button"
+              tabindex="0"
+              :aria-label="'编辑账单：' + record.category + '，' + (record.remark || '无备注') + '，' + formatCurrency(record.amount)"
+              @click="edit(record)"
+              @keydown.enter.prevent="edit(record)"
+              @keydown.space.prevent="edit(record)"
             >
               <div class="bills-record-main">
                 <span class="bills-record-stamp" aria-hidden="true"><ReceiptText :size="20" :stroke-width="1.5" /></span>
@@ -168,12 +189,15 @@ function getSign(record) {
                   <p class="bills-subtitle">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>
                 </div>
               </div>
+              <div class="bills-record-actions">
               <p
                 class="bills-record-amount"
                 :class="record.type === 'income' ? 'bills-income' : 'bills-expense'"
               >
                 {{ getSign(record) }}{{ formatCurrency(record.amount) }}
               </p>
+                <ChevronRight class="bills-record-chevron" :size="16" :stroke-width="1.5" aria-hidden="true" />
+              </div>
             </article>
           </div>
         </div>
@@ -186,11 +210,21 @@ function getSign(record) {
       </section>
     </main>
 
+    <RecordEditor v-if="editingRecord" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" @save="saveEdit" @close="editingRecord = null" />
     <BottomNav active="detail" />
   </div>
 </template>
 
 <style scoped>
+.bills-manual-link { margin-bottom: 18px; }
+.bills-record-actions { display: flex; flex-direction: row; align-items: flex-end; gap: 5px; flex-shrink: 0; min-width: 75px; max-width: 43%; }
+.bills-record-chevron { flex-shrink: 0; color: #b6a18d; }
+.bills-edit-hint { margin: 7px 0 0; text-align: center; font-size: 12px; color: var(--zz-home-ink-soft); }
+.bills-record[role="button"] { cursor: pointer; }
+.bills-record:hover { background: #fff8ed; }
+.bills-record:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 3px; }
+.bills-alert { color: #aa594d; font-size: 12px; margin-bottom: 12px; }
+.bills-notice { font-size: 12px; margin-bottom: 12px; line-height: 1.8; }
 .journal-bills { min-height: 100dvh; padding: 18px 16px calc(var(--zz-home-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px)); background: var(--zz-home-bg); color: var(--zz-home-ink); font-family: var(--zz-home-font); font-weight: 400; }
 .bills-content { max-width: var(--zz-home-content-width); margin-inline: auto; }
 .bills-header { display: flex; align-items: center; gap: 9px; margin-bottom: 26px; }
@@ -224,7 +258,7 @@ function getSign(record) {
 .bills-record-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .bills-record-stamp { display: grid; place-items: center; flex: 0 0 36px; height: 38px; border: 1px dashed var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-title-brush); }
 .bills-record-text { min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
-.bills-record-amount { flex-shrink: 0; max-width: 43%; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.bills-record-amount { flex-shrink: 0; max-width: none; width: auto; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .bills-empty { margin-top: 27px; padding: 27px 16px; border: 1px dashed var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); text-align: center; font-size: 15px; }
 .bills-empty img { display: block; width: 112px; height: 112px; object-fit: contain; margin: 0 auto 13px; }
 .bills-back:focus-visible, .bills-month-button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 3px; }

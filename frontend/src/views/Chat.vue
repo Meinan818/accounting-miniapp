@@ -1,4 +1,5 @@
 <script setup>
+import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
@@ -6,6 +7,10 @@ import { ArrowLeft } from 'lucide-vue-next'
 import ChatBubble from '@/components/common/ChatBubble.vue'
 import ChatInput from '@/components/common/ChatInput.vue'
 import ConfirmCard from '@/components/common/ConfirmCard.vue'
+import DraftGroupCard from '@/components/common/DraftGroupCard.vue'
+import { createDraft, applyDraftInput, groupReply, isQuery, resolveGroup } from '@/utils/draftEngine'
+import { legacyCents } from '@/utils/money'
+import { validateRecord } from '@/utils/ledger'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar-fluffy-v1.png'
 import miaoThinking from '@/assets/design/mascot/poses/miao-thinking.png'
 import { useConversationStore } from '@/stores/conversationStore'
@@ -52,108 +57,89 @@ function resetMoodLater() {
   }, 1800)
 }
 
+const savingGroup = ref(null)
+const actionErrors = ref({})
+const activeDraftMessage = computed(() => [...conversationStore.messages].reverse().find(m => m.kind === 'draft-group' && m.group
+  && ['needs_input', 'ready'].includes(m.group.status) && recordStore.batchRecords(m.group.id).length === 0))
+function reply(content) { conversationStore.addMessage({ role: 'assistant', kind: 'text', content }) }
+function queryReply(text) {
+  if (!recordStore.refresh()) { reply(recordStore.storageError); return }
+  if (/上个月|下个月|去年|今年|昨天|前天|今天|本周|上周|\d{4}[-年]|\d{1,2}月/.test(text)) { reply('这版查询先支持本月汇总；其他日期请到明细切月查看。本喵不会拿本月数据冒充其他日期。'); return }
+  const result = getFakeAIResponse(text, { monthExpense: recordStore.monthExpense, monthIncome: recordStore.monthIncome,
+    categoryExpenses: recordStore.categoryExpenses, categoryIncome: recordStore.categoryIncome })
+  reply(result.type === 'query' ? result.reply : '本喵暂时只支持查询本月收入、支出与分类汇总。账单以明细里的最新数据为准。')
+}
+function saveDraft(messageId) {
+  const message = conversationStore.messages.find(m => m.id === messageId)
+  if (!message?.group || message.group.status !== 'ready' || savingGroup.value) return
+  savingGroup.value = messageId
+  actionErrors.value[messageId] = ''
+  try {
+    const saved = recordStore.addRecords(message.group.items, { batchId: message.group.id, source: 'chat' })
+    conversationStore.updateGroup(messageId, { ...message.group, status: 'saved', pending: null })
+    reply('本喵已记下' + saved.length + '笔，首页和明细已同步。之后直接改明细，查询也会读取最新账单。')
+    conversationStore.setMascotMood('success'); resetMoodLater()
+  } catch (e) { actionErrors.value[messageId] = e.message; reply(e.message) }
+  finally { savingGroup.value = null; scrollToBottom() }
+}
+function cancelDraft(messageId) {
+  const message = conversationStore.messages.find(m => m.id === messageId)
+  if (!message?.group || savingGroup.value || recordStore.batchRecords(message.group.id).length) return
+  const result = applyDraftInput(message.group, '取消这组')
+  conversationStore.updateGroup(messageId, result.group); actionErrors.value[messageId] = ''; reply(result.reply)
+}
+function editDraft(messageId, { itemId, record }) {
+  const message = conversationStore.messages.find(m => m.id === messageId)
+  if (!message?.group || savingGroup.value || ['saved', 'cancelled'].includes(message.group.status) || recordStore.batchRecords(message.group.id).length) return
+  const group = JSON.parse(JSON.stringify(message.group))
+  const item = group.items.find(i => i.id === itemId)
+  if (!item) return
+  try {
+    const normalized = validateRecord(record)
+    Object.assign(item, normalized, { amountCents: legacyCents(normalized.amount), description: normalized.remark || normalized.category, errors: { amount: '', date: '', time: '' } })
+    group.pending = null; resolveGroup(group)
+    conversationStore.updateGroup(messageId, group); actionErrors.value[messageId] = ''; reply(groupReply(group))
+  } catch (e) { actionErrors.value[messageId] = e.message }
+}
 async function handleSend(userInput) {
   const text = String(userInput || '').trim()
-
-  if (!text || conversationStore.isThinking) {
-    return
-  }
-
-  conversationStore.addMessage({
-    role: 'user',
-    kind: 'text',
-    content: text,
-  })
-  conversationStore.setThinking(true)
-  conversationStore.setMascotMood('thinking')
-  scrollToBottom()
-
-  await wait(900)
-
-  const response = getFakeAIResponse(text, {
-    monthExpense: recordStore.monthExpense,
-    monthIncome: recordStore.monthIncome,
-    categoryExpenses: recordStore.categoryExpenses,
-    categoryIncome: recordStore.categoryIncome,
-  })
-
-  if (response.type === 'record') {
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'text',
-      content: response.reply,
-    })
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'record',
-      content: response.reply,
-      record: response.record,
-    })
-    conversationStore.setMascotMood('happy')
-  } else if (response.type === 'query') {
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'text',
-      content: response.reply,
-    })
-    conversationStore.setMascotMood('success')
-    resetMoodLater()
-  } else {
-    conversationStore.addMessage({
-      role: 'assistant',
-      kind: 'text',
-      content: response.reply,
-    })
-    conversationStore.setMascotMood('confused')
-    resetMoodLater()
-  }
-
-  conversationStore.setThinking(false)
-  scrollToBottom()
+  if (!text || conversationStore.isThinking || savingGroup.value) return
+  conversationStore.addMessage({ role: 'user', kind: 'text', content: text })
+  conversationStore.setThinking(true); conversationStore.setMascotMood('thinking'); scrollToBottom()
+  try {
+    await wait(600)
+    recordStore.refresh()
+    const active = activeDraftMessage.value
+    if (active) {
+      const result = applyDraftInput(active.group, text)
+      if (result.action === 'query') queryReply(text)
+      else if (result.action === 'confirm') saveDraft(active.id)
+      else { conversationStore.updateGroup(active.id, result.group); actionErrors.value[active.id] = ''; reply(result.reply) }
+    } else if (isQuery(text)) queryReply(text)
+    else {
+      const result = createDraft(text)
+      reply(result.reply)
+      if (result.group) conversationStore.addMessage({ role: 'assistant', kind: 'draft-group', group: result.group })
+    }
+  } catch { reply('本喵这次没整理好，草稿没有入账。可以再说清楚一些，或者用手动记账。') }
+  finally { conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() }
 }
-
+function legacySaved(message) { return message.confirmed || recordStore.batchRecords('legacy-' + message.id).length > 0 }
+function legacyRecord(message) { return recordStore.batchRecords('legacy-' + message.id)[0] || message.record }
 function handleUpdateRecord(messageId, updatedRecord) {
+  const message = conversationStore.messages.find(m => m.id === messageId)
+  if (!message || legacySaved(message)) { reply('这笔已入账，请直接到明细修改。'); return }
   conversationStore.updateRecord(messageId, updatedRecord)
-  conversationStore.addMessage({
-    role: 'assistant',
-    kind: 'text',
-    content: '已经帮你改好啦，再核对一下就可以记账了 ✨',
-  })
-  conversationStore.setMascotMood('happy')
-  scrollToBottom()
+  reply('已经帮你改好啦，再核对一下就可以记账了。')
 }
-
 function handleConfirmRecord(messageId, record) {
-  const message = conversationStore.messages.find((item) => item.id === messageId)
-
-  if (!message || message.confirmed) {
-    return
-  }
-
-  recordStore.addRecord(record)
-  conversationStore.markRecordConfirmed(messageId)
-
-  const typeLabel = record.type === 'income' ? '收入' : '支出'
-  const isCurrentMonth = dayjs(record.date).format('YYYY-MM') === dayjs().format('YYYY-MM')
-  let successMessage
-
-  if (isCurrentMonth) {
-    const categorySource = record.type === 'income'
-      ? recordStore.categoryIncome
-      : recordStore.categoryExpenses
-    const updatedTotal = categorySource[record.category] || record.amount
-    successMessage = `✅ 记账成功！本月${record.category}${typeLabel}已累计 ${formatCurrency(updatedTotal)}。`
-  } else {
-    successMessage = `✅ 记账成功！已记录一笔${record.category}${typeLabel} ${formatCurrency(record.amount)}。`
-  }
-
-  conversationStore.addMessage({
-    role: 'assistant',
-    kind: 'text',
-    content: successMessage,
-  })
-  conversationStore.setMascotMood('success')
-  resetMoodLater()
+  const message = conversationStore.messages.find(m => m.id === messageId)
+  if (!message || legacySaved(message)) return
+  try {
+    recordStore.addRecord(record, { batchId: 'legacy-' + messageId, source: 'chat' })
+    conversationStore.markRecordConfirmed(messageId)
+    reply('本喵已记下一笔，明细和查询使用同一份最新账单。')
+  } catch (e) { reply(e.message) }
   scrollToBottom()
 }
 
@@ -202,18 +188,30 @@ onBeforeUnmount(() => {
       </div>
       <div class="miao-summary">
         <p>本月支出 <span>{{ monthExpenseText }}</span></p>
-        <span class="miao-demo-label">本地演示 · 每次整理一笔</span>
+        <span class="miao-demo-label">规则演示 · 每组最多5笔</span>
+        <ManualEntry class="miao-manual-link" />
       </div>
     </header>
 
     <main ref="messagesContainer" class="miao-messages">
       <div class="miao-thread" aria-live="polite">
+        <p v-if="recordStore.storageError || conversationStore.persistenceError" class="miao-storage-error" role="alert">{{ recordStore.storageError || conversationStore.persistenceError }}</p>
         <template v-for="message in conversationStore.messages" :key="message.id">
           <ChatBubble v-if="message.kind === 'text'" :message="message" cat-appearance />
+          <DraftGroupCard
+            v-if="message.kind === 'draft-group' && message.group"
+            :group="message.group"
+            :saved-records="recordStore.batchRecords(message.group.id)"
+            :busy="savingGroup === message.id || conversationStore.isThinking"
+            :error="actionErrors[message.id]"
+            @confirm="saveDraft(message.id)"
+            @cancel="cancelDraft(message.id)"
+            @update="editDraft(message.id, $event)"
+          />
           <ConfirmCard
             v-else-if="message.kind === 'record'"
-            :confirmed="message.confirmed"
-            :record="message.record"
+            :confirmed="legacySaved(message)"
+            :record="legacyRecord(message)"
             cat-appearance
             @confirm="handleConfirmRecord(message.id, $event)"
             @update="handleUpdateRecord(message.id, $event)"
@@ -227,7 +225,7 @@ onBeforeUnmount(() => {
       </div>
     </main>
 
-    <ChatInput :disabled="conversationStore.isThinking" cat-appearance @send="handleSend" @voice="handleVoice" />
+    <ChatInput :disabled="conversationStore.isThinking || Boolean(savingGroup)" cat-appearance @send="handleSend" @voice="handleVoice" />
   </div>
 </template>
 
@@ -262,6 +260,8 @@ onBeforeUnmount(() => {
 .miao-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 5px 12px; padding: 9px 16px; font-size: 12px; background: var(--miao-yellow); }
 .miao-summary p { display: flex; align-items: center; gap: 8px; }
 .miao-summary p span { font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.miao-manual-link { justify-self: start; }
+.miao-storage-error { font-size: 12px; color: #aa594d; line-height: 1.8; }
 .miao-demo-label { color: var(--miao-soft); }
 .miao-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
 .miao-thread { display: flex; flex-direction: column; gap: 18px; padding: 22px 16px 25px; }

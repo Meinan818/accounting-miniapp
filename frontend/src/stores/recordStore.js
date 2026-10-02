@@ -1,8 +1,10 @@
-import { computed, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref } from 'vue'
 import { defineStore } from 'pinia'
 import dayjs from 'dayjs'
+import { createId, prepareBatch, prepareUpdate, validDate } from '../utils/ledger.js'
+import { legacyCents, sumAmounts, MAX_CENTS } from '../utils/money.js'
 
-const STORAGE_KEY = 'zhizhang_mock_records'
+export const RECORD_STORAGE_KEY = 'zhizhang_mock_records'
 
 function createSampleRecords() {
   const month = dayjs().format('YYYY-MM')
@@ -21,96 +23,74 @@ function createSampleRecords() {
   ]
 }
 
-function isLegacySample(records) {
-  return Array.isArray(records)
-    && records.length <= 2
-    && records.every((record) => String(record.id).startsWith('sample'))
-}
 
-function loadRecords() {
-  if (typeof window === 'undefined') {
-    return createSampleRecords()
-  }
-
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY)
-
-    if (!saved) {
-      return createSampleRecords()
-    }
-
-    const parsed = JSON.parse(saved)
-
-    if (isLegacySample(parsed)) {
-      return createSampleRecords()
-    }
-
-    return Array.isArray(parsed) ? parsed : createSampleRecords()
-  } catch (error) {
-    console.warn('读取本地假账单失败：', error)
-    return createSampleRecords()
-  }
-}
 
 export const useRecordStore = defineStore('record', () => {
-  const records = ref(loadRecords())
-
-  const monthRecords = computed(() => {
-    const currentMonth = dayjs().format('YYYY-MM')
-    return records.value.filter((record) => record.date?.startsWith(currentMonth))
-  })
-
-  const monthExpense = computed(() => monthRecords.value
-    .filter((record) => record.type === 'expense')
-    .reduce((total, record) => total + Number(record.amount || 0), 0))
-
-  const monthIncome = computed(() => monthRecords.value
-    .filter((record) => record.type === 'income')
-    .reduce((total, record) => total + Number(record.amount || 0), 0))
-
-  const categoryExpenses = computed(() => monthRecords.value
-    .filter((record) => record.type === 'expense')
-    .reduce((summary, record) => {
-      summary[record.category] = (summary[record.category] || 0) + Number(record.amount || 0)
-      return summary
-    }, {}))
-
-  const categoryIncome = computed(() => monthRecords.value
-    .filter((record) => record.type === 'income')
-    .reduce((summary, record) => {
-      summary[record.category] = (summary[record.category] || 0) + Number(record.amount || 0)
-      return summary
-    }, {}))
-
-  function addRecord(record) {
-    const newRecord = {
-      ...record,
-      id: `record-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-      amount: Number(record.amount),
+  const storageError = ref('')
+  function readLatest(fallback = createSampleRecords()) {
+    try {
+      if (typeof window === 'undefined') return fallback
+      const raw = window.localStorage.getItem(RECORD_STORAGE_KEY)
+      if (raw == null) return fallback
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed) || parsed.some(r => !r || typeof r !== 'object' || typeof r.id !== 'string'
+        || !['expense', 'income'].includes(r.type) || !Number.isFinite(Number(r.amount)) || Number(r.amount) <= 0 || Number(r.amount) * 100 > MAX_CENTS
+        || !validDate(r.date) || typeof r.category !== 'string')
+        || new Set(parsed.map(r => r.id)).size !== parsed.length) throw new Error('invalid records')
+      return parsed
+    } catch {
+      throw new Error('本地账单读取失败，为保护原数据暂不写入。请先备份浏览器数据，不要清除存储。')
     }
-
-    records.value.unshift(newRecord)
-    return newRecord
   }
-
-  function clearRecords() {
-    records.value = []
+  let initial
+  try { initial = readLatest() } catch (e) { initial = []; storageError.value = e.message }
+  const records = ref(initial)
+  const monthRecords = computed(() => records.value.filter(r => r.date?.startsWith(dayjs().format('YYYY-MM'))))
+  const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
+  const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
+  function categories(type) {
+    const cents = {}
+    for (const r of monthRecords.value.filter(r => r.type === type)) cents[r.category] = (cents[r.category] || 0) + legacyCents(r.amount)
+    return Object.fromEntries(Object.entries(cents).map(([k, v]) => [k, v / 100]))
   }
+  const categoryExpenses = computed(() => categories('expense'))
+  const categoryIncome = computed(() => categories('income'))
 
-  watch(records, (newRecords) => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(newRecords))
+  function persist(next) {
+    try {
+      if (typeof window !== 'undefined') window.localStorage.setItem(RECORD_STORAGE_KEY, JSON.stringify(next))
+    } catch {
+      throw new Error('账单未保存：浏览器存储不可用或空间不足。草稿已保留，请稍后重试。')
     }
-  }, { deep: true })
-
-  return {
-    records,
-    monthRecords,
-    monthExpense,
-    monthIncome,
-    categoryExpenses,
-    categoryIncome,
-    addRecord,
-    clearRecords,
+    records.value = next
+    storageError.value = ''
   }
+  function refresh() {
+    try { records.value = readLatest(records.value); storageError.value = ''; return true }
+    catch (e) { storageError.value = e.message; return false }
+  }
+  function addRecords(inputs, { batchId = createId('batch'), source = 'chat' } = {}) {
+    const latest = readLatest(records.value)
+    const result = prepareBatch(latest, inputs, { batchId, source })
+    if (result.added) persist(result.records)
+    else { records.value = latest; storageError.value = '' }
+    return result.saved
+  }
+  function addRecord(input, options = {}) {
+    return addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options })[0]
+  }
+  function updateRecord(id, input) {
+    const result = prepareUpdate(readLatest(records.value), id, input)
+    persist(result.records)
+    return result.updated
+  }
+  function batchRecords(id) { return records.value.filter(r => r.draftGroupId === id) }
+  function clearRecords() { persist([]) }
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    const listener = e => { if (e.key === RECORD_STORAGE_KEY || e.key == null) refresh() }
+    window.addEventListener('storage', listener)
+    onScopeDispose(() => window.removeEventListener('storage', listener))
+  }
+  return { records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
+    addRecord, addRecords, updateRecord, batchRecords, refresh, clearRecords }
 })

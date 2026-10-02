@@ -3,6 +3,7 @@
 import { computed, ref, watch } from 'vue'
 import { CATEGORY_OPTIONS, getCategoryMeta } from '@/utils/mockAI'
 import { formatCurrency, formatRecordTime } from '@/utils/format'
+import { validateRecord } from '@/utils/ledger'
 
 // 2. Props
 const props = defineProps({
@@ -63,30 +64,12 @@ function handleTypeChange() {
 }
 
 function saveChanges() {
-  const amount = Number(form.value.amount)
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    errorMessage.value = '金额必须大于 0'
-    return
-  }
-
-  if (!form.value.date) {
-    errorMessage.value = '请选择日期'
-    return
-  }
-
-  if (!form.value.time) {
-    errorMessage.value = '请选择时间'
-    return
-  }
-
-  emit('update', {
-    ...props.record,
-    ...form.value,
-    amount: Number(amount.toFixed(2)),
-  })
-  errorMessage.value = ''
-  editing.value = false
+  try {
+    const normalized = validateRecord({ ...form.value, description: form.value.remark || form.value.category })
+    emit('update', { ...props.record, ...normalized })
+    errorMessage.value = ''
+    editing.value = false
+  } catch (error) { errorMessage.value = error.message }
 }
 
 // 7. 生命周期与监听
