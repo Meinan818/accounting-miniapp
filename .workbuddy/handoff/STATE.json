@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "手账贴纸入口与明细整行编辑已获用户满意确认，用户授权本地commit保存A1及相关UI/测试/文档",
-  "stage": "manual_entry_bills_ui_accepted_local_save",
+  "currentTask": "用户已审核认可单笔删除/新增定位/热更新修复并授权本地commit；开始A3月度统计方案准备，统计业务尚未实施",
+  "stage": "a3_monthly_statistics_scope_pending",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "继续验收A1聊天业务路径（多笔、追问、纠正、确认保存），再确认后续A2范围；远端备份另行授权Push",
-  "nextStepReason": "入口与编辑面板已人工认可，不重复验收该外观；A1整体交互尚不能由UI满意或技术检查替代，先验证主线再扩展",
-  "pendingUserDecision": "A1整体交互反馈、后续A2范围；Push仍需单独授权",
+  "nextStep": "确认A3统计页最小范围：月份切换、月收支/结余、收支分类金额/占比及同源改删联动，确认后实施；暂缓的明细排序方案不启动",
+  "nextStepReason": "先保存已认可的有界成果，再按原前端路线推进当前占位统计页；复用已有有效账单，不重做A1/数据层，不提前做后端或模型质量指标",
+  "pendingUserDecision": "A3统计页最小方案实施确认；Push仍需另行授权",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }

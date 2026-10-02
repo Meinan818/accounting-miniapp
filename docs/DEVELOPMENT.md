@@ -74,5 +74,15 @@ npm run build
 - frontend/src/utils/ledger.js / money.js：共享金额/日期/分类校验，批量保存与按ID修改；整数分运算，保存适配旧amount字段。
 - RecordStore：从旧key读取最新账单，再整体校验和单次持久化；保存成功再更新响应式数据。编辑保留ID/来源/组标识。旧草稿仅是历史，不得成为修改后账单的事实来源。
 - ConversationStore：捕获对话写入异常，保护损坏内容；保存状态在UI优先用账单组标识恢复，对话和账单两个localStorage键不是数据库事务。
-- 前端无新依赖，包锁未改；正式可复跑的36项Node测试在frontend/tests，命令npm test。内部浏览器检查脚本/截图在E盘.workbuddy/memory/home-visual。测试只用独立profile和固定用例日期，不清用户浏览器数据；真机键盘/跨设备未验证。
+- 前端无新依赖，包锁未改；正式可复跑的49项Node测试在frontend/tests，命令npm test。内部浏览器检查脚本/截图在E盘.workbuddy/memory/home-visual。测试只用独立profile和固定用例日期，不清用户浏览器数据；真机键盘/跨设备未验证。
 - 真实Java/AI阶段以用户身份授权的后端账单接口为唯一事实来源，当前浏览器同步不是登录隔离/云端同步。
+
+## A2单笔删除的数据边界
+
+ledger.prepareDelete保留原账单并增加deletedAt/updatedAt，重复删除不重复写入，prepareUpdate禁止修改已删除项。RecordStore内部完整记录用于同组防重和读取最新数据，records计算属性只暴露未删除账单，batchRecords包含删除事实供聊天卡片使用；保持原存储键与旧数据兼容。持久化成功后才更新内存/报告成功，失败保留原状态。逻辑删除保留本地历史，并非数据库事务或安全审计；没有恢复入口或彻底擦除功能。
+
+## 开发热更新与新增行定位
+
+RecordStore使用已安装Pinia4.0.3的acceptHMRUpdate，并以显式import.meta.hot.accept注册Vite边界，保持已打开页面的动作/计算属性与代码一致。首次在没有旧HMR上下文的页面启用时仍需刷新一次，不通过清空或重建账本处理。单元测试覆盖热更新回调在原上下文升级动作和保留数据，内部Vite模块图检查覆盖边界识别。
+
+手动保存跳转在月份参数外携带added账单标识；Bills按该ID定位/标记新行，不重新排列日期、不把示例或其他账单搬动。删除成功聚焦状态提示，旧模块缺动作时提示刷新。对应内部旧浏览器断言更新URL预期，数据/金额断言不删。

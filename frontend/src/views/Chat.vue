@@ -208,6 +208,7 @@ onBeforeUnmount(() => {
             @cancel="cancelDraft(message.id)"
             @update="editDraft(message.id, $event)"
           />
+          <p v-else-if="message.kind === 'record' && legacyRecord(message)?.deletedAt" class="legacy-deleted-note">这笔账单已删除，已从当前汇总移除，不会通过旧聊天重新入账。</p>
           <ConfirmCard
             v-else-if="message.kind === 'record'"
             :confirmed="legacySaved(message)"
@@ -261,6 +262,7 @@ onBeforeUnmount(() => {
 .miao-summary p { display: flex; align-items: center; gap: 8px; }
 .miao-summary p span { font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .miao-manual-link { justify-self: start; }
+.legacy-deleted-note { padding: 16px; border: 1px dashed #d9c5a9; border-radius: 16px; font-size: 13px; line-height: 1.8; color: #9c806c; background: #fffaf2; }
 .miao-storage-error { font-size: 12px; color: #aa594d; line-height: 1.8; }
 .miao-demo-label { color: var(--miao-soft); }
 .miao-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }

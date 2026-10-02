@@ -14,7 +14,7 @@ const batchId = createId('manual')
 function save(record) {
   if (saving.value) return
   saving.value = true
-  try { const saved = store.addRecord(record, { batchId, source: 'manual' }); router.push({ path: '/bills', query: { month: saved.date.slice(0, 7) } }) }
+  try { const saved = store.addRecord(record, { batchId, source: 'manual' }); router.push({ path: '/bills', query: { month: saved.date.slice(0, 7), added: saved.id } }) }
   catch (e) { error.value = e.message; saving.value = false }
 }
 </script>

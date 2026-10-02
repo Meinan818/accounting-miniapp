@@ -9,26 +9,31 @@ const saved = computed(() => props.savedRecords.length === props.group.items.len
 const status = computed(() => saved.value ? 'saved' : props.group.status)
 const items = computed(() => props.group.items.map(i => {
   const r = props.savedRecords.find(r => r.draftItemId === i.id)
-  return r ? { ...i, ...r, id: i.id, amountCents: legacyCents(r.amount), description: r.remark || r.description || r.category } : i
+  return r ? { ...i, ...r, id: i.id, deleted: Boolean(r.deletedAt), amountCents: r.deletedAt ? null : legacyCents(r.amount), description: r.remark || r.description || r.category } : i
 }))
-const totals = computed(() => ({ expense: items.value.filter(i => i.type === 'expense').reduce((n, i) => n + (i.amountCents || 0), 0), income: items.value.filter(i => i.type === 'income').reduce((n, i) => n + (i.amountCents || 0), 0) }))
+const deletedCount = computed(() => items.value.filter(i => i.deleted).length)
+const statusLabel = computed(() => status.value === 'saved' && deletedCount.value
+  ? (deletedCount.value === items.value.length ? '全部已删除' : '已记录 · 删除' + deletedCount.value + '笔')
+  : ({ needs_input: '待补充', ready: '待确认', saved: '已记账', cancelled: '已取消' })[status.value] || '保存中')
+const totals = computed(() => ({ expense: items.value.filter(i => !i.deleted && i.type === 'expense').reduce((n, i) => n + (i.amountCents || 0), 0), income: items.value.filter(i => !i.deleted && i.type === 'income').reduce((n, i) => n + (i.amountCents || 0), 0) }))
 const editRecord = computed(() => { const i = props.group.items.find(i => i.id === editing.value); return i ? { ...i, amount: i.amountCents == null ? '' : centsText(i.amountCents) } : null })
 function update(record) { emit('update', { itemId: editing.value, record }); editing.value = null }
 </script>
 <template>
   <article class="miao-record draft-group-card" :data-group-id="group.id" :data-state="status">
-    <div class="draft-heading"><h2 class="record-heading">这组小账单 · {{ items.length }}笔</h2><span class="record-pending">{{ ({ needs_input: '待补充', ready: '待确认', saved: '已记账', cancelled: '已取消' })[status] || '保存中' }}</span></div>
+    <div class="draft-heading"><h2 class="record-heading">这组小账单 · {{ items.length }}笔</h2><span class="record-pending">{{ statusLabel }}</span></div>
     <ol class="draft-items">
-      <li v-for="(item, index) in items" :key="item.id" :data-item-id="item.id">
-        <div class="draft-item-top"><span>{{ index + 1 }}. {{ item.description }}</span><strong :class="item.type">{{ item.amountCents == null ? '待补金额' : '¥' + centsText(item.amountCents) }}</strong></div>
-        <p>{{ item.type === 'income' ? '收入' : item.type === 'expense' ? '支出' : '待定收支' }} · {{ item.category }} · {{ item.date || '待补日期' }} {{ item.time || '待补时间' }}</p>
+      <li v-for="(item, index) in items" :key="item.id" :data-item-id="item.id" :class="{ 'deleted-item': item.deleted }">
+        <div class="draft-item-top"><span>{{ index + 1 }}. {{ item.description }}</span><strong :class="item.type">{{ item.deleted ? '已删除' : item.amountCents == null ? '待补金额' : '¥' + centsText(item.amountCents) }}</strong></div>
+        <p v-if="!item.deleted">{{ item.type === 'income' ? '收入' : item.type === 'expense' ? '支出' : '待定收支' }} · {{ item.category }} · {{ item.date || '待补日期' }} {{ item.time || '待补时间' }}</p>
+        <p v-else>已从当前账本移除，不计入合计。</p>
         <button v-if="!['saved', 'cancelled'].includes(status)" type="button" :disabled="busy" :aria-label="'编辑第' + (index + 1) + '笔草稿'" @click="editing = item.id">编辑这笔</button>
       </li>
     </ol>
-    <div class="draft-totals"><p v-if="totals.expense">支出{{ status === 'needs_input' ? '已知金额' : '合计' }} ¥{{ centsText(totals.expense) }}</p><p v-if="totals.income">收入{{ status === 'needs_input' ? '已知金额' : '合计' }} ¥{{ centsText(totals.income) }}</p><p v-if="status === 'needs_input'">仍有待补充或待选择的信息，补齐后才能保存。</p></div>
+    <div class="draft-totals"><p v-if="deletedCount">当前有效账单 {{ items.length - deletedCount }}笔；已删除 {{ deletedCount }}笔，不计入下方合计。</p><p v-if="totals.expense">支出{{ status === 'needs_input' ? '已知金额' : '合计' }} ¥{{ centsText(totals.expense) }}</p><p v-if="totals.income">收入{{ status === 'needs_input' ? '已知金额' : '合计' }} ¥{{ centsText(totals.income) }}</p><p v-if="status === 'needs_input'">仍有待补充或待选择的信息，补齐后才能保存。</p></div>
     <p v-if="error" role="alert" class="draft-error">{{ error }}</p>
     <div v-if="!['saved', 'cancelled'].includes(status)" class="draft-actions"><button type="button" :disabled="busy" @click="emit('cancel')">取消这组</button><button type="button" class="draft-confirm bg-primary-400" :disabled="busy || status !== 'ready'" @click="emit('confirm')">{{ busy ? '正在保存…' : '确认记下' + items.length + '笔' }}</button></div>
-    <p v-else-if="status === 'saved'" class="saved-note">此卡片读取最新账单；<router-link :to="{ path: '/bills', query: { month: items[0]?.date?.slice(0, 7) } }">到明细修改</router-link>。历史聊天回复只是当时的记录。</p>
+    <p v-else-if="status === 'saved'" class="saved-note">此卡片读取最新账单（含删除状态）；<router-link :to="{ path: '/bills', query: { month: (items.find(i => !i.deleted) || items[0])?.date?.slice(0, 7) } }">到明细修改</router-link>。历史聊天回复只是当时的记录。</p>
     <RecordEditor v-if="editRecord" :key="editing" :record="editRecord" @save="update" @close="editing = null" />
   </article>
 </template>
@@ -41,6 +46,7 @@ function update(record) { emit('update', { itemId: editing.value, record }); edi
 strong { font-weight: 400; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .draft-items p { font-size: 12px; color: #aa8a70; margin-top: 5px; }
 .draft-items button { margin-top: 6px; padding: 6px 10px; font-size: 12px; min-height: 36px; }
+.deleted-item { color: #9c8877; }.deleted-item strong { color: #9c8877; }
 .expense { color: #ba7662; }.income { color: #7f9367; }
 .draft-totals { font-size: 13px; line-height: 1.9; margin-top: 10px; }
 .draft-actions { display: flex; gap: 10px; margin-top: 14px; }.draft-actions button { flex: 1; padding: 10px 6px; }

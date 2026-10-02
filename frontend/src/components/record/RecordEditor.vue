@@ -1,20 +1,33 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import RecordForm from './RecordForm.vue'
-const props = defineProps({ record: { type: Object, required: true }, saving: Boolean, error: String })
-const emit = defineEmits(['save', 'close'])
+import { formatCurrency } from '@/utils/format'
+const props = defineProps({ record: { type: Object, required: true }, saving: Boolean, error: String, allowDelete: Boolean })
+const emit = defineEmits(['save', 'close', 'delete'])
 const dialog = ref(null)
+const confirmingDelete = ref(false)
+const deleteTrigger = ref(null)
+const cancelDeleteButton = ref(null)
+async function startDelete() { if (!props.saving) { confirmingDelete.value = true; await nextTick(); cancelDeleteButton.value?.focus() } }
+async function cancelDelete() { confirmingDelete.value = false; await nextTick(); deleteTrigger.value?.focus() }
 let previousOverflow
 onMounted(() => { previousOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden'; dialog.value.showModal() })
 onBeforeUnmount(() => { dialog.value?.close(); document.body.style.overflow = previousOverflow })
-function close() { if (!props.saving) emit('close') }
+function close() { if (props.saving) return; if (confirmingDelete.value) cancelDelete(); else emit('close') }
 </script>
 <template>
   <dialog ref="dialog" class="bill-editor" aria-labelledby="bill-editor-title" @cancel.prevent="close">
     <div class="editor-handle" aria-hidden="true"></div>
-    <div class="editor-heading"><h2 id="bill-editor-title">编辑这笔账单</h2><button type="button" aria-label="关闭修改窗口" :disabled="saving" @click="close">×</button></div>
-    <p class="editor-note">保存后，明细、首页和聊天查询都会使用最新数据。</p>
-    <RecordForm :record="record" :saving="saving" :error="error" submit-label="保存修改" @save="emit('save', $event)" @cancel="close" />
+    <div class="editor-heading"><h2 id="bill-editor-title">{{ confirmingDelete ? '删除这笔账单？' : '编辑这笔账单' }}</h2><button type="button" :aria-label="confirmingDelete ? '取消删除返回编辑' : '关闭修改窗口'" :disabled="saving" @click="close">×</button></div>
+    <p v-if="!confirmingDelete" class="editor-note">保存后，明细、首页和聊天查询都会使用最新数据。</p>
+    <RecordForm v-show="!confirmingDelete" :record="record" :saving="saving" :error="error" submit-label="保存修改" @save="emit('save', $event)" @cancel="close" />
+    <button v-if="allowDelete && !confirmingDelete" ref="deleteTrigger" class="delete-entry" type="button" :disabled="saving" @click="startDelete">删除这笔账单</button>
+    <section v-if="confirmingDelete" class="delete-confirmation">
+      <p class="delete-summary">{{ record.category }} · {{ record.remark || '无备注' }}<strong>{{ record.type === 'income' ? '+' : '-' }}{{ formatCurrency(record.amount) }}</strong><span>{{ record.date }} {{ record.time }}</span></p>
+      <p class="delete-note">删除后，这笔已保存的账单不再计入首页、明细和聊天查询。尚未保存的编辑不会写入；此版本暂不提供恢复入口。</p>
+      <p v-if="error" class="delete-error" role="alert">{{ error }}</p>
+      <div class="delete-actions"><button ref="cancelDeleteButton" type="button" :disabled="saving" @click="cancelDelete">返回编辑</button><button class="delete-confirm-button" type="button" :disabled="saving" @click="emit('delete')">{{ saving ? '正在删除…' : '确认删除' }}</button></div>
+    </section>
   </dialog>
 </template>
 <style scoped>
@@ -24,6 +37,18 @@ function close() { if (!props.saving) emit('close') }
 h2 { font-size: 19px; font-weight: 400; }
 .editor-heading button { min-width: 44px; min-height: 44px; border: 1px solid #d9c5a9; border-radius: 12px; background: #fffdf8; font-size: 24px; color: inherit; }
 .editor-note { font-size: 12px; margin: 10px 0 18px; line-height: 1.7; }
+.delete-entry { display: block; width: 100%; min-height: 44px; margin-top: 16px; padding: 8px; border-top: 1px dashed #dfcdbb; color: #a36a60; font-size: 13px; }
+.delete-confirmation { margin-top: 18px; }
+.delete-summary { padding: 14px; border: 1px solid #e5ccba; border-radius: 14px 11px 15px 12px; background: #fff5e7; overflow-wrap: anywhere; font-size: 14px; line-height: 1.8; }
+.delete-summary strong { display: block; color: #aa665b; font-size: 22px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.delete-summary span { display: block; color: #9d806c; font-size: 12px; }
+.delete-note { margin: 16px 0; line-height: 1.9; font-size: 13px; }
+.delete-error { margin-bottom: 14px; color: #aa594d; font-size: 13px; line-height: 1.8; }
+.delete-actions { display: flex; gap: 10px; }
+.delete-actions button { flex: 1; min-height: 44px; padding: 10px 8px; border: 1px solid #dcc2a9; border-radius: 12px; background: #fffdf8; font-size: 14px; }
+.delete-actions .delete-confirm-button { background: #f4dbd4; color: #874f47; border-color: #dfb4aa; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.delete-entry:focus-visible, .delete-actions button:focus-visible { outline: 2px solid #785746; outline-offset: 3px; }
 .editor-handle { display: none; }
 @media (max-width: 639px) {
   .bill-editor { position: fixed; inset: auto 0 0; margin: 0 auto; width: 100%; max-width: 480px; max-height: calc(100dvh - 16px); padding: 12px 18px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 24px 24px 0 0; box-shadow: 0 -6px 24px rgb(80 60 40 / .1); }

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { parseCents, centsText, sumAmounts } from '../src/utils/money.js'
-import { prepareBatch, prepareUpdate, validateRecord, validDate } from '../src/utils/ledger.js'
+import { prepareBatch, prepareUpdate, prepareDelete, validateRecord, validDate } from '../src/utils/ledger.js'
 const item = (extra = {}) => ({ id: 'a', type: 'expense', amount: '25.50', category: '餐饮', date: '2026-10-02', time: '12:00', remark: '午饭', ...extra })
 test('金额严格校验及整数分汇总', () => {
   assert.equal(parseCents('1,234.56'), 123456); assert.equal(centsText(41), '0.41'); assert.equal(centsText(-41), '-0.41')
@@ -39,4 +39,41 @@ test('不存在账单、部分重复组和重复条目编号均阻止误写', ()
   assert.throws(() => prepareBatch([], [item(), item()], { batchId: 'batch' }))
   const saved = prepareBatch([], [item()], { batchId: 'batch' }).records
   assert.throws(() => prepareBatch(saved, [item(), item({ id: 'b' })], { batchId: 'batch' }))
+})
+
+test('单笔删除只标记目标，保留来源/草稿标识和其他账单', () => {
+  const original = prepareBatch([], [item(), item({ id: 'b', amount: '16' })], { batchId: 'batch', source: 'chat' }).records
+  const timestamp = '2026-10-03T12:00:00.000Z'
+  const result = prepareDelete(original, original[0].id, timestamp)
+  assert.equal(result.deleted, true); assert.equal(result.updated.deletedAt, timestamp)
+  assert.equal(result.updated.updatedAt, timestamp); assert.equal(result.updated.id, original[0].id)
+  assert.equal(result.updated.draftGroupId, 'batch'); assert.equal(result.updated.draftItemId, 'a')
+  assert.equal(result.updated.source, 'chat'); assert.deepEqual(result.records[1], original[1])
+  assert.equal(original[0].deletedAt, undefined)
+})
+test('重复删除不改原删除时间，不存在目标明确失败', () => {
+  const old = prepareBatch([], [item()], { batchId: 'batch' }).records
+  const first = prepareDelete(old, old[0].id, '2026-10-03T12:00:00.000Z')
+  const again = prepareDelete(first.records, old[0].id, '2026-10-04T12:00:00.000Z')
+  assert.equal(again.deleted, false); assert.equal(again.updated.deletedAt, first.updated.deletedAt)
+  assert.throws(() => prepareDelete(old, 'missing'), /不存在/)
+})
+test('已删除账单不能通过旧编辑恢复', () => {
+  const old = prepareBatch([], [item()], { batchId: 'batch' }).records
+  const removed = prepareDelete(old, old[0].id).records
+  assert.throws(() => prepareUpdate(removed, old[0].id, item({ amount: '99' })), /已删除/)
+})
+test('部分删除后重复整组确认保留删除事实，不重复生成账单', () => {
+  const inputs = [item(), item({ id: 'b' })]
+  const old = prepareBatch([], inputs, { batchId: 'batch' }).records
+  const removed = prepareDelete(old, old[0].id).records
+  const repeat = prepareBatch(removed, inputs, { batchId: 'batch' })
+  assert.equal(repeat.added, false); assert.equal(repeat.saved.length, 2)
+  assert.equal(repeat.saved.filter(r => r.deletedAt).length, 1); assert.deepEqual(repeat.records, removed)
+})
+test('整组全部删除后重新载入再确认也不能恢复', () => {
+  const old = prepareBatch([], [item()], { batchId: 'batch' }).records
+  const removed = JSON.parse(JSON.stringify(prepareDelete(old, old[0].id).records))
+  const repeat = prepareBatch(removed, [item()], { batchId: 'batch' })
+  assert.equal(repeat.added, false); assert.equal(repeat.records.length, 1); assert(repeat.saved[0].deletedAt)
 })

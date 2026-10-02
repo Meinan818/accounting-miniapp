@@ -1,7 +1,7 @@
 import { computed, onScopeDispose, ref } from 'vue'
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import dayjs from 'dayjs'
-import { createId, prepareBatch, prepareUpdate, validDate } from '../utils/ledger.js'
+import { createId, prepareBatch, prepareUpdate, prepareDelete, validDate } from '../utils/ledger.js'
 import { legacyCents, sumAmounts, MAX_CENTS } from '../utils/money.js'
 
 export const RECORD_STORAGE_KEY = 'zhizhang_mock_records'
@@ -35,7 +35,8 @@ export const useRecordStore = defineStore('record', () => {
       const parsed = JSON.parse(raw)
       if (!Array.isArray(parsed) || parsed.some(r => !r || typeof r !== 'object' || typeof r.id !== 'string'
         || !['expense', 'income'].includes(r.type) || !Number.isFinite(Number(r.amount)) || Number(r.amount) <= 0 || Number(r.amount) * 100 > MAX_CENTS
-        || !validDate(r.date) || typeof r.category !== 'string')
+        || !validDate(r.date) || typeof r.category !== 'string'
+        || (r.deletedAt !== undefined && (typeof r.deletedAt !== 'string' || !Number.isFinite(Date.parse(r.deletedAt)))))
         || new Set(parsed.map(r => r.id)).size !== parsed.length) throw new Error('invalid records')
       return parsed
     } catch {
@@ -44,7 +45,9 @@ export const useRecordStore = defineStore('record', () => {
   }
   let initial
   try { initial = readLatest() } catch (e) { initial = []; storageError.value = e.message }
-  const records = ref(initial)
+  const allRecords = ref(initial)
+  // All pages read active bills; batch lookup also retains deletion facts for old chat cards.
+  const records = computed(() => allRecords.value.filter(r => !r.deletedAt))
   const monthRecords = computed(() => records.value.filter(r => r.date?.startsWith(dayjs().format('YYYY-MM'))))
   const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
   const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
@@ -56,35 +59,42 @@ export const useRecordStore = defineStore('record', () => {
   const categoryExpenses = computed(() => categories('expense'))
   const categoryIncome = computed(() => categories('income'))
 
-  function persist(next) {
+  function persist(next, errorMessage = '账单未保存：浏览器存储不可用或空间不足。草稿已保留，请稍后重试。') {
     try {
       if (typeof window !== 'undefined') window.localStorage.setItem(RECORD_STORAGE_KEY, JSON.stringify(next))
     } catch {
-      throw new Error('账单未保存：浏览器存储不可用或空间不足。草稿已保留，请稍后重试。')
+      throw new Error(errorMessage)
     }
-    records.value = next
+    allRecords.value = next
     storageError.value = ''
   }
   function refresh() {
-    try { records.value = readLatest(records.value); storageError.value = ''; return true }
+    try { allRecords.value = readLatest(allRecords.value); storageError.value = ''; return true }
     catch (e) { storageError.value = e.message; return false }
   }
   function addRecords(inputs, { batchId = createId('batch'), source = 'chat' } = {}) {
-    const latest = readLatest(records.value)
+    const latest = readLatest(allRecords.value)
     const result = prepareBatch(latest, inputs, { batchId, source })
     if (result.added) persist(result.records)
-    else { records.value = latest; storageError.value = '' }
+    else { allRecords.value = latest; storageError.value = '' }
     return result.saved
   }
   function addRecord(input, options = {}) {
     return addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options })[0]
   }
   function updateRecord(id, input) {
-    const result = prepareUpdate(readLatest(records.value), id, input)
+    const result = prepareUpdate(readLatest(allRecords.value), id, input)
     persist(result.records)
     return result.updated
   }
-  function batchRecords(id) { return records.value.filter(r => r.draftGroupId === id) }
+  function deleteRecord(id) {
+    const latest = readLatest(allRecords.value)
+    const result = prepareDelete(latest, id)
+    if (result.deleted) persist(result.records, '删除未完成：浏览器存储不可用或空间不足，原账单没有改变。请稍后重试。')
+    else { allRecords.value = latest; storageError.value = '' }
+    return result.updated
+  }
+  function batchRecords(id) { return allRecords.value.filter(r => r.draftGroupId === id) }
   function clearRecords() { persist([]) }
   if (typeof window !== 'undefined' && window.addEventListener) {
     const listener = e => { if (e.key === RECORD_STORAGE_KEY || e.key == null) refresh() }
@@ -92,5 +102,14 @@ export const useRecordStore = defineStore('record', () => {
     onScopeDispose(() => window.removeEventListener('storage', listener))
   }
   return { records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
-    addRecord, addRecords, updateRecord, batchRecords, refresh, clearRecords }
+    addRecord, addRecords, updateRecord, deleteRecord, batchRecords, refresh, clearRecords }
 })
+
+// Keep an already-open development page on the current actions/getters without clearing its ledger.
+export function createRecordStoreHMRHandler(hot) {
+  return hot ? acceptHMRUpdate(useRecordStore, hot) : undefined
+}
+if (import.meta.hot) {
+  // Vite needs this literal accept call to identify the store as a hot-update boundary.
+  import.meta.hot.accept(createRecordStoreHMRHandler(import.meta.hot))
+}

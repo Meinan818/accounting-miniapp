@@ -54,8 +54,18 @@ export function prepareBatch(existing, inputs, { batchId, source = 'manual', now
 export function prepareUpdate(existing, id, input, now = new Date().toISOString()) {
   const current = existing.find(r => r.id === id)
   if (!current) throw new Error('账单已不存在，请刷新明细')
+  if (current.deletedAt) throw new Error('这笔账单已删除，不能用旧编辑恢复，请刷新明细')
   const fields = validateRecord(input)
   // Preserve identity, provenance and batch markers so edited AI bills cannot be duplicated.
   const updated = { ...current, ...fields, id: current.id, updatedAt: now }
   return { records: existing.map(r => r.id === id ? updated : r), updated }
+}
+
+// Retain the same ledger entry as a deletion marker so an old draft cannot recreate it.
+export function prepareDelete(existing, id, now = new Date().toISOString()) {
+  const current = existing.find(r => r.id === id)
+  if (!current) throw new Error('账单已不存在，请刷新明细')
+  if (current.deletedAt) return { records: existing, updated: current, deleted: false }
+  const updated = { ...current, deletedAt: now, updatedAt: now }
+  return { records: existing.map(r => r.id === id ? updated : r), updated, deleted: true }
 }

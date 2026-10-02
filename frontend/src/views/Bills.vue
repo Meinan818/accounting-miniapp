@@ -1,7 +1,7 @@
 <script setup>
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import RecordEditor from '@/components/record/RecordEditor.vue'
 import { sumAmounts, legacyCents } from '@/utils/money'
@@ -24,6 +24,7 @@ const editingRecord = ref(null)
 const saving = ref(false)
 const saveError = ref('')
 const notice = ref('')
+const noticeElement = ref(null)
 
 // 4. 计算属性
 const monthTitle = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY年M月'))
@@ -59,6 +60,18 @@ const groupedRecords = computed(() => {
   }))
 })
 
+const highlightedId = computed(() => typeof route.query.added === 'string' ? route.query.added : '')
+const recordElements = new Map()
+function setRecordElement(id, element) { if (element) recordElements.set(id, element); else recordElements.delete(id) }
+watch([highlightedId, selectedMonth], async ([id]) => {
+  if (!id || !monthRecords.value.some(record => record.id === id)) return
+  notice.value = '新账单已保存，已定位到刚刚记下的这一笔。'
+  await nextTick()
+  const element = recordElements.get(id)
+  element?.scrollIntoView({ block: 'center', behavior: 'auto' })
+  element?.focus({ preventScroll: true })
+}, { immediate: true })
+
 function edit(record) { editingRecord.value = { ...record }; saveError.value = ''; notice.value = '' }
 function saveEdit(input) {
   if (saving.value || !editingRecord.value) return
@@ -68,8 +81,18 @@ function saveEdit(input) {
   finally { saving.value = false }
 }
 
+async function deleteEdit() {
+  if (saving.value || !editingRecord.value) return
+  if (typeof recordStore.deleteRecord !== 'function') { saveError.value = '当前页面仍使用旧版本数据模块。请先退出编辑并刷新页面，原账单尚未删除。'; return }
+  saving.value = true; saveError.value = ''
+  try { recordStore.deleteRecord(editingRecord.value.id); editingRecord.value = null; notice.value = '这笔账单已删除：首页、明细和聊天查询已同步。'; await nextTick(); noticeElement.value?.focus() }
+  catch (e) { saveError.value = e.message }
+  finally { saving.value = false }
+}
+
 // 5. 方法
 function changeMonth(offset) {
+  notice.value = ''
   selectedMonth.value = dayjs(`${selectedMonth.value}-01`).add(offset, 'month').format('YYYY-MM')
 }
 
@@ -113,7 +136,7 @@ function getSign(record) {
 
       <ManualEntry class="bills-manual-link" />
       <p v-if="recordStore.storageError" class="bills-alert" role="alert">{{ recordStore.storageError }}</p>
-      <p v-if="notice" class="bills-notice" role="status">{{ notice }}</p>
+      <p v-if="notice" ref="noticeElement" class="bills-notice" role="status" tabindex="-1">{{ notice }}</p>
 
       <section class="bills-summary" aria-label="月度账单汇总">
         <div class="bills-month">
@@ -174,7 +197,9 @@ function getSign(record) {
               v-for="record in group.records"
               :key="record.id"
               :data-record-id="record.id"
+              :ref="element => setRecordElement(record.id, element)"
               class="bills-record"
+              :class="{ 'bills-record-highlighted': record.id === highlightedId }"
               role="button"
               tabindex="0"
               :aria-label="'编辑账单：' + record.category + '，' + (record.remark || '无备注') + '，' + formatCurrency(record.amount)"
@@ -185,7 +210,7 @@ function getSign(record) {
               <div class="bills-record-main">
                 <span class="bills-record-stamp" aria-hidden="true"><ReceiptText :size="20" :stroke-width="1.5" /></span>
                 <div class="bills-record-text">
-                  <p>{{ record.category }}</p>
+                  <p>{{ record.category }} <span v-if="record.id === highlightedId" class="bills-added-tag">刚刚记下</span></p>
                   <p class="bills-subtitle">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>
                 </div>
               </div>
@@ -210,7 +235,7 @@ function getSign(record) {
       </section>
     </main>
 
-    <RecordEditor v-if="editingRecord" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" @save="saveEdit" @close="editingRecord = null" />
+    <RecordEditor v-if="editingRecord" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" allow-delete @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
     <BottomNav active="detail" />
   </div>
 </template>
@@ -224,7 +249,9 @@ function getSign(record) {
 .bills-record:hover { background: #fff8ed; }
 .bills-record:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 3px; }
 .bills-alert { color: #aa594d; font-size: 12px; margin-bottom: 12px; }
-.bills-notice { font-size: 12px; margin-bottom: 12px; line-height: 1.8; }
+.bills-notice { font-size: 12px; margin-bottom: 12px; padding: 10px 12px; border: 1px solid #d7d9ba; border-radius: 12px; background: #f2f4e5; line-height: 1.8; }
+.bills-record.bills-record-highlighted { border-color: #ce9e8c; background: #fff4e5; }
+.bills-added-tag { display: inline-block; margin-left: 4px; padding: 2px 5px; border-radius: 6px; background: #f8dfd5; color: #a16556; font-size: 11px; vertical-align: middle; }
 .journal-bills { min-height: 100dvh; padding: 18px 16px calc(var(--zz-home-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px)); background: var(--zz-home-bg); color: var(--zz-home-ink); font-family: var(--zz-home-font); font-weight: 400; }
 .bills-content { max-width: var(--zz-home-content-width); margin-inline: auto; }
 .bills-header { display: flex; align-items: center; gap: 9px; margin-bottom: 26px; }
