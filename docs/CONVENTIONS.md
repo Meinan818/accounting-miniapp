@@ -17,23 +17,22 @@
 
 ## 二、目录结构约定（`frontend/src/`）
 
+当前存在的代码入口（不要求创建空目录或占位文件）：
+
 ```
 src/
-├── views/              # 页面（路由级组件）：Login / Home / Add / Stats / Profile
-├── components/
-│   ├── common/         # 通用组件（Button、Input、Card）
-│   ├── layout/         # 布局（Header、Footer、Sidebar）
-│   ├── record/         # 账单相关组件
-│   ├── chart/          # 图表组件
-│   └── mascot/         # 吉祥物组件
-├── api/                # 数据服务入口：当前有历史占位，后续演示实现/Java HTTP实现统一在此封装
-├── stores/             # Pinia：user.js / record.js / category.js
+├── views/              # Home / Chat / Bills；Add / Stats / Profile / Login仍占位
+├── components/         # calendar / common / layout / record / chart / mascot
+├── stores/             # recordStore.js / conversationStore.js
 ├── router/index.js
-├── utils/              # date.js / format.js / validator.js
-├── assets/             # images/ 与 mascot/
+├── utils/              # format.js / mockAI.js（本地规则模拟，不是真实AI）
+├── assets/design/      # 已接入的分类素材
+├── styles/             # 首页局部视觉基准等
 ├── App.vue
 └── main.js
 ```
+
+未来演示/Java数据和对话服务入口按批准任务逐步建立；当前api目录无实现，不把示例中的userStore当作已有认证。后续代码示例是写法示意，不证明对应文件或接口存在。
 
 ## 三、Vue 组件规范
 

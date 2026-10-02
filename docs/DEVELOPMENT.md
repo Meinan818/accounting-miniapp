@@ -1,7 +1,7 @@
 # 智账 — 当前开发指南
 
-> 当前工作：Vue3前端打磨。目标为Java + MySQL后端，后端尚未建立。
-> 项目规则/事实见AGENTS.md，阶段计划见PROJECT_PLAN.md。旧Supabase指南在docs/archive/supabase-route/，不能作为当前操作入口。
+> 当前主线：聊天记账前端闭环（多笔草稿、追问补充、对话纠正、确认保存）。目标为Java + MySQL及真实AI，后端尚未建立；首页视觉为配套。
+> 项目规则见AGENTS.md，目标/验收见PROJECT_PLAN.md，当前任务见STATE.json，历史证据见LOG.md；实现以代码和本轮验证为准。旧Supabase指南在docs/archive/supabase-route/，不能作为当前操作入口。
 
 ## 一、运行前端
 
