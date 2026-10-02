@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "毛茸茸头像已通过并接入；品牌统一为喵叽智账，聊天标题为和小宝聊聊今天的开销，包名/锁文件/有效文档一致；最终构建与53项回归通过",
-  "stage": "brand_avatar_ready_to_save",
+  "currentTask": "首页保留原猫图；旧导航分支和6处图引用已清除，19张淘汰图归档/5张预留猫图分类；构建、53项浏览器及7项素材检查通过，用户已授权本地commit",
+  "stage": "asset_cleanup_verified",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "授权commit保存本轮头像、聊天标题及品牌统一；随后提出A1多笔草稿/连续追问/纠正最小方案，确认后实施",
-  "nextStepReason": "头像画风已通过且接入验证，当前名称与用户纠正一致；先保存独立成果，后续回到聊天记账主线，不扩大到命名功能或后端",
-  "pendingUserDecision": "本轮头像/品牌/标题统一的commit；页面观感有反馈可继续调整，Push单独确认",
+  "nextStep": "提出A1多笔草稿、连续追问与对话纠正的最小交互方案，确认范围后实施",
+  "nextStepReason": "首页头像选择已明确，旧素材已分类且相关页面/数据回归通过；继续聊天记账主线，不再围绕已认可头像重复验收",
+  "pendingUserDecision": "A1最小方案的实施范围；远端备份Push须另行授权",
   "onlineVersion": "无（尚未部署）",
-  "updatedAt": "2026-10-02"
+  "updatedAt": "2026-10-03"
 }

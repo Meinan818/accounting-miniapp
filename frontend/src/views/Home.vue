@@ -122,7 +122,7 @@ function getRecordSign(record) {
       </section>
     </main>
 
-    <BottomNav active="bill" home-appearance />
+    <BottomNav active="bill" />
   </div>
 </template>
 

@@ -186,7 +186,7 @@ function getSign(record) {
       </section>
     </main>
 
-    <BottomNav active="detail" home-appearance />
+    <BottomNav active="detail" />
   </div>
 </template>
 

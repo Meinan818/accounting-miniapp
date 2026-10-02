@@ -1,0 +1,121 @@
+{
+  "archivedAt": "2026-10-03",
+  "reason": "User approved removal of legacy navigation references and preservation of obsolete UI assets",
+  "destructiveDeletion": false,
+  "assets": [
+    {
+      "originalPath": "frontend/src/assets/design/calendar/calendar-clip.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/calendar/calendar-clip.png",
+      "sha256": "64afc697d85eefd68fe37d7cce12c826c43263ed5ff2145f60a86801ed6a30d8",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/calendar/calendar-frame.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/calendar/calendar-frame.png",
+      "sha256": "740ebd76eaa8a0e220de6688ff7fc894e830f8e8804ebcd9b94f4ea763f4749a",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/calendar/expense-coin.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/calendar/expense-coin.png",
+      "sha256": "a617a965831681c39c8728613037118ebd60b8e69d33d0b8fa24336b0bc22c24",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/calendar/income-cash.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/calendar/income-cash.png",
+      "sha256": "97f30a7f2bba52ab0b6288b9025c3fee0678343bbb630fd232f8286efd43537c",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/calendar/month-pill.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/calendar/month-pill.png",
+      "sha256": "74755d70134115a1c0c5c46371104ddd94eb3b7d3320b56cfee6c2487511646e",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/decoration/bear-peek.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/decoration/bear-peek.png",
+      "sha256": "5be3728b0c7de8335d122f60acd76dca49e3bb77bfb65dc8fc274c8949d1323c",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/decoration/cat-peek.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/decoration/cat-peek.png",
+      "sha256": "249a25344d2d44b7d76f53b872a496214bfe4a6c6a6906052ba438165ef65899",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/decoration/leaves.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/decoration/leaves.png",
+      "sha256": "6506fcb1c237c8beb8c956eef2d3a254954a06dcada94377293f52307f37eea6",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/decoration/plant-sprout.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/decoration/plant-sprout.png",
+      "sha256": "b4270b18c3f71dc5167943c0c0f7c10cd7f751f14a0614ec1e2db011e59d64aa",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/decoration/title-brush.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/decoration/title-brush.png",
+      "sha256": "cbad937029d04ebc18232e1c68da9143822a5bd5af1aa85c04038290fc452ee4",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/bottom-wave.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/bottom-wave.png",
+      "sha256": "408cf502f09bbd28c3638dc1f597dde60e63c4ba9d93bf60be815c79e3d9f4c7",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/nav-bill-notebook.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/nav-bill-notebook.png",
+      "sha256": "9531c0b4ece95db7aeba49007083f9ff7366560c4e1b422f9ea68a7ccbc1c1e8",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/nav-detail-pig.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/nav-detail-pig.png",
+      "sha256": "8d5b99be702ab814735daaffeea8e8be53b3b8ed4c6c2dcecdd8d827ecd19630",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/nav-profile-dog.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/nav-profile-dog.png",
+      "sha256": "6466694ec316e9bc2d8753db0e4a7d33bf26bae7aada547d4c527376f23c202e",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/nav-saving-jar.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/nav-saving-jar.png",
+      "sha256": "f388f47b668d8bb20c78740c4d9d2f469c1d8fa3ceff6a65be52fc905ec43e5a",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/paw-prints.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/paw-prints.png",
+      "sha256": "bf69a22c3ad0ff9b806026215a6db89ebd336c9f6f2695c93abeb61540aa84ce",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/plus-button.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/plus-button.png",
+      "sha256": "e8bed6ac290d1ff16ef3138d8c99a2007ebdc5b65bf3d220ae85bda1b0dac462",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/navigation/plus-glow.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/navigation/plus-glow.png",
+      "sha256": "d486ba0a21fd7f462b166cab4f0501688a6e1c3365e20686dcfc517a0b05b63e",
+      "reason": "Current pages no longer use this legacy UI asset"
+    },
+    {
+      "originalPath": "frontend/src/assets/design/mascot/chick-avatar.png",
+      "archivePath": "docs/archive/assets/legacy-ui-2026-10-03/mascot/chick-avatar.png",
+      "sha256": "96e0a9b3d790101e7d9980dab66a83764374d8fe77fc0e435e5106a15d2a62a6",
+      "reason": "Retired chicken mascot; original preserved"
+    }
+  ]
+}

@@ -81,3 +81,10 @@ backend/在后端阶段建立，本轮没有创建。
 - 聊天顶部两行组成“和小宝聊聊今天的开销”，小宝仅展示占位，不写入用户设置。
 - GitHub仓库、工作区目录、浏览器存储键与素材文件名保留，避免改变路径或丢失既有账单；`zhizhang_conversation` / `zhizhang_mock_records`是兼容键，不是当前应用名。
 - docs/archive、LOG旧条目及docs/assets/source的原始生图提示词保留历史名称，不作为当前品牌依据，不批量改写历史或生成来源。
+
+## 素材分类
+
+- 首页：保留原猫图miao-avatar.png；聊天：使用已审核通过的毛茸茸猫头miao-avatar-fluffy-v1.png。
+- 当前场景图：mascot/poses下4张；暂未使用的5张猫姿态在mascot/poses/reserved，manifest.json标明active/reserved和SHA256。
+- 淘汰的19张日历、装饰、小鸡和旧导航图在docs/archive/assets/legacy-ui-2026-10-03，按类别保留；manifest.json记录原路径、归档路径与哈希，图片内容未改。
+- 首页/明细只使用现有轻导航，旧图片导航分支不再参与构建；原始参考图、提示词和历史归档仍保留。
