@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "用户授权提交品牌/设计文档并开始聊天页仅视觉接入；业务逻辑与本地数据保持不变",
-  "stage": "chat_visual_in_progress",
+  "currentTask": "用户授权先commit当前聊天页，再按已提出方案重设计首页；聊天页构建和22项回归已重新通过",
+  "stage": "home_visual_in_progress",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "按已批准的猫猫手账设计接入现有聊天页，构建并验证现有记账操作",
-  "nextStepReason": "设计已通过且实施范围已确认；先把猫猫角色、全名、配色、字体与气泡/卡片样式落到实际前端，不混入新记账能力",
-  "pendingUserDecision": "实际聊天页接入后的观感验收；后续代码commit/Push仍按保存节点确认",
+  "nextStep": "按聊天页同款猫猫手账风格重设计首页，检查日历、导航与聊天入账后的联动",
+  "nextStepReason": "首页风格统一范围已明确批准；先保存聊天页回退点，再调整首页外观，不修改业务数据或后端",
+  "pendingUserDecision": "首页重设计后的页面观感；后续首页代码commit与Push仍各按保存节点授权",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-02"
 }

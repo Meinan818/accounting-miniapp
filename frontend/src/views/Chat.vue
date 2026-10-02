@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-vue-next'
 import ChatBubble from '@/components/common/ChatBubble.vue'
 import ChatInput from '@/components/common/ChatInput.vue'
 import ConfirmCard from '@/components/common/ConfirmCard.vue'
-import MascotChicken from '@/components/mascot/MascotChicken.vue'
+import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
 import { useConversationStore } from '@/stores/conversationStore'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
@@ -176,54 +176,133 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="paper-surface flex h-[100dvh] flex-col overflow-hidden bg-cream">
-    <header class="border-b-[3px] border-hand bg-cream-dark/90 px-4 py-3 backdrop-blur">
-      <div class="mx-auto flex max-w-2xl items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
+  <div class="miao-chat">
+    <header class="miao-header">
+      <div class="miao-header-content">
+        <div class="miao-brand">
           <router-link
             to="/"
-            class="flex h-10 w-10 items-center justify-center rounded-full border-2 border-hand bg-white text-gray-900 shadow-sm active:scale-95"
+            class="miao-back active:scale-95"
             aria-label="返回日历主页"
           >
             <ArrowLeft :size="20" />
           </router-link>
-          <div>
-            <h1 class="text-xl font-bold text-gray-900">和小账记账</h1>
-            <p class="text-xs text-gray-500">说说今天花了什么</p>
+          <img :src="miaoAvatar" alt="手绘猫猫喵子" class="miao-header-cat" />
+          <div class="min-w-0">
+            <h1 class="miao-title">喵子智账</h1>
+            <p class="miao-subtitle">和喵子聊聊今天的小开销</p>
           </div>
         </div>
-        <div class="rounded-xl border-2 border-hand bg-white px-3 py-2 text-right shadow-sm">
-          <p class="text-xs text-gray-500">本月支出</p>
-          <p class="font-mono text-lg font-bold text-expense-dark">{{ monthExpenseText }}</p>
-        </div>
+      </div>
+      <div class="miao-summary">
+        <p>本月支出 <span>{{ monthExpenseText }}</span></p>
+        <span class="miao-demo-label">本地演示 · 每次整理一笔</span>
       </div>
     </header>
 
-    <main ref="messagesContainer" class="flex-1 overflow-y-auto px-4 py-5">
-      <div class="mx-auto flex max-w-2xl flex-col gap-4" aria-live="polite">
+    <main ref="messagesContainer" class="miao-messages">
+      <div class="miao-thread" aria-live="polite">
         <template v-for="message in conversationStore.messages" :key="message.id">
-          <ChatBubble v-if="message.kind === 'text'" :message="message" />
+          <ChatBubble v-if="message.kind === 'text'" :message="message" cat-appearance />
           <ConfirmCard
             v-else-if="message.kind === 'record'"
             :confirmed="message.confirmed"
             :record="message.record"
+            cat-appearance
             @confirm="handleConfirmRecord(message.id, $event)"
             @update="handleUpdateRecord(message.id, $event)"
           />
         </template>
 
-        <div v-if="conversationStore.isThinking" class="message-enter flex items-start gap-2">
-          <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-xl">
-            🐣
-          </div>
-          <div class="rounded-2xl rounded-tl-sm border border-gray-200 bg-white px-4 py-3 text-gray-500 shadow-sm">
-            小账正在思考...🤔
-          </div>
+        <div v-if="conversationStore.isThinking" class="message-enter miao-thinking">
+          <img :src="miaoAvatar" alt="" />
+          <p>喵子正在整理…</p>
         </div>
       </div>
     </main>
 
-    <MascotChicken :mood="conversationStore.mascotMood" />
-    <ChatInput :disabled="conversationStore.isThinking" @send="handleSend" @voice="handleVoice" />
+    <ChatInput :disabled="conversationStore.isThinking" cat-appearance @send="handleSend" @voice="handleVoice" />
   </div>
 </template>
+
+<style scoped>
+.miao-chat {
+  --miao-paper: #fdfaf3;
+  --miao-white: #fffdf8;
+  --miao-ink: #3c261a;
+  --miao-soft: #79634f;
+  --miao-line: #d9cbb6;
+  --miao-pink: #f8dfda;
+  --miao-yellow: #fceed4;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--miao-paper);
+  color: var(--miao-ink);
+  font-family: "Microsoft YaHei UI Light", "Microsoft YaHei UI", "微软雅黑", sans-serif;
+  font-weight: 400;
+}
+.miao-header { flex-shrink: 0; border-bottom: 1px dashed var(--miao-line); }
+.miao-header-content, .miao-summary, .miao-thread { width: 100%; max-width: 480px; margin-inline: auto; }
+.miao-header-content { padding: 18px 16px 15px; }
+.miao-brand { display: flex; align-items: center; gap: 9px; }
+.miao-back { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border: 1px solid var(--miao-line); border-radius: 16px 13px 17px 14px; background: var(--miao-white); }
+.miao-header-cat { width: 66px; height: 62px; object-fit: contain; flex-shrink: 0; transform: rotate(-5deg); }
+.miao-title { position: relative; isolation: isolate; width: fit-content; font-size: 24px; font-weight: 400; letter-spacing: 1px; white-space: nowrap; }
+.miao-title::before { content: ''; position: absolute; inset: 9px -5px 1px; z-index: -1; border-radius: 62% 45% 58% 42%; background: var(--miao-yellow); transform: rotate(-2deg); }
+.miao-subtitle { margin-top: 5px; font-size: 12px; color: var(--miao-soft); }
+.miao-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 5px 12px; padding: 9px 16px; font-size: 12px; background: var(--miao-yellow); }
+.miao-summary p { display: flex; align-items: center; gap: 8px; }
+.miao-summary p span { font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.miao-demo-label { color: var(--miao-soft); }
+.miao-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+.miao-thread { display: flex; flex-direction: column; gap: 18px; padding: 22px 16px 25px; }
+.miao-thinking { display: flex; align-items: flex-end; gap: 8px; font-size: 14px; color: var(--miao-soft); }
+.miao-thinking img { width: 36px; height: 34px; object-fit: contain; flex-shrink: 0; }
+.miao-thinking p { padding: 11px 13px; border: 1px solid var(--miao-line); border-radius: 21px 19px 22px 8px; background: var(--miao-white); }
+.miao-back:focus-visible,
+.miao-chat :deep(button:focus-visible),
+.miao-chat :deep(input:focus-visible),
+.miao-chat :deep(select:focus-visible) { outline: 2px solid var(--miao-ink); outline-offset: 3px; }
+.miao-chat :deep(.miao-bubble) { align-items: flex-end; min-width: 0; }
+.miao-chat :deep(.miao-bubble .chat-assistant-avatar) { width: 36px; height: 34px; border: 0; background: none; border-radius: 0; }
+.miao-chat :deep(.miao-bubble .chat-bubble-body) { max-width: calc(100% - 44px); padding: 11px 13px; border: 1px solid var(--miao-line); border-radius: 21px 19px 22px 8px; background: var(--miao-white); color: var(--miao-ink); font-size: 15px; line-height: 1.85; box-shadow: none; }
+.miao-chat :deep(.miao-bubble-user .chat-bubble-body) { max-width: 88%; background: var(--miao-pink); border-radius: 22px 8px 19px 22px; }
+.miao-chat :deep(.miao-record) { position: relative; max-width: none; margin-top: 10px; padding: 24px 14px 14px; border: 1.5px solid var(--miao-line); border-radius: 16px 19px 20px 15px; background: var(--miao-white); color: var(--miao-ink); font-size: 15px; box-shadow: 3px 4px 0 var(--miao-yellow); }
+.miao-chat :deep(.miao-record::before) { content: ''; position: absolute; width: 76px; height: 20px; top: -9px; left: calc(50% - 38px); background: var(--miao-pink); border: 1px dashed var(--miao-line); border-radius: 2px 4px 3px 2px; transform: rotate(-4deg); pointer-events: none; }
+.miao-chat :deep(.miao-record .record-heading) { font-size: 17px; letter-spacing: .4px; }
+.miao-chat :deep(.miao-record .record-pending) { font-size: 12px; padding: 3px 7px; background: var(--miao-yellow); border-radius: 9px 6px 8px 5px; transform: rotate(3deg); white-space: nowrap; }
+.miao-chat :deep(.miao-record .space-y-2 > div) { padding-block: 7px; border-bottom: 1px dashed var(--miao-line); }
+.miao-chat :deep(.miao-record .space-y-2 > div > span:first-child) { flex-shrink: 0; }
+.miao-chat :deep(.miao-record .space-y-2 > div > span:last-child) { overflow-wrap: anywhere; }
+.miao-chat :deep(.miao-record .text-gray-900) { color: var(--miao-ink); }
+.miao-chat :deep(.miao-record .text-gray-600),
+.miao-chat :deep(.miao-record .text-gray-700) { color: var(--miao-soft); }
+.miao-chat :deep(.miao-record .font-bold),
+.miao-chat :deep(.miao-record .font-semibold),
+.miao-chat :deep(.miao-record .font-medium) { font-weight: 400; }
+.miao-chat :deep(.miao-record .font-mono) { font-family: inherit; font-size: 17px; font-variant-numeric: tabular-nums; }
+.miao-chat :deep(.miao-record button) { min-height: 44px; border: 1px solid var(--miao-line); border-radius: 16px 13px 17px 14px; background: var(--miao-white); color: var(--miao-ink); }
+.miao-chat :deep(.miao-record button.bg-primary-400) { background: var(--miao-pink); box-shadow: 0 2px 0 var(--miao-line); }
+.miao-chat :deep(.miao-record button.border-primary-400) { background: var(--miao-pink); border-color: var(--miao-ink); }
+.miao-chat :deep(.miao-record input),
+.miao-chat :deep(.miao-record select) { min-width: 0; min-height: 44px; border: 1px solid var(--miao-line); border-radius: 12px 10px 13px 11px; background: var(--miao-white); color: var(--miao-ink); font-size: 16px; }
+.miao-chat :deep(.miao-input) { flex-shrink: 0; border-top: 1px dashed var(--miao-line); padding: 13px 16px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--miao-paper); }
+.miao-chat :deep(.miao-input .chat-compose) { max-width: 448px; padding: 5px 5px 5px 13px; border: 1.5px solid var(--miao-line); border-radius: 22px 18px 21px 17px; background: var(--miao-white); box-shadow: none; }
+.miao-chat :deep(.miao-input .chat-compose:focus-within) { outline: 2px solid var(--miao-ink); outline-offset: 2px; }
+.miao-chat :deep(.miao-input input) { padding-block: 8px; font-size: 16px; color: var(--miao-ink); }
+.miao-chat :deep(.miao-input input:focus-visible) { outline: none; }
+.miao-chat :deep(.miao-input input::placeholder) { color: var(--miao-soft); }
+.miao-chat :deep(.miao-input .chat-send) { width: auto; min-width: 58px; height: 44px; padding-inline: 12px; border: 1px solid var(--miao-line); border-radius: 16px 13px 17px 14px; background: var(--miao-yellow); color: var(--miao-ink); font-size: 14px; box-shadow: none; }
+.miao-chat :deep(.miao-input .chat-send:disabled) { opacity: .6; }
+.miao-chat :deep(.miao-input .chat-input-hint) { max-width: 448px; margin: 10px auto 0; text-align: center; color: var(--miao-soft); font-size: 12px; }
+@media (max-width: 359px) {
+  .miao-header-content { padding-inline: 12px; }
+  .miao-brand { gap: 7px; }
+  .miao-header-cat { width: 51px; height: 53px; }
+  .miao-title { font-size: 23px; }
+  .miao-subtitle { font-size: 11px; }
+  .miao-thread { padding-inline: 12px; }
+}
+</style>

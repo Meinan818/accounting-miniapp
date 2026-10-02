@@ -14,6 +14,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  catAppearance: { type: Boolean, default: false },
 })
 
 // 3. Emits
@@ -101,15 +102,16 @@ watch(
 </script>
 
 <template>
-  <article class="message-enter mx-auto w-full max-w-xl rounded-xl border-[3px] border-hand bg-white p-4 shadow-md">
+  <article class="message-enter mx-auto w-full max-w-xl rounded-xl border-[3px] border-hand bg-white p-4 shadow-md" :class="{ 'miao-record': catAppearance }">
     <div class="mb-3 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
-        <span class="text-xl">📝</span>
-        <span class="font-semibold text-gray-900">已识别</span>
+        <span v-if="!catAppearance" class="text-xl">📝</span>
+        <span class="record-heading font-semibold text-gray-900">{{ catAppearance ? '喵子的小账单' : '已识别' }}</span>
       </div>
       <span v-if="confirmed" class="rounded-full bg-income-light px-3 py-1 text-xs font-medium text-income-dark">
         已记账
       </span>
+      <span v-else-if="catAppearance" class="record-pending">待确认</span>
     </div>
 
     <template v-if="!editing">
@@ -117,7 +119,7 @@ watch(
         <div class="flex items-center justify-between gap-4">
           <span class="text-gray-600">类型</span>
           <span class="font-medium text-gray-900">
-            {{ typeLabel }} · {{ record.category }} {{ recordMeta?.icon }}
+            {{ typeLabel }} · {{ record.category }} <template v-if="!catAppearance">{{ recordMeta?.icon }}</template>
           </span>
         </div>
         <div class="flex items-center justify-between gap-4">
@@ -171,7 +173,7 @@ watch(
             type="button"
             @click="form.type = option; handleTypeChange()"
           >
-            {{ option === 'expense' ? '支出 💸' : '收入 💰' }}
+            {{ option === 'expense' ? (catAppearance ? '支出' : '支出 💸') : (catAppearance ? '收入' : '收入 💰') }}
           </button>
         </div>
       </div>
@@ -195,7 +197,7 @@ watch(
             class="w-full rounded-lg border-2 border-gray-200 bg-white px-3 py-2 outline-none transition-colors focus:border-primary-400"
           >
             <option v-for="option in categoryOptions" :key="option.label" :value="option.label">
-              {{ option.icon }} {{ option.label }}
+              <template v-if="!catAppearance">{{ option.icon }} </template>{{ option.label }}
             </option>
           </select>
         </label>
