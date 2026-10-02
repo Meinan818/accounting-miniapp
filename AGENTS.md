@@ -69,7 +69,7 @@ STATE.json的nextStep/nextStepReason与汇报一致。已明确通过的成果�
 | Java计划 | PROJECT_PLAN.md已按前端→Java基础→连通与AI→长期打磨重写；backend/尚未建立，当前继续前端 |
 | 预算与部署 | 初期本地开发默认零成本；AI服务、服务器、域名费用未批准。尚未部署，无线上网站；Java服务的部署方案以后单独确认 |
 | 待用户外部操作 | 当前不需要。原Supabase建库/SQL/密钥步骤取消；Java与真实AI阶段按实际需要再给操作步骤 |
-| 原仓库 | https://github.com/Meinan818/accounting-miniapp，旧名称暂保留，未授权改名或更改可见性；本轮项目整理已获一次Push授权 |
+| 原仓库 | https://github.com/Meinan818/accounting-miniapp，旧名称暂保留，未授权改名或更改可见性；后续Push须单独授权 |
 | 文件存放 | 项目代码、素材和内部材料使用E盘；脚本/截图/日志在.workbuddy/memory/。既有C盘材料未经授权不删除，必要本机规则/技能只改其原文件 |
 | 后端环境 | 历史核查确认Java21、MySQL8客户端和Maven可执行；尚未验证MySQL服务连接或Java工程启动 |
 

@@ -4,7 +4,7 @@
 
 2026-10-02之前的长历史在docs/archive/development/BATON.md，仅供追溯，不能当作当前任务书。
 
-## 2026-10-02 · 项目整理（验证完成，待本地保存与Push）
+## 2026-10-02 · 项目整理（已完成）
 
 - 用户确认按全项目范围整理，并授权完成后交接、commit和Push；由Codex全权负责，不再保留旧AI轮值或文件修改限制。
 - 根目录只留AGENTS/README/PROJECT_PLAN三个Markdown入口；当前说明在docs/，源素材/原型在docs/assets/，正式页面素材在frontend/src/assets/design分类目录，历史方案和旧资产在docs/archive/。
@@ -16,4 +16,5 @@
 - 本轮复核 `npm run build` 通过（1795模块，2.59秒）；29个移动文件SHA256均与搬移记录一致；`git diff --check`通过。
 - 本地Vite预览后运行 `.workbuddy/memory/project-cleanup/snapshot-pages.cjs after`：7个路由均可打开，页面错误0、图片全部加载；与整理前的7张截图SHA256逐一相同。截图和结果只在E盘忽略目录，不入Git。
 - 前端无现成lint、typecheck或固定单元测试脚本；本轮未修改账单Store，未做真实数据库/AI检查，也未获得首页整页观感通过。
-- 本地保存与Push完成后需再核对远端实际文件，并在此记录结果。下一对话先核对Git现场，再提出A1视觉修正精确方案；本轮不算A1实施授权。
+- 已保存中文本地快照并完成本轮获授权的Push。随后从GitHub回访当前修改路线：远端与本地一致，项目标题和A1待办标记存在，Supabase依赖不存在，新源图及交接摘要存在。项目尚未部署，Push未改变任何线上网站。
+- 下一对话先核对Git现场，再提出A1视觉修正精确方案；本轮不算A1实施授权，后续Push也须另行授权。

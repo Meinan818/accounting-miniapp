@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "项目整理已完成并通过构建、素材校验和页面对照；收尾保存并完成已授权Push后交接A1首页视觉修正",
-  "stage": "cleanup_verified",
+  "currentTask": "项目整理、验证、本地保存和授权Push均已完成；下一任务是A1首页视觉修正方案",
+  "stage": "cleanup_complete",
   "blocked": false,
   "blockedReason": "",
   "nextStep": "新对话先核查现场，再提出A1首页视觉修正的精确方案，等待用户确认后实施",
   "nextStepReason": "整理后的七个页面与整理前逐像素截图一致；首页原有观感问题仍是前端最高优先级",
-  "pendingUserDecision": "首页新完整底部构图/导航/日期视觉修正及Java后端实施仍待各自方案确认；本轮整理Push已获授权",
+  "pendingUserDecision": "首页新完整底部构图/导航/日期视觉修正及Java后端实施仍待各自方案确认；后续Push需重新授权",
   "onlineVersion": "无（尚未部署；本次Push仅上传GitHub）",
   "updatedAt": "2026-10-02"
 }
