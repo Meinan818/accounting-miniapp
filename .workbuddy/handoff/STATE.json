@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "首页与聊天外观已保存，本地主线合并工作完成；继续前端，未新增聊天业务或后端",
-  "stage": "frontend_ready",
+  "currentTask": "已恢复上一轮最新反馈：猫无默认名字、自称本喵，猫耳/爪印聊天气泡与固定原猫头头像已验证；毛茸茸头像仅提示词，未生成",
+  "stage": "chat_persona_avatar_review",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "从主线继续前端，先提出多笔草稿、连续追问和对话纠正的最小交互方案",
-  "nextStepReason": "用户要求后续从主线开发；核心仍是像聊天一样记账，现有实现只有模拟单笔识别，需要先明确连续对话前端体验再实施",
-  "pendingUserDecision": "首页实际观感仍未明确通过；下一轮交互实施范围与Push分别确认",
+  "nextStep": "申请1次毛茸茸猫头头像候选图生成授权；生成后展示供用户审核，通过后才能接入",
+  "nextStepReason": "用户最新反馈优先；先改善聊天观感，不把应用名称当猫名，不未经审核接入新图片",
+  "pendingUserDecision": "1张毛茸茸头像的实验参考生图授权、生成后画风审核；现有气泡实际观感仍待确认，用户已授权本轮commit与Push",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-02"
 }

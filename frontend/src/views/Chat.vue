@@ -7,6 +7,7 @@ import ChatBubble from '@/components/common/ChatBubble.vue'
 import ChatInput from '@/components/common/ChatInput.vue'
 import ConfirmCard from '@/components/common/ConfirmCard.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
+import miaoThinking from '@/assets/design/mascot/poses/miao-thinking.png'
 import { useConversationStore } from '@/stores/conversationStore'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
@@ -187,10 +188,10 @@ onBeforeUnmount(() => {
           >
             <ArrowLeft :size="20" />
           </router-link>
-          <img :src="miaoAvatar" alt="手绘猫猫喵子" class="miao-header-cat" />
+          <img :src="miaoAvatar" alt="手绘猫猫" class="miao-header-cat" />
           <div class="min-w-0">
             <h1 class="miao-title">喵子智账</h1>
-            <p class="miao-subtitle">和喵子聊聊今天的小开销</p>
+            <p class="miao-subtitle">聊聊今天的小开销</p>
           </div>
         </div>
       </div>
@@ -215,8 +216,8 @@ onBeforeUnmount(() => {
         </template>
 
         <div v-if="conversationStore.isThinking" class="message-enter miao-thinking">
-          <img :src="miaoAvatar" alt="" />
-          <p>喵子正在整理…</p>
+          <img :src="miaoThinking" alt="猫猫托腮思考" />
+          <p>本喵正在整理…</p>
         </div>
       </div>
     </main>
@@ -259,16 +260,30 @@ onBeforeUnmount(() => {
 .miao-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
 .miao-thread { display: flex; flex-direction: column; gap: 18px; padding: 22px 16px 25px; }
 .miao-thinking { display: flex; align-items: flex-end; gap: 8px; font-size: 14px; color: var(--miao-soft); }
-.miao-thinking img { width: 36px; height: 34px; object-fit: contain; flex-shrink: 0; }
+.miao-thinking img { width: 64px; height: 68px; object-fit: contain; flex-shrink: 0; }
 .miao-thinking p { padding: 11px 13px; border: 1px solid var(--miao-line); border-radius: 21px 19px 22px 8px; background: var(--miao-white); }
 .miao-back:focus-visible,
 .miao-chat :deep(button:focus-visible),
 .miao-chat :deep(input:focus-visible),
 .miao-chat :deep(select:focus-visible) { outline: 2px solid var(--miao-ink); outline-offset: 3px; }
 .miao-chat :deep(.miao-bubble) { align-items: flex-end; min-width: 0; }
-.miao-chat :deep(.miao-bubble .chat-assistant-avatar) { width: 36px; height: 34px; border: 0; background: none; border-radius: 0; }
-.miao-chat :deep(.miao-bubble .chat-bubble-body) { max-width: calc(100% - 44px); padding: 11px 13px; border: 1px solid var(--miao-line); border-radius: 21px 19px 22px 8px; background: var(--miao-white); color: var(--miao-ink); font-size: 15px; line-height: 1.85; box-shadow: none; }
-.miao-chat :deep(.miao-bubble-user .chat-bubble-body) { max-width: 88%; background: var(--miao-pink); border-radius: 22px 8px 19px 22px; }
+.miao-chat :deep(.miao-bubble .chat-assistant-avatar) { width: 44px; height: 44px; padding: 3px; border: 1px dashed var(--miao-line); background: var(--miao-yellow); border-radius: 48% 52% 46% 54%; }
+.miao-chat :deep(.miao-bubble .chat-bubble-body) { position: relative; max-width: calc(100% - 52px); padding: 14px 16px 25px; border: 1.5px solid var(--miao-line); border-radius: 22px 25px 24px 13px; background: var(--miao-white); color: var(--miao-ink); font-size: 15px; line-height: 1.85; box-shadow: 1px 2px 0 var(--miao-yellow); }
+.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::before),
+.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::after) { content: ''; position: absolute; top: -5px; width: 11px; height: 11px; border-top: 1.5px solid var(--miao-line); border-left: 1.5px solid var(--miao-line); border-radius: 4px 1px 2px 1px; background: var(--miao-white); transform: rotate(45deg); pointer-events: none; }
+.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::before) { left: 14px; }
+.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::after) { right: 14px; }
+.miao-chat :deep(.chat-bubble-tail) { position: absolute; left: -5px; bottom: 13px; width: 9px; height: 9px; border-left: 1.5px solid var(--miao-line); border-bottom: 1.5px solid var(--miao-line); border-radius: 0 0 0 3px; background: var(--miao-white); transform: rotate(45deg); pointer-events: none; }
+.miao-chat :deep(.miao-bubble-user .chat-bubble-body) { max-width: 88%; background: var(--miao-pink); border-radius: 25px 22px 13px 24px; box-shadow: 1px 2px 0 var(--miao-yellow); }
+.miao-chat :deep(.miao-bubble-user .chat-bubble-tail) { left: auto; right: -5px; border: 0; border-top: 1.5px solid var(--miao-line); border-right: 1.5px solid var(--miao-line); border-radius: 0 3px 0 0; background: var(--miao-pink); }
+.miao-chat :deep(.bubble-paw) { position: absolute; bottom: 7px; right: 11px; width: 18px; height: 13px; opacity: .3; transform: rotate(-13deg); pointer-events: none; }
+.miao-chat :deep(.paw-pad), .miao-chat :deep(.paw-toe) { position: absolute; background: var(--miao-soft); }
+.miao-chat :deep(.paw-pad) { bottom: 0; left: 5px; width: 9px; height: 6px; border-radius: 55% 55% 45% 45%; }
+.miao-chat :deep(.paw-toe) { width: 3px; height: 4px; border-radius: 50%; }
+.miao-chat :deep(.toe-one) { left: 1px; top: 5px; transform: rotate(-30deg); }
+.miao-chat :deep(.toe-two) { left: 5px; top: 1px; }
+.miao-chat :deep(.toe-three) { left: 10px; top: 1px; }
+.miao-chat :deep(.toe-four) { left: 15px; top: 5px; transform: rotate(30deg); }
 .miao-chat :deep(.miao-record) { position: relative; max-width: none; margin-top: 10px; padding: 24px 14px 14px; border: 1.5px solid var(--miao-line); border-radius: 16px 19px 20px 15px; background: var(--miao-white); color: var(--miao-ink); font-size: 15px; box-shadow: 3px 4px 0 var(--miao-yellow); }
 .miao-chat :deep(.miao-record::before) { content: ''; position: absolute; width: 76px; height: 20px; top: -9px; left: calc(50% - 38px); background: var(--miao-pink); border: 1px dashed var(--miao-line); border-radius: 2px 4px 3px 2px; transform: rotate(-4deg); pointer-events: none; }
 .miao-chat :deep(.miao-record .record-heading) { font-size: 17px; letter-spacing: .4px; }

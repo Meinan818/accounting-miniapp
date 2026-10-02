@@ -1,0 +1,22 @@
+Use case: illustration-story.
+Asset type: a single production mascot sticker sheet for the Chinese journaling bookkeeping app "Miaozi", to be cropped into nine separate UI illustrations.
+Input Image 1 is the visual style and MAIN CHARACTER IDENTITY reference. Preserve its warm handmade 2D picture-book style, soft paper/pencil grain INSIDE the colored shapes, irregular dark-brown outlines, cream-white and warm gray fur patches, round small chocolate eyes, simple tiny nose/mouth and pale peach-pink cheeks. Do not reproduce the original peeking pose nine times.
+
+Produce exactly ONE 2048 by 2048 PNG illustration sheet with a genuinely transparent alpha background.
+Arrange EXACTLY NINE separate cats in an invisible uniform THREE BY THREE grid, reading left to right, top to bottom. Cell centers are approximately (341,341), (1024,341), (1707,341), (341,1024), (1024,1024), (1707,1024), (341,1707), (1024,1707), (1707,1707). Each entire cat and its small prop must remain within its own cell. Leave generous transparent gutters, at least 64 pixels of clear space around each character. Draw no cell borders or grid lines.
+
+Cells 1 to 6 are the SAME gray-and-cream-white main cat from the reference, with the same face proportions and identifiable forehead/cheek patch pattern. Small rounded chibi bodies and paws, expressive but not humanoid. Six unmistakably DIFFERENT actions:
+1. Friendly welcome: sitting upright and waving one paw, happy small smile.
+2. Bookkeeping: holding a small cream notebook with one paw and a short pencil with the other, looking attentively at the notebook. Blank notebook, no writing.
+3. Thinking: sitting, one paw on the cheek, head slightly tilted, thoughtful eyes.
+4. Success celebration: both paws raised, gently delighted smile, a few tiny hand-drawn pastel star shapes within this cell.
+5. Unsure / asking for clarification: both paws open, curious tilted head, mild puzzled expression, not distressed or crying.
+6. Quiet idle: curled up dozing on a tiny pale-pink cushion, eyes closed, visible little curled tail. No letters or Z symbols.
+
+Cells 7 to 9 are three companion cats, NOT new unrelated mascots. Use precisely the same 2D rendering language, brown outline texture, facial simplicity, rosy cheeks, body scale and pastel family:
+7. A warm pastel ginger tabby sitting with a tiny cream coin pouch, relaxed friendly face. No currency signs.
+8. A cream-colored kitten holding a small blank scalloped receipt, interested face. No numbers or writing.
+9. A black-and-cream-white kitten resting its chin and front paws on a tiny cream paper stack, gentle contented face.
+
+Palette: warm gray, cream, soft ginger, peach blush and a little dusty pink. Dark brown rather than black line work; the black-and-white companion's dark fur is warm soft charcoal, never a glossy silhouette. Keep props visually secondary. Match the existing reference's cute handmade watercolor-pencil sticker feel, not a slick modern emoji.
+Constraints: nine cats only, clear silhouettes, complete ears/paws/tails, transparent outside each cat, no clipped parts, no shared scenery, no duplicate pose, no heavy shadow, no opaque sheet backdrop, no typography, no logos or watermark. Paper grain only on character shapes, NOT on the transparent background. No 3D rendering, plastic shine, gradients implying 3D volume, photorealistic fur, realistic cats, anime eyes, chicken, bear or dog.

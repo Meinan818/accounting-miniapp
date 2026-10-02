@@ -4,6 +4,7 @@ import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
 import { ReceiptText } from 'lucide-vue-next'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
+import miaoConfused from '@/assets/design/mascot/poses/miao-confused.png'
 import CalendarCard from '@/components/calendar/CalendarCard.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
@@ -60,7 +61,7 @@ function getRecordSign(record) {
   <div class="journal-home">
     <main class="home-content">
       <header class="home-header">
-        <img :src="miaoAvatar" alt="手绘猫猫喵子" class="home-header-cat" />
+        <img :src="miaoAvatar" alt="手绘猫猫" class="home-header-cat" />
         <div>
           <h1 class="home-title">喵子智账</h1>
           <p class="home-subtitle">日常开销 · 本地演示</p>
@@ -112,10 +113,10 @@ function getRecordSign(record) {
         </div>
 
         <div v-else class="home-empty">
-          <img :src="miaoAvatar" alt="" />
+          <img :src="miaoConfused" alt="摊爪的猫猫" />
           <div>
             <p>这天还没有小账单</p>
-            <p class="home-subtitle">点下面的 +，和喵子聊着记一笔</p>
+            <p class="home-subtitle">点下面的 +，本喵陪你记一笔</p>
           </div>
         </div>
       </section>
@@ -153,7 +154,7 @@ function getRecordSign(record) {
 .home-amount-income { color: var(--zz-home-green); }
 .home-amount-expense { color: var(--zz-home-pink); }
 .home-empty { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 14px; border: 1px dashed var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); font-size: 14px; }
-.home-empty img { width: 54px; height: 48px; object-fit: contain; flex-shrink: 0; }
+.home-empty img { width: 84px; height: 84px; object-fit: contain; flex-shrink: 0; }
 @media (max-width: 359px) {
   .journal-home { padding-inline: 12px; }
   .home-header { gap: 8px; }

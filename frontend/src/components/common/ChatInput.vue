@@ -72,7 +72,7 @@ onBeforeUnmount(() => {
         class="min-w-0 flex-1 bg-transparent py-2 text-base text-gray-900 outline-none placeholder:text-gray-400"
         maxlength="120"
         placeholder="说说今天花了什么钱..."
-        :aria-label="catAppearance ? '给喵子发消息' : '发送记账消息'"
+        :aria-label="catAppearance ? '给猫猫发消息' : '发送记账消息'"
         type="text"
         @keydown.enter="handleEnter"
       />
@@ -99,7 +99,7 @@ onBeforeUnmount(() => {
         <ArrowUp v-else :size="20" :stroke-width="2.5" />
       </button>
     </div>
-    <p v-if="catAppearance" class="chat-input-hint">你说，喵子来整理。确认后才记下哦。</p>
+    <p v-if="catAppearance" class="chat-input-hint">把今天的小开销说给本喵听，确认后才记下哦。</p>
 
     <p
       v-if="showVoiceHint"

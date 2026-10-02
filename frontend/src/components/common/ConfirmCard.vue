@@ -106,7 +106,7 @@ watch(
     <div class="mb-3 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2">
         <span v-if="!catAppearance" class="text-xl">📝</span>
-        <span class="record-heading font-semibold text-gray-900">{{ catAppearance ? '喵子的小账单' : '已识别' }}</span>
+        <span class="record-heading font-semibold text-gray-900">{{ catAppearance ? '这笔小账单' : '已识别' }}</span>
       </div>
       <span v-if="confirmed" class="rounded-full bg-income-light px-3 py-1 text-xs font-medium text-income-dark">
         已记账
