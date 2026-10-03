@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "14种猫猫分类贴纸、精确筛选与跨页联动已本地保存并核验远端备份；131测试/构建/16项SSR检查通过，实际浏览器操作因权限拒绝未验证",
-  "stage": "category_stickers_saved_browser_check_pending",
+  "currentTask": "准备交接：分类贴纸/筛选/联动已保存并核验远端备份；当前预览可响应，浏览器权限拒绝未解除，后端保持暂停，未扩功能或重跑业务检查",
+  "stage": "handoff_category_saved_browser_check_pending",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "定位浏览器设置与工具拒绝不一致，权限恢复后完成5174独立账本新增/编辑/分类筛选/跨页交互验证",
+  "nextStep": "新对话先核NEXT/规则/计划/状态/最新LOG、Git/源码/端口和工具权限，再定位浏览器拒绝，恢复后完成5174独立交互验证",
   "nextStepReason": "分类源码已保存且逻辑检查通过，但实际页面操作与窄屏效果不能由SSR或HTTP200代替；保持5173原账本安全",
-  "pendingUserDecision": "当前用户截图5174浏览已始终允许，工具仍拒绝，需继续核实际权限选项；用户最终验收纠错。后端按先等等暂停，收费生图无新授权且无新主角成品",
+  "pendingUserDecision": "用户特别要求保留本次浏览器失败：站点浏览已始终允许而工具仍saved permission拒绝，根因未知且未解决；不要归咎未授权、代理或服务，尚待权限表格右箭头后的列截图。新对话先读专门失败记录；后端保持暂停，收费生图无新授权且无新主角成品，原账本不清空/自动上传/绑定首次账号",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
