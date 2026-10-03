@@ -95,7 +95,10 @@ test('金额双向适配保留分精度和未知时间，不信任畸形回执',
 })
 test('超时及新实例重试复用持久化UUID，账户相同操作独立', async () => {
   const storage = memory(); const keys = []; let fail = true
-  const client = { request: async (method, path, options) => { keys.push(options.headers['Idempotency-Key']); if (fail) throw new Error('timeout'); return { records: [view] } } }
+  const client = { request: async (method, path, options) => {
+    if (method === 'PUT') return { id: path.split('/').at(-1), version: 0, status: 'OPEN', records: options.body.records }
+    keys.push(options.headers['Idempotency-Key']); if (fail) throw new Error('timeout'); return { records: [view] }
+  } }
   const first = createLedgerApi(client, { storage, owner: '1', newUuid: () => id })
   await assert.rejects(first.createBatch([input], 'group1'), /timeout/)
   fail = false
@@ -109,7 +112,10 @@ test('超时及新实例重试复用持久化UUID，账户相同操作独立', a
 })
 test('同次确认内容变化拒绝发请求，防止超时后改稿重复入账', async () => {
   let requests = 0
-  const api = createLedgerApi({ request: async () => { requests++; return { records: [view] } } }, { storage: memory(), owner: '1', newUuid: () => id })
+  const api = createLedgerApi({ request: async (method, path, options) => {
+    if (method === 'PUT') return { id, version: 0, status: 'OPEN', records: options.body.records }
+    requests++; return { records: [view] }
+  } }, { storage: memory(), owner: '1', newUuid: () => id })
   await api.createBatch([input], 'g')
   await assert.rejects(api.createBatch([{ ...input, amount: '0.30' }], 'g'), /内容已改变/)
   assert.equal(requests, 1)
@@ -122,6 +128,34 @@ test('防重标识保存失败或旧意图损坏时不发送请求也不覆盖�
   const storage = memory(); storage.setItem('miaoji_account_write_intents_v1_1', '{broken')
   await assert.rejects(createLedgerApi(client, { storage, owner: '1' }).createBatch([input], 'g'))
   assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), '{broken'); assert.equal(calls, 0)
+})
+test('草稿版本先持久化再确认，新实例拒绝已变化的服务端版本', async () => {
+  const storage = memory(); let version = 0; const calls = []
+  const client = { request: async (method, path, options) => {
+    calls.push({ method, path, options })
+    if (method === 'PUT') return { id, version, status: 'OPEN', records: options.body.records }
+    assert.equal(JSON.parse(storage.getItem('miaoji_account_write_intents_v1_1')).g.draftVersion, 0)
+    assert.deepEqual(options.body, { version: 0 }); throw Error('lost confirmation response')
+  } }
+  await assert.rejects(createLedgerApi(client, { storage, owner: '1', newUuid: () => id }).createBatch([input], 'g'), /lost confirmation/)
+  version = 1
+  await assert.rejects(createLedgerApi(client, { storage, owner: '1' }).createBatch([input], 'g'), /版本已变化/)
+  assert.equal(calls.filter(call => call.method === 'POST').length, 1)
+})
+test('草稿版本持久化失败或服务端内容不符时不发送确认', async () => {
+  let writes = 0; let content = null; let saved = null
+  const properStorage = { getItem: () => saved, setItem: (key, value) => {
+    if (JSON.parse(value).g?.draftVersion != null) throw Error('quota')
+    saved = value
+  } }
+  const client = { request: async (method, path, options) => {
+    if (method === 'POST') { writes++; return { records: [view] } }
+    return { id, version: 0, status: 'OPEN', records: content ?? options.body.records }
+  } }
+  await assert.rejects(createLedgerApi(client, { storage: properStorage, owner: '1', newUuid: () => id }).createBatch([input], 'g'), /尚未发送确认/)
+  content = [{ ...toRecordInput(input), amount: '9.99' }]
+  await assert.rejects(createLedgerApi(client, { storage: properStorage, owner: '1' }).createBatch([input], 'g'), /内容不一致/)
+  assert.equal(writes, 0)
 })
 test('修改删除带服务器版本，回执保留组标识', async () => {
   const calls = []

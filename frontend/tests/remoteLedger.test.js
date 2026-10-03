@@ -26,7 +26,11 @@ test('重开页面后按回执ID恢复组条目关联，顺序变化及删除不
 })
 test('重放回执及读取失败不恢复已删除账单或覆盖当前编辑', async () => {
   let offline = false
-  const test = setup({ request: async (method, path) => path.endsWith('batch') ? { records: [value] } : offline ? Promise.reject(Error('offline')) : { records: [{ record: { ...value, amount: '0.30', version: 2 }, deletedAt: '2026-10-03T01:00:00Z' }] } })
+  const test = setup({ request: async (method, path, options) => {
+    if (method === 'PUT') return { id: path.split('/').at(-1), version: 0, status: 'OPEN', records: options.body.records }
+    if (path.endsWith('/confirm')) return { records: [value] }
+    return offline ? Promise.reject(Error('offline')) : { records: [{ record: { ...value, amount: '0.30', version: 2 }, deletedAt: '2026-10-03T01:00:00Z' }] }
+  } })
   try {
     await test.store.refresh(); offline = true
     await assert.rejects(test.store.addRecords([input], { batchId: 'g' }), /服务器已确认/)
@@ -41,8 +45,9 @@ test('账号改变立即清内存，旧账号迟到响应不进入新账本', as
 })
 test('写入必须等待新快照，不能用先前正在读取的旧账本报告同步', async () => {
   let resolve; let reads = 0
-  const test = setup({ request: async (method, path) => {
-    if (path.endsWith('batch')) return { records: [value] }
+  const test = setup({ request: async (method, path, options) => {
+    if (method === 'PUT') return { id: path.split('/').at(-1), version: 0, status: 'OPEN', records: options.body.records }
+    if (path.endsWith('/confirm')) return { records: [value] }
     reads++; if (reads === 1) return new Promise(done => { resolve = done })
     return { records: [{ record: value, deletedAt: null }] }
   } })

@@ -34,7 +34,8 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     if (raw === null) return {}
     const value = JSON.parse(raw)
     if (!value || typeof value !== 'object' || Array.isArray(value)
-      || Object.values(value).some(v => !v || !UUID.test(v.requestId) || typeof v.content !== 'string')) {
+      || Object.values(value).some(v => !v || !UUID.test(v.requestId) || typeof v.content !== 'string'
+        || (v.draftVersion != null && (!Number.isSafeInteger(v.draftVersion) || v.draftVersion < 0)))) {
       throw new Error('确认记录无法读取，原内容已保护，请勿清除存储。')
     }
     return value
@@ -53,13 +54,35 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     catch { throw new Error('确认标识无法保存，尚未发送入账请求。请保留草稿后再试。') }
     return requestId
   }
+  function rememberDraftVersion(batchId, version) {
+    const values = intents()
+    const saved = values[batchId]
+    if (!saved) throw new Error('确认标识已变化，请保留内容并核对账单。')
+    if (saved.draftVersion != null && saved.draftVersion !== version) throw new Error('服务端草稿版本已变化，请重新核对，不要重复入账。')
+    if (saved.draftVersion == null) {
+      values[batchId] = { ...saved, draftVersion: version }
+      try { storage.setItem(key, JSON.stringify(values)) }
+      catch { throw new Error('草稿版本无法保存，尚未发送确认请求。请保留内容后再试。') }
+    }
+    return values[batchId].draftVersion
+  }
   async function createBatch(inputs, batchId) {
     if (!Array.isArray(inputs) || inputs.length < 1 || inputs.length > 5) throw new Error('每次确认1–5笔账单')
     const ids = inputs.map((value, index) => String(value.id ?? index))
     if (new Set(ids).size !== ids.length) throw new Error('草稿编号重复')
     const body = { records: inputs.map(toRecordInput) }
     const requestId = intent(batchId, JSON.stringify(body))
-    const response = await client.request('POST', '/api/records/batch', { body, headers: { 'Idempotency-Key': requestId }, beforeSend })
+    const draft = await client.request('PUT', `/api/drafts/${requestId}`, { body, beforeSend })
+    if (draft?.id !== requestId || !Number.isSafeInteger(draft.version) || draft.version < 0
+      || !['OPEN', 'CONFIRMED'].includes(draft.status) || !Array.isArray(draft.records) || draft.records.length !== body.records.length
+      || draft.records.some((record, index) => ['type', 'amount', 'date', 'category', 'note', 'time']
+        .some(field => (record?.[field] ?? null) !== (body.records[index][field] ?? null)))) {
+      throw new Error('服务端草稿状态或内容不一致，请保留原操作并核对账单。')
+    }
+    beforeSend()
+    const version = rememberDraftVersion(batchId, draft.version)
+    const response = await client.request('POST', `/api/drafts/${requestId}/confirm`, {
+      body: { version }, headers: { 'Idempotency-Key': requestId }, beforeSend })
     const receipt = response?.records
     if (!Array.isArray(receipt) || receipt.length !== inputs.length) throw new Error('保存回执不完整，请用原操作重试。')
     return receipt.map((value, index) => ({ ...fromRecordView(value), draftGroupId: batchId, draftItemId: ids[index] }))

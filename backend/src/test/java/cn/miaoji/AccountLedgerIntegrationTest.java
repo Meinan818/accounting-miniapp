@@ -48,6 +48,8 @@ class AccountLedgerIntegrationTest {
     @MockitoSpyBean LedgerRepository records;
     @MockitoSpyBean LedgerWriteRepository requests;
     @MockitoSpyBean cn.miaoji.ledger.LedgerAuditRepository audit;
+    @MockitoSpyBean cn.miaoji.ledger.DraftRepository drafts;
+    @Autowired cn.miaoji.ledger.DraftService draftService;
 
     private record Browser(MockHttpSession session, String token) {}
 
@@ -88,6 +90,103 @@ class AccountLedgerIntegrationTest {
         var result = mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input(amount))).andExpect(status().isCreated()).andReturn();
         return json.readTree(result.getResponse().getContentAsString());
+    }
+
+    @Test void draftsRequireOwnershipAndLatestVersionAndDoNotWriteBeforeConfirmation() throws Exception {
+        var alice=account();var bob=account();var id=UUID.randomUUID();
+        mvc.perform(get("/api/drafts/"+id)).andExpect(status().isUnauthorized());
+        mvc.perform(put("/api/drafts/"+id).session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"records\":["+input("1.00")+"]}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.version").value(0)).andExpect(jsonPath("$.status").value("OPEN"));
+        mvc.perform(get("/api/records").session(alice.session()).param("month","2026-10")).andExpect(jsonPath("$.total").value(0));
+        mvc.perform(get("/api/drafts/"+id).session(bob.session())).andExpect(status().isNotFound());
+        mvc.perform(post("/api/drafts/"+id+"/confirm").session(bob.session()).header("X-CSRF-TOKEN",bob.token())
+                .header("Idempotency-Key",id).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isNotFound());
+        mvc.perform(put("/api/drafts/"+id).session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"records\":["+input("2.00")+"]}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.version").value(1));
+        mvc.perform(put("/api/drafts/"+id).session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"records\":["+input("3.00")+"]}"))
+                .andExpect(status().isConflict());
+        mvc.perform(post("/api/drafts/"+id+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .header("Idempotency-Key",id).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("STALE_DRAFT"));
+        mvc.perform(post("/api/drafts/"+id+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .header("Idempotency-Key",id).contentType(MediaType.APPLICATION_JSON).content("{\"version\":1}"))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.records[0].amount").value("2.00"));
+        mvc.perform(post("/api/drafts/"+id+"/cancel").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":1}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test void confirmedDraftReplaysOriginalReceiptWithoutRestoringDeletedRecord() throws Exception {
+        var alice=account();var me=mvc.perform(get("/api/auth/me").session(alice.session())).andReturn();
+        long owner=json.readTree(me.getResponse().getContentAsString()).path("id").asLong();var id=UUID.randomUUID();
+        var values=List.of(new RecordInput("expense","1.00",java.time.LocalDate.of(2026,10,3),"餐饮","合成"));
+        draftService.save(owner,id,null,values);draftService.save(owner,id,null,values);
+        var receipt=draftService.confirm(owner,id,0,id);var record=receipt.records().getFirst();
+        mvc.perform(delete("/api/records/"+record.id()).param("version","0").session(alice.session())
+                .header("X-CSRF-TOKEN",alice.token())).andExpect(status().isNoContent());
+        jdbc.update("UPDATE ledger_draft SET expires_at='2020-01-01 00:00:00' WHERE user_id=? AND id=?",owner,id.toString());
+        var replay=draftService.confirm(owner,id,0,id);
+        assertThat(replay.replayed()).isTrue();assertThat(replay.records()).isEqualTo(receipt.records());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id=? AND deleted_at IS NULL",Long.class,owner)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE record_id=?",Long.class,record.id())).isEqualTo(2);
+    }
+
+    @Test void cancelledExpiredAndInvalidDraftsCannotConfirm() throws Exception {
+        var alice=account();var me=mvc.perform(get("/api/auth/me").session(alice.session())).andReturn();
+        long owner=json.readTree(me.getResponse().getContentAsString()).path("id").asLong();var id=UUID.randomUUID();
+        var values=List.of(new RecordInput("expense","1.00",java.time.LocalDate.of(2026,10,3),"餐饮","合成"));
+        draftService.save(owner,id,null,values);draftService.cancel(owner,id,0);draftService.cancel(owner,id,0);
+        mvc.perform(post("/api/drafts/"+id+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .header("Idempotency-Key",id).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("DRAFT_CLOSED"));
+        var expired=UUID.randomUUID();draftService.save(owner,expired,null,values);
+        jdbc.update("UPDATE ledger_draft SET expires_at='2020-01-01 00:00:00' WHERE user_id=? AND id=?",owner,expired.toString());
+        mvc.perform(post("/api/drafts/"+expired+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .header("Idempotency-Key",expired).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isGone());
+        mvc.perform(put("/api/drafts/"+UUID.randomUUID()).session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"records\":["+input("0.00")+"]}"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(post("/api/drafts/"+id+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .header("Idempotency-Key",UUID.randomUUID()).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isBadRequest());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id=?",Long.class,owner)).isZero();
+    }
+
+    @Test void draftFinalizationFailureRollsBackLedgerRequestAndAuditAndCanRetry() throws Exception {
+        var alice=account();var me=mvc.perform(get("/api/auth/me").session(alice.session())).andReturn();
+        long owner=json.readTree(me.getResponse().getContentAsString()).path("id").asLong();var id=UUID.randomUUID();
+        draftService.save(owner,id,null,List.of(new RecordInput("expense","1.00",java.time.LocalDate.of(2026,10,3),"餐饮","合成")));
+        doThrow(new DataIntegrityViolationException("synthetic draft finish failure")).when(drafts)
+                .finish(eq(owner),eq(id.toString()),eq(0L),eq("CONFIRMED"),anyString());
+        mvc.perform(post("/api/drafts/"+id+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .header("Idempotency-Key",id).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isServiceUnavailable());
+        assertThat(draftService.get(owner,id).status()).isEqualTo("OPEN");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id=?",Long.class,owner)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_write_request WHERE user_id=?",Long.class,owner)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE user_id=?",Long.class,owner)).isZero();
+        reset(drafts);assertThat(draftService.confirm(owner,id,0,id).records()).hasSize(1);
+    }
+
+    @Test void concurrentDraftConfirmationCreatesOnlyOneBatchAndAudit() throws Exception {
+        var alice=account();var me=mvc.perform(get("/api/auth/me").session(alice.session())).andReturn();
+        long owner=json.readTree(me.getResponse().getContentAsString()).path("id").asLong();var id=UUID.randomUUID();
+        draftService.save(owner,id,null,List.of(new RecordInput("expense","1.00",java.time.LocalDate.of(2026,10,3),"餐饮","合成")));
+        var barrier=new CountDownLatch(1);
+        try(var pool=Executors.newFixedThreadPool(6)) {
+            var tasks=new java.util.ArrayList<java.util.concurrent.Future<cn.miaoji.ledger.LedgerWriteService.WriteReceipt>>();
+            for(int i=0;i<6;i++) tasks.add(pool.submit(() -> {barrier.await();return draftService.confirm(owner,id,0,id);}));
+            barrier.countDown();int first=0;
+            for(var result:tasks) {var receipt=result.get(20,TimeUnit.SECONDS);if(!receipt.replayed()) first++;}
+            assertThat(first).isEqualTo(1);
+        }
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id=?",Long.class,owner)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE user_id=?",Long.class,owner)).isEqualTo(1);
     }
 
     @Test void auditTracksCommittedVersionsAndNeverDuplicatesReplaysOrRejectedChanges() throws Exception {
