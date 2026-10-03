@@ -1,4 +1,12 @@
-## 当前入口：聊天查询与确认回执（2026-10-04）
+## 当前入口：发送延时与离页等待状态（2026-10-04）
+
+新窗口01a103ce-1650-7d50-bbe6-8c08120e0346仍compact=0，source回执success与原生automation目标/每小时/ACTIVE/failed_runs_only已核。demo-before实际12项10通过2失败：延时离页thinking未释放、读取后仍追加草稿。handleSend入口/两个await后核当前页面及代次，finally核当前页面；卸载释放本页发送的thinking并撤销旧代次，stop同步释放sending。成功Store事实与已认可聊天流程保持。
+
+15项Chat实际setup/真实createAiDraftApi+合成客户端通过，含正常演示待确认草稿、停止后再整理、正式离页中止及旧结果不能清新页面thinking；332项全量通过，最后源码demo/server两构建通过，追加两项合成测试后源码不变无需重复构建。材料chat-interactions-2026-10-04/demo-before、demo-after-fixed-field、send-all-after、frontend-send-all与build-*-demo日志。新增正常演示断言最初读amount而非amountCents导致1失败，修正测试字段后通过，原日志保留。真实AI/邮件/账单/照片/账号写入0，GUI/真机/实际隔夜仍未验。
+
+a6185d708b431a31bf90f8e7353d7e6564d8bdbf普通Push完整远端一致已核；本节点核差异后正常保存上传，结果见memory/push-send与remote-send日志。本机预览http://127.0.0.1:5174，19940/20820须现场核，不擅自重启。下一项Login/验证码实际组件的输入、切换模式与离页迟到回调取证；优先读真实文件、复用已有session/API测试与合成客户端，不发真实验证码邮件、不改账号，不询问用户或委派。
+
+## 前一节点：聊天查询与确认回执（2026-10-04）
 
 actions-before真实7项4通过3失败：离页查询仍追加回复，整组/旧单笔确认迟到更新旧对话，整组追加情绪计时器。复用isCurrentView保护入口/await回执与reply/计时器，Store成功账单事实保留；离页组未改saved仍由batchRecords事实防重。10项Chat实际setup/327项全量及两构建通过，材料chat-interactions-2026-10-04，正常查询/确认/失败重试/重复阻断与迟到失败均覆盖。无真实业务/AI/邮件/照片调用，无新依赖，GUI/真机未验。
 

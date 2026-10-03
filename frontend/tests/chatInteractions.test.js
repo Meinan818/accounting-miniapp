@@ -3,13 +3,16 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import * as Vue from 'vue'
-import { createAiDraftApi } from '../src/api/aiDraft.js'
+import { createAiDraftApi, draftControl } from '../src/api/aiDraft.js'
+import dayjs from 'dayjs'
 import { getMonthQueryReply } from '../src/utils/chatQuery.js'
+import { createDraft, applyDraftInput, groupReply, isQuery, resolveGroup } from '../src/utils/draftEngine.js'
 
 const script = readFileSync(new URL('../src/views/Chat.vue', import.meta.url), 'utf8')
   .split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
-function scene() {
+function scene({ server = true, syntheticAi = false } = {}) {
   const scope = Vue.effectScope(), cleanup = [], scrolls = [], timers = [], writes = [], queries = [], facts = []
+  const aiRequests = [], intervals = [], clearedIntervals = []
   let finish, retries = 0, top = 200
   const conversation = Vue.reactive({ messages: Array.from({ length: 90 }, (_, id) => ({ id: String(id), kind: 'text', role: 'assistant', content: '合成历史' })),
     isThinking: false, retryPersistence: () => { retries++; return new Promise(resolve => { finish = resolve }) },
@@ -17,21 +20,26 @@ function scene() {
     updateGroup: (id, group) => { conversation.messages.find(message => message.id === id).group = group },
     updateRecord: (id, record) => { conversation.messages.find(message => message.id === id).record = record },
     markRecordConfirmed: id => { conversation.messages.find(message => message.id === id).confirmed = true },
-    setMascotMood: value => { conversation.mascotMood = value } })
+    setMascotMood: value => { conversation.mascotMood = value }, setThinking: value => { conversation.isThinking = value } })
   const store = { batchRecords: () => facts, records: [], storageError: '合成读取失败', summaryError: '', monthExpenseCents: 0,
     refresh: () => new Promise((resolve, reject) => queries.push({ resolve, reject })),
     addRecords: (items, options) => new Promise((resolve, reject) => writes.push({ items, options, reject, resolve: saved => { facts.push(...saved); resolve(saved) } })),
     addRecord: (record, options) => new Promise((resolve, reject) => writes.push({ items: [record], options, reject, resolve: saved => { facts.push(saved); resolve(saved) } })) }
-  const auth = Vue.reactive({ user: { id: 'synthetic' }, api: { request() { assert.fail('不可调用真实网络') } } })
-  const bindings = { ...Vue, onMounted() {}, onBeforeUnmount: callback => cleanup.push(callback), SERVER_MODE: true, createAiDraftApi, getMonthQueryReply,
-    window: { setTimeout: callback => { timers.push(callback); return timers.length }, clearTimeout() {}, clearInterval() {} },
+  const auth = Vue.reactive({ user: { id: 'synthetic' }, api: { request(method, path, options) {
+    assert(syntheticAi, '不可调用真实网络'); assert.equal(method, 'POST'); assert.equal(path, '/api/ai/parse'); options.beforeSend()
+    return new Promise((resolve, reject) => aiRequests.push({ options, resolve, reject }))
+  } } })
+  const bindings = { ...Vue, onMounted() {}, onBeforeUnmount: callback => cleanup.push(callback), SERVER_MODE: server, createAiDraftApi, getMonthQueryReply, draftControl, dayjs,
+    createDraft, applyDraftInput, groupReply, isQuery, resolveGroup,
+    window: { setTimeout: callback => { timers.push(callback); return timers.length }, clearTimeout() {},
+      setInterval: callback => { intervals.push(callback); return intervals.length }, clearInterval: id => clearedIntervals.push(id) },
     useAuthStore: () => auth, useConversationStore: () => conversation,
     useRecordStore: () => store }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {loadEarlier, retryConversation, messagesContainer, visibleLimit, loadingHistory, retryingPersistence, actionErrors, queryReply, saveDraft, handleConfirmRecord, savingGroup}')(...Object.values(bindings)))
+    ';return {loadEarlier, retryConversation, messagesContainer, visibleLimit, loadingHistory, retryingPersistence, actionErrors, queryReply, saveDraft, handleConfirmRecord, savingGroup, handleSend, stopAiWait, aiRunning}')(...Object.values(bindings)))
   const container = { scrollHeight: 1000, get scrollTop() { return top }, set scrollTop(value) { top = value; scrolls.push(value) } }
   view.messagesContainer.value = container
-  return { view, auth, conversation, writes, queries, facts, timers, container, scrolls, get retries() { return retries }, finish: value => finish(value), dispose() {
+  return { view, auth, conversation, writes, queries, facts, timers, aiRequests, clearedIntervals, container, scrolls, get retries() { return retries }, finish: value => finish(value), dispose() {
     cleanup.splice(0).forEach(callback => callback()); scope.stop(); view.messagesContainer.value = null
   } }
 }
@@ -171,4 +179,77 @@ test('当前页面旧单笔确认仍更新回执，重复确认不再发写请�
     await env.view.handleConfirmRecord('legacy', record)
     assert.equal(env.writes.length, 1)
   } finally { env.dispose() }
+})
+
+test('演示等待600ms期间离页后不追加读取或草稿，退出即释放本页thinking', async () => {
+  const env = scene({ server: false }), pending = env.view.handleSend('午饭25')
+  env.dispose()
+  assert.equal(env.conversation.isThinking, false)
+  env.timers[0](); await Promise.resolve(); await Promise.resolve()
+  env.queries[0]?.resolve(true); await pending
+  assert.equal(env.queries.length, 0)
+  assert.equal(env.conversation.messages.length, 91)
+})
+
+test('演示读取途中离页，旧结果不追加草稿且不能清新页面thinking', async () => {
+  const env = scene({ server: false }), pending = env.view.handleSend('午饭25')
+  env.timers[0](); await Promise.resolve(); await Promise.resolve()
+  assert.equal(env.queries.length, 1)
+  env.dispose(); env.conversation.setThinking(true)
+  env.queries[0].resolve(true); await pending
+  assert.equal(env.conversation.messages.length, 91)
+  assert.equal(env.conversation.isThinking, true)
+})
+
+test('演示正常延时读取后仍创建待确认草稿，输入不会自动写账单', async () => {
+  const env = scene({ server: false })
+  try {
+    const pending = env.view.handleSend('午饭25')
+    await env.view.handleSend('咖啡18')
+    assert.equal(env.timers.length, 1)
+    env.timers[0](); await Promise.resolve(); await Promise.resolve()
+    env.queries[0].resolve(true); await pending
+    assert.equal(env.conversation.messages.length, 93)
+    assert.equal(env.conversation.messages.at(-1).group.status, 'ready')
+    assert.equal(env.conversation.messages.at(-1).group.items[0].amountCents, 2500)
+    assert.equal(env.writes.length, 0)
+    assert.equal(env.conversation.isThinking, false)
+  } finally { env.dispose() }
+})
+
+const readyAi = request => ({ model: 'glm-4-flash-250414', status: 'ready', question: '',
+  records: [{ type: 'expense', amount: '25.00', date: request.options.body.date, category: '餐饮', note: '合成午饭' }] })
+
+test('正式Chat停止后再整理，旧AI回执不清新等待状态，合成新草稿仍须确认', async () => {
+  const env = scene({ syntheticAi: true })
+  try {
+    const first = env.view.handleSend('午饭25')
+    assert.equal(env.aiRequests.length, 1)
+    env.view.stopAiWait()
+    assert.equal(env.aiRequests[0].options.signal.aborted, true)
+    assert.equal(env.conversation.isThinking, false)
+    const second = env.view.handleSend('午饭25元')
+    env.aiRequests[0].resolve(readyAi(env.aiRequests[0])); await first
+    assert.equal(env.view.aiRunning.value, true)
+    assert.equal(env.conversation.isThinking, true)
+    assert.equal(env.conversation.messages.filter(message => message.kind === 'draft-group').length, 0)
+    env.aiRequests[1].resolve(readyAi(env.aiRequests[1])); await second
+    assert.equal(env.conversation.messages.filter(message => message.kind === 'draft-group').length, 1)
+    assert.equal(env.view.aiRunning.value, false)
+    assert.equal(env.conversation.isThinking, false)
+    assert.equal(env.writes.length, 0)
+    assert.deepEqual(env.clearedIntervals, [1, 2])
+  } finally { env.dispose() }
+})
+
+test('正式Chat离页中止合成AI，旧结果不能清新页面thinking或追加草稿', async () => {
+  const env = scene({ syntheticAi: true }), pending = env.view.handleSend('午饭25')
+  env.dispose()
+  assert.equal(env.aiRequests[0].options.signal.aborted, true)
+  assert.equal(env.conversation.isThinking, false)
+  env.conversation.setThinking(true)
+  env.aiRequests[0].resolve(readyAi(env.aiRequests[0])); await pending
+  assert.equal(env.conversation.messages.length, 91)
+  assert.equal(env.conversation.isThinking, true)
+  assert.equal(env.writes.length, 0)
 })

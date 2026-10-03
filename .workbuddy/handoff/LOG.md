@@ -976,3 +976,10 @@
 - c9112af4bad5c912d34b39b0374308d0b377eac0普通Push与ls-remote完整一致已核。
 - actions-before实际7项4通过3失败：查询/整组/旧单笔确认迟到追加旧对话，整组创建情绪计时器。isCurrentView保护入口和await回执，reply与计时器分别保护；成功Store事实不撤销，组状态离页保留并继续按batchRecords识别已确认。10项Chat针对/327项全量与两构建通过，补正常确认/失败重试/重复阻断及离页失败。
 - 本轮全为合成Store，未写真实账本/对话/照片或发AI/邮件；GUI/真机未验。compact=0，automation目标保持。下一项演示handleSend延时/refresh间隙离页取证，保护新页面thinking，不触发真实模型。
+
+## 2026-10-04 · 发送延时与离页等待状态
+
+- a6185d708b431a31bf90f8e7353d7e6564d8bdbf普通Push及ls-remote完整一致已核。
+- demo-before12项10通过2失败：演示600ms离页thinking未释放、refresh迟到追加草稿。发送入口/await后核isCurrentView和代次，finally拒绝旧页面；sending记录本页流程，卸载释放本页thinking并撤销代次，停止同步释放。成功账单事实与当前页面正常流程保持。
+- 15项实际Chat setup+真实AI适配器合成客户端通过，含正常演示待确认、正式停止再整理及离页中止；332项全量通过。最后源码demo/server两构建通过，随后只追加合成测试不重复构建。真实模型/业务/邮件/照片调用0，无新依赖/账号变更；GUI/真机/实际隔夜未验，compact=0。
+- demo-after新正常测试用amount而实际草稿字段amountCents造成1失败，修正测试字段2500分后通过，不改业务迎合测试。下项Login/验证码组件状态/模式与离页取证，禁真实邮件和账号写入；现有原生续办读STATE继续，无需用户操作。本节点保存Push/远端实际证据见chat-interactions-2026-10-04/push-send.log、remote-send.log。

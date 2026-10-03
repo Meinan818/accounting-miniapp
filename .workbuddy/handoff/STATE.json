@@ -2,12 +2,12 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "聊天查询与确认回执已验证，继续演示发送延时离页取证",
+  "currentTask": "聊天发送离页与合成AI停止补验通过，继续登录验证码组件时序取证",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "离线核演示handleSend600ms延时/refresh间隙离页，保护新页面thinking，不发真实模型请求",
-  "nextStepReason": "演示发送等待本机延时及读取后才解析，现sendGeneration只保护finally，需核旧页面继续处理",
+  "nextStep": "离线核Login/验证码组件输入、模式切换与离页迟到回调，复用现有session/API测试，不发真实邮件或改账号",
+  "nextStepReason": "已有会话与验证码接口回归，但实际Login组件状态与输入保护需独立取证；业务输入生命周期优先",
   "pendingUserDecision": "集中记录.workbuddy/handoff/PENDING.md；目前不主动提问，继续独立任务",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-04",
@@ -20,7 +20,7 @@
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a103ce-1650-7d50-bbe6-8c08120e0346",
-    "transferStatus": "已原生创建gpt-6.1-sol/high并转移；toml逐字段核仅目标改变，其余提示/名称/每小时/ACTIVE/failed_runs_only保持。源保存最终结果后写success回执退出，新聊天核finalCommit后设0接续",
+    "transferStatus": "success回执/目标/finalCommit与原生view、toml已核，源不再共享写入；仅转移目标，其余原字段保持。本窗口已设0接续",
     "scheduledRunVerified": false
   }
 }

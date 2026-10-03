@@ -37,6 +37,7 @@ const aiRunning = ref(false)
 let aiController = null
 let aiTimer = null
 let sendGeneration = 0
+let sending = false
 function clearAiWait() {
   if (aiTimer) window.clearInterval(aiTimer)
   aiTimer = null; aiRunning.value = false; aiElapsed.value = 0
@@ -44,7 +45,7 @@ function clearAiWait() {
 function stopAiWait() {
   if (!aiController) return
   aiController.abort(); aiController = null; clearAiWait(); sendGeneration++
-  conversationStore.setThinking(false); conversationStore.setMascotMood('happy')
+  sending = false; conversationStore.setThinking(false); conversationStore.setMascotMood('happy')
   reply('本次整理已停止，未入账。原草稿保留；平台任务可能仍在结束中，请稍后再发。')
 }
 
@@ -176,14 +177,17 @@ function editDraft(messageId, { itemId, record }) {
 }
 async function handleSend(userInput) {
   const text = String(userInput || '').trim()
-  if (!text || conversationStore.isThinking || savingGroup.value || retryingPersistence.value) return
+  if (!isCurrentView() || !text || conversationStore.isThinking || savingGroup.value || retryingPersistence.value) return
   const generation = ++sendGeneration
+  sending = true
   conversationStore.addMessage({ role: 'user', kind: 'text', content: text })
   conversationStore.setThinking(true); conversationStore.setMascotMood('thinking'); scrollToBottom()
   try {
     if (SERVER_MODE) { await handleServerSend(text); return }
     await wait(600)
+    if (!isCurrentView() || generation !== sendGeneration) return
     await recordStore.refresh()
+    if (!isCurrentView() || generation !== sendGeneration) return
     const active = activeDraftMessage.value
     if (active) {
       const result = applyDraftInput(active.group, text)
@@ -197,7 +201,7 @@ async function handleSend(userInput) {
       if (result.group) conversationStore.addMessage({ role: 'assistant', kind: 'draft-group', group: result.group })
     }
   } catch { reply('本喵这次没整理好，草稿没有入账。可以再说清楚一些，或者用手动记账。') }
-  finally { if (generation === sendGeneration) { conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() } }
+  finally { if (isCurrentView() && generation === sendGeneration) { sending = false; conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() } }
 }
 async function handleServerSend(text) {
   const active = activeDraftMessage.value
@@ -270,6 +274,8 @@ watch(
 onMounted(scrollToBottom)
 
 onBeforeUnmount(() => {
+  if (sending && isCurrentView()) { conversationStore.setThinking(false); conversationStore.setMascotMood('happy') }
+  sending = false; sendGeneration++
   disposed = true
   aiController?.abort(); aiController = null; clearAiWait()
   if (moodTimer) {
