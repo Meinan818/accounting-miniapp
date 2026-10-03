@@ -51,6 +51,48 @@ test('并发读取CSRF只产生一次请求', async () => {
   const api = createApiClient({ fetcher: async () => { calls++; await new Promise(resolve => setTimeout(resolve, 10)); return response(200, token) } })
   await Promise.all([api.getCsrf(), api.getCsrf()]); assert.equal(calls, 1)
 })
+
+test('安全校验重置后不复用旧请求，旧回执和finally不覆盖新校验', async () => {
+  const resolvers = []
+  const headers = []
+  const api = createApiClient({ fetcher: (path, options) => {
+    if (path.endsWith('/csrf')) return new Promise(done => resolvers.push(done))
+    headers.push(options.headers['X-CSRF-TOKEN'])
+    return Promise.resolve(response(200, {}))
+  } })
+  const first = api.getCsrf()
+  api.resetCsrf()
+  const second = api.getCsrf()
+  assert.equal(resolvers.length, 2)
+  resolvers[0](response(200, { ...token, token: 'old-synthetic' }))
+  await assert.rejects(first, /安全校验.*变化/)
+  const joined = api.getCsrf()
+  assert.equal(resolvers.length, 2)
+  resolvers[1](response(200, { ...token, token: 'current-synthetic' }))
+  await Promise.all([second, joined])
+  await api.request('POST', '/api/profile', { body: {} })
+  assert.deepEqual(headers, ['current-synthetic'])
+})
+
+test('账号变化期间安全校验旧回执不缓存，写请求不发出', async () => {
+  let owner = '1', resolve, writes = 0
+  const api = createApiClient({ getOwner: () => owner, fetcher: (path) => {
+    if (path.endsWith('/csrf')) return new Promise(done => { resolve = done })
+    writes++; return Promise.resolve(response(200, {}))
+  } })
+  const pending = api.request('POST', '/api/profile', { body: {} })
+  owner = '2'
+  resolve(response(200, token))
+  await assert.rejects(pending, /身份.*变化|安全校验.*变化/)
+  const next = api.getCsrf()
+  assert.equal(writes, 0)
+  let settled = false
+  next.then(() => { settled = true })
+  await new Promise(done => setImmediate(done))
+  assert.equal(settled, false)
+  resolve(response(200, { ...token, token: 'other-synthetic' }))
+  assert.equal((await next).token, 'other-synthetic')
+})
 test('请求断言当前账号，跨标签Cookie变化的409撤销旧页面身份', async () => {
   let changed = 0, header
   const api = createApiClient({ getOwner: () => '1', onUnauthorized: () => changed++, fetcher: async (path, options) => {

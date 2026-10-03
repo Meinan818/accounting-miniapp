@@ -10,7 +10,10 @@ export class ApiError extends Error {
 // 浏览器只请求同源/api，凭据由HttpOnly会话Cookie持有。
 export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000, onUnauthorized = () => {}, getOwner = () => null } = {}) {
   let csrf = null
+  let csrfOwner = null
   let csrfLoading = null
+  let csrfGeneration = 0
+  function resetCsrf() { csrfGeneration++; csrf = null; csrfOwner = null; csrfLoading = null }
   async function send(method, path, { body, headers = {}, signal, requestTimeoutMs = timeoutMs } = {}) {
     if (!path.startsWith('/api/') || path.includes('://')) throw new Error('接口须使用同源/api路径')
     const ownerAtSend = getOwner()
@@ -29,7 +32,7 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
         if (hasBody) { try { data = JSON.parse(text) } catch { /* HTML代理错误不能直接显示原文。 */ } }
       }
       if (!response.ok) {
-        if ((response.status === 401 || data?.code === 'ACCOUNT_CHANGED') && getOwner() === ownerAtSend) { csrf = null; onUnauthorized() }
+        if ((response.status === 401 || data?.code === 'ACCOUNT_CHANGED') && getOwner() === ownerAtSend) { resetCsrf(); onUnauthorized() }
         const message = response.status === 401 ? (path === '/api/auth/login' ? '账号或密码不正确。' : '登录已失效，请重新登录。')
           : response.status === 403 ? '安全校验未通过，请重新登录后再试。'
             : typeof data?.message === 'string' ? data.message : '服务暂不可用，请稍后重试。'
@@ -43,17 +46,24 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
     } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort) }
   }
   async function getCsrf() {
+    const owner = getOwner()
+    if (csrf && csrfOwner !== owner) resetCsrf()
     if (csrf) return csrf
+    if (csrfLoading && csrfLoading.owner !== owner) resetCsrf()
     if (!csrfLoading) {
-      csrfLoading = send('GET', '/api/auth/csrf').then(data => {
+      const current = csrfGeneration
+      const attempt = { owner, promise: null }
+      csrfLoading = attempt
+      attempt.promise = send('GET', '/api/auth/csrf').then(data => {
+        if (current !== csrfGeneration || getOwner() !== owner) throw new ApiError('安全校验或登录身份已变化，请使用当前账号重试。', { code: 'STALE_CSRF' })
         if (data?.headerName !== 'X-CSRF-TOKEN' || typeof data.token !== 'string' || !data.token) {
           throw new ApiError('安全校验信息无法读取。', { code: 'INVALID_RESPONSE' })
         }
-        csrf = data
+        csrf = data; csrfOwner = owner
         return data
-      }).finally(() => { csrfLoading = null })
+      }).finally(() => { if (csrfLoading === attempt) csrfLoading = null })
     }
-    return csrfLoading
+    return csrfLoading.promise
   }
   async function request(method, path, { body, form = false, multipart = false, headers = {}, signal, requestTimeoutMs, beforeSend = () => {} } = {}) {
     const outgoing = { ...headers }
@@ -75,10 +85,10 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
   }
   async function login(username, password) {
     await request('POST', '/api/auth/login', { body: { username, password }, form: true })
-    csrf = null
+    resetCsrf()
     await getCsrf()
     return request('GET', '/api/auth/me')
   }
-  async function logout() { await request('POST', '/api/auth/logout'); csrf = null }
-  return { request, login, logout, getCsrf, resetCsrf: () => { csrf = null } }
+  async function logout() { await request('POST', '/api/auth/logout'); resetCsrf() }
+  return { request, login, logout, getCsrf, resetCsrf }
 }
