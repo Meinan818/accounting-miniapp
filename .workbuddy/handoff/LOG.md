@@ -904,3 +904,10 @@
 - 首轮修复后的失败来自测试window缺removeEventListener且新增dispose触发，原日志保留，补完整测试替身后294通过；未修改浏览器业务来迁就替身。
 - c07f229普通Push及远端完整c07f229e29246ea78c2f17c1513db0a554b70530一致已核；服务仍19940/20820且仅127.0.0.1:8080/5174，无部署。compact仍1，同聊天恢复保留；既有automation不重复创建。
 - 下一项核本机Vite修改模块供给与交接记录，再继续资料编辑保存/读取与取消的组件状态时序；不能用源模块200覆盖GUI/真机验收。
+## 2026-10-04 · 个人资料异步输入保护
+
+- profile-interactions-2026-10-04/before.log实际3项1通过2失败：重复打开的第二次读取覆盖已填昵称；较早GET在PUT保存新版本后返回，覆盖名片。openProfile串行并在已打开时保留表单；loadProfile按代次/身份/离页核响应，保存撤销旧读取。
+- 追加照片部分保存页面验证：POST成功/PUT失败/GET失败仍保留昵称及已上传照片版本，重试仅PUT；成功后旧profileError未清除的retry-before.log4通过1失败已复现并修正。不会再次上传或更改账单/原照片。
+- 5项实际Profile setup+真实createProfileApi合成客户端集成、299项全量及demo/server两构建通过。源模块HTTP8项200仅证明本机Vite供给；GUI/真机/真实资料写入未验证，未调用模型/邮件/上传真实照片。
+- 6756978普通Push成功，完整6756978b3e86f03ab006fa4afecaf548de05b265远端一致已核。compact仍1，automation沿用既有ID，不重复创建，完整定时成功仍未证实。
+- 下一项核个人页月概况/最近7天是否随本机跨日跨月更新；Profile当前month是挂载常量，recentDays的computed未依赖响应日期，须离线取得证据后接已有useLocalDay，不写业务日期或强制重读账本。

@@ -1,3 +1,11 @@
+## 2026-10-04 · 个人资料异步输入保护
+
+- profile-interactions-2026-10-04/before.log实际3项1通过2失败：重复打开的第二次读取覆盖已填昵称；较早GET在PUT保存新版本后返回，覆盖名片。openProfile串行并在已打开时保留表单；loadProfile按代次/身份/离页核响应，保存撤销旧读取。
+- 追加照片部分保存页面验证：POST成功/PUT失败/GET失败仍保留昵称及已上传照片版本，重试仅PUT；成功后旧profileError未清除的retry-before.log4通过1失败已复现并修正。不会再次上传或更改账单/原照片。
+- 5项实际Profile setup+真实createProfileApi合成客户端集成、299项全量及demo/server两构建通过。源模块HTTP8项200仅证明本机Vite供给；GUI/真机/真实资料写入未验证，未调用模型/邮件/上传真实照片。
+- 6756978普通Push成功，完整6756978b3e86f03ab006fa4afecaf548de05b265远端一致已核。compact仍1，automation沿用既有ID，不重复创建，完整定时成功仍未证实。
+- 下一项核个人页月概况/最近7天是否随本机跨日跨月更新；Profile当前month是挂载常量，recentDays的computed未依赖响应日期，须离线取得证据后接已有useLocalDay，不写业务日期或强制重读账本。
+
 ## 2026-10-04 · 旧分类原型同名汇总
 
 - category-prototype-2026-10-04/before.log实际15项14通过1失败：演示旧分类__proto__不是返回对象的自有分类，普通对象累加受原型属性影响；constructor也不能正确累加。两Store改Map累加及Object.fromEntries输出，旧名称/金额/记录不迁移不写入。

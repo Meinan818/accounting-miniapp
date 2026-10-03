@@ -45,21 +45,41 @@ const profileConflict = ref(false)
 const photoInput = ref(null)
 const processingPhoto = ref(false)
 const savingProfile = ref(false)
+const loadingProfile = ref(false)
+const openingProfile = ref(false)
+let profileReadGeneration = 0
 let photoRequest = 0
 let profileSnapshot = null
 const avatars = [{ key: 'cat', label: '猫猫' }, { key: 'paw', label: '爪印' }, { key: 'flower', label: '小花' }]
 async function loadProfile() {
+  if (disposed) return false
+  const request = ++profileReadGeneration
+  const isCurrentRead = () => !disposed && request === profileReadGeneration && (!remoteProfile || isCurrentProfile())
+  loadingProfile.value = true
   try {
-    if (remoteProfile) { profile.value = await remoteProfile.read(); profileError.value = ''; return }
+    if (remoteProfile) {
+      const result = await remoteProfile.read()
+      if (!isCurrentRead()) return false
+      profile.value = result; profileError.value = ''; return true
+    }
     const result = readLocalProfile(window.localStorage)
+    if (!isCurrentRead()) return false
     profile.value = result.profile; profileSnapshot = result.snapshot; profileError.value = result.error
-  } catch (error) { if (!disposed && (!remoteProfile || isCurrentProfile())) profileError.value = (remoteProfile ? '账号' : '本地') + '资料暂时无法读取。' + error.message }
+    return !result.error
+  } catch (error) {
+    if (isCurrentRead()) profileError.value = (remoteProfile ? '账号' : '本地') + '资料暂时无法读取。' + error.message
+    return false
+  } finally { if (request === profileReadGeneration) loadingProfile.value = false }
 }
 async function openProfile() {
-  await loadProfile()
-  if (profileError.value) return
-  profileForm.value = { ...profile.value }; editError.value = ''; profileNotice.value = ''; profileConflict.value = false
-  profileDialog.value.showModal()
+  if (disposed || openingProfile.value || savingProfile.value || profileDialog.value?.open) return false
+  openingProfile.value = true
+  try {
+    if (!await loadProfile() || disposed || !profileDialog.value) return false
+    profileForm.value = { ...profile.value }; editError.value = ''; profileNotice.value = ''; profileConflict.value = false
+    profileDialog.value.showModal()
+    return true
+  } finally { openingProfile.value = false }
 }
 function closeProfile(event) { if (savingProfile.value) { event?.preventDefault?.(); return }; photoRequest++; processingPhoto.value = false; profileDialog.value.close() }
 async function choosePhoto(event) {
@@ -75,15 +95,19 @@ async function choosePhoto(event) {
   finally { if (request === photoRequest) processingPhoto.value = false }
 }
 async function saveProfile() {
-  if (processingPhoto.value || savingProfile.value) return
+  if (disposed || processingPhoto.value || savingProfile.value) return
+  // An earlier read cannot replace the version established by this save.
+  profileReadGeneration++; loadingProfile.value = false
   savingProfile.value = true
   try {
     if (remoteProfile) {
-      profile.value = await remoteProfile.save(profile.value, profileForm.value)
+      const saved = await remoteProfile.save(profile.value, profileForm.value)
+      if (!isCurrentProfile()) return
+      profile.value = saved; profileError.value = ''
       savingProfile.value = false; closeProfile(); profileNotice.value = '资料已保存到当前账号。'; return
     }
     const result = saveLocalProfile(window.localStorage, profileForm.value, profileSnapshot)
-    profile.value = result.profile; profileSnapshot = result.snapshot
+    profile.value = result.profile; profileSnapshot = result.snapshot; profileError.value = ''
     savingProfile.value = false; closeProfile(); profileNotice.value = '本地资料已保存，只保存在当前浏览器。'
   } catch (error) {
     if (disposed || (remoteProfile && !isCurrentProfile())) return
@@ -97,7 +121,7 @@ async function saveProfile() {
   }
   finally { savingProfile.value = false }
 }
-onBeforeUnmount(() => { disposed = true; photoRequest++ })
+onBeforeUnmount(() => { disposed = true; photoRequest++; profileReadGeneration++ })
 async function logout() {
   try { await auth.logout() }
   catch (failure) { profileError.value = failure.message }
@@ -121,10 +145,10 @@ onMounted(() => { store.refresh(); loadProfile() })
       <section class="profile-identity" aria-label="本地账本说明">
         <div class="profile-person-avatar"><img v-if="profile.avatar === 'photo'" :src="profile.photo" alt="自定义照片头像" class="profile-custom-photo" /><CatNavIcon v-else-if="profile.avatar === 'cat'" kind="profile" /><JournalSticker v-else :kind="profile.avatar" :tone="profile.avatar === 'flower' ? 'lilac' : 'pink'" /></div>
         <JournalSticker kind="flower" tone="lilac" class="profile-flower" />
-        <div class="profile-person-copy"><span class="profile-id-eyebrow">MY LITTLE JOURNAL</span><h2>{{ profile.nickname }}</h2><p>{{ profile.signature || '给生活留一点小空白。' }}</p><span class="profile-local-badge">{{ SERVER_MODE ? auth.user?.username : '本地资料 · 尚未登录' }}</span><button class="profile-edit-button" type="button" :disabled="Boolean(profileError)" @click="openProfile">{{ SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }} <ChevronRight :size="14" /></button></div>
+        <div class="profile-person-copy"><span class="profile-id-eyebrow">MY LITTLE JOURNAL</span><h2>{{ profile.nickname }}</h2><p>{{ profile.signature || '给生活留一点小空白。' }}</p><span class="profile-local-badge">{{ SERVER_MODE ? auth.user?.username : '本地资料 · 尚未登录' }}</span><button class="profile-edit-button" type="button" :disabled="Boolean(profileError) || openingProfile || loadingProfile || savingProfile" :aria-busy="openingProfile" @click="openProfile">{{ openingProfile ? '正在读取资料…' : SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }} <ChevronRight :size="14" /></button></div>
       </section>
       <p v-if="profileNotice" class="profile-notice" role="status">{{ profileNotice }}</p>
-      <div v-if="profileError" class="profile-error" role="alert"><p>{{ profileError }}</p><button type="button" @click="loadProfile">重新读取资料</button></div>
+      <div v-if="profileError" class="profile-error" role="alert"><p>{{ profileError }}</p><button type="button" :disabled="loadingProfile || savingProfile" @click="loadProfile">{{ loadingProfile ? '正在读取…' : '重新读取资料' }}</button></div>
       <section v-if="!SERVER_MODE" class="profile-account-note" aria-label="账号状态"><CatNavIcon kind="home" /><div><h2>小账本，先住在这里</h2><p>当前账单留在这个浏览器。正式账号登录与个人资料同步正在规划，尚未接通。</p></div><img :src="miaoAvatar" alt="" /></section>
 
       <section v-if="SERVER_MODE" class="profile-account-note"><CatNavIcon kind="profile" /><div><h2>这是你的正式账号</h2><p>账单和资料保存在本机服务，原浏览器演示数据保留。</p><button type="button" @click="logout">退出当前账号</button></div></section>
@@ -182,7 +206,7 @@ onMounted(() => { store.refresh(); loadProfile() })
           <template v-if="!profileError"><p>当前昵称：{{ profile.nickname }}</p><p>当前签名：{{ profile.signature || '未填写' }}</p><p>当前头像：{{ profile.avatar === 'photo' ? '照片' : avatars.find(avatar => avatar.key === profile.avatar)?.label }}</p></template>
           <p v-else>最新资料暂时无法读取，请稍后重试；你的输入没有丢失。</p>
         </div>
-        <div v-if="remoteProfile && profileError" class="profile-error"><p>{{ profileError }}</p><button type="button" :disabled="savingProfile" @click="loadProfile">重新读取最新资料</button></div>
+        <div v-if="remoteProfile && profileError" class="profile-error"><p>{{ profileError }}</p><button type="button" :disabled="savingProfile || loadingProfile" @click="loadProfile">{{ loadingProfile ? '正在读取…' : '重新读取最新资料' }}</button></div>
         <div class="profile-editor-actions"><button type="button" @click="closeProfile">取消</button><button type="submit" :disabled="processingPhoto || savingProfile">{{ SERVER_MODE ? '保存账号资料' : '保存本地资料' }}</button></div>
       </form>
     </dialog>
