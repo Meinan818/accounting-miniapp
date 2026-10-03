@@ -1,4 +1,4 @@
-import { nextTick, ref, watch } from 'vue'
+import { nextTick, onScopeDispose, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { createId, validDate, validateRecord } from '../utils/ledger.js'
 import { MAX_CENTS } from '../utils/money.js'
@@ -51,7 +51,7 @@ function checkGroup(group) {
 // Validate without rewriting, filtering or migrating older messages.
 function readHistory() {
   const raw = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
-  if (raw == null) return [welcome()]
+  if (raw == null) return { messages: [welcome()], raw }
   const parsed = JSON.parse(raw)
   if (!Array.isArray(parsed)) throw new Error('invalid history')
   const ids = new Set(), groups = new Set()
@@ -69,19 +69,21 @@ function readHistory() {
       groups.add(message.group.id)
     }
   }
-  return parsed
+  return { messages: parsed, raw }
 }
 
 export const useConversationStore = defineStore('conversation', () => {
   const persistenceError = ref('')
   const restorationBlocked = ref(false)
-  let sessionChanged = false
+  const storageConflict = ref(false)
+  const hasUnsavedChanges = ref(false)
+  let expectedRaw
   let restoring = false
   let initial = [welcome()]
   function blockedMessage() {
     persistenceError.value = '旧对话暂无法读取，已保护原内容。新对话仅留本次页面，刷新前请先备份。账单仍可在明细查看。'
   }
-  try { initial = readHistory() }
+  try { const history = readHistory(); initial = history.messages; expectedRaw = history.raw }
   catch { restorationBlocked.value = true; blockedMessage() }
   const messages = ref(initial)
   const isThinking = ref(false)
@@ -99,9 +101,22 @@ export const useConversationStore = defineStore('conversation', () => {
   function setThinking(v) { isThinking.value = Boolean(v) }
   function setMascotMood(v) { mascotMood.value = v }
   function clearConversation() { messages.value = [welcome()]; mascotMood.value = 'happy' }
+  function conflictMessage() {
+    storageConflict.value = true
+    persistenceError.value = '另一页面已更新对话，本页已暂停写入，不会用旧历史覆盖。'
+      + (hasUnsavedChanges.value ? '本页未保存的消息或草稿仍在此页，请先备份两份内容，不要刷新或清除存储。' : '可点击重新读取最新对话，账单仍以明细为准。')
+  }
   function persist(value) {
+    if (storageConflict.value) { conflictMessage(); return false }
     try {
-      if (typeof window !== 'undefined') window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value))
+      // Check immediately before writing. This protects known stale snapshots, not an atomic cross-tab lock.
+      const nextRaw = JSON.stringify(value)
+      if (typeof window !== 'undefined') {
+        if (window.localStorage.getItem(STORAGE_KEY) !== expectedRaw) { conflictMessage(); return false }
+        window.localStorage.setItem(STORAGE_KEY, nextRaw)
+      }
+      expectedRaw = nextRaw
+      hasUnsavedChanges.value = false
       persistenceError.value = ''; return true
     } catch {
       persistenceError.value = '对话暂未保存到浏览器，刷新可能丢失未确认草稿；已入账的数据仍以明细为准。'
@@ -109,28 +124,48 @@ export const useConversationStore = defineStore('conversation', () => {
     }
   }
   async function retryPersistence() {
-    // Drain queued deep-watch writes before deciding whether re-reading is safe.
+    // Drain queued edits before deciding whether re-reading can discard anything.
     await nextTick()
-    if (!restorationBlocked.value) return persist(messages.value)
-    if (sessionChanged) {
-      persistenceError.value = '原对话仍受保护，本页已有新消息或草稿；为避免覆盖任一份内容，暂不能重新读取。请先备份两份内容，不要刷新或清除存储。'
+    if (!restorationBlocked.value && !storageConflict.value) return persist(messages.value)
+    if (hasUnsavedChanges.value) {
+      persistenceError.value = '原对话仍受保护，本页已有未保存消息或草稿；为避免覆盖任一份内容，暂不能重新读取。请先备份两份内容，不要刷新或清除存储。'
       return false
     }
     try {
       const recovered = readHistory()
       restoring = true
-      messages.value = recovered
+      messages.value = recovered.messages
+      expectedRaw = recovered.raw
+      restorationBlocked.value = false; storageConflict.value = false
       await nextTick()
-      restorationBlocked.value = false; persistenceError.value = ''; sessionChanged = false
+      // A storage event can arrive while the view updates: never acknowledge an already-stale reload.
+      if (typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEY) !== expectedRaw) {
+        conflictMessage(); return false
+      }
+      persistenceError.value = ''; hasUnsavedChanges.value = false
       return true
-    } catch { blockedMessage(); return false }
+    } catch { restorationBlocked.value = true; blockedMessage(); return false }
     finally { restoring = false }
   }
   watch(messages, value => {
     if (restoring) return
-    sessionChanged = true
+    hasUnsavedChanges.value = true
     if (!restorationBlocked.value) persist(value)
   }, { deep: true })
-  return { messages, isThinking, mascotMood, persistenceError, restorationBlocked, retryPersistence,
+  if (typeof window !== 'undefined' && window.addEventListener) {
+    const target = window
+    const listener = event => {
+      if (event.key !== STORAGE_KEY && event.key != null) return
+      if (restorationBlocked.value) return
+      try {
+        if (event.storageArea && event.storageArea !== target.localStorage) return
+        // Read the actual current snapshot, not a potentially delayed event.newValue.
+        if (target.localStorage.getItem(STORAGE_KEY) !== expectedRaw) conflictMessage()
+      } catch { persistenceError.value = '对话存储暂无法读取，请先保留本页内容，稍后重试；不会自动覆盖旧历史。' }
+    }
+    target.addEventListener('storage', listener)
+    onScopeDispose(() => target.removeEventListener?.('storage', listener))
+  }
+  return { messages, isThinking, mascotMood, persistenceError, restorationBlocked, storageConflict, hasUnsavedChanges, retryPersistence,
     addMessage, updateRecord, markRecordConfirmed, updateGroup, setThinking, setMascotMood, clearConversation }
 })

@@ -235,7 +235,7 @@ onBeforeUnmount(() => {
         <p v-if="recordStore.storageError" class="miao-storage-error" role="alert">{{ recordStore.storageError }}</p>
         <div v-if="conversationStore.persistenceError" class="miao-storage-error" role="alert">
           <p>{{ conversationStore.persistenceError }}</p>
-          <button type="button" class="miao-history-button" :disabled="retryingPersistence || conversationStore.isThinking || Boolean(savingGroup)" @click="retryConversation">{{ conversationStore.restorationBlocked ? '重新读取旧对话' : '重试对话保存' }}</button>
+          <button type="button" class="miao-history-button" :disabled="retryingPersistence || conversationStore.isThinking || Boolean(savingGroup)" @click="retryConversation">{{ conversationStore.storageConflict ? '重新读取最新对话' : conversationStore.restorationBlocked ? '重新读取旧对话' : '重试对话保存' }}</button>
         </div>
         <div v-if="hiddenCount" class="miao-history-controls">
           <button type="button" class="miao-history-button" :disabled="loadingHistory || conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="loadEarlier">查看更早对话（还有{{ hiddenCount }}条）</button>

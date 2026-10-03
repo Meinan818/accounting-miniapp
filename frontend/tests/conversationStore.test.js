@@ -120,3 +120,114 @@ test('规则引擎真实产生的各类追问/歧义/取消/保存上下文可�
     assert.equal(JSON.stringify(store.messages), raw); assert.equal(writes, 0)
   }
 })
+
+test('两个页面顺序写入时旧快照不能覆盖最新历史，冲突本页消息仍保留', async () => {
+  const a = useConversationStore(); setActivePinia(createPinia()); const b = useConversationStore()
+  a.addMessage({ content: '页面A新消息' }); await nextTick(); const latest = data.get(key), before = writes
+  b.addMessage({ content: '页面B新消息' }); await nextTick()
+  assert.equal(data.get(key), latest); assert.equal(writes, before)
+  assert.equal(b.messages.at(-1).content, '页面B新消息'); assert.equal(b.storageConflict, true)
+  assert.equal(b.hasUnsavedChanges, true); assert.match(b.persistenceError, /另一页面|其他页面/)
+  assert.equal(await b.retryPersistence(), false); assert.equal(data.get(key), latest)
+  assert.equal(b.messages.at(-1).content, '页面B新消息')
+})
+test('已经保存过的页面没有未保存内容时可以显式读取另一页面新历史', async () => {
+  const a = useConversationStore(); a.addMessage({ content: '已保存的A内容' }); await nextTick()
+  setActivePinia(createPinia()); const b = useConversationStore(); b.addMessage({ content: 'B新内容' }); await nextTick()
+  const latest = data.get(key), before = writes
+  assert.equal(a.hasUnsavedChanges, false)
+  // No storage event mock here: retry must also perform the pre-write check.
+  assert.equal(await a.retryPersistence(), false); assert.equal(a.storageConflict, true)
+  assert.equal(await a.retryPersistence(), true)
+  assert.equal(JSON.stringify(a.messages), latest); assert.equal(data.get(key), latest); assert.equal(writes, before)
+  a.addMessage({ content: '读取后继续' }); await nextTick()
+  assert.equal(JSON.parse(data.get(key)).length, 4); assert.equal(a.hasUnsavedChanges, false)
+})
+test('对话写入失败期间外部历史改变，重试不得覆盖任何一份内容', async () => {
+  const store = useConversationStore(); fail = true; store.addMessage({ content: '写入失败的本页内容' }); await nextTick()
+  const external = JSON.stringify([{ id:'external', role:'assistant', kind:'text', content:'其他页面内容' }]); data.set(key, external); fail = false
+  assert.equal(await store.retryPersistence(), false); assert.equal(data.get(key), external)
+  assert.equal(store.messages.at(-1).content, '写入失败的本页内容'); assert.equal(store.storageConflict, true)
+  assert.equal(await store.retryPersistence(), false); assert.equal(data.get(key), external)
+})
+
+function storageEvents() {
+  const listeners = new Set()
+  window.addEventListener = (type, listener) => { if (type === 'storage') listeners.add(listener) }
+  window.removeEventListener = (type, listener) => { if (type === 'storage') listeners.delete(listener) }
+  return { emit: event => { for (const listener of listeners) listener(event) }, count: () => listeners.size }
+}
+const textHistory = content => JSON.stringify([{ id:'external', role:'assistant', kind:'text', content }])
+test('存储事件只提示冲突，不自动重读或覆盖，显式重读不产生写入', async () => {
+  const events = storageEvents(), store = useConversationStore(), before = JSON.stringify(store.messages)
+  const latest = textHistory('另一页面最新历史'); data.set(key, latest); events.emit({ key, newValue: latest })
+  assert.equal(store.storageConflict, true); assert.equal(store.hasUnsavedChanges, false)
+  assert.equal(JSON.stringify(store.messages), before); assert.equal(writes, 0)
+  assert.equal(await store.retryPersistence(), true); assert.equal(JSON.stringify(store.messages), latest)
+  assert.equal(data.get(key), latest); assert.equal(writes, 0); assert.equal(store.storageConflict, false)
+})
+test('无关键/sessionStorage/延迟旧事件不会误锁已同步快照', async () => {
+  const events = storageEvents(), store = useConversationStore()
+  store.addMessage({ content:'当前已保存' }); await nextTick(); const latest = data.get(key)
+  events.emit({ key:'zhizhang_mock_records', newValue:'other' })
+  events.emit({ key, storageArea:{}, newValue:'session-only' })
+  events.emit({ key, newValue:'older-delayed-snapshot' })
+  assert.equal(store.storageConflict, false); assert.equal(data.get(key), latest); assert.equal(store.persistenceError, '')
+})
+test('Store销毁会移除storage监听，不残留事件动作', () => {
+  const events = storageEvents(), store = useConversationStore(); assert.equal(events.count(), 1)
+  store.$dispose(); assert.equal(events.count(), 0)
+  data.set(key, textHistory('外部')); events.emit({ key }); assert.equal(store.storageConflict, false)
+})
+test('另一页移除对话键或clear事件时不自动重新生成/覆盖历史', async () => {
+  for (const eventKey of [key, null]) {
+    setActivePinia(createPinia()); data.set(key, textHistory('初始历史')); const events = storageEvents(), store = useConversationStore()
+    data.delete(key); events.emit({ key:eventKey, newValue:null }); const before = writes
+    store.addMessage({ content:'旧页面新消息' }); await nextTick()
+    assert.equal(data.has(key), false); assert.equal(store.storageConflict, true); assert.equal(writes, before)
+    assert.equal(await store.retryPersistence(), false); assert.equal(data.has(key), false)
+  }
+})
+test('外部历史损坏后显式重读仍保护原文，不写入替换内容', async () => {
+  const events = storageEvents(), store = useConversationStore(); data.set(key, '{bad-external'); events.emit({ key })
+  assert.equal(await store.retryPersistence(), false); assert.equal(store.restorationBlocked, true)
+  assert.equal(data.get(key), '{bad-external'); assert.equal(writes, 0)
+  const valid = textHistory('修复后的原历史'); data.set(key, valid)
+  assert.equal(await store.retryPersistence(), true); assert.equal(JSON.stringify(store.messages), valid); assert.equal(writes, 0)
+})
+test('冲突后同tick新增草稿与重读，先排空监听再保护本页内容', async () => {
+  const events = storageEvents(), store = useConversationStore(), group = createDraft('咖啡', {date:'2026-10-03',time:'12:00'}).group
+  const latest = textHistory('其他页面'); data.set(key, latest); events.emit({ key })
+  store.addMessage({ kind:'draft-group', group })
+  assert.equal(await store.retryPersistence(), false); assert.equal(data.get(key), latest)
+  assert.equal(store.messages.at(-1).group.id, group.id); assert.equal(store.messages.at(-1).group.pending.kind, 'amountCents')
+})
+test('普通写入前读取失败保留未保存状态，权限恢复且快照未变可重试', async () => {
+  const store = useConversationStore(), get = window.localStorage.getItem
+  window.localStorage.getItem = () => { throw Error('denied') }
+  store.addMessage({ content:'权限异常的新消息' }); await nextTick()
+  assert.equal(store.hasUnsavedChanges, true); assert.equal(writes, 0)
+  window.localStorage.getItem = get; assert.equal(await store.retryPersistence(), true)
+  assert.equal(store.hasUnsavedChanges, false); assert.equal(JSON.parse(data.get(key)).at(-1).content, '权限异常的新消息')
+})
+test('重读时外部再次更新不能假报成功或写回已过期历史', async () => {
+  const events = storageEvents(), store = useConversationStore(); const older = textHistory('第一份外部历史'), latest = textHistory('重读时又更新')
+  data.set(key, older); events.emit({ key }); const get = window.localStorage.getItem; let calls = 0
+  window.localStorage.getItem = k => { if(k === key && calls++ === 0){ data.set(key,latest);return older }return get(k) }
+  assert.equal(await store.retryPersistence(), false); assert.equal(store.storageConflict, true)
+  assert.equal(data.get(key), latest); assert.equal(writes, 0)
+  window.localStorage.getItem = get; assert.equal(await store.retryPersistence(), true); assert.equal(JSON.stringify(store.messages), latest)
+})
+test('冲突页确认账单仍走同一账本，历史未覆盖且重复确认不能重复入账', async () => {
+  const { useRecordStore } = await import('../src/stores/recordStore.js')
+  const group = createDraft('咖啡16', {date:'2026-10-03',time:'12:00'}).group
+  const conversation = useConversationStore(); conversation.addMessage({id:'draft',kind:'draft-group',group}); await nextTick()
+  data.set('zhizhang_mock_records','[]'); const ledger = useRecordStore()
+  const latest = textHistory('外部更新'); data.set(key, latest)
+  const saved = ledger.addRecords(group.items, {batchId:group.id, source:'chat'})
+  conversation.updateGroup('draft', {...group,status:'saved'}); conversation.addMessage({content:'已记下一笔'}); await nextTick()
+  assert.equal(data.get(key), latest); assert.equal(conversation.storageConflict, true); assert.equal(conversation.hasUnsavedChanges, true)
+  assert.equal(saved.length,1); assert.equal(ledger.records.length,1)
+  ledger.addRecords(group.items, {batchId:group.id,source:'chat'}); assert.equal(ledger.records.length,1)
+  assert.equal(conversation.messages.find(m=>m.id==='draft').group.status,'saved')
+})
