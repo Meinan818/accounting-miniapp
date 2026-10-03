@@ -30,6 +30,7 @@ const recordStore = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
 const owner = auth?.user?.id
 let disposed = false
+function isCurrentView() { return !disposed && (!SERVER_MODE || auth.user?.id === owner) }
 const aiDraft = SERVER_MODE ? createAiDraftApi(auth.api, { isCurrent: () => !disposed && auth.user?.id === owner }) : null
 const aiElapsed = ref(0)
 const aiRunning = ref(false)
@@ -61,7 +62,7 @@ const monthExpenseText = computed(() => recordStore.storageError ? '暂不可读
 // 5. 方法
 function scrollToBottom() {
   nextTick(() => {
-    if (messagesContainer.value) {
+    if (isCurrentView() && messagesContainer.value) {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
   })
@@ -104,26 +105,29 @@ const hiddenCount = computed(() => Math.max(0, conversationStore.messages.length
 const loadingHistory = ref(false)
 const retryingPersistence = ref(false)
 async function loadEarlier() {
-  if (loadingHistory.value) return
+  if (!isCurrentView() || loadingHistory.value) return
   loadingHistory.value = true
   const container = messagesContainer.value
   const previousHeight = container?.scrollHeight || 0
   const previousTop = container?.scrollTop || 0
   visibleLimit.value += historyBatchSize
   await nextTick()
-  if (container) container.scrollTop = previousTop + container.scrollHeight - previousHeight
+  if (!isCurrentView()) return
+  if (container && container === messagesContainer.value) container.scrollTop = previousTop + container.scrollHeight - previousHeight
   loadingHistory.value = false
 }
 async function retryConversation() {
-  if (retryingPersistence.value || conversationStore.isThinking || savingGroup.value) return
+  if (!isCurrentView() || retryingPersistence.value || conversationStore.isThinking || savingGroup.value) return
   retryingPersistence.value = true
   try {
-    if (await conversationStore.retryPersistence()) {
+    const restored = await conversationStore.retryPersistence()
+    if (!isCurrentView()) return
+    if (restored) {
       actionErrors.value = {}
       visibleLimit.value = historyBatchSize
       scrollToBottom()
     }
-  } finally { retryingPersistence.value = false }
+  } finally { if (isCurrentView()) retryingPersistence.value = false }
 }
 function reply(content) { conversationStore.addMessage({ role: 'assistant', kind: 'text', content }) }
 async function queryReply(text) {

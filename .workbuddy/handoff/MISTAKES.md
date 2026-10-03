@@ -251,3 +251,8 @@
 ## 2026-10-04 · 统计默认本月缓存
 
 - useStatsMonthNavigation默认currentMonth函数未含响应依赖，Stats缓存默认本月不跨月；真实setup3项2通过1失败原文保留。页面复用useLocalDay并注入响应默认月份，显式month不跟随，3项针对/317项全量/两构建通过。以后默认系统日期与用户显式选择分开核，避免响应日期无意覆盖历史查看。
+
+## 2026-10-04 · 聊天历史离页与测试microtask
+
+- loadEarlier捕获容器后离页仍scroll，retryConversation迟到清旧状态；before-fixed-harness1通过2失败保留。isCurrentView/当前容器保护，4项针对/321项全量/两构建通过。
+- 首轮正常阅读断言预期800，假高度在await重复调用后才设1600，此时旧callback已读1000，因此200正确。修正替身时序，原业务正常路径通过；今后渲染高度在nextTick回调前更新，不把harness调度错误称产品缺陷。

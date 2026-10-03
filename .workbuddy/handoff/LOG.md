@@ -964,3 +964,9 @@
 - a5e1ecf07425867903b8f02ecdd593b91482a6e8普通Push及ls-remote完整远端一致已核。
 - stats-interactions-2026-10-04/before.log实际3项2通过1失败：默认selectedMonth computed跨月保留2026-10，统计仍旧月。Stats接useLocalDay并将响应当前月份传既有导航helper；显式历史月份仍保持，默认概况29分→31分，旧选日撤销而收支类别保留，时钟释放，0请求。图表等待时用户选日保护原来通过，无需改图表。
 - 3项针对/317项全量及demo/server两构建通过。无依赖/锁文件变化，无真实业务/AI/邮件/照片调用；GUI/真机/实际隔夜未验，compact=0。下一项Chat历史展开与重读离页回调取证，先证据再最小修复。
+
+## 2026-10-04 · 聊天历史生命周期
+
+- 495c0acecb7b054ef5a6e62923b74ae57b02ddb8普通Push与ls-remote完整一致已核。
+- chat-interactions-2026-10-04/before-fixed-harness3项1通过2失败：历史展开离页仍滚旧容器，重读迟到清旧错误及展开范围。复用disposed/owner的isCurrentView保护入口/回执与底部滚动，容器核同一实例；4项针对/321项全量/两构建通过，包含账号变化与正常阅读/重读、重复阻断。
+- 首轮正常测试晚于await更新假高度而误失败，before.log保留；调整高度在microtask前反映渲染后正常通过，不修业务来迁就替身。无真实业务/AI/邮件/照片调用，无新依赖，GUI/真机未验，compact=0。继续查询与整组/旧单笔确认迟到回执取证，账单事实不随离页丢弃。

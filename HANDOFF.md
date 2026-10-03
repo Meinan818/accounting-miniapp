@@ -1,4 +1,10 @@
-## 当前入口：统计默认月份跨月（2026-10-04）
+## 当前入口：聊天历史生命周期（2026-10-04）
+
+Chat loadEarlier捕获旧容器、retryConversation缺离页回执守卫，before-fixed-harness实际3项1通过2失败；复用disposed和owner封装isCurrentView，历史/重试入口与回执拒绝旧身份/离页，滚动核当前容器。4项真实setup/321项全量及两构建通过，材料chat-interactions-2026-10-04。首轮正常阅读测试高度设置晚于microtask导致误失败，修正替身时序后原正常流程通过，不混作业务错误。原对话/账本/账号未写，无真实AI/邮件请求，无依赖变化，GUI/真机未验。
+
+495c0acecb7b054ef5a6e62923b74ae57b02ddb8普通Push及完整远端一致已核。compact=0，现有automation目标保持。下一项Chat queryReply/saveDraft/旧单笔确认的离页迟到回执，合成Store验证，不发真实写入；确认成功的Store账单事实须保留，页面通知与定时器分别保护。
+
+## 前一节点：统计默认月份跨月（2026-10-04）
 
 Stats实际setup before.log3项2通过1失败：缓存默认2026-10在跨到11月后仍旧月。接useLocalDay向useStatsMonthNavigation传响应默认月份，显式month不跟随；月底概况29分→31分，收支类别保持、旧选日撤销、0账本请求与时钟释放。原图表用户选日保护本来通过，不误称需修复。3项针对/317项全量及两构建通过，材料stats-interactions-2026-10-04，无依赖变化/真实业务/AI/邮件调用，GUI/真机/实际隔夜未验。
 
