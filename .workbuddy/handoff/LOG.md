@@ -995,3 +995,5 @@
 - 登录25d3933066456dc8b34257ab52c8b2d4c78a3b53本地保存；普通Git Push两次443失败原文保留。官方只读API重新核远端82bf834e70a505a8213bad42d4f5b6636ffbbbf4、私有/无Pages/0 workflows/0 deployments，原HTTPS失败不当成功。
 - conversation-lifecycle-2026-10-04/before真实31项29通过2失败：释放后的retryPersistence仍写旧快照或回填旧实例。onScopeDispose active守卫protect persist/重试入口与两个await，迟到失败不改错误，原存储不覆盖。31项针对/339项全量及两构建通过，最终catch格式整理后全量339再次通过，未改语义。既有Pinia R1004 harness提示保留，不冒称浏览器错误或抑制日志。
 - 无真实账号/账本/对话/照片写入，无真实AI/邮件请求，无依赖变化；GUI/真机/实际隔夜未验，compact=0。核相关差异后本地保存，复用既有官方同SHA/force:false快进适配器上传，结果见api-sync/remote-final材料，不强推/改可见性。下一项同Pinia释放再建快照/错误状态与账号键恢复取证，保护原未保存对话。
+
+- 同步实际结果：既有官方Git数据库适配器成功准备逐SHA一致的25d39330/a0f71bfc，19个blob，force:false快进后GET核远端a0f71bfc0207238d558db985a564d0eefd2d1b02与HEAD一致，origin/main同步更新；api-sync.log完整保留。Git443失败原文未删，不改仓库可见性/权限/部署。当前服务19940/20820仍仅127.0.0.1:8080/5174，无重启，Git干净。339项及两构建保持，原生每小时续办字段与compact=0保持。同步结果文档独立保存，最后远端核见remote-final.log。

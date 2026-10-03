@@ -1,5 +1,7 @@
 ## 当前入口：对话Store释放后持久化（2026-10-04）
 
+同步结果已核：官方Git数据库同SHA/force:false适配器成功上传25d3933及a0f71bf两个提交、19个新blob，远端完整a0f71bfc0207238d558db985a564d0eefd2d1b02一致，Git443失败原日志保留；api-sync.log是实际成功证据，下方“提交后同步”仅前置说明。当前干净/main，服务19940/20820仍仅127.0.0.1:8080/5174，未重启。常规成果无需外部操作，后续原生续办按STATE接手下一项。
+
 339项前端及两构建通过，31项真实Pinia对话Store测试通过。conversation-lifecycle-2026-10-04/before实际31项29通过2失败：retryPersistence等待nextTick期间$dispose后仍persist旧快照或回填旧实例。onScopeDispose撤销Storeactive，persist/重试入口及两个await守卫，迟到失败不改错误，原存储不写不覆盖。页面正常重读与冲突/未保存草稿保护的既有回归保持。当前套件沿用现有Pinia harness，有既有R1004提示，非失败，不抑制或虚报GUI。真实账号/账本/照片/AI/邮件调用0，compact=0，GUI/真机/实际隔夜待验。
 
 登录节点25d3933066456dc8b34257ab52c8b2d4c78a3b53本地保存；Git Push两次443失败原文login-interactions-2026-10-04/push.log、push-retry.log保留。官方只读API重新核远端82bf834e70a505a8213bad42d4f5b6636ffbbbf4、私有/无Pages/0 workflows/0 deployments。本节点提交后复用已有frontend-categories-2026-10-03/github-sync.mjs同对象SHA/force:false快进适配器同步，不创建远端/改可见性/部署；实际上传/远端结果见conversation-lifecycle-2026-10-04/api-sync.log、remote-final.log。
