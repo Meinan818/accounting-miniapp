@@ -1,4 +1,10 @@
-## 当前入口：认证Store生命周期（2026-10-04）
+## 当前入口：路由身份恢复等待（2026-10-04）
+
+370全量/demo及server两构建、4项真实Vue Router memory+createSession+原guard合成回执通过。router-before3项2通过1失败：恢复loading第二导航误跳Login；waitForRestoration只等正在进行的恢复，登录loading不额外GET。首修仍旧guard追加账本读取，router-after29项28通过1失败保留；导航代次守卫await恢复/账本回执。owner-before4项3通过1失败：账本await身份失效仍放行Bills，回执核owner修复。
+
+认证7cf4943cd193d376006e527446dc507fe1a20b7d官方同SHA/force:false上传并核远端完整一致（auth-sync）。本节点保存上传见router-sync。真实账号/业务/AI/邮件请求0，无依赖/部署，GUI/真机仍未验，compact=1不归零。下一项同createSession多次login/expire间旧client.login多步链：目前session代次只在整client.login完成后核，旧POST回执可能继续resetCsrf/getCsrf/GET me；合成fetch取证，不使用真实Cookie或凭据。
+
+## 前一节点：认证Store生命周期（2026-10-04）
 
 366项前端及两构建、6项authLifecycle真实authStore+createSession+createApiClient合成fetch通过。auth-before-fixed-harness4项4失败：Pinia重建旧身份hydrate，释放迟到restore回填，旧login追加安全校验/身份读取，旧401触发window重定向。session.dispose撤销代次/入口，auth scope释放resetCsrf/阻断旧fetch与回调，user/status/error skipHydrate，新实例unknown重新核当前Cookie；旧注册回执不自动登录、旧验证码入口不发请求。真实账号/邮箱/业务/AI调用0，GUI/真机仍待验。
 

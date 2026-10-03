@@ -1030,3 +1030,9 @@
 - 真实authStore+session+API合成fetch初轮auth-before4失败中第三项Response body异步未等完导致undefined，并有异步拒绝；改setImmediate排空、排空原实现多余请求后auth-before-fixed-harness4项4业务失败，旧状态hydrate/迟到restore/旧login继续请求/旧401重定向已确证，原失败不删除。
 - createSession.dispose失效代次/入口，authStore scope释放旧fetch/Unauthorized/identity回调并resetCsrf，user/status/error skipHydrate。6项authLifecycle通过，涵盖CSRF等待不发POST、注册回执不自动登录及旧验证码动作不发请求；全量366及demo/server两构建通过（auth-after初53项、auth-frontend含新增6项/两构建）。无真实认证/账本/照片/邮件/AI请求，无依赖变化，GUI/真机/实际隔夜待验。
 - compact=1保持，独立保存上传结果见auth-sync。下一项正式路由restore等待期间的并发导航/身份变化合成取证；loading现不等待，不能未取证就让login加载期间也无条件发restore。无需用户操作，原生静音每小时续办保持。
+
+## 2026-10-04 · 正式路由等待身份恢复
+
+- 认证7cf4943cd193d376006e527446dc507fe1a20b7d官方同SHA/force:false上传成功，1提交/11blob，完整远端一致（auth-sync）。
+- 真实Vue Router内存路由+原guard+createSession合成回执，router-before3项2通过1失败：restore loading第二导航误跳Login，最新目的地丢失。waitForRestoration仅等已有恢复，不给login loading追加GET；首修仍旧guard读取两次账本（router-after29项28通过1失败），加导航代次撤销。owner-before4项3通过1失败：账本await身份失效仍放行Bills，回执再核owner。
+- 4项router/370全量/demo与server构建通过，失败离线恢复重试/正常登录loading/并发导航均覆盖。原业务/认证/AI/邮件请求0，无依赖/部署，GUI/真机/下载落盘/隔夜仍未验；compact=1保持。下一项同session旧client.login POST回执的后续CSRF/GET me链取证，不能仅以最终代次守卫推断网络链已停；本节点保存上传见router-sync，无需用户操作。

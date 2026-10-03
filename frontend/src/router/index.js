@@ -59,14 +59,24 @@ const router = createRouter({
   scrollBehavior: getScrollPosition,
 })
 
+let navigationGeneration = 0
 if (SERVER_MODE) router.beforeEach(async to => {
+  const current = ++navigationGeneration
   const auth = useAuthStore()
-  if (['unknown', 'unavailable'].includes(auth.status)) {
-    try { await auth.restore() } catch { if (to.name !== 'Login') return { name: 'Login' } }
+  try {
+    if (['unknown', 'unavailable'].includes(auth.status)) await auth.restore()
+    else await auth.waitForRestoration()
+  } catch {
+    if (current !== navigationGeneration) return false
+    if (to.name !== 'Login') return { name: 'Login' }
   }
+  if (current !== navigationGeneration) return false
   if (to.meta.requiresAuth && !auth.user) return { name: 'Login' }
   if (to.name === 'Login' && auth.user) return { name: 'Home' }
+  const owner = auth.user?.id
   if (to.meta.requiresAuth) await useRecordStore().refresh()
+  if (current !== navigationGeneration) return false
+  if (to.meta.requiresAuth && auth.user?.id !== owner) return { name: 'Login' }
 })
 
 export default router

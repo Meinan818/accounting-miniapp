@@ -1,4 +1,8 @@
-## 2026-10-04 · 认证Store释放再建（当前入口）
+## 2026-10-04 · 路由身份恢复等待（当前入口）
+
+4项真实内存router/session、370全量及两构建通过，并发导航共享恢复/保留新目的地，不给login loading加GET，旧guard代次阻读取，账本回执再核owner。7cf4943完整远端一致，本节点上传见router-sync。compact=1保持；继续同实例多次login/expire中旧client.login回执的CSRF和后续网络链，先合成取证再修；禁真实认证/业务/AI/邮件请求，GUI/真机待验。
+
+## 2026-10-04 · 认证Store释放再建（历史）
 
 6项authLifecycle/366全量/两构建通过，重建unknown不回填旧身份，释放session代次/旧fetch/CSRF/回调，旧401不重定向、注册迟到不自动登录。45856e9完整远端一致，本节点上传见auth-sync。compact=1不归零；继续正式router恢复等待期间并发导航取证，当前loading跳过restore，须与login中的loading区分；真实guard/session+合成客户端，不发真实账号/邮件/业务/AI请求。GUI/真机待验。
 

@@ -290,3 +290,6 @@
 ## 2026-10-04 · authStore dispose未失效会话
 - 认证Store普通setup hydrate旧user/status，未在scope结束撤销session/API后续链；旧401甚至触发window重定向。auth-before-fixed-harness4项4失败保留，6项authLifecycle/366全量/两构建修复后通过。以后Store身份状态不能复用释放实例快照，session代次、CSRF、fetch后续链和页面跳转分别核，不把新客户端自动当旧身份可信。
 - 初harness只排10次microtask不足以等真实Response body，第三项undefined并在恢复global fetch后出现异步拒绝。改setImmediate且在失败断言前排空原实现追加请求后，无异步遗留，4项业务失败独立确证；今后合成网络替身卸载前排空已启动任务，不能把调度错误算作业务证据。
+
+## 2026-10-04 · 路由loading不是访客
+- guard仅unknown/unavailable等待restore，已有恢复loading时第二导航误判user=null为访客。router-before3项2通过1失败保留；仅共享现有恢复，不给登录loading新请求。首修仍旧guard追加账本读取，router-after29项28通过1失败；导航代次修复，账本await身份失效仍放行另有owner-before4项3通过1失败，owner回执保护后4项router/370全量/两构建通过。今后路由身份等待同时核最新导航、读取数量和await后身份，不能只看最终页面名称。

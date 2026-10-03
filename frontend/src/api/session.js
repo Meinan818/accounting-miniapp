@@ -9,6 +9,7 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
   let restoration = null
   let active = true
   function dispose() { active = false; generation++; restoration = null }
+  function waitForRestoration() { return restoration?.promise ?? Promise.resolve(false) }
   function identity(value) {
     if (value !== null && (!/^\d+$/.test(value.id) || typeof value.username !== 'string')) {
       throw new ApiError('账号身份格式不正确，请重新登录。', { code: 'INVALID_RESPONSE' })
@@ -89,5 +90,5 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     if (current !== generation) return false
     identity(null); status.value = 'guest'; error.value = ''
   }
-  return { user, status, error, restore, login, register, requestRegistrationCode, logout, expire, dispose }
+  return { user, status, error, restore, waitForRestoration, login, register, requestRegistrationCode, logout, expire, dispose }
 }
