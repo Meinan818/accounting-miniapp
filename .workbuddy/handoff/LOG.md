@@ -1010,3 +1010,9 @@
 - 重建节点本地118f381保存，Git443失败rebuild-push原文保留；既有官方同SHA/force:false适配器实际同步1提交/9blob，完整118f381891f569f25c36599935bc621e3c1fa9da一致（rebuild-sync）。不改权限/可见性/部署。
 - identity-before41项38通过3失败：身份watch先清空丢未保存草稿，恢复第二个nextTick后仍成功并清账号变化错误，旧动作可回填已清空对话。先retained snapshot再清空、identityChanged永久撤销旧实例，isCurrent统一覆盖动作/重试/await/监听；返回原账号的新实例可恢复，B不读A。
 - 41项Store/349全量/demo及server两构建通过（identity-after/frontend/demo/server），真实账号/账本/照片/AI/邮件调用0，无依赖变化；GUI/真机/实际隔夜待验。compact=1保持，自动续办沿用，不要求用户操作。下一项恢复nextTick间隙新编辑和重复重试，不能忽略用户编辑并误报已保存；本节点保存上传实际结果见identity-sync。
+
+## 2026-10-04 · 对话恢复期间编辑与重复重试
+
+- 身份节点2d3e23ce37eede73332e77e68446365fdfdb9e27已由官方同SHA/force:false接口上传并核远端完整一致，1提交/9blob，identity-sync保留。既有Git443失败不抹除。
+- recovery-before45项41通过4失败：restoring suppress watch隐去await期间新编辑，回执错误清未保存标记，外部冲突后再重读可能覆盖新编辑；重复retry产生多次读写。retrying在首await前锁定、finally释放；恢复await后对cleanMessagesRaw核真实编辑，先标未保存再核外部原文，正常保存/失败保留/冲突阻断。
+- 45项针对/353全量/demo与server两构建通过，材料recovery-before/after/frontend/demo/server。无真实业务/账号/照片/AI/邮件调用，无新依赖/部署，compact=1保持，GUI/真机/实际隔夜待验。下一项显式本机备份受保护对话，现提示先备份但无出口；保留本页消息与当前存储原文，不清理/导入/远传，合成下载验证。本节点保存上传实际见recovery-sync。

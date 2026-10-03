@@ -280,3 +280,6 @@
 
 ## 2026-10-04 · 对话身份watch清空与恢复回执
 - 原身份watch仅清空messages/设restorationBlocked，清空前未保存草稿丢失；恢复await中身份变化仍认成功/覆盖错误，旧动作继续修改空实例。identity-before41项38通过3失败保留。先按账号保留草稿，再永久撤销旧实例、统一isCurrent覆盖动作/await/监听，41项针对/349全量/两构建通过。身份变回同id不等于原实例会话可复活，需新实例；清屏与保留隔离快照分别验证。
+
+## 2026-10-04 · 恢复抑制watch隐去用户编辑
+- restoring为避免重读自动持久化而抑制watch，但也吞掉nextTick间隙真实用户编辑，末尾又清hasUnsavedChanges；无忙碌锁导致重复retry额外写入。recovery-before45项41通过4失败保留。首await前锁+finally释放，恢复后对cleanMessagesRaw检查新编辑再核存储基准，45项针对/353全量/两构建通过。以后抑制回填监听必须验证期间的新编辑/写入失败/外部冲突及重复操作，不能只测纯只读重载。

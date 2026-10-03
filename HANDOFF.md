@@ -1,4 +1,10 @@
-## 当前入口：对话Store身份变化（2026-10-04）
+## 当前入口：对话恢复期间编辑（2026-10-04）
+
+45项Store/353项全量及demo/server两构建通过。recovery-before45项41通过4失败：restoring suppress watch后新消息没写却误报已保存，外部冲突丢新编辑标记，重复retry产生额外写入。retrying在首次await前锁定且finally释放，恢复await后对cleanMessagesRaw检测新编辑，再核外部基准；新编辑正常保存，写入失败或外部冲突保持草稿/未保存状态，原只读重载0写入。
+
+身份节点2d3e23ce37eede73332e77e68446365fdfdb9e27由既有官方同SHA/force:false接口上传并核完整一致（identity-sync）。本节点保存上传结果见recovery-sync。无真实账号/账本/照片/AI/邮件调用，无依赖/部署，compact=1保持。下一项完善聊天保护提示的本机备份入口：目前提示先备份两份但页面仅重试按钮，评估显式下载本页消息与当前存储原文，不自动清理/导入或远传；先核现有模板与浏览器API，合成验证，GUI/真机仍待工具。
+
+## 前一节点：对话Store身份变化（2026-10-04）
 
 41项Store/349全量与两构建通过。identity-before41项38通过3失败：身份先变化时清空丢未保存草稿，恢复迟到仍成功/清账号变化错误，旧动作回填已清空实例。清空前隔离保留快照、identityChanged永久撤销旧实例，统一isCurrent覆盖动作/持久化/恢复await/监听；原账号新实例恢复草稿，新账号只读取自己的键，同tick未保存也保留。合成auth/storage，无真实业务/AI/邮件调用。compact=1保持，GUI/真机/实际隔夜待验。
 

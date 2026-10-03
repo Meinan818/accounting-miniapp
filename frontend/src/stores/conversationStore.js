@@ -100,6 +100,7 @@ export const useConversationStore = defineStore('conversation', () => {
   const hasUnsavedChanges = skipHydrate(ref(false))
   let expectedRaw
   let restoring = false
+  let retrying = false
   let initial = [welcome()]
   function blockedMessage() {
     persistenceError.value = '旧对话暂无法读取，已保护原内容。新对话仅留本次页面，刷新前请先备份。账单仍可在明细查看。'
@@ -175,16 +176,17 @@ export const useConversationStore = defineStore('conversation', () => {
     }
   }
   async function retryPersistence() {
-    if (!isCurrent()) return false
-    // Drain queued edits before deciding whether re-reading can discard anything.
-    await nextTick()
-    if (!isCurrent()) return false
-    if (!restorationBlocked.value && !storageConflict.value) return persist(messages.value)
-    if (hasUnsavedChanges.value) {
-      persistenceError.value = '原对话仍受保护，本页已有未保存消息或草稿；为避免覆盖任一份内容，暂不能重新读取。请先备份两份内容，不要刷新或清除存储。'
-      return false
-    }
+    if (!isCurrent() || retrying) return false
+    retrying = true
     try {
+      // Drain queued edits before deciding whether re-reading can discard anything.
+      await nextTick()
+      if (!isCurrent()) return false
+      if (!restorationBlocked.value && !storageConflict.value) return persist(messages.value)
+      if (hasUnsavedChanges.value) {
+        persistenceError.value = '原对话仍受保护，本页已有未保存消息或草稿；为避免覆盖任一份内容，暂不能重新读取。请先备份两份内容，不要刷新或清除存储。'
+        return false
+      }
       const recovered = readHistory(key)
       restoring = true
       messages.value = recovered.messages
@@ -193,17 +195,20 @@ export const useConversationStore = defineStore('conversation', () => {
       restorationBlocked.value = false; storageConflict.value = false
       await nextTick()
       if (!isCurrent()) return false
+      // Suppressing the reload's watcher must not hide edits made while it renders.
+      hasUnsavedChanges.value = JSON.stringify(messages.value) !== cleanMessagesRaw
       // A storage event can arrive while the view updates: never acknowledge an already-stale reload.
       if (typeof window !== 'undefined' && window.localStorage.getItem(key) !== expectedRaw) {
         conflictMessage(); return false
       }
+      if (hasUnsavedChanges.value) return persist(messages.value)
       persistenceError.value = ''; hasUnsavedChanges.value = false
       return true
     } catch {
       if (isCurrent()) { restorationBlocked.value = true; blockedMessage() }
       return false
     }
-    finally { if (isCurrent()) restoring = false }
+    finally { retrying = false; if (isCurrent()) restoring = false }
   }
   watch(messages, value => {
     if (!isCurrent() || restoring) return
