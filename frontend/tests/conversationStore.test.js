@@ -7,6 +7,29 @@ import { createDraft, applyDraftInput } from '../src/utils/draftEngine.js'
 let data, fail, writes
 const key = 'zhizhang_conversation'
 beforeEach(() => { data = new Map(); fail = false; writes = 0; globalThis.window = { localStorage: { getItem: k => data.get(k) ?? null, setItem: (k,v) => { if(fail) throw Error('full'); writes++; data.set(k,v) } } }; setActivePinia(createPinia()) })
+test('真实AI空候选追问恢复原文，完整草稿允许未指定时间', async () => {
+  const pending = { id: 'ai-pending', role: 'assistant', kind: 'draft-group', group: {
+    id: 'ai-group', origin: 'ai', status: 'needs_input', items: [], pending: { kind: 'ai', text: '今天吃午饭', question: '花了多少钱？' },
+  } }
+  const ready = { id: 'ai-ready', role: 'assistant', kind: 'draft-group', group: {
+    id: 'ai-ready-group', origin: 'ai', status: 'ready', pending: null,
+    items: [{ id: 'ai-item', type: 'expense', amountCents: 2500, category: '餐饮', date: '2026-10-04', remark: '午饭' }],
+  } }
+  const raw = JSON.stringify([pending, ready]); data.set(key, raw)
+  const store = useConversationStore(); assert.equal(store.restorationBlocked, false)
+  assert.equal(store.messages[0].group.pending.text, '今天吃午饭'); assert.equal(writes, 0)
+  assert.equal(data.get(key), raw)
+})
+test('真实AI损坏的追问上下文和空待确认组保护原文', () => {
+  for (const group of [
+    { id: 'g', origin: 'ai', status: 'needs_input', items: [], pending: { kind: 'ai', text: '', question: '多少钱' } },
+    { id: 'g', origin: 'ai', status: 'ready', items: [], pending: null },
+    { id: 'g', status: 'needs_input', items: [], pending: { kind: 'ai', text: '午饭', question: '多少钱' } },
+  ]) {
+    setActivePinia(createPinia()); const raw = JSON.stringify([{ id: 'm', role: 'assistant', kind: 'draft-group', group }]); data.set(key, raw)
+    const store = useConversationStore(); assert.equal(store.restorationBlocked, true); assert.equal(data.get(key), raw)
+  }
+})
 test('读取旧单笔对话不擅自迁移或覆盖', () => {
   const old = [{id:'old',role:'assistant',kind:'record',confirmed:false,record:{amount:25}}]
   data.set(key,JSON.stringify(old));const store=useConversationStore()

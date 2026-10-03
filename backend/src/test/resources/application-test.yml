@@ -5,6 +5,11 @@ spring:
     password: ''
     driver-class-name: org.h2.Driver
 miaoji:
+  ai:
+    enabled: false
+    api-key: ''
+  email:
+    enabled: false
   auth:
     attempt-limit: 10000
     legacy-registration: true

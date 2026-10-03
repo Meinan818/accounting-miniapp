@@ -3,9 +3,9 @@ package cn.miaoji.ledger;
 import cn.miaoji.auth.AuthAttemptLimiter;
 import cn.miaoji.common.ApiException;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Validator;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.http.*;
@@ -53,9 +53,16 @@ public class GlmDraftParser {
     private static Exchange httpExchange() {
         var client=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5))
                 .followRedirects(HttpClient.Redirect.NEVER).build();
+        return httpExchange(client,Duration.ofSeconds(60));
+    }
+    static Exchange httpExchange(HttpClient client,Duration deadline) {
         return request->{
-            var response=client.send(request,ignored->new LimitedBody());
-            return new Reply(response.statusCode(),response.body());
+            var future=client.sendAsync(request,ignored->new LimitedBody());
+            try {
+                // 显式等待响应体完成；总期限也覆盖已收到响应头后停止传输的服务。
+                var response=future.get(deadline.toMillis(),TimeUnit.MILLISECONDS);
+                return new Reply(response.statusCode(),response.body());
+            } finally { if(!future.isDone()) future.cancel(true); }
         };
     }
     public Proposal parse(long owner,Input input) {
@@ -71,18 +78,20 @@ public class GlmDraftParser {
                 缺金额/收支方向或指代歧义时records为空、question填写简短追问；不猜金额或凭空补笔。
                 查询统计、删除、取消或保存指令不执行，records为空并提示使用对应账本功能。
                 每条字段type为income或expense，amount必须十进制字符串、正数且最多两位小数，
-                date为YYYY-MM-DD（今天以输入date为准），category限指定分类，note为最多200字的纯文本。
+                date为YYYY-MM-DD（今天以输入date为准），category限指定分类，note为最多120字的纯文本。
                 可选time为HH:mm，未提供不补。纠正时参考context返回完整新组；不确定目标则追问。
                 """+"合法分类："+json.writeValueAsString(CategoryCatalog.OPTIONS);
             var body=json.writeValueAsString(Map.of("model",MODEL,"stream",false,"max_tokens",1200,
                     "thinking",Map.of("type","disabled"),"response_format",Map.of("type","json_object"),
                     "messages",List.of(Map.of("role","system","content",system),
                             Map.of("role","user","content",json.writeValueAsString(input)))));
-            var request=HttpRequest.newBuilder(ENDPOINT).timeout(Duration.ofSeconds(20))
+            var request=HttpRequest.newBuilder(ENDPOINT).timeout(Duration.ofSeconds(60))
                     .header("Authorization","Bearer "+key).header("Content-Type","application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(body)).build();
             var reply=exchange.send(request);
-            if(reply.status()!=200 || reply.body()==null || reply.body().length>MAX_RESPONSE) throw invalidResponse();
+            if(reply.status()==429) throw error(HttpStatus.TOO_MANY_REQUESTS,"AI_PROVIDER_BUSY","智谱当前请求额度或并发已达上限，请稍后再试");
+            if(reply.status()==401 || reply.status()==403) throw unavailable();
+            if(reply.status()!=200 || reply.body()==null || reply.body().length==0 || reply.body().length>MAX_RESPONSE) throw invalidResponse();
             var envelope=json.readTree(reply.body());
             var choices=envelope.path("choices");
             if(!choices.isArray() || choices.size()!=1 || !choices.get(0).path("finish_reason").asText().equals("stop")) throw invalidResponse();
@@ -99,8 +108,22 @@ public class GlmDraftParser {
             }
             if(!question.asText().isEmpty()) throw invalidResponse();
             var records=new java.util.ArrayList<RecordInput>();
-            for(var row:rows) {var record=json.treeToValue(row,RecordInput.class);ledger.validate(record);records.add(record);}
+            for(var row:rows) {
+                if(!row.isObject()) throw invalidResponse();
+                var names=new java.util.HashSet<String>();row.fieldNames().forEachRemaining(names::add);
+                if(!names.containsAll(Set.of("type","amount","date","category","note"))
+                        || !Set.of("type","amount","date","category","note","time").containsAll(names)) throw invalidResponse();
+                for(var field:List.of("type","amount","date","category","note")) if(!row.path(field).isTextual()) throw invalidResponse();
+                if(row.has("time") && !row.path("time").isTextual() && !row.path("time").isNull()) throw invalidResponse();
+                if(!row.path("date").asText().matches("[0-9]{4}-[0-9]{2}-[0-9]{2}") || row.path("note").asText().length()>120) throw invalidResponse();
+                var record=json.treeToValue(row,RecordInput.class);ledger.validate(record);records.add(record);
+            }
             return new Proposal(MODEL,"ready",List.copyOf(records),"");
+        } catch(JsonProcessingException malformed) {throw invalidResponse();
+        } catch(TimeoutException | HttpTimeoutException timeout) {throw timedOut();
+        } catch(ExecutionException failed) {
+            if(failed.getCause() instanceof HttpTimeoutException) throw timedOut();
+            throw unavailable();
         } catch(InterruptedException interrupted) {
             Thread.currentThread().interrupt();throw unavailable();
         } catch(ApiException failure) {
@@ -118,9 +141,10 @@ public class GlmDraftParser {
     }
     private static ApiException invalidResponse() {return error(HttpStatus.BAD_GATEWAY,"AI_INVALID_RESPONSE","AI返回的草稿不完整或不合法，请重新整理或手动记账");}
     private static ApiException unavailable() {return error(HttpStatus.SERVICE_UNAVAILABLE,"AI_UNAVAILABLE","AI整理暂时不可用，未保存任何账单，请稍后再试");}
+    private static ApiException timedOut() {return error(HttpStatus.GATEWAY_TIMEOUT,"AI_TIMEOUT","AI整理超时，未保存任何账单，请稍后再试");}
     private static ApiException error(HttpStatus status,String code,String message) {return new ApiException(status,code,message);}
 
-    /** 响应消费时限制大小，超过即取消；HttpRequest超时覆盖响应体完成。 */
+    /** 响应消费时限制大小，超过即取消；Exchange总期限覆盖响应体完成。 */
     static final class LimitedBody implements HttpResponse.BodySubscriber<byte[]> {
         private final CompletableFuture<byte[]> result=new CompletableFuture<>();
         private final ByteArrayOutputStream bytes=new ByteArrayOutputStream();

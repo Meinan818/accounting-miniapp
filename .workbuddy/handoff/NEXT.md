@@ -1,13 +1,7 @@
-# 喵叽智账 · 用户手动新对话接手入口
+# 喵叽智账 · 当前接手入口
 
-用户外出要求暂停，本次用户自行新开对话；Codex不create_thread。当前名称已改为「喵叽智账：邮箱验证注册与GLM草稿适配交接」。选择gpt-6.1-sol/high；新聊天compact基准0。旧会话可识别计数1，不继承，也不是第二次compact触发。
+先读根HANDOFF、AGENTS、PROJECT_PLAN、STATE、MISTAKES和LOG最新条，核Git/代码/服务。2026-10-04用户恢复持续开发，旧外出暂停结束。新聊天先将compact计数设0，旧次数只作历史；每次实际压缩立即口头报次数/写STATE，第2次停代码、总结、改名、commit、创建gpt-6.1-sol/high新聊天。不Push/部署、不改全局、不用子代理。
 
-新窗口第一项记录动作：STATE observedCompactionCount设0，compactionCountBasis注明全新会话基准；旧1仅历史。以后每次实际识别compact立即明确告诉用户第N次，并同步STATE；摘要提及旧事件不算新事件。
+163投递已收到。GLM真实多笔/追问/纠正及原草稿确认已有证据；正式聊天已接GLM不回退规则，demo独立保留。86项后端/package、189项Node及两构建通过；源模块连接5174/Java/MySQL/GLM的6项通过。原真实脚本8项后分页汇总断言失败，另源模块严格核两笔41.00，失败与修正记录均保留。
 
-先读根HANDOFF、AGENTS、PROJECT_PLAN、STATE、MISTAKES和LOG末条，再核Git/源码/服务。普通开发与本地commit已授权，保护原数据/照片/资料/材料，不Push/部署、不用子代理。
-
-第一步核SMTP配置识别：用户已称配置完成，但backend/.env.local.properties脱敏检查configured=false，未发邮件，原因未知。只核变量名/启用/是否非空，不输出秘密。然后补GLM草稿源码编译及合成边界测试，保持默认禁用，不声称真实接入。
-
-邮箱节点3bea467已保存，72后端/180Node/两构建/9MySQL通过；HTTP明确合成验证码，完整注册GUI/163投递未验证。新GlmDraftParser/Controller及配置仅草稿，未编译/测试/打包/接前端，按待续保存。前端聊天仍规则模拟。材料路径/官方文档/运行与待测项见HANDOFF。
-
-暂停收尾8080已停；5174 PID31548保留，下次核现场。真实GLM密钥未核，不外发账本，不用Kitool。模型指定GLM-4.7-Flash、零付费部署、先本机，朋友访问稍后定。浏览器原拒绝和恢复均见LOG；再次拒绝停，不绕过。后续每次交接先改名再commit，自动新建指定模型规则仅此次由手动新建例外覆盖。
+下一步正式网页注册/登录及聊天完整GUI、窄屏与最终用户验收，不冒称已通过；无可调用浏览器交互工具时给可访问本地链接和具体操作，不绕过历史拒绝。旧数据/照片/资料/素材不导入、不删除。当前服务本机8080/正式Vite5174，下次重核PID与HTTP；normal服务旧注册默认关闭，真实凭据只在忽略properties，不在聊天/Git。

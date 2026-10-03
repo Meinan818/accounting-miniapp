@@ -616,3 +616,16 @@
 - 用户回复SMTP已配置。读取本机properties后configured=false，脚本提前返回，未发送HTTP发信申请/真实SMTP；具体缺项/原因未定位。进一步PowerShell脱敏核查命令无输出且exit1，不能据此判断授权码或用户名。下次先核实际文件和启用项，不回显秘密、不凭猜测改凭据。
 - 发信尝试前启动已验证邮箱jar PID34764，V8校验正常；暂停经路径/命令核实后已停止该自身进程，8080无监听；5174 PID31548保留。尚无真实投递，SMTP接受与收件箱送达仍须区分。所有账号/挑战/旧账本/照片保留。
 - 本轮交接文档与未验证GLM源码本地保存后停止，不继续开发；用户手动新对话选gpt-6.1-sol/high并读HANDOFF，先SMTP识别再GLM编译/合成测试。没有线上影响。- 用户再次要求每次压缩立即口头汇报，已承认首次漏明确汇报并写MISTAKES与规则；用户担忧新窗口误继承，交接强化接手先将STATE归零、旧次数仅历史，摘要提及不算实际事件。
+## 2026-10-04 · 用户手动新会话接手，163真实投递与GLM正式草稿
+
+- 先读HANDOFF及全部接手入口，现场main/926fa37、工作区干净；本会话compact基准0并先写STATE，不继承旧1。用户再次询问第二次交接与总结/改名规则，已明确答复保留，当前无实际可识别事件，不创建聊天。
+- SMTP白名单核查实际无必要键及环境值，用户按详细步骤补本机忽略properties，之后开关true/必要值非空。邮箱已验证jar启动并向发信邮箱自身申请，smtp-result.json记录200/JavaMail接受；用户明确“已收到”，真实收件箱投递已核。验证码、密码、授权码未回显。GLM官方quick-start API Keys入口说明后用户“GLM已保存”，本机启用/密钥非空核实；主动文字/候选外发已说明，不发送原账本/照片。
+- 首次源码编译及72项baseline通过；新增测试复现JSON异常被误报AI_UNAVAILABLE、字段隐式转换。修复严格输出/异常映射、非空响应、重复和尾部拒绝、日期/分类/金额字符串及120字备注。LimitedBody在消费时限制64KiB；sendAsync future总期限覆盖停滞响应体并取消。账号6/分钟、本进程2并发及槽释放、匿名/CSRF/身份变化有合成测试。
+- 真实首次完整模型请求503；独立Java短合成请求200说明密钥有效，较长探测45秒HttpTimeoutException、随后429/1302并发限制。提高总期限至60秒/前端65秒，504 AI_TIMEOUT与上游429 AI_PROVIDER_BUSY明确区分，不自动重试/切模型/费用。接口不写数据、不读整本账单。官方当前pricing.md仍列GLM-4.7-Flash输入输出免费，FlashX未用。失败保留，不保证平台时延/账号并发或取消立即释放远端任务。
+- 真实模型/Java/MySQL脚本8项通过：匿名、独立合成身份、两笔43.00、缺金额追问不猜、纠正41.00、解析不写入、草稿不入账、确认/重放同回执。最终汇总因读取r.amount而非r.record.amount产生NaN，failure/progress保留，不报原9项全部通过。
+- 另actual frontend source API经5174代理访问实际Java/MySQL/GLM，source-*/result.json最终6项通过：登录、两笔41.00、原UUID草稿确认回执、重复不增、AI整理昨天面包3.50、该候选不写账单。前次4项结果独立保留，无需重跑已有真实模型来补造先前9项。原真实脚本及新旧合成账号/账单/草稿全部保留，无导入或清理。
+- 正式Chat接aiDraft.js：候选/纠正/追加经真实GLM，查询读实际账单，确认/取消本机明确识别，确认仍走V6；失败保留旧草稿不回退模拟。追问原文字及问题限1000字、可刷新恢复；空追问不误判已保存；未指定时间不补造。demo保留原规则及独立存储，资料/照片/外观不更换。页面说明主动文字和候选交给智谱。
+- 新测试第一次Runnable编译错误、证据目录错配、用户名过长、MISTAKES patch猜标题等已记MISTAKES。最关键测试隔离：原test profile继承用户刚启用真实AI，86中disabled断言获429并实际外发合成文字；没有真实账本/照片。application-test.yml明确ai.enabled=false/api-key为空、email.enabled=false，后续全量86项与package成功glm-package-3.log。原失败glm-package-2.log保留。189项Node frontend-final.log、build-demo/server-final.log通过。无新依赖。
+- 测试自身Java已核路径/命令停止（临时legacy-registration=true仅合成HTTP脚本），重启正常服务PID24312无该开关；正式Vite PID20820本机5174。local-preview-result.json真实CSRF200、旧无验证注册403、登录文档及Chat模块200，仅HTTP而非GUI。8080/5174监听已核。当前可调用工具中无浏览器交互工具，不绕过历史拒绝，不冒称当前GUI通过；已提供本地链接和完整注册/聊天验收步骤，等待用户结果。
+- 材料根glm-integration-2026-10-04全部在E盘且忽略；用户凭据只在backend/.env.local.properties、storage和旧内部材料未纳入。HANDOFF/NEXT/STATE/AGENTS/README与backend说明同步实际进展，旧历史仅历史。使用git-workflow检查并按项目持续授权本地保存，提交号/结果以随后工具返回为准；不Push/部署、无线上影响。
+- 下一步Codex根据完整正式网页验收修实际问题；无反馈时不虚报验收完成或拓展付费/外网权限。朋友访问方式后续确定。第二次compact一识别即停代码、总结本次聊天/改名/交接/commit再新建gpt-6.1-sol/high，计数归零。

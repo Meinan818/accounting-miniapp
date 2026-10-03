@@ -6,7 +6,7 @@ import CategoryIcon from '@/components/common/CategoryIcon.vue'
 const props = defineProps({ group: { type: Object, required: true }, savedRecords: { type: Array, default: () => [] }, busy: Boolean, error: String })
 const emit = defineEmits(['confirm', 'cancel', 'update'])
 const editing = ref(null)
-const saved = computed(() => props.savedRecords.length === props.group.items.length && props.group.items.every(i => props.savedRecords.some(r => r.draftItemId === i.id)))
+const saved = computed(() => props.group.items.length > 0 && props.savedRecords.length === props.group.items.length && props.group.items.every(i => props.savedRecords.some(r => r.draftItemId === i.id)))
 const status = computed(() => saved.value ? 'saved' : props.group.status)
 const items = computed(() => props.group.items.map(i => {
   const r = props.savedRecords.find(r => r.draftItemId === i.id)
@@ -17,16 +17,17 @@ const statusLabel = computed(() => status.value === 'saved' && deletedCount.valu
   ? (deletedCount.value === items.value.length ? '全部已删除' : '已记录 · 删除' + deletedCount.value + '笔')
   : ({ needs_input: '待补充', ready: '待确认', saved: '已记账', cancelled: '已取消' })[status.value] || '保存中')
 const totals = computed(() => ({ expense: items.value.filter(i => !i.deleted && i.type === 'expense').reduce((n, i) => n + (i.amountCents || 0), 0), income: items.value.filter(i => !i.deleted && i.type === 'income').reduce((n, i) => n + (i.amountCents || 0), 0) }))
-const editRecord = computed(() => { const i = props.group.items.find(i => i.id === editing.value); return i ? { ...i, amount: i.amountCents == null ? '' : centsText(i.amountCents) } : null })
+const editRecord = computed(() => { const i = props.group.items.find(i => i.id === editing.value); return i ? { ...i, time: i.time ?? '00:00', amount: i.amountCents == null ? '' : centsText(i.amountCents) } : null })
 function update(record) { emit('update', { itemId: editing.value, record }); editing.value = null }
 </script>
 <template>
   <article class="miao-record draft-group-card" :data-group-id="group.id" :data-state="status">
-    <div class="draft-heading"><h2 class="record-heading">这组小账单 · {{ items.length }}笔</h2><span class="record-pending">{{ statusLabel }}</span></div>
+    <div class="draft-heading"><h2 class="record-heading">{{ items.length ? '这组小账单 · ' + items.length + '笔' : '本喵还需要一点信息' }}</h2><span class="record-pending">{{ statusLabel }}</span></div>
+    <p v-if="group.pending?.kind === 'ai'" class="draft-totals">{{ group.pending.question }}</p>
     <ol class="draft-items">
       <li v-for="(item, index) in items" :key="item.id" :data-item-id="item.id" :class="{ 'deleted-item': item.deleted }">
         <div class="draft-item-top"><span class="draft-item-copy"><CategoryIcon v-if="['income','expense'].includes(item.type)" :category="item.category" :type="item.type" /><span>{{ index + 1 }}. {{ item.description }}</span></span><strong :class="item.type">{{ item.deleted ? '已删除' : item.amountCents == null ? '待补金额' : '¥' + centsText(item.amountCents) }}</strong></div>
-        <p v-if="!item.deleted">{{ item.type === 'income' ? '收入' : item.type === 'expense' ? '支出' : '待定收支' }} · {{ item.category }} · {{ item.date || '待补日期' }} {{ item.time || '待补时间' }}</p>
+        <p v-if="!item.deleted">{{ item.type === 'income' ? '收入' : item.type === 'expense' ? '支出' : '待定收支' }} · {{ item.category }} · {{ item.date || '待补日期' }} {{ item.time || (group.origin === 'ai' ? '未指定时间' : '待补时间') }}</p>
         <p v-else>已从当前账本移除，不计入合计。</p>
         <button v-if="!['saved', 'cancelled'].includes(status)" type="button" :disabled="busy" :aria-label="'编辑第' + (index + 1) + '笔草稿'" @click="editing = item.id">编辑这笔</button>
       </li>

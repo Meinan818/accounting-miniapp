@@ -23,8 +23,9 @@ function checkPatch(patch) {
   }
 }
 function checkGroup(group) {
-  if (!isObject(group) || !validId(group.id) || !Array.isArray(group.items) || !group.items.length || group.items.length > 5
+  if (!isObject(group) || !validId(group.id) || !Array.isArray(group.items) || group.items.length > 5
     || !['needs_input', 'ready', 'saved', 'cancelled'].includes(group.status)) throw new Error('invalid group')
+  if (!group.items.length && !(group.origin === 'ai' && ['needs_input', 'cancelled'].includes(group.status))) throw new Error('empty group')
   if (group.createdDate !== undefined && (typeof group.createdDate !== 'string' || !validDate(group.createdDate))) throw new Error('invalid date')
   const ids = new Set()
   if (group.recordIds !== undefined && (!Array.isArray(group.recordIds) || group.recordIds.length !== group.items.length
@@ -38,14 +39,17 @@ function checkGroup(group) {
     if (item.time != null && !validTime(item.time)) throw new Error('invalid time')
     for (const field of ['category', 'description', 'remark']) if (item[field] !== undefined && typeof item[field] !== 'string') throw new Error('invalid text')
     if (item.errors !== undefined && (!isObject(item.errors) || Object.values(item.errors).some(e => typeof e !== 'string'))) throw new Error('invalid errors')
-    if (['ready', 'saved'].includes(group.status)) validateRecord(item)
+    if (['ready', 'saved'].includes(group.status)) validateRecord(group.origin === 'ai' ? { ...item, time: item.time ?? '00:00' } : item)
   }
   const pending = group.pending
   if (group.status === 'needs_input' && !pending) throw new Error('missing pending context')
   if (group.status !== 'needs_input' && pending != null) throw new Error('unexpected pending context')
   if (pending != null) {
     if (!isObject(pending)) throw new Error('invalid pending context')
-    if (pending.kind === 'target') {
+    if (pending.kind === 'ai') {
+      if (group.origin !== 'ai' || typeof pending.text !== 'string' || !pending.text.trim() || pending.text.length > 1000
+        || typeof pending.question !== 'string' || !pending.question.trim() || pending.question.length > 300) throw new Error('invalid ai clarification')
+    } else if (pending.kind === 'target') {
       if (!Array.isArray(pending.itemIds) || !pending.itemIds.length || new Set(pending.itemIds).size !== pending.itemIds.length
         || pending.itemIds.some(id => !ids.has(id))) throw new Error('invalid targets')
       checkPatch(pending.patch)

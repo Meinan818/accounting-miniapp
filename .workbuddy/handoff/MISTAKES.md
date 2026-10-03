@@ -119,3 +119,12 @@
 - 已识别第一次compact并将STATE置1，但初次恢复commentary没有明确说出次数，用户提醒后才口头说明。
 - 影响：用户无法及时确认计数是否持续维护，增加交接误继承的疑虑。
 - 修正：AGENTS/NEXT/HANDOFF增加每次实际事件当场报第N次并写STATE；新窗口先归零，旧次数仅历史。规则已保存，未来执行效果仍需实际事件核验。
+## 2026-10-04 · GLM接手验证中的测试隔离与脚本错误
+
+- 首次Maven证据目录使用当前backend工作目录拼接，创建在backend/.workbuddy而日志目标在项目根，重定向失败，Maven未执行。改为项目根绝对路径；核绝对目标及无文件后，仅移除本次创建的空目录。backend-baseline.log随后72项通过。以后材料根用显式绝对路径，目录与日志目标一起核对。
+- 新测试辅助函数将Runnable直接传AssertJ，testCompile失败；改用call::run，原glm-before.log保留。随后glm-before-2.log真实复现2项错误分类失败，修复后13项通过。另两次只读猜测路径不存在，后用rg确定真实文件，无业务修改。
+- HTTP脚本合成用户名超过既有32字符限制，注册400，未调模型；保留根目录glm-real-failure.json。按实际契约限为28字符，并给每次尝试分配real-时间目录，不覆盖失败证据。
+- 测试profile原来只覆盖数据库，用户启用本机AI后会继承实际开关/密钥。glm-package-2.log的disabled测试实际发出合成文字并获429，86项中1失败。没有发送既有账本/照片，但该测试本应完全离线。已在application-test.yml明确ai.enabled=false/api-key为空、email.enabled=false；真实外发只由单独明确脚本执行，测试不依赖用户配置。
+- MISTAKES追加首次apply_patch只给#假设行，工具拒绝未修改；改用明确追加。以后文件修改先取准确上下文，不猜标题。
+
+- 真实GLM脚本最后汇总将snapshot/page条目的包装层当账单，读取r.amount产生NaN；前面真实模型/追问/纠正/不写入/确认重放8项实际通过，失败文件保留，不能冒称9项全通过。改读r.record.amount；另实际前端源模块重新登录读取，严格核两笔41.00、原草稿重试不重复，并真实解析昨日面包3.50而不写入，6项独立result.json通过。以后先核现有remoteLedger分页结构再写HTTP断言，失败后有通过的独立证据才更新最终结论。

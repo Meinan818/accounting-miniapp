@@ -11,10 +11,10 @@ export class ApiError extends Error {
 export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000, onUnauthorized = () => {}, getOwner = () => null } = {}) {
   let csrf = null
   let csrfLoading = null
-  async function send(method, path, { body, headers = {}, signal } = {}) {
+  async function send(method, path, { body, headers = {}, signal, requestTimeoutMs = timeoutMs } = {}) {
     if (!path.startsWith('/api/') || path.includes('://')) throw new Error('接口须使用同源/api路径')
     const timeout = new AbortController()
-    const timer = setTimeout(() => timeout.abort(), timeoutMs)
+    const timer = setTimeout(() => timeout.abort(), requestTimeoutMs)
     const abort = () => timeout.abort()
     if (signal?.aborted) timeout.abort()
     signal?.addEventListener('abort', abort, { once: true })
@@ -54,7 +54,7 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
     }
     return csrfLoading
   }
-  async function request(method, path, { body, form = false, multipart = false, headers = {}, signal, beforeSend = () => {} } = {}) {
+  async function request(method, path, { body, form = false, multipart = false, headers = {}, signal, requestTimeoutMs, beforeSend = () => {} } = {}) {
     const outgoing = { ...headers }
     const expectedOwner = getOwner()
     if (expectedOwner != null) outgoing['X-Expected-Account'] = String(expectedOwner)
@@ -70,7 +70,7 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
     // 不自动重试写入；调用方保留同次确认的请求键与草稿。
     beforeSend()
     if (getOwner() !== expectedOwner) throw new Error('登录身份已变化，本次操作没有发送。')
-    return send(method, path, { body: content, headers: outgoing, signal })
+    return send(method, path, { body: content, headers: outgoing, signal, requestTimeoutMs })
   }
   async function login(username, password) {
     await request('POST', '/api/auth/login', { body: { username, password }, form: true })

@@ -20,10 +20,17 @@ import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
 import { getMonthQueryReply } from '@/utils/chatQuery'
 import { linkGroupRecords } from '@/utils/groupRecords'
+import { SERVER_MODE } from '@/api/mode'
+import { createAiDraftApi, draftControl } from '@/api/aiDraft'
+import { useAuthStore } from '@/stores/authStore'
 
 // 2. 组合式函数
 const conversationStore = useConversationStore()
 const recordStore = useRecordStore()
+const auth = SERVER_MODE ? useAuthStore() : null
+const owner = auth?.user?.id
+let disposed = false
+const aiDraft = SERVER_MODE ? createAiDraftApi(auth.api, { isCurrent: () => !disposed && auth.user?.id === owner }) : null
 
 // Temporary display name; user naming is planned, not implemented.
 const catDisplayName = '小宝'
@@ -123,21 +130,23 @@ async function saveDraft(messageId) {
 }
 function cancelDraft(messageId) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message?.group || savingGroup.value || retryingPersistence.value || recordStore.batchRecords(message.group.id).length) return
-  const result = applyDraftInput(message.group, '取消这组')
+  if (!message?.group || conversationStore.isThinking || savingGroup.value || retryingPersistence.value || recordStore.batchRecords(message.group.id).length) return
+  const result = message.group.origin === 'ai'
+    ? { group: { ...message.group, status: 'cancelled', pending: null }, reply: '这组已取消，没有写入账单。' }
+    : applyDraftInput(message.group, '取消这组')
   conversationStore.updateGroup(messageId, result.group); actionErrors.value[messageId] = ''; reply(result.reply)
 }
 function editDraft(messageId, { itemId, record }) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message?.group || savingGroup.value || retryingPersistence.value || ['saved', 'cancelled'].includes(message.group.status) || recordStore.batchRecords(message.group.id).length) return
+  if (!message?.group || conversationStore.isThinking || savingGroup.value || retryingPersistence.value || ['saved', 'cancelled'].includes(message.group.status) || recordStore.batchRecords(message.group.id).length) return
   const group = JSON.parse(JSON.stringify(message.group))
   const item = group.items.find(i => i.id === itemId)
   if (!item) return
   try {
     const normalized = validateRecord(record)
     Object.assign(item, normalized, { amountCents: legacyCents(normalized.amount), description: normalized.remark || normalized.category, errors: { amount: '', date: '', time: '' } })
-    group.pending = null; resolveGroup(group)
-    conversationStore.updateGroup(messageId, group); actionErrors.value[messageId] = ''; reply(groupReply(group))
+    if (group.origin !== 'ai') { group.pending = null; resolveGroup(group) }
+    conversationStore.updateGroup(messageId, group); actionErrors.value[messageId] = ''; reply(group.pending?.kind === 'ai' ? group.pending.question : groupReply(group))
   } catch (e) { actionErrors.value[messageId] = e.message }
 }
 async function handleSend(userInput) {
@@ -146,6 +155,7 @@ async function handleSend(userInput) {
   conversationStore.addMessage({ role: 'user', kind: 'text', content: text })
   conversationStore.setThinking(true); conversationStore.setMascotMood('thinking'); scrollToBottom()
   try {
+    if (SERVER_MODE) { await handleServerSend(text); return }
     await wait(600)
     await recordStore.refresh()
     const active = activeDraftMessage.value
@@ -162,6 +172,28 @@ async function handleSend(userInput) {
     }
   } catch { reply('本喵这次没整理好，草稿没有入账。可以再说清楚一些，或者用手动记账。') }
   finally { conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() }
+}
+async function handleServerSend(text) {
+  const active = activeDraftMessage.value
+  if (isQuery(text)) { await queryReply(text); return }
+  const control = draftControl(text)
+  if (control) {
+    if (!active) { reply('当前没有待确认草稿。记账可以直接告诉本喵开销。'); return }
+    if (control === 'cancel') {
+      conversationStore.updateGroup(active.id, { ...active.group, status: 'cancelled', pending: null })
+      reply('这组已取消，没有写入账单。'); return
+    }
+    const count = text.match(/(\d+)笔/)
+    if (active.group.status !== 'ready') { reply('还有信息需要补充，暂时不能保存。'); return }
+    if (count && Number(count[1]) !== active.group.items.length) { reply('当前是' + active.group.items.length + '笔，请核对数量再确认。'); return }
+    await saveDraft(active.id); return
+  }
+  try {
+    const result = await aiDraft.parse(text, { date: dayjs().format('YYYY-MM-DD'), group: active?.group })
+    if (active) { conversationStore.updateGroup(active.id, result.group); actionErrors.value[active.id] = '' }
+    else conversationStore.addMessage({ role: 'assistant', kind: 'draft-group', group: result.group })
+    reply(result.reply)
+  } catch (error) { if (!disposed && auth.user?.id === owner) reply(error.message + '。原草稿保留，尚未入账。') }
 }
 function legacySaved(message) { return message.confirmed || recordStore.batchRecords('legacy-' + message.id).length > 0 }
 function legacyRecord(message) { return recordStore.batchRecords('legacy-' + message.id)[0] || recordStore.recordsByIds?.([message.record?.id])[0] || message.record }
@@ -206,6 +238,7 @@ watch(
 onMounted(scrollToBottom)
 
 onBeforeUnmount(() => {
+  disposed = true
   if (moodTimer) {
     window.clearTimeout(moodTimer)
   }
@@ -230,7 +263,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="miao-summary">
         <p class="chat-month-note"><CatNavIcon kind="receipt" />本月支出 <span>{{ monthExpenseText }}</span></p>
-        <span class="miao-demo-label">规则演示 · 每组最多5笔</span>
+        <span class="miao-demo-label">{{ SERVER_MODE ? 'GLM草稿整理 · 确认后才入账' : '规则演示 · 每组最多5笔' }}</span>
         <ManualEntry class="miao-manual-link" />
       </div>
       <div class="chat-query-tools" aria-label="安全查询快捷入口"><span>想先看看？</span><button type="button" class="chat-query-chip" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月总支出')">本月支出</button><button type="button" class="chat-query-chip income" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月总收入')">本月收入</button><button type="button" class="chat-query-chip review" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月复盘')">本月复盘</button></div>
@@ -245,6 +278,7 @@ onBeforeUnmount(() => {
         </section>
         <p v-else class="chat-thread-marker"><JournalSticker tone="sage" /> 每一笔小日子 · 确认后才记下 <JournalSticker kind="flower" tone="lilac" /></p>
         <p v-if="recordStore.storageError" class="miao-storage-error" role="alert">{{ recordStore.storageError }}</p>
+        <p v-if="SERVER_MODE" class="miao-history-note">整理时，你发送的文字和当前候选草稿会交给智谱处理；每组最多5笔，核对后再确认。</p>
         <div v-if="conversationStore.persistenceError" class="miao-storage-error" role="alert">
           <p>{{ conversationStore.persistenceError }}</p>
           <button type="button" class="miao-history-button" :disabled="retryingPersistence || conversationStore.isThinking || Boolean(savingGroup)" @click="retryConversation">{{ conversationStore.storageConflict ? '重新读取最新对话' : conversationStore.restorationBlocked ? '重新读取旧对话' : '重试对话保存' }}</button>

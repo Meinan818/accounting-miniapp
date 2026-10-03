@@ -7,6 +7,17 @@ const response = (status, data) => new Response(status === 204 ? null : JSON.str
 const token = { headerName: 'X-CSRF-TOKEN', token: 'synthetic-csrf' }
 const id = '7ebf606b-a0d5-4053-98fb-194505f3d10c'
 const input = { id: 'item1', type: 'expense', amount: '0.29', date: '2026-10-03', time: '09:15', category: '餐饮', remark: '合成午饭' }
+test('AI可设置更长的单次期限，普通请求保持原默认期限', async () => {
+  const client = createApiClient({ timeoutMs: 5, fetcher: async (path, { signal }) => {
+    if (path.endsWith('/csrf')) return response(200, token)
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => resolve(response(200, { ok: true })), 20)
+      signal.addEventListener('abort', () => { clearTimeout(timer); reject(new Error('abort')) }, { once: true })
+    })
+  } })
+  assert.deepEqual(await client.request('POST', '/api/ai/parse', { body: {}, requestTimeoutMs: 100 }), { ok: true })
+  await assert.rejects(client.request('GET', '/api/records/snapshot'), /中断或超时/)
+})
 const view = { id, type: 'expense', amount: '0.29', date: input.date, time: input.time, category: input.category, note: input.remark, version: 0 }
 function memory() {
   const values = new Map()

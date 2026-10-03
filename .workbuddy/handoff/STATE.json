@@ -2,15 +2,15 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "用户临时暂停并手动新开对话；邮箱已保存，GLM草稿代码待编译测试",
+  "currentTask": "163真实投递与GLM正式聊天适配已技术验证，准备完整网页闭环验收",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "用户手动新开gpt-6.1-sol/high对话，读HANDOFF后先核SMTP配置识别，再补GLM编译和合成测试",
-  "nextStepReason": "用户特殊情况要求本轮暂停、自己新建聊天；GLM新增源码未编译测试，不能冒称接入完成",
-  "pendingUserDecision": "用户称SMTP已配置，但本机脱敏检查configured=false，未发邮件；需核实际文件/启用项，不在聊天提供秘密",
+  "nextStep": "验收正式网页注册/登录、GLM多笔与追问纠正、确认刷新和明细联动",
+  "nextStepReason": "接口及真实源模块链路已通过，下一步需要核用户实际页面操作，不能以自动测试冒称GUI验收",
+  "pendingUserDecision": "需要用户完成本机网页验收；密钥/授权码只保留本机，未部署，朋友访问方式后续确定",
   "onlineVersion": "无（尚未部署）",
-  "updatedAt": "2026-10-03",
-  "observedCompactionCount": 1,
-  "compactionCountBasis": "本会话已识别第一次compact；旧会话2次不计入。第二次实际事件立即停代码、交接、commit并创建指定模型新聊天。"
+  "updatedAt": "2026-10-04",
+  "observedCompactionCount": 0,
+  "compactionCountBasis": "2026-10-04全新会话基准0；旧会话1次只作历史，不继承。仅实际可识别事件计数，第二次立即停代码并交接。"
 }
