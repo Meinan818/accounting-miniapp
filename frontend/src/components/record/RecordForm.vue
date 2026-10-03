@@ -50,5 +50,7 @@ input, select { width: 100%; min-width: 0; box-sizing: border-box; }
 .form-actions { display: flex; gap: 10px; margin-top: 18px; }
 .form-error { color: #aa594d; margin-top: 12px; overflow-wrap: anywhere; }
 input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid #8c6c50; outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { button { transition: background-color 140ms ease, border-color 140ms ease; } }
+button:not(:disabled):active { border-color: #ba9782; }
 @media(max-width:359px) { .field-grid { grid-template-columns: 1fr; } }
 </style>

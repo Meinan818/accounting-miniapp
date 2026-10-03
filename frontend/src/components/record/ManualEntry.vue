@@ -14,5 +14,6 @@ import { NotebookPen, PawPrint } from 'lucide-vue-next'
 .manual-entry-paw { color: #b9817a; transform: rotate(13deg); }
 .manual-entry:hover { background: #fff0de; }
 .manual-entry:active { box-shadow: 1px 1px 0 #f3ddd7; }
+@media (prefers-reduced-motion: no-preference) { .manual-entry { transition: background-color 150ms ease, box-shadow 150ms ease; } }
 .manual-entry:focus-visible { outline: 2px solid #785746; outline-offset: 4px; }
 </style>

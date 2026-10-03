@@ -151,5 +151,6 @@ onMounted(() => store.refresh())
 .stats-error h2 { font-size: 17px; font-weight: 400; }.stats-error p { margin: 12px 0; font-size: 13px; line-height: 1.8; }.stats-error button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--zz-home-line); border-radius: 10px; }
 button:disabled { opacity: .4; cursor: not-allowed; }
 a:focus-visible, button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) { .stats-type-switch button { transition: background-color 150ms ease, color 150ms ease; } }
 @media (max-width: 359px) { .journal-stats { padding-inline: 12px; }.stats-header { gap: 7px; }.stats-header-cat { width: 58px; height: 65px; }.stats-title { font-size: 23px; }.stats-category-card { padding: 14px; }.stats-type-switch button { min-width: 46px; padding-inline: 8px; } }
 </style>

@@ -32,7 +32,19 @@ function close() { if (props.saving) return; if (confirmingDelete.value) cancelD
 </template>
 <style scoped>
 .bill-editor { width: min(480px,calc(100% - 28px)); max-height: calc(100dvh - 40px); overflow-y: auto; padding: 20px; border: 1px solid #d9c5a9; border-radius: 18px 22px 19px 16px; background: var(--zz-home-bg, #fdfaf3); color: var(--zz-home-ink, #3c261a); font-family: inherit; }
+.bill-editor { box-shadow: 0 16px 48px rgb(80 60 40 / .15); }
 .bill-editor::backdrop { background: rgb(80 60 40 / .28); }
+@media (prefers-reduced-motion: no-preference) {
+  .bill-editor[open] { animation: editor-unfold 200ms cubic-bezier(.22, 1, .36, 1); }
+  .bill-editor[open]::backdrop { animation: editor-backdrop 180ms ease-out; }
+  .delete-confirmation { animation: editor-content 150ms ease-out; }
+}
+@keyframes editor-unfold {
+  from { opacity: .92; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes editor-backdrop { from { background: rgb(80 60 40 / 0); } to { background: rgb(80 60 40 / .28); } }
+@keyframes editor-content { from { opacity: .8; } to { opacity: 1; } }
 .editor-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 h2 { font-size: 19px; font-weight: 400; }
 .editor-heading button { min-width: 44px; min-height: 44px; border: 1px solid #d9c5a9; border-radius: 12px; background: #fffdf8; font-size: 24px; color: inherit; }
@@ -48,7 +60,7 @@ h2 { font-size: 19px; font-weight: 400; }
 .delete-actions button { flex: 1; min-height: 44px; padding: 10px 8px; border: 1px solid #dcc2a9; border-radius: 12px; background: #fffdf8; font-size: 14px; }
 .delete-actions .delete-confirm-button { background: #f4dbd4; color: #874f47; border-color: #dfb4aa; }
 button:disabled { opacity: .5; cursor: not-allowed; }
-.delete-entry:focus-visible, .delete-actions button:focus-visible { outline: 2px solid #785746; outline-offset: 3px; }
+.editor-heading button:focus-visible, .delete-entry:focus-visible, .delete-actions button:focus-visible { outline: 2px solid #785746; outline-offset: 3px; }
 .editor-handle { display: none; }
 @media (max-width: 639px) {
   .bill-editor { position: fixed; inset: auto 0 0; margin: 0 auto; width: 100%; max-width: 480px; max-height: calc(100dvh - 16px); padding: 12px 18px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 24px 24px 0 0; box-shadow: 0 -6px 24px rgb(80 60 40 / .1); }

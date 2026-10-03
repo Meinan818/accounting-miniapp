@@ -27,6 +27,7 @@ const saveError = ref('')
 const notice = ref('')
 const noticeElement = ref(null)
 const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0,120) : '')
+const searchInput = ref(null)
 
 // 4. 计算属性
 const monthTitle = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY年M月'))
@@ -94,6 +95,12 @@ async function deleteEdit() {
 }
 
 // 5. 方法
+async function clearSearch() {
+  searchText.value = ''
+  await nextTick()
+  searchInput.value?.focus()
+}
+
 function changeMonth(offset) {
   notice.value = ''
   selectedMonth.value = dayjs(`${selectedMonth.value}-01`).add(offset, 'month').format('YYYY-MM')
@@ -178,7 +185,7 @@ function getSign(record) {
         </dl>
       </section>
 
-      <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" @click="searchText = ''">清除</button></div><p v-if="searchText && !recordStore.storageError" class="bills-search-feedback" role="status">找到 {{ listedRecords.length }} 笔 · 搜索只影响列表，本月汇总不变</p></section>
+      <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input ref="searchInput" id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" @click="clearSearch">清除</button></div><p v-if="searchText && !recordStore.storageError" class="bills-search-feedback" role="status">找到 {{ listedRecords.length }} 笔 · 搜索只影响列表，本月汇总不变</p></section>
       <p class="bills-storage-note">账单保存在当前浏览器；这里的修改会同步到首页和聊天查询</p>
       <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
 
@@ -248,8 +255,13 @@ function getSign(record) {
 .bills-search-card { position: relative; margin-top: 21px; padding: 13px 13px 11px; background: #ede6f0; border: 1px solid #c8b8d0; border-radius: 9px 16px 10px 15px; }
 .bills-search-card::before { content: ''; position:absolute; width:44px; height:14px; background:#f3e3bc; opacity:.8; top:-7px; left:17px; transform:rotate(-5deg); }
 .bills-search-row { display: flex; align-items: center; gap: 9px; margin-top: 4px; min-height:44px; color:#8a7591; }.bills-search-row input { min-width:0; width:100%; font-size:14px; background:transparent; color:#624f6b; outline:none; }.bills-search-row input:focus-visible { outline: none; }
-.bills-search-card:focus-within { border-color: #ab91b7; box-shadow: 0 0 0 3px #e5d9ec80; }
-.bills-search-row button:focus-visible { outline: 2px solid #92749f; outline-offset: 2px; border-radius: 8px; }.bills-search-row input::placeholder { color:#7c6684; opacity:1; }
+.bills-search-card:focus-within { border-color: #94749f; box-shadow: 0 0 0 3px #e5d9ec80; }
+.bills-search-row button:focus-visible { outline: 2px solid #92749f; outline-offset: 2px; border-radius: 8px; }.bills-search-row input::placeholder { color:#755d7d; opacity:1; }
+@media (prefers-reduced-motion: no-preference) {
+  .bills-search-card { transition: border-color 160ms ease, box-shadow 160ms ease; }
+  .bills-record { transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease; }
+}
+.bills-record:active { border-color: #c5a58f; box-shadow: 1px 2px 0 #e9ddcc; }
 .bills-search-row button { min-height:44px; min-width:44px; font-size:12px; flex-shrink:0; }.bills-search-feedback { margin-top:5px; font-size:11px; line-height:1.8; color:#7b6984; }
 
 .bills-manual-link { margin-bottom: 18px; }
