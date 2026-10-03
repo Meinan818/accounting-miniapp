@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "个人页账本概况重试已验证，继续账单编辑窗口组件时序",
+  "currentTask": "第二次实际压缩交接：停止业务代码，保存记录并原生转移续办",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
@@ -11,8 +11,8 @@
   "pendingUserDecision": "集中记录.workbuddy/handoff/PENDING.md；目前不主动提问，继续独立任务",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-04",
-  "observedCompactionCount": 1,
-  "compactionCountBasis": "本聊天01a10369-4fe9-7c82-9502-a6593e36b203已识别第1次实际compact并告知；同聊天恢复保留1，源聊天2次仅历史。",
+  "observedCompactionCount": 2,
+  "compactionCountBasis": "本聊天01a10369-4fe9-7c82-9502-a6593e36b203已识别第2次实际compact并告知，立即停止业务代码；同聊天恢复保留2，真正新窗口才设基准0。",
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
@@ -20,7 +20,7 @@
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a10369-4fe9-7c82-9502-a6593e36b203",
-    "transferStatus": "已核transfer-result.json success、targetThreadId、本地finalCommit与原生view/toml，每小时/ACTIVE/failed_runs_only一致",
+    "transferStatus": "本次交接待原生创建并转移；新聊天须核compaction-handoff-2026-10-04/transfer-result.json后接手，旧成功回执仅历史",
     "scheduledRunVerified": false
   }
 }

@@ -1,3 +1,9 @@
+## 2026-10-04 · 第2次实际压缩交接（当前入口）
+
+源01a10369-4fe9-7c82-9502-a6593e36b203实际compact=2，已告知并停业务代码。同聊天恢复保持2，真正新窗口核compaction-handoff-2026-10-04/transfer-result.json的success及finalCommit后才设0并接手；此前只读等待，避免并发写入。先读HANDOFF当前段、AGENTS、PROJECT_PLAN、STATE/PENDING/MISTAKES、LOG末条，核Git/服务/automation。指定gpt-6.1-sol/high、现有automation每小时/ACTIVE/failed_runs_only保持，仅转新目标。
+
+303项前端与两构建通过、e28b727完整SHA远端一致均为已有证据；本次纯交接不Push。下一项账单编辑删除确认返回编辑的输入/焦点与离页回调：先实际Vue renderer离线取证，尚无已复现缺陷。GUI/真机/隔夜未验，不凭猜测改。禁真实账单/资料/AI/邮件写入，新聊天核远端全部增量/秘密/部署影响后自主Push并继续，不主动提问、不等回复、不用子代理。
+
 ## 2026-10-04 · 个人页账本概况原地重试
 
 - Profile接既有useLedgerReload，与首页/明细/统计一致：显式按钮force=true、初始普通版本读取、重复点击阻断、忙碌/禁用及离页保护。资料读取与账本读取独立；金额计算错误只给准确提示，不引导无效重读。

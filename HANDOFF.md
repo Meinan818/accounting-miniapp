@@ -1,3 +1,7 @@
+## 最新交接入口：第2次实际压缩（2026-10-04）
+
+源01a10369-4fe9-7c82-9502-a6593e36b203实际compact=2，已告知并停业务代码；同聊天恢复保留2。本文“当前交接：账本可靠性与个人资料时序”段及LOG末条为当前完整交接，下面旧compact=1仅历史。先本地commit，再原生创建gpt-6.1-sol/high、转移automation；新聊天只读等候compaction-handoff-2026-10-04/transfer-result.json的success及finalCommit，成功后设0、继续编辑窗口离线取证，用户无需操作。本次不Push。
+
 ## 2026-10-04 · 个人页账本概况原地重试
 
 - Profile接既有useLedgerReload，与首页/明细/统计一致：显式按钮force=true、初始普通版本读取、重复点击阻断、忙碌/禁用及离页保护。资料读取与账本读取独立；金额计算错误只给准确提示，不引导无效重读。
@@ -120,6 +124,24 @@
 分页重复编号优先于顺序错误分类，严格递增与旧快照保护保持。28项针对、250项全量及demo/server两构建全部通过，证据heartbeat-recovery-2026-10-04的new-window日志，旧失败保留。无GUI/真机或真实业务写入、AI/邮件调用。下一项直接继续手动未知写入刷新重进恢复，保留原键/内容，不自动重新建账。
 
 # 喵叽智账 · 全权续办、免费GLM与个人页调整交接
+
+## 当前交接：账本可靠性与个人资料时序（2026-10-04，优先于下方历史）
+
+源聊天01a10369-4fe9-7c82-9502-a6593e36b203第2次实际compact已告知，业务代码停止，STATE=2，同聊天恢复不归零，真正新窗口设0。已原生改名；先核差异及秘密、本地commit，再原生创建gpt-6.1-sol/high并转移现有automation。实际结果见LOG及.workbuddy/memory/compaction-handoff-2026-10-04/transfer-result.json。新聊天在回执success且finalCommit核一致前只读等待，不修改共享文件；源写完成功回执后不再修改。本次不Push，后继核全部增量/远端/秘密/部署影响后自主上传，不问用户、不等继续、不用子代理。
+
+架构：Vue3/JavaScript/Vite/Pinia + Java21/Spring Boot3.5.16/Security/JDBC/Flyway + MySQL独立miaoji_dev；正式server/demo分离，免费glm-4-flash-250414整理草稿，用户确认才入账。认证/邮箱、本人账单/统计、资料/私有照片、幂等事务、审计和一致分段账本已联通。首次加载仍全量内存。零费用、本机，无部署，保护已有账号/账本/照片/合成数据；离线测试禁真实AI、邮件及资料账单写入，不追加付费模型/生图或改权限/可见性。
+
+本聊天已验证保存上传：分页重复错误分类；手动未知写入刷新恢复、过期安全取消、跨页意图/Web Locks；原地读取重试、跨日及相邻月选日；Pinia HMR快照、监听退休、重建账号隔离和迟到读写；大额累计安全整数分/精确显示、旧分类原型同名Map汇总；Profile重复编辑/旧读取覆盖新保存/照片部分保存重试、响应日期月概况/足迹、本地照片取消替换保护及useLedgerReload账本重试。最新303项前端及demo/server两构建通过，另8项HMR、8项金额/Calendar真实模板离线渲染、9项Profile实际setup集成证据；GUI/焦点/窄屏/真机/实际隔夜未验。本次只交接，不重跑业务测试。
+
+最近e28b727e60e8de3d68bafa168885343b07bc3a3e已普通Push成功，ls-remote两次连接失败原文profile-interactions-2026-10-04/remote-verify-failure.log保留；官方只读API完整远端一致证据remote-final.json。开工Git干净/main，无未完成源码；Java19940/Vite20820仍仅127.0.0.1:8080/5174监听，未重启，预览http://127.0.0.1:5174。私有仓库/无部署是此前证据，新Push仍重新核查。
+
+下一项离线核账单编辑窗口删除确认返回编辑的输入/焦点及离页迟到回调，有工具再補GUI/窄屏。只读过RecordEditor.vue、RecordForm.vue、Bills.vue和tests/manualRendering.test.js，尚未复现缺陷。native dialog与v-show保留表单，startDelete/cancelDelete在nextTick后聚焦；挂载锁body overflow、卸载关闭恢复、saving拒绝close。先取实际组件证据再决定修复，不凭猜测。复用现有Vue自定义renderer及合成Store，不写真实账单。
+
+关键路径：frontend/src/components/record/RecordEditor.vue、RecordForm.vue、views/Bills.vue/Profile.vue、stores/recordStore.js、api/remoteLedger.js、tests/manualRendering.test.js；useLedgerReload/useLocalDay位置先rg --files核实。start-local.cmd/scripts/local-dev.mjs统一本机入口，旧PID须核归属再操作。沿用JavaScript、现依赖、小步回退，金额/日期/身份/事务优先。材料在memory的record-hmr、money-totals、category-prototype、profile-interactions-2026-10-04目录；缓存及单任务TEMP/TMP在E盘，不改系统变量。凭据/storage/memory/target/dist/node_modules忽略，不入Git。
+
+本聊天踩坑见MISTAKES：HMR迁移与重建旧账号、整数分越界、分类原型同名、资料并发/跨日均有原失败及修复证据。测试替身漏字段/手算错误不称业务故障；只读猜路径/Windows通配失败保留。误建frontend/.workbuddy/memory/record-hmr-2026-10-04空目录清理被自动审批拒绝，已保留不绕过。本次交接多文件patch上下文错误被原子拒绝，核Git无部分写入后修正；技能路径漏.system及空CODEX_HOME只读失败已纠正；官方自动化页面403，不称文档已读取，按现有原生工具schema及回执核验。
+
+automation沿用每小时/ACTIVE/failed_runs_only及全部原提示，仅原生改目标、不建重复、不手写toml或替代调度。此heartbeat确已收到开工，完整定时成功未证实。真正新窗口核回执后设compact=0、直接接续，第2次实际事件再停代码交接；摘要/唤醒/普通中断不计。下方旧计数、失败待续与目标均仅历史。
 
 ## 最新交接（2026-10-04，覆盖下方旧现场）
 
