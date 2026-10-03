@@ -171,7 +171,15 @@ export function applyDraftInput(original, text, options = {}) {
     group.items.push(...parsed.items); group.pending = null; resolveGroup(group)
     return { group, reply: groupReply(group) }
   }
-  if (group.pending?.kind === 'target') {
+  // 新的明确纠正替换旧意图；只有纯编号回答才能应用待选择的旧修改。
+  const correction = /改成|改为|改到|改一下|那笔|第[1-5一二三四五]笔.*(?:是|金额|日期)/.test(text)
+  const targetReply = text.replace(/\d{1,3}(?:,\d{3})+(?:\.\d+)?/g, token => token.replaceAll(',', ''))
+    .replace(/[。！!?？]+$/u, '')
+  if (group.pending?.kind === 'target' && /[，,、;；。\n]|然后|另外|同时|以及|还有|并且|和|与/.test(targetReply)) {
+    return { group, reply: '请先用单独编号选择要修改的条目，再逐笔补充修改。本喵先保留原草稿。' }
+  }
+  if (group.pending?.kind === 'target' && !correction) {
+    if (!/^(?:是|就是|选|选择)?第[1-5一二三四五]笔[。！!?？]*$/u.test(text.trim())) return { group, reply: groupReply(group) }
     const idx = numberTarget(text)
     const item = group.items[idx]
     if (!item || !group.pending.itemIds.includes(item.id)) return { group, reply: groupReply(group) }
@@ -179,7 +187,6 @@ export function applyDraftInput(original, text, options = {}) {
     return { group, reply: groupReply(group) }
   }
   // Explicit corrections take precedence over answering the next missing field.
-  const correction = /改成|改为|改到|改一下|那笔|第[1-5一二三四五]笔.*(?:是|金额|日期)/.test(text)
   if (correction) {
     const targetText = text.split(/改成|改为|改到|改一下|是/)[0]
     const targets = targetsFor(group, targetText)

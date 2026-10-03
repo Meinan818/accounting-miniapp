@@ -30,6 +30,24 @@ test('真实AI损坏的追问上下文和空待确认组保护原文', () => {
     const store = useConversationStore(); assert.equal(store.restorationBlocked, true); assert.equal(data.get(key), raw)
   }
 })
+
+test('AI追问日期基准持久化后可恢复，非法日期保护原文', async () => {
+  const group = { id: 'date-group', origin: 'ai', status: 'needs_input', items: [], createdDate: '2026-10-04',
+    pending: { kind: 'ai', text: '昨天午饭', question: '多少钱？', referenceDate: '2026-10-06' } }
+  const store = useConversationStore(); store.addMessage({ kind: 'draft-group', group }); await nextTick()
+  const raw = data.get(key); setActivePinia(createPinia())
+  const restored = useConversationStore()
+  assert.equal(restored.restorationBlocked, false); assert.equal(restored.messages.at(-1).group.pending.referenceDate, '2026-10-06')
+  assert.equal(data.get(key), raw)
+  for (const invalid of ['2026-02-30', '9999-01-01', 42, null]) {
+    setActivePinia(createPinia())
+    const damaged = JSON.stringify([{ id: 'date-message', role: 'assistant', kind: 'draft-group',
+      group: { ...group, pending: { ...group.pending, referenceDate: invalid } } }])
+    data.set(key, damaged); const before = writes
+    assert.equal(useConversationStore().restorationBlocked, true)
+    assert.equal(data.get(key), damaged); assert.equal(writes, before)
+  }
+})
 test('读取旧单笔对话不擅自迁移或覆盖', () => {
   const old = [{id:'old',role:'assistant',kind:'record',confirmed:false,record:{amount:25}}]
   data.set(key,JSON.stringify(old));const store=useConversationStore()

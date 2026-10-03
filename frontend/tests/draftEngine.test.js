@@ -6,6 +6,19 @@ const options = { date: '2026-10-02', time: '12:00', makeId: p => p + '-' + ++id
 const draft = text => createDraft(text, options)
 const send = (g, text) => applyDraftInput(g, text, options)
 
+test('待选编号仅接受单一选择，新明确纠正使用新金额且保留其他笔', () => {
+  const original = draft('午饭25，咖啡18').group
+  const pending = send(original, '那笔改成15').group
+  const complex = send(pending, '第2笔，同时午饭是昨天的')
+  assert.deepEqual(complex.group, pending)
+  const changed = send(pending, '第2笔改成17').group
+  assert.deepEqual(changed.items.map(item => item.amountCents), [2500, 1700])
+  assert.equal(changed.status, 'ready')
+  const selected = send(pending, '就是第2笔。').group
+  assert.deepEqual(selected.items.map(item => item.amountCents), [2500, 1500])
+  assert.equal(pending.pending.patch.amountCents, 1500)
+})
+
 test('一句话创建两笔，纠正仅更新对应金额与原编号', () => {
   const g = draft('今天吃面25，买咖啡18').group
   assert.equal(g.status, 'ready'); assert.equal(g.items.length, 2)

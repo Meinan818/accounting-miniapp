@@ -48,7 +48,8 @@ function checkGroup(group) {
     if (!isObject(pending)) throw new Error('invalid pending context')
     if (pending.kind === 'ai') {
       if (group.origin !== 'ai' || typeof pending.text !== 'string' || !pending.text.trim() || pending.text.length > 1000
-        || typeof pending.question !== 'string' || !pending.question.trim() || pending.question.length > 300) throw new Error('invalid ai clarification')
+        || typeof pending.question !== 'string' || !pending.question.trim() || pending.question.length > 300
+        || (pending.referenceDate !== undefined && (!validDate(pending.referenceDate) || pending.referenceDate.startsWith('9999-')))) throw new Error('invalid ai clarification')
     } else if (pending.kind === 'target') {
       if (!Array.isArray(pending.itemIds) || !pending.itemIds.length || new Set(pending.itemIds).size !== pending.itemIds.length
         || pending.itemIds.some(id => !ids.has(id))) throw new Error('invalid targets')
