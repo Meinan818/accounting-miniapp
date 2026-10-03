@@ -1,6 +1,6 @@
 # 喵叽智账 · 接手入口
 
-工作目录：E:/XiangMu/未定项目。先读AGENTS.md、PROJECT_PLAN.md、STATE.json与LOG最新记录，再核Git/源码/服务/工具权限；保护全部账本、照片、原图、内部材料和现有改动，不reset/clean。
+工作目录：E:/XiangMu/未定项目。先读AGENTS.md、PROJECT_PLAN.md、STATE.json、MISTAKES.md与LOG最新记录，再核Git/源码/服务/工具权限；保护全部账本、照片、原图、内部材料和现有改动，不reset/clean。Codex后续确认自身错误时，及时追加MISTAKES.md并复验，不记录敏感值。
 
 ## 最新任务与当前成果
 
