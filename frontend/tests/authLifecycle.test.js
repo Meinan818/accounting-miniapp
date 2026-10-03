@@ -95,3 +95,34 @@ test('释放后旧注册回执不自动登录，旧验证码动作也不发邮�
     assert.equal(env.requests.length, 2); assert.deepEqual(env.redirects, [])
   } finally { env.dispose() }
 })
+test('同实例新登录完成后旧POST回执不重置新CSRF或追加身份读取', async () => {
+  const env = await scene()
+  try {
+    const old = env.store.login('synthetic-A', 'synthetic-password'); old.catch(() => {})
+    env.requests[0].finish(200, csrf); await env.flush()
+    const fresh = env.store.login('synthetic-B', 'synthetic-password'); await env.flush()
+    env.requests[2].finish(204); await env.flush()
+    env.requests[3].finish(200, csrf); await env.flush()
+    env.requests[4].finish(200, bob); assert.equal(await fresh, true)
+    const bound = env.store.api.getCsrf(); await env.flush()
+    const freshToken = { ...csrf, token: 'synthetic-current-B' }; env.requests[5].finish(200, freshToken); await bound
+    const before = env.requests.length
+    env.requests[1].finish(204); await env.flush()
+    if (env.requests[before]) { env.requests[before].finish(200, { ...csrf, token: 'synthetic-late-A' }); await env.flush() }
+    if (env.requests[before + 1]) env.requests[before + 1].finish(200, alice)
+    assert.equal(await old, false); assert.equal(env.store.user.id, '2')
+    assert.equal(env.requests.length, before); assert.deepEqual(await env.store.api.getCsrf(), freshToken)
+  } finally { env.dispose() }
+})
+test('同实例expire发生在CSRF等待中，旧登录不能继续发送POST', async () => {
+  const env = await scene()
+  try {
+    const pending = env.store.login('synthetic-A', 'synthetic-password'); pending.catch(() => {})
+    env.store.expire(); env.requests[0].finish(200, csrf); await env.flush()
+    if (env.requests[1]) { env.requests[1].finish(204); await env.flush() }
+    if (env.requests[2]) { env.requests[2].finish(200, csrf); await env.flush() }
+    if (env.requests[3]) env.requests[3].finish(200, alice)
+    assert.equal(await pending, false); assert.equal(env.requests.length, 1)
+    assert.equal(env.store.user, null); assert.equal(env.store.status, 'guest')
+  } finally { env.dispose() }
+})

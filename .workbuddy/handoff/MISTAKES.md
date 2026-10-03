@@ -293,3 +293,6 @@
 
 ## 2026-10-04 · 路由loading不是访客
 - guard仅unknown/unavailable等待restore，已有恢复loading时第二导航误判user=null为访客。router-before3项2通过1失败保留；仅共享现有恢复，不给登录loading新请求。首修仍旧guard追加账本读取，router-after29项28通过1失败；导航代次修复，账本await身份失效仍放行另有owner-before4项3通过1失败，owner回执保护后4项router/370全量/两构建通过。今后路由身份等待同时核最新导航、读取数量和await后身份，不能只看最终页面名称。
+
+## 2026-10-04 · 外层登录代次不取消API后续步骤
+- session只在整client.login返回后检查代次，旧POST成功回执仍resetCsrf/getCsrf/GET me，替换新token；expire在CSRF等待中仍发POST。login-chain-before8项6通过2失败保留。传isCurrent给API并在每步请求前/重置前核，8项生命周期/57项相关/372全量/两构建通过。多步适配器须继承调用方意图，不把外层忽略结果等同于停止后续网络操作。

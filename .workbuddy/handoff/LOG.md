@@ -1036,3 +1036,9 @@
 - 认证7cf4943cd193d376006e527446dc507fe1a20b7d官方同SHA/force:false上传成功，1提交/11blob，完整远端一致（auth-sync）。
 - 真实Vue Router内存路由+原guard+createSession合成回执，router-before3项2通过1失败：restore loading第二导航误跳Login，最新目的地丢失。waitForRestoration仅等已有恢复，不给login loading追加GET；首修仍旧guard读取两次账本（router-after29项28通过1失败），加导航代次撤销。owner-before4项3通过1失败：账本await身份失效仍放行Bills，回执再核owner。
 - 4项router/370全量/demo与server构建通过，失败离线恢复重试/正常登录loading/并发导航均覆盖。原业务/认证/AI/邮件请求0，无依赖/部署，GUI/真机/下载落盘/隔夜仍未验；compact=1保持。下一项同session旧client.login POST回执的后续CSRF/GET me链取证，不能仅以最终代次守卫推断网络链已停；本节点保存上传见router-sync，无需用户操作。
+
+## 2026-10-04 · 同实例旧登录的后续请求链
+
+- 路由3a9655ddbbb993457d53bec8e1a2660551bc2ff1官方同SHA/force:false同步成功，1提交/11blob，远端完整一致（router-sync）。
+- login-chain-before8项6通过2失败：旧login POST回执重置新CSRF/追加读取，expire在CSRF等待中旧POST仍发。session代次作为isCurrent传API，POST beforeSend/回执重置之前/GET me beforeSend检查；旧请求已发不声称撤回，停止后续链并保留新token。
+- 8项authLifecycle、57项认证/API相关、372全量与demo/server两构建通过（login-chain-*）。无真实账号/业务/AI/邮件请求，无依赖/部署，GUI/真机/下载落盘/隔夜待验，compact=1保持。下一项旧logout回执与新认证CSRF隔离合成取证；本节点保存上传见login-chain-sync，不需用户操作。

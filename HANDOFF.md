@@ -1,4 +1,10 @@
-## 当前入口：路由身份恢复等待（2026-10-04）
+## 当前入口：旧登录后续请求链（2026-10-04）
+
+372项全量/两构建、8项authLifecycle及57项认证/API相关通过。login-chain-before8项6通过2失败：session仅整client.login返回后核代次，旧POST回执继续resetCsrf/GET csrf/GET me且覆盖新token，expire在安全校验等待中仍发旧POST。session.login传isCurrent到client.login，入口/POST beforeSend/回执reset之前/GET me beforeSend逐步守卫，旧请求已发送的服务端事实不冒称撤销，后续链停止。
+
+路由3a9655ddbbb993457d53bec8e1a2660551bc2ff1官方同SHA/force:false同步并核完整远端一致（router-sync），本节点保存上传见login-chain-sync。无真实认证/业务/AI/邮件调用，无依赖/部署，GUI/真机仍待验，compact=1保持。下一项同实例旧logout回执与新登录CSRF隔离，logout亦仅外层await守卫，先合成取证再最小修复；原生静音每小时续办沿用，无需用户操作。
+
+## 前一节点：路由身份恢复等待（2026-10-04）
 
 370全量/demo及server两构建、4项真实Vue Router memory+createSession+原guard合成回执通过。router-before3项2通过1失败：恢复loading第二导航误跳Login；waitForRestoration只等正在进行的恢复，登录loading不额外GET。首修仍旧guard追加账本读取，router-after29项28通过1失败保留；导航代次守卫await恢复/账本回执。owner-before4项3通过1失败：账本await身份失效仍放行Bills，回执核owner修复。
 

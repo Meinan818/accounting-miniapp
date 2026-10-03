@@ -87,11 +87,16 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
     if (csrfToken && csrfToken !== csrf) throw new ApiError('安全校验已变化，本次操作没有发送，请保留内容后重试。', { code: 'STALE_CSRF' })
     return send(method, path, { body: content, headers: outgoing, signal, requestTimeoutMs })
   }
-  async function login(username, password) {
-    await request('POST', '/api/auth/login', { body: { username, password }, form: true })
+  async function login(username, password, { isCurrent = () => true } = {}) {
+    const beforeSend = () => {
+      if (!isCurrent()) throw new ApiError('本次登录已失效，请使用当前页面重新登录。', { code: 'STALE_AUTH' })
+    }
+    beforeSend()
+    await request('POST', '/api/auth/login', { body: { username, password }, form: true, beforeSend })
+    beforeSend()
     resetCsrf()
     await getCsrf()
-    return request('GET', '/api/auth/me')
+    return request('GET', '/api/auth/me', { beforeSend })
   }
   async function logout() { await request('POST', '/api/auth/logout'); resetCsrf() }
   return { request, login, logout, getCsrf, resetCsrf }

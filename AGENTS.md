@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 当前372项前端/两构建、8项authLifecycle与57项认证/API相关通过：session.login传当前代次给API，旧POST回执不reset新CSRF或追加GET me，expire发生在CSRF等待期间不发旧POST。login-chain-before8项6通过2失败保留，3a9655d完整远端一致，compact=1。下一项旧logout回执/新会话校验隔离，合成fetch，无真实认证/邮件/业务/AI请求，GUI/真机待验。
+
 - 当前370项前端/两构建、4项真实内存router+session通过：并发导航只等现有恢复，登录loading不额外GET；导航代次阻旧guard追加账本读取，账本await后再核身份。router-before3项2通过1失败、owner-before4项3通过1失败与首修仍重复读取证据保留。7cf4943完整远端一致，compact=1；下一项同实例旧client.login后续CSRF链取证，无真实账号/业务/AI/邮件请求，GUI/真机待验。
 
 - 当前366项前端/两构建、6项auth生命周期通过：认证Store新实例unknown/不hydrate旧身份，释放撤销session代次/CSRF与旧fetch后续链，旧401不重定向，迟到注册不自动登录。auth-before-fixed-harness4项4失败保留，首轮harness调度错误另记。45856e9完整远端一致，compact=1；下一项正式路由恢复等待/并发导航取证，无真实认证/邮件/业务/AI请求，GUI/真机待验。

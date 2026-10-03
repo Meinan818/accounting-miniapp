@@ -46,7 +46,7 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     restoration = null
     identity(null); status.value = 'loading'; error.value = ''
     try {
-      const value = await client.login(username, password)
+      const value = await client.login(username, password, { isCurrent: () => active && current === generation })
       if (current !== generation) return false
       identity(value); status.value = 'authenticated'; return true
     } catch (failure) {

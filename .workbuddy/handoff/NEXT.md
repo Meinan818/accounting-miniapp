@@ -1,4 +1,8 @@
-## 2026-10-04 · 路由身份恢复等待（当前入口）
+## 2026-10-04 · 旧登录后续链（当前入口）
+
+372项前端/两构建、8项auth生命周期与57项认证相关通过；旧login代次保护贯穿POST前/回执resetCSRF前/GET me前，新token不被旧链替换，expire等待不发旧POST。3a9655d完整远端一致，本节点上传见login-chain-sync。compact=1不归零；继续旧logout迟到回执及CSRF等待的新认证隔离，用合成fetch，不发真实账号/邮件/业务/AI请求，GUI/真机待验。
+
+## 2026-10-04 · 路由身份恢复等待（历史）
 
 4项真实内存router/session、370全量及两构建通过，并发导航共享恢复/保留新目的地，不给login loading加GET，旧guard代次阻读取，账本回执再核owner。7cf4943完整远端一致，本节点上传见router-sync。compact=1保持；继续同实例多次login/expire中旧client.login回执的CSRF和后续网络链，先合成取证再修；禁真实认证/业务/AI/邮件请求，GUI/真机待验。
 
