@@ -160,6 +160,48 @@ test('分页读取超过5000条也完整替换且保留删除事实', async () =
     assert.equal(test.store.recordsByIds([entries[0].record.id])[0].deletedAt, entries[0].deletedAt)
   } finally { test.dispose() }
 })
+
+test('分页第二页网络中断保留完整旧快照，重试从首页以新版本完整读取', async () => {
+  const entries = Array.from({ length: 501 }, (_, index) => ({ record: { ...value,
+    id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}` }, deletedAt: index === 500 ? '2026-10-04T00:00:00Z' : null }))
+  let phase = 'initial'
+  const paths = []
+  const scene = setup({ request: async (_, path) => {
+    paths.push(path)
+    if (phase === 'initial') return { revision: '0', nextAfter: null, records: [{ record: value }] }
+    const after = new URL(path, 'http://synthetic').searchParams.get('after')
+    if (after && phase === 'interrupted') throw Error('合成第二页网络中断')
+    return after ? { revision: '1', nextAfter: null, records: entries.slice(500) }
+      : { revision: '1', nextAfter: entries[499].record.id, records: entries.slice(0, 500) }
+  } })
+  try {
+    await scene.store.refresh()
+    phase = 'interrupted'
+    assert.equal(await scene.store.refresh(), false)
+    assert.equal(scene.store.records.value.length, 1)
+    assert.equal(scene.store.records.value[0].id, id)
+    phase = 'retry'
+    const start = paths.length
+    assert.equal(await scene.store.refresh(), true)
+    assert.equal(new URL(paths[start], 'http://synthetic').searchParams.has('after'), false)
+    assert.equal(scene.store.records.value.length, 500)
+    assert.ok(scene.store.recordsByIds([entries[500].record.id])[0].deletedAt)
+    assert.equal(scene.store.storageError.value, '')
+  } finally { scene.dispose() }
+})
+
+test('分页页内逆序或回退编号不能冒充完整账本', async () => {
+  let bad = false
+  const first = '00000000-0000-4000-8000-000000000010', second = '00000000-0000-4000-8000-000000000001'
+  const scene = setup({ request: async () => bad ? { revision: '1', nextAfter: null, records: [{ record: { ...value, id: first } }, { record: { ...value, id: second } }] }
+    : { revision: '0', nextAfter: null, records: [{ record: value }] } })
+  try {
+    await scene.store.refresh(); bad = true
+    assert.equal(await scene.store.refresh(), false)
+    assert.equal(scene.store.records.value.length, 1)
+    assert.equal(scene.store.records.value[0].id, id)
+  } finally { scene.dispose() }
+})
 test('分页中途版本变化或重复游标保留上次完整账本', async () => {
   let mode = 'initial'; let calls = 0
   const secondId = 'aabf606b-a0d5-4053-98fb-194505f3d10c'

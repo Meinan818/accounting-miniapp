@@ -58,10 +58,12 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
             throw new Error('账本分页回执不完整或版本已变化，原账本已保留。')
           }
           revision = page.revision
+          let previousId = after
           for (const entry of page.records) {
             const id = entry.record?.id
+            if (typeof id !== 'string' || (previousId !== null && id <= previousId)) throw new Error('账本分页顺序或位置不合法，原账本已保留。')
             if (seen.has(id)) throw new Error('账本分页编号重复，原账本已保留。')
-            seen.add(id); entries.push(entry)
+            seen.add(id); entries.push(entry); previousId = id
           }
           if (page.nextAfter !== null && (page.records.length === 0 || page.nextAfter !== page.records.at(-1).record?.id
             || (after !== null && page.nextAfter <= after))) throw new Error('账本分页位置不合法，原账本已保留。')

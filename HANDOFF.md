@@ -1,5 +1,23 @@
 # 喵叽智账 · 全权续办、免费GLM与个人页调整交接
 
+## 最新交接（2026-10-04，覆盖下方旧现场）
+
+源聊天01a10312-42ac-7953-909e-b7f982a78353实际compact=2，已告知并停止业务代码，STATE=2；同聊天恢复不归零。按用户规则先待续本地commit/改名，再原生创建gpt-6.1-sol/high新聊天，转移现有heartbeat。实际结果见LOG末条，不能凭计划声称成功。用户全权授权，新聊天直接持续开发、不主动提问、不等回复、不用子代理。
+
+架构：Vue3/JavaScript/Vite/Pinia + Java21/Spring Boot3.5.16/Security/JDBC/Flyway + MySQL独立miaoji_dev。正式server和demo隔离；免费glm-4-flash-250414只整理草稿，确认才入账。认证/邮箱、账单/统计、资料/私有照片、幂等事务、审计和分段账本已联通。零费用、本机；保护原账号/账本/照片/合成数据，不追加收费或真实外发，不改权限/可见性/生产数据。
+
+已完成：聊天指代/追问/追加、账本版本缓存与迟到保护、60笔明细窗口、资料部分保存/冲突、统计切月、会话/验证码/CSRF及同账号新会话隔离、手动成功导航恢复、明细版本对照与查询路由边界。改动前248项前端及demo/server两构建通过，GUI/真机未补验，87项后端/真实模型/邮件为历史证据。上节点HEAD=3c1b5867f2eddff8629422768582072097f3ba75，上一轮已核远端完整SHA一致。本次交接仅本地保存，先修待续失败再核查Push。
+
+待续源码只有frontend/src/api/remoteLedger.js与frontend/tests/remoteLedger.test.js：新增第二页中断保护/从首页按新版本重试及页内逆序拒绝测试，新增previousId严格递增检查。后端LedgerRepository现有ORDER BY id、id>?已核，无后端改动。材料.workbuddy/memory/heartbeat-recovery-2026-10-04/pages-before.log及pages-after.log均28项27通过1失败。交接只读after日志确认：旧“分页中途版本变化或重复游标”用例220行期望/重复/，实际“账本分页顺序或位置不合法”，新增顺序校验抢先重复检测。未补全量/构建，不称节点完成；此聊天不再修代码或凑测试通过。
+
+新聊天先核检查顺序/错误分类、修复并针对/全量/两构建验证，保留原失败，再commit/核查后普通Push，直接继续手动未知写入刷新重进恢复。Add每次挂载新manual batchId，同页重试已保护，刷新恢复尚未实施。可评估复用账号隔离键miaoji_account_write_intents_v1_${owner}，原请求键和内容必须一致；未知结果不可自动换键重写、不可串账号或存秘密。首次账本仍全量内存，GUI缺工具记PENDING，不等待用户代测。
+
+关键路径：remoteLedger/client/Add/ledgerStore与后端LedgerRepository；start-local.cmd/scripts/local-dev.mjs统一本机入口。heartbeat开工核Java19940/Vite20820仅127.0.0.1的8080/5174监听，未重启/停止，新聊天核实际归属再操作。沿用JavaScript/现依赖、小步回退，金额/业务日期/账号隔离/确认事务优先；测试禁真实AI/邮件。缓存与单命令TEMP/TMP在E盘，不改系统环境。真实配置、storage、memory、target/dist/node_modules忽略，严禁入Git。
+
+origin已确认私有https://github.com/Meinan818/accounting-miniapp.git；新聊天核所有待上传历史、秘密/目标/部署影响再正常Push，不强推、不改权限；历史间歇连接失败保留。原生heartbeat ID automation，每小时/ACTIVE/failed_runs_only，交接前目标源聊天，创建成功后原生update转移并保持其余字段，不重复建立、不手改toml。heartbeat确已收到并开工，但完整定时成功未验证，scheduledRunVerified仍false。真正新窗口设compact基准0，源2次仅历史；实际第2次再停代码/交接commit/改名/指定模型新建并转移，自动唤醒/摘要/普通中断不计。
+
+本会话新踩坑为分页校验优先级导致旧断言失败，见MISTAKES。交接多文件patch错误上下文被原子拒绝，核无部分写入后按实际内容重试；不影响业务数据。下方旧计数/目标/待办和源聊天功能描述只作历史，以本段与LOG最新条执行。
+
 更新：2026-10-04。本聊天01a10312-42ac-7953-909e-b7f982a78353已识别第1次实际compact并告知，STATE=1，同聊天恢复不得归零；源聊天第2次仅历史。新聊天由原生工具显式gpt-6.1-sol/high承接，heartbeat automation已转到当前聊天。以下旧“本次聊天”功能记录均为源聊天历史，不冒称本轮重验。
 
 最新现场：聊天、账本缓存、60笔窗口、资料、统计、会话/验证码/CSRF及同账号代次、手动导航、编辑冲突和明细查询已验证，248项前端及demo/server构建通过，相关源模块和5项本机HTTP200。GUI/真机未补验，无新外发/业务写入。直接继续大账本分页中断、未确认写入原操作恢复及可验证交互范围。历史33项和随后5节点已Push到私有main，远端25320a9完整SHA核一致；中途重置/超时失败保留，未强推/改权限/部署。heartbeat仍每小时ACTIVE，实际compact=1；用户不用操作，不等待继续。
