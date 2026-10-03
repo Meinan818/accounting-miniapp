@@ -5,7 +5,7 @@ import ManualEntry from '@/components/record/ManualEntry.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import RecordEditor from '@/components/record/RecordEditor.vue'
-import { sumAmounts, legacyCents } from '@/utils/money'
+import { centsText, getRecordTotals } from '@/utils/money'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import NotebookBack from '@/components/common/NotebookBack.vue'
@@ -48,9 +48,7 @@ const monthRecords = computed(() => recordStore.records
     return rightKey.localeCompare(leftKey)
   }))
 
-const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
-const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
-const monthBalance = computed(() => (legacyCents(monthIncome.value) - legacyCents(monthExpense.value)) / 100)
+const monthTotals = computed(() => getRecordTotals(monthRecords.value))
 
 const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
 const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
@@ -86,8 +84,7 @@ const groupedRecords = computed(() => {
   return [...groups.entries()].map(([date, records]) => ({
     date,
     label: getDateLabel(date),
-    income: sumAmounts(records, 'income'),
-    expense: sumAmounts(records, 'expense'),
+    ...getRecordTotals(records),
     records,
   }))
 })
@@ -214,18 +211,19 @@ function getSign(record) {
           </button>
         </div>
 
-        <dl v-if="!recordStore.storageError" class="bills-totals">
+        <p v-if="!recordStore.storageError && monthTotals.error" class="bills-storage-note" role="alert">{{ monthTotals.error }}</p>
+        <dl v-else-if="!recordStore.storageError" class="bills-totals">
           <div class="bills-total-income">
             <dt>收入</dt>
-            <dd class="bills-income">{{ formatCurrency(monthIncome) }}</dd>
+            <dd class="bills-income">¥{{ centsText(monthTotals.incomeCents) }}</dd>
           </div>
           <div class="bills-total-expense">
             <dt>支出</dt>
-            <dd class="bills-expense">{{ formatCurrency(monthExpense) }}</dd>
+            <dd class="bills-expense">¥{{ centsText(monthTotals.expenseCents) }}</dd>
           </div>
           <div class="bills-total-balance">
             <dt>结余</dt>
-            <dd>{{ formatCurrency(monthBalance) }}</dd>
+            <dd>¥{{ centsText(monthTotals.balanceCents) }}</dd>
           </div>
         </dl>
       </section>
@@ -244,11 +242,12 @@ function getSign(record) {
           <div class="bills-day-heading">
             <h3>{{ group.label }}</h3>
             <div class="bills-day-totals">
-              <span v-if="group.income" class="bills-income">
-                收入 +{{ formatCurrency(group.income) }}
+              <span v-if="group.error" role="alert">{{ group.error }}</span>
+              <span v-if="!group.error && group.incomeCents" class="bills-income">
+                收入 +¥{{ centsText(group.incomeCents) }}
               </span>
-              <span v-if="group.expense" class="bills-expense">
-                支出 -{{ formatCurrency(group.expense) }}
+              <span v-if="!group.error && group.expenseCents" class="bills-expense">
+                支出 -¥{{ centsText(group.expenseCents) }}
               </span>
             </div>
           </div>

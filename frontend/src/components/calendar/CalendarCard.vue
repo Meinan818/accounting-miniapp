@@ -5,6 +5,7 @@ import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { getCalendarCells, shiftCalendarMonth } from '@/utils/calendar'
 import { validDate } from '@/utils/ledger'
+import { centsText, legacyCents } from '@/utils/money'
 
 // 2. Props
 const props = defineProps({
@@ -14,9 +15,14 @@ const props = defineProps({
   records: { type: Array, default: () => [] },
   income: { type: Number, default: 0 },
   expense: { type: Number, default: 0 },
+  incomeCents: { type: Number, default: null },
+  expenseCents: { type: Number, default: null },
+  summaryError: { type: String, default: '' },
 })
 
-const wideAmounts = computed(() => Math.max(props.income, props.expense).toFixed(2).length > 9)
+const incomeText = computed(() => centsText(props.incomeCents ?? legacyCents(props.income)))
+const expenseText = computed(() => centsText(props.expenseCents ?? legacyCents(props.expense)))
+const wideAmounts = computed(() => Math.max(incomeText.value.length, expenseText.value.length) > 9)
 
 // 3. Emits
 const emit = defineEmits(['update:month', 'update:selected-date'])
@@ -97,20 +103,21 @@ function getDayNumberClass(cell) {
       </button>
     </div>
 
-    <div class="calendar-totals">
+    <p v-if="summaryError" class="calendar-totals text-sm" role="alert">{{ summaryError }}</p>
+    <div v-else class="calendar-totals">
       <div class="calendar-summary-grid grid grid-cols-2 gap-2" :class="{ 'calendar-summary-grid-wide': wideAmounts }">
         <div class="calendar-summary calendar-summary-income cat-money-note cat-money-note-income">
           <span class="calendar-note-mark" aria-hidden="true">✦</span>
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月收入</p>
-            <p class="calendar-amount text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
+            <p class="calendar-amount text-[var(--zz-home-green)]">¥{{ incomeText }}</p>
           </div>
         </div>
         <div class="calendar-summary calendar-summary-expense cat-money-note cat-money-note-expense">
           <span class="calendar-note-mark" aria-hidden="true">♡</span>
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月支出</p>
-            <p class="calendar-amount text-[var(--zz-home-pink)]">{{ `¥${expense.toFixed(2)}` }}</p>
+            <p class="calendar-amount text-[var(--zz-home-pink)]">¥{{ expenseText }}</p>
           </div>
         </div>
       </div>

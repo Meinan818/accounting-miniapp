@@ -2,7 +2,7 @@ import { computed, onScopeDispose, ref } from 'vue'
 import { acceptHMRUpdate, skipHydrate } from 'pinia'
 import dayjs from 'dayjs'
 import { createId, prepareBatch, prepareUpdate, prepareDelete, validDate } from '../utils/ledger.js'
-import { legacyCents, sumAmounts, MAX_CENTS } from '../utils/money.js'
+import { legacyCents, getRecordTotals, MAX_CENTS } from '../utils/money.js'
 import { SERVER_MODE } from '../api/mode.js'
 import { createRemoteLedger } from '../api/remoteLedger.js'
 import { useAuthStore } from './authStore.js'
@@ -62,9 +62,13 @@ export const useRecordStore = defineScopedStore('record', () => {
   const records = computed(() => allRecords.value.filter(r => !r.deletedAt))
   const { today } = useLocalDay()
   const monthRecords = computed(() => records.value.filter(r => r.date?.startsWith(today.value.slice(0, 7))))
-  const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
-  const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
+  const monthTotals = computed(() => getRecordTotals(monthRecords.value))
+  const summaryError = computed(() => monthTotals.value.error)
+  const monthExpense = computed(() => monthTotals.value.expense)
+  const monthIncome = computed(() => monthTotals.value.income)
+  const monthExpenseCents = computed(() => monthTotals.value.expenseCents)
   function categories(type) {
+    if (summaryError.value) return {}
     const cents = {}
     for (const r of monthRecords.value.filter(r => r.type === type)) cents[r.category] = (cents[r.category] || 0) + legacyCents(r.amount)
     return Object.fromEntries(Object.entries(cents).map(([k, v]) => [k, v / 100]))
@@ -114,7 +118,7 @@ export const useRecordStore = defineScopedStore('record', () => {
     window.addEventListener('storage', listener)
     onScopeDispose(() => window.removeEventListener('storage', listener))
   }
-  return { allRecords, records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
+  return { allRecords, records, storageError, summaryError, monthRecords, monthExpense, monthExpenseCents, monthIncome, categoryExpenses, categoryIncome,
     addRecord, addRecords, updateRecord, deleteRecord, batchRecords, refresh, clearRecords }
 }, lifetimes)
 

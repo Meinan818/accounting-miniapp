@@ -11,7 +11,7 @@ import ChatInput from '@/components/common/ChatInput.vue'
 import ConfirmCard from '@/components/common/ConfirmCard.vue'
 import DraftGroupCard from '@/components/common/DraftGroupCard.vue'
 import { createDraft, applyDraftInput, groupReply, isQuery, resolveGroup } from '@/utils/draftEngine'
-import { legacyCents } from '@/utils/money'
+import { centsText, legacyCents } from '@/utils/money'
 import { validateRecord } from '@/utils/ledger'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar-fluffy-v1.png'
 import miaoThinking from '@/assets/design/mascot/poses/miao-thinking.png'
@@ -55,7 +55,8 @@ const messagesContainer = ref(null)
 let moodTimer = null
 
 // 4. 计算属性
-const monthExpenseText = computed(() => recordStore.storageError ? '暂不可读取' : formatCurrency(recordStore.monthExpense))
+const monthExpenseText = computed(() => recordStore.storageError ? '暂不可读取'
+  : recordStore.summaryError ? '暂无法准确汇总' : `¥${centsText(recordStore.monthExpenseCents)}`)
 
 // 5. 方法
 function scrollToBottom() {

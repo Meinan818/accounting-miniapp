@@ -2,7 +2,7 @@ import { computed, onScopeDispose, ref, watch } from 'vue'
 import { skipHydrate } from 'pinia'
 import { useLocalDay } from '../utils/calendar.js'
 import { createId } from '../utils/ledger.js'
-import { legacyCents, sumAmounts } from '../utils/money.js'
+import { legacyCents, getRecordTotals } from '../utils/money.js'
 import { createLedgerApi, fromRecordView } from './ledger.js'
 
 export function createRemoteLedger(client, owner, { storage, eventTarget = globalThis.window, dateClock = {} } = {}) {
@@ -13,9 +13,13 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   const records = computed(() => allRecords.value.filter(record => !record.deletedAt))
   const { today } = useLocalDay(dateClock)
   const monthRecords = computed(() => records.value.filter(record => record.date.startsWith(today.value.slice(0, 7))))
-  const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
-  const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
+  const monthTotals = computed(() => getRecordTotals(monthRecords.value))
+  const summaryError = computed(() => monthTotals.value.error)
+  const monthExpense = computed(() => monthTotals.value.expense)
+  const monthIncome = computed(() => monthTotals.value.income)
+  const monthExpenseCents = computed(() => monthTotals.value.expenseCents)
   function categories(type) {
+    if (summaryError.value) return {}
     const values = {}
     for (const record of monthRecords.value.filter(record => record.type === type)) values[record.category] = (values[record.category] || 0) + legacyCents(record.amount)
     return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value / 100]))
@@ -167,6 +171,6 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   function batchRecords(id) { return allRecords.value.filter(record => record.draftGroupId === id) }
   function recordsByIds(ids = []) { return allRecords.value.filter(record => ids.includes(record.id)) }
   function clearRecords() { throw new Error('正式账本不提供清空操作。') }
-  return { allRecords, records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
+  return { allRecords, records, storageError, summaryError, monthRecords, monthExpense, monthExpenseCents, monthIncome, categoryExpenses, categoryIncome,
     refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords, manualRecovery, cancelManualOperation }
 }

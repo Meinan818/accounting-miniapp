@@ -12,7 +12,7 @@ import CalendarCard from '@/components/calendar/CalendarCard.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
-import { sumAmounts } from '@/utils/money'
+import { centsText, getRecordTotals } from '@/utils/money'
 import { SERVER_MODE } from '@/api/mode'
 import { useLedgerReload } from '@/utils/navigation'
 import { useHomeCalendar } from '@/utils/calendar'
@@ -30,9 +30,8 @@ const visibleMonthRecords = computed(() => recordStore.records.filter((record) =
 )))
 
 const todayRecords = computed(() => recordStore.records.filter(record => record.date === today.value))
-const todayExpense = computed(() => sumAmounts(todayRecords.value, 'expense'))
-const monthIncome = computed(() => sumAmounts(visibleMonthRecords.value, 'income'))
-const monthExpense = computed(() => sumAmounts(visibleMonthRecords.value, 'expense'))
+const todayTotals = computed(() => getRecordTotals(todayRecords.value))
+const monthTotals = computed(() => getRecordTotals(visibleMonthRecords.value))
 
 const selectedRecords = computed(() => recordStore.records
   .filter((record) => record.date === selectedDate.value)
@@ -69,7 +68,7 @@ function getRecordSign(record) {
 
       <section class="home-desk-hero desk-note" aria-label="今日记账便签">
         <div class="home-date-bookmark" aria-label="今天的日期"><span>{{ dayjs(today).format('M月') }}</span><strong>{{ dayjs(today).format('DD') }}</strong><span>{{ weekdayLabel }}</span></div>
-        <div class="home-note-copy"><p class="edition-kicker">每天一页 · 慢慢记下</p><h2>把小开销，写成小日子</h2><p v-if="!recordStore.storageError" class="home-today-line">今天 {{ todayRecords.length }} 笔 · 支出 {{ formatCurrency(todayExpense) }}</p><p v-else class="home-today-line">先保留账本，再慢慢整理</p><router-link to="/chat" class="journal-action home-chat-action">和本喵聊着记 <span aria-hidden="true">↗</span></router-link></div>
+        <div class="home-note-copy"><p class="edition-kicker">每天一页 · 慢慢记下</p><h2>把小开销，写成小日子</h2><p v-if="!recordStore.storageError && !todayTotals.error" class="home-today-line">今天 {{ todayRecords.length }} 笔 · 支出 ¥{{ centsText(todayTotals.expenseCents) }}</p><p v-else-if="!recordStore.storageError" class="home-today-line" role="alert">今天 {{ todayRecords.length }} 笔 · {{ todayTotals.error }}</p><p v-else class="home-today-line">先保留账本，再慢慢整理</p><router-link to="/chat" class="journal-action home-chat-action">和本喵聊着记 <span aria-hidden="true">↗</span></router-link></div>
         <JournalSticker kind="spark" tone="honey" class="home-hero-sticker" />
       </section>
       <div class="home-tools"><ManualEntry class="home-manual-link" /><button type="button" class="home-return-today" @click="returnToday"><CatNavIcon kind="calendar" /><span>回到今天</span></button></div>
@@ -80,8 +79,9 @@ function getRecordSign(record) {
         :today="today"
         :selected-date="selectedDate"
         :records="recordStore.records"
-        :income="monthIncome"
-        :expense="monthExpense"
+        :income-cents="monthTotals.incomeCents"
+        :expense-cents="monthTotals.expenseCents"
+        :summary-error="monthTotals.error"
         @update:month="handleMonthChange"
         @update:selected-date="handleDateChange"
       />

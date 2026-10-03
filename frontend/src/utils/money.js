@@ -26,6 +26,32 @@ export function legacyCents(value) {
   return Number.isFinite(n) ? Math.round(n * 100) : 0
 }
 
+export function sumCents(records, type) {
+  if (!Array.isArray(records)) throw new Error('账单列表无法读取，暂时无法显示准确汇总。')
+  let total = 0
+  for (const record of records) {
+    if (!record || !['income', 'expense'].includes(record.type)) throw new Error('账单收支类型无效，暂时无法显示准确汇总。')
+    if (type && record.type !== type) continue
+    const amount = legacyCents(record.amount)
+    if (!Number.isSafeInteger(amount) || amount <= 0 || amount > MAX_CENTS) throw new Error('账单金额无效，暂时无法显示准确汇总。')
+    const next = total + amount
+    if (!Number.isSafeInteger(next)) throw new Error('金额汇总超出安全范围，暂时无法显示准确金额；原账单已保留。')
+    total = next
+  }
+  return total
+}
+
 export function sumAmounts(records, type) {
-  return records.filter(r => !type || r.type === type).reduce((sum, r) => sum + legacyCents(r.amount), 0) / 100
+  return sumCents(records, type) / 100
+}
+
+// A failed summary must not replace actual bills or render a fabricated zero.
+export function getRecordTotals(records) {
+  try {
+    const incomeCents = sumCents(records, 'income'), expenseCents = sumCents(records, 'expense')
+    const balanceCents = incomeCents - expenseCents
+    return { incomeCents, expenseCents, balanceCents, income: incomeCents / 100, expense: expenseCents / 100, error: '' }
+  } catch (failure) {
+    return { incomeCents: null, expenseCents: null, balanceCents: null, income: null, expense: null, error: failure.message }
+  }
 }
