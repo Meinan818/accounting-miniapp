@@ -3,7 +3,7 @@ import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import dayjs from 'dayjs'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
@@ -15,26 +15,22 @@ import { formatCurrency } from '@/utils/format'
 import { sumAmounts } from '@/utils/money'
 import { SERVER_MODE } from '@/api/mode'
 import { useLedgerReload } from '@/utils/navigation'
+import { useHomeCalendar } from '@/utils/calendar'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
 const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore)
 
 // 3. 响应式数据
-const today = dayjs().format('YYYY-MM-DD')
-const todayMonth = today.slice(0, 7)
-const calendarMonth = ref(todayMonth)
-const selectedDate = ref(today)
+const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange } = useHomeCalendar()
 
 // 4. 计算属性
 const visibleMonthRecords = computed(() => recordStore.records.filter((record) => (
   record.date?.startsWith(calendarMonth.value)
 )))
 
-const todayRecords = computed(() => recordStore.records.filter(record => record.date === today))
+const todayRecords = computed(() => recordStore.records.filter(record => record.date === today.value))
 const todayExpense = computed(() => sumAmounts(todayRecords.value, 'expense'))
-const weekdayLabel = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dayjs(today).day()]
-function returnToday() { calendarMonth.value = todayMonth; selectedDate.value = today }
 const monthIncome = computed(() => sumAmounts(visibleMonthRecords.value, 'income'))
 const monthExpense = computed(() => sumAmounts(visibleMonthRecords.value, 'expense'))
 
@@ -45,7 +41,7 @@ const selectedRecords = computed(() => recordStore.records
 const selectedDateLabel = computed(() => {
   const date = dayjs(selectedDate.value)
 
-  if (date.isSame(dayjs(), 'day')) {
+  if (date.isSame(dayjs(today.value), 'day')) {
     return `今天 · ${date.format('M月D日')}`
   }
 
@@ -53,10 +49,6 @@ const selectedDateLabel = computed(() => {
 })
 
 // 5. 方法
-function handleMonthChange(month) {
-  calendarMonth.value = month
-  selectedDate.value = month === todayMonth ? today : `${month}-01`
-}
 
 function getRecordSign(record) {
   return record.type === 'income' ? '+' : '-'

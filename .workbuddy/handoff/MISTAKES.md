@@ -196,3 +196,5 @@
 
 ## 2026-10-04 · 编排调用语法拒绝
 - 一次functions.exec JavaScript缺右括号，工具在编译阶段拒绝，内部shell没有执行；修正调用后继续，未改业务/数据。以后编排使用短调用并核括号，不将编排失败误称Git或程序错误。
+
+- 编排括号错误在Web Locks记录时再次发生，仍在执行前拒绝、没有shell写入；已固定使用text(await tools.exec_command(...))的单层形式，不混用text((await...)模板。
