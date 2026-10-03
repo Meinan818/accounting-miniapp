@@ -10,6 +10,7 @@ import { getMonthStatistics } from '../src/utils/statistics.js'
 import { getRecentDays } from '../src/utils/journal.js'
 import { centsText } from '../src/utils/money.js'
 import { useLocalDay } from '../src/utils/calendar.js'
+import { useLedgerReload } from '../src/utils/navigation.js'
 
 const original = { nickname: '合成名片', signature: '合成签名', avatar: 'cat', version: 0 }
 function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail('不可处理真实照片') } } = {}) {
@@ -21,7 +22,7 @@ function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail
   const bindings = { computed, ref, dayjs, onMounted() {}, onBeforeUnmount: fn => cleanup.push(fn), SERVER_MODE: true,
     useRecordStore: () => ({ records, storageError: '', refresh() { assert.fail('不可自动读账单') } }),
     useAuthStore: () => auth, getMonthStatistics, getRecentDays, centsText, packageInfo: { version: 'synthetic' },
-    useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
+    useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }), useLedgerReload,
     DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto: createPhoto }
   const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, loadingProfile }')(...Object.values(bindings)))
   let opens = 0

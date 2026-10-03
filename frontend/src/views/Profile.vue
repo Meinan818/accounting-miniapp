@@ -17,8 +17,10 @@ import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
 import { createProfileApi } from '@/api/profile'
 import { useLocalDay } from '@/utils/calendar'
+import { useLedgerReload } from '@/utils/navigation'
 
 const store = useRecordStore()
+const { reloading, reloadError, reloadRecords } = useLedgerReload(store)
 const auth = SERVER_MODE ? useAuthStore() : null
 const profileOwner = auth?.user.id
 let disposed = false
@@ -33,7 +35,7 @@ const calculated = computed(() => {
   catch (error) { return { data: null, error: error.message } }
 })
 const statistics = computed(() => calculated.value.data)
-const error = computed(() => store.storageError || calculated.value.error)
+const error = computed(() => store.storageError || reloadError.value || calculated.value.error)
 const wideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents].some(value => centsText(value).length > 9))
 const recentDays = computed(() => getRecentDays(store.records, today.value))
 const recordedDays = computed(() => recentDays.value.filter(day => day.count > 0).length)
@@ -133,7 +135,7 @@ const entries = [
   { title: '收支统计', note: '按月份看看钱花在哪里', icon: 'chart', to: '/stats' },
   { title: '和本喵聊聊', note: '说说开销，核对后再记账', icon: 'chat', to: '/chat' },
 ]
-onMounted(() => { store.refresh(); loadProfile() })
+onMounted(() => { reloadRecords(); loadProfile() })
 </script>
 
 <template>
@@ -156,9 +158,9 @@ onMounted(() => { store.refresh(); loadProfile() })
       <section v-if="SERVER_MODE" class="profile-account-note"><CatNavIcon kind="profile" /><div><h2>这是你的正式账号</h2><p>账单和资料保存在本机服务，原浏览器演示数据保留。</p><button type="button" @click="logout">退出当前账号</button></div></section>
       <section class="profile-ledger-card" aria-labelledby="profile-ledger-title">
         <div class="profile-section-heading"><h2 id="profile-ledger-title">账本小概况</h2><span>{{ monthTitle }}</span></div>
-        <div v-if="error" class="profile-error" role="alert">
+        <div v-if="error" class="profile-error" role="alert" :aria-busy="reloading">
           <p>账本概况暂时无法读取</p><p>{{ error }}</p>
-          <button type="button" @click="store.refresh()">重新读取账单</button>
+          <button v-if="store.storageError || reloadError" type="button" :disabled="reloading" @click="reloadRecords(true)">{{ reloading ? '正在读取…' : '重新读取账单' }}</button>
         </div>
         <template v-else-if="statistics">
           <p class="profile-record-count">当前有效账单 <strong>{{ store.records.length }}</strong> 笔<span>本月 {{ statistics.recordCount }} 笔</span></p>
