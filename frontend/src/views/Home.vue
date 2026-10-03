@@ -14,9 +14,11 @@ import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
 import { sumAmounts } from '@/utils/money'
 import { SERVER_MODE } from '@/api/mode'
+import { useLedgerReload } from '@/utils/navigation'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
+const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore)
 
 // 3. 响应式数据
 const today = dayjs().format('YYYY-MM-DD')
@@ -79,7 +81,7 @@ function getRecordSign(record) {
         <JournalSticker kind="spark" tone="honey" class="home-hero-sticker" />
       </section>
       <div class="home-tools"><ManualEntry class="home-manual-link" /><button type="button" class="home-return-today" @click="returnToday"><CatNavIcon kind="calendar" /><span>回到今天</span></button></div>
-      <div v-if="recordStore.storageError" class="home-storage-error" role="alert"><p>{{ recordStore.storageError }}</p><button type="button" class="home-return-today" @click="recordStore.refresh()">重新读取账单</button></div>
+      <div v-if="recordStore.storageError || reloadError" class="home-storage-error" role="alert" :aria-busy="reloading"><p>{{ recordStore.storageError || reloadError }}</p><button type="button" class="home-return-today" :disabled="reloading" @click="reloadRecords(true)">{{ reloading ? '正在读取…' : '重新读取账单' }}</button></div>
 
       <CalendarCard v-if="!recordStore.storageError"
         :month="calendarMonth"

@@ -15,18 +15,13 @@ import { useRecordStore } from '@/stores/recordStore'
 import { centsText } from '@/utils/money'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import { JOURNAL_COLORS } from '@/utils/journal'
-import { useStatsMonthNavigation } from '@/utils/navigation'
+import { useStatsMonthNavigation, useLedgerReload } from '@/utils/navigation'
 import { getMonthReview } from '@/utils/monthReview'
 const route = useRoute()
 const router = useRouter()
 const store = useRecordStore()
 const { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth } = useStatsMonthNavigation(route, router)
-const reloading = ref(false)
-async function reloadRecords() {
-  if (reloading.value) return
-  reloading.value = true
-  try { await store.refresh() } finally { reloading.value = false }
-}
+const { reloading, reloadError, reloadRecords } = useLedgerReload(store)
 const selectedType = ref('expense')
 const monthTitle = computed(() => dayjs(selectedMonth.value + '-01').format('YYYY年M月'))
 const calculated = computed(() => {
@@ -39,7 +34,7 @@ const selectedDay = ref('')
 const dayChart = ref(null)
 const pointedDay = computed(() => review.value?.days.find(day => day.date === selectedDay.value) || review.value?.peak || null)
 const maximumDayExpense = computed(() => review.value?.peak?.expenseCents || 0)
-const error = computed(() => store.storageError || calculated.value.error)
+const error = computed(() => store.storageError || reloadError.value || calculated.value.error)
 const needsWideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents, statistics.value.balanceCents].some(value => centsText(value).length > 7))
 const categoryRows = computed(() => statistics.value?.categories[selectedType.value] || [])
 const leadingCategory = computed(() => categoryRows.value[0] || null)
@@ -82,7 +77,7 @@ onMounted(reloadRecords)
           <div class="stats-count-line"><p>有效账单 <strong>{{ statistics.recordCount }}</strong> 笔</p><router-link :to="{ path: '/bills', query: { month: selectedMonth } }" :aria-label="'查看' + monthTitle + '账单明细'">查看明细 →</router-link></div>
         </template>
       </section>
-      <section v-if="error" class="stats-error" :aria-busy="reloading" role="alert"><h2>{{ reloading ? '正在读取账单' : '统计暂时无法显示' }}</h2><p>{{ error }}</p><button type="button" :disabled="reloading" @click="reloadRecords">{{ reloading ? '读取中…' : '重新读取账单' }}</button></section>
+      <section v-if="error" class="stats-error" :aria-busy="reloading" role="alert"><h2>{{ reloading ? '正在读取账单' : '统计暂时无法显示' }}</h2><p>{{ error }}</p><button type="button" :disabled="reloading" @click="reloadRecords(true)">{{ reloading ? '读取中…' : '重新读取账单' }}</button></section>
       <template v-else-if="statistics">
         <section class="review-trend" aria-labelledby="review-trend-title">
           <div class="review-section-title"><div><p class="edition-kicker">花费足迹 · 每天一小格 · 左右滑动</p><h2 id="review-trend-title">这一月，钱是怎么花的？</h2></div><span>{{ review.activeDays }} 个记录日</span></div>

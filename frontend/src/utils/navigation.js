@@ -66,6 +66,26 @@ export function useManualRecordSave(store, router, batchId) {
   return { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling }
 }
 
+export function useLedgerReload(store) {
+  const reloading = ref(false), reloadError = ref('')
+  let active = true
+  onScopeDispose(() => { active = false })
+  async function reloadRecords(force = false) {
+    if (!active || reloading.value) return false
+    reloading.value = true; reloadError.value = ''
+    try {
+      const loaded = await store.refresh(force === true)
+      if (!active) return false
+      if (!loaded) reloadError.value = store.storageError || '账本暂未完整读到，原账本已保留，请重新读取。'
+      return loaded === true
+    } catch (failure) {
+      if (active) reloadError.value = failure?.message || '账本暂时无法读取，请稍后重试。'
+      return false
+    } finally { if (active) reloading.value = false }
+  }
+  return { reloading, reloadError, reloadRecords }
+}
+
 export function useStatsMonthNavigation(route, router, currentMonth = () => dayjs().format('YYYY-MM')) {
   const selectedMonth = computed(() => isValidMonth(route.query.month) ? route.query.month : currentMonth())
   const pendingMonth = ref('')

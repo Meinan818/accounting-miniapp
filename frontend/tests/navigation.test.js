@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { getScrollPosition } from '../src/utils/navigation.js'
 import { useStatsMonthNavigation } from '../src/utils/navigation.js'
 import { useManualRecordSave } from '../src/utils/navigation.js'
-import { useBillQuery } from '../src/utils/navigation.js'
+import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { effectScope, reactive } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 
@@ -22,6 +22,42 @@ test('同一明细页收到新查询链接同步月/收支/分类/搜索，清�
     assert.equal(query.selectedType.value, 'all')
     assert.equal(query.selectedCategory.value, '')
   } finally { scope.stop() }
+})
+
+test('账本原地重试只读取一次，显式强制参数保持，错误后可继续重试', async () => {
+  let finish, calls = 0, fail = true
+  const options = [], scope = effectScope()
+  const loader = scope.run(() => useLedgerReload({ refresh: force => {
+    calls++; options.push(force)
+    if (calls === 1) return new Promise(done => { finish = done })
+    if (fail) throw Error('合成读取异常')
+    return true
+  } }))
+  try {
+    const pending = loader.reloadRecords(true)
+    assert.equal(await loader.reloadRecords(true), false)
+    finish(false); assert.equal(await pending, false)
+    assert.equal(loader.reloading.value, false)
+    assert.ok(loader.reloadError.value)
+    assert.equal(await loader.reloadRecords(true), false)
+    assert.match(loader.reloadError.value, /合成读取异常/)
+    fail = false
+    assert.equal(await loader.reloadRecords(), true)
+    assert.equal(loader.reloadError.value, '')
+    assert.deepEqual(options, [true, true, false])
+  } finally { scope.stop() }
+})
+
+test('离开页面后读取迟到不更新本页错误，释放后不能再次读取', async () => {
+  let finish, calls = 0
+  const scope = effectScope()
+  const loader = scope.run(() => useLedgerReload({ refresh: () => { calls++; return new Promise(done => { finish = done }) } }))
+  const pending = loader.reloadRecords(true)
+  scope.stop(); finish(false)
+  assert.equal(await pending, false)
+  assert.equal(loader.reloadError.value, '')
+  assert.equal(await loader.reloadRecords(true), false)
+  assert.equal(calls, 1)
 })
 
 test('非法或数组明细查询安全回退，拒绝1000年以前的月份', () => {

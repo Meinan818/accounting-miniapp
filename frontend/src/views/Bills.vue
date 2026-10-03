@@ -18,10 +18,11 @@ import { filterRecords, windowRecordGroups } from '@/utils/journal'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { getCategoryArtwork } from '@/utils/categoryArtwork'
 import { SERVER_MODE } from '@/api/mode'
-import { useBillQuery } from '@/utils/navigation'
+import { useBillQuery, useLedgerReload } from '@/utils/navigation'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
+const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore)
 
 // 3. 响应式数据
 const route = useRoute()
@@ -187,7 +188,7 @@ function getSign(record) {
       </header>
 
       <ManualEntry class="bills-manual-link" />
-      <p v-if="recordStore.storageError" class="bills-alert" role="alert">{{ recordStore.storageError }}</p>
+      <div v-if="recordStore.storageError || reloadError" class="bills-alert" role="alert" :aria-busy="reloading"><p>{{ recordStore.storageError || reloadError }}</p><button type="button" :disabled="reloading" @click="reloadRecords(true)">{{ reloading ? '正在读取…' : '重新读取账单' }}</button></div>
       <p v-if="notice" ref="noticeElement" class="bills-notice" role="status" tabindex="-1">{{ notice }}</p>
 
       <section class="bills-summary" aria-label="月度账单汇总">
@@ -341,6 +342,7 @@ function getSign(record) {
 .bills-record:hover { background: #fff8ed; }
 .bills-record:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 3px; }
 .bills-alert { color: #aa594d; font-size: 12px; margin-bottom: 12px; }
+.bills-alert button { min-height: 44px; margin-top: 8px; padding: 8px 12px; border: 1px solid #d9c5a9; border-radius: 12px; background: #fff7e8; color: #624f6b; }.bills-alert button:disabled { opacity: .55; }.bills-alert button:focus-visible { outline: 2px solid #91664e; outline-offset: 3px; }
 .bills-notice { font-size: 12px; margin-bottom: 12px; padding: 10px 12px; border: 1px solid #d7d9ba; border-radius: 12px; background: #f2f4e5; line-height: 1.8; }
 .bills-record.bills-record-highlighted { border-color: #ce9e8c; background: #fff4e5; }
 .bills-added-tag { display: inline-block; margin-left: 4px; padding: 2px 5px; border-radius: 6px; background: #f8dfd5; color: #a16556; font-size: 11px; vertical-align: middle; }
