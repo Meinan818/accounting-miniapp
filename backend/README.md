@@ -17,7 +17,7 @@ cd E:\XiangMu\未定项目\backend
 按 `.env.example` 的说明在本机配置 `.env.local.properties`，连接独立的 `miaoji_dev` 开发库；配置被 Git 忽略。正式服务应使用专用的最小权限数据库账号，本轮不修改 MySQL 权限。启动时工作目录必须为 backend：
 
 ```powershell
-java -jar .\target\miaoji-backend-0.1.0.jar
+.\run.ps1
 ```
 
 默认只监听 `127.0.0.1:8080`。启动时 Flyway 在已批准的新空库建立表，拒绝基线化已有表，并禁止 clean。不要将配置指向已有业务库。服务重启使内存登录会话失效，重新登录后账单仍在 MySQL。
@@ -57,6 +57,16 @@ java -jar .\target\miaoji-backend-0.1.0.jar
 
 ## 尚未完成
 
-当前不是完整 B/C 验收：自定义分类、资料与照片接口、登录限流、服务端草稿/审计、前端联通和真实 AI 均未实现。整组接口直接接收用户已确认的内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署，也没有收费服务调用。
+当前不是完整 B/C 验收：自定义分类、登录限流、服务端草稿/审计、前端联通和真实 AI 均未实现。整组接口直接接收用户已确认的内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署，也没有收费服务调用。
 
 兼容性依据：[Spring Boot 3.5 环境要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)、[Spring Security 会话](https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html)、[CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)。实际验证见项目交接 LOG。
+
+## 正式账号资料与头像
+
+GET `/api/profile`读取当前账号名片；PUT同路径传`{version,nickname,signature,avatar}`，昵称1–20个Unicode码点、签名最多60，avatar为cat/paw/flower/photo。photo需先上传，未知字段拒绝，旧版本409。注册与默认名片同事务创建；V4为既有账号建立默认名片，不读取浏览器本地资料。
+
+POST `/api/profile/avatar?version=N`使用multipart字段`image`，只接受2MB以内的有效JPEG/PNG，边长最多4096、总像素最多400万。服务端检查签名、实际解码及截断警告，居中裁剪256px、奶油底JPEG重新编码并舍弃元信息；前端可将WebP在本机处理成JPEG后上传。正常上传返回新资料版本。实际容器超限返回413，非法图片400，版本冲突409。
+
+GET同路径只向当前登录身份返回其照片，响应JPEG及`Cache-Control: no-store`；未上传404、匿名401。用户不能指定文件路径或照片所属账号。所有写入保留CSRF；照片文件采用随机UUID，数据库保存失败清理本次新文件，旧头像文件保留，不执行历史清理。
+
+默认文件存于`backend/storage/`，可用`MIAOJI_STORAGE_DIR`指定独立路径；multipart和Java临时目录位于项目盘，`run.ps1`只设置当前进程环境并恢复。storage、凭据、缓存不入Git。正式备份需要同时保存数据库与storage，当前仅本机开发，尚无生产容量/备份策略或照片删除功能。

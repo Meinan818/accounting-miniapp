@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AccountService implements UserDetailsService {
@@ -21,10 +22,14 @@ public class AccountService implements UserDetailsService {
         this.passwords = passwords;
     }
 
+    @Transactional
     public void register(String username, String password) {
         try {
             jdbc.update("INSERT INTO app_user (username, password_hash) VALUES (?, ?)",
                     normalize(username), passwords.encode(password));
+            var owner = jdbc.queryForObject("SELECT id FROM app_user WHERE username = ?", Long.class, normalize(username));
+            jdbc.update("INSERT INTO account_profile (user_id, nickname) VALUES (?, ?)", owner,
+                    normalize(username).substring(0, Math.min(20, username.length())));
         } catch (DuplicateKeyException error) {
             throw new ApiException(HttpStatus.CONFLICT, "USERNAME_UNAVAILABLE", "此用户名不可用");
         }

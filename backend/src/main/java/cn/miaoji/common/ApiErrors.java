@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @RestControllerAdvice
 public class ApiErrors {
@@ -28,5 +29,11 @@ public class ApiErrors {
     ResponseEntity<?> storage(DataAccessException error) {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(Map.of("code", "STORAGE_UNAVAILABLE", "message", "账本服务暂不可用，请稍后重试"));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    ResponseEntity<?> uploadTooLarge(MaxUploadSizeExceededException error) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(Map.of("code", "PHOTO_TOO_LARGE", "message", "照片须在2MB以内"));
     }
 }
