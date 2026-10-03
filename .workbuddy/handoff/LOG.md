@@ -1055,3 +1055,10 @@
 - login-return-before40项38通过2失败：旧Login成功固定首页、guard跳Login丢明细意图。新增安全getLoginReturnPath，六个已知站内页允许，query/hash保留，外部/未知/循环/数组/控制字符安全回首页。guard访客/恢复失败/身份变化带目标，Login及已认证Login访问返回，auth失效保留当前站内页面。全部真实源码配合合成账号/内存路由，无真实认证/业务请求。
 - 初复验同URLpush被Router判重复而不跑guard（login-return-after49/50），改新URL访问后实际对象path返回丢query/hash（login-return-frontend376/377）。research-docs核本地Vue Router4.6.4字符串与对象解析源码，返回完整字符串后50项相关/377全量及最后demo/server构建通过（*-after-string、*-final）。保留原失败，不改断言迎合代码。
 - 无依赖/部署/真实AI/邮件/账号/账本/照片调用，GUI/真机/下载落盘/隔夜待验，compact=1保持。本节点保存上传见login-return-sync；下一项Login初始auth.error恢复失败/会话失效提示与表单重试清理取证，不需用户操作。
+
+## 2026-10-04 · 登录返回节点同步与既有提示核查
+
+- c8bae2a58db1c8186906c2ba7c37140eb041d49d官方同SHA/force:false上传成功，1提交/15blob，完整远端一致（login-return-sync）。377项及最后源码demo/server构建保持，无源修改无需重复检查。
+- 下一项初始auth.error可见性已只读核实：Login模板error || auth.error与切换清error/auth.error原有，旧源git show亦同。前条“目前只显示本页error”来自截断读取的错误推测，已更正STATE/NEXT，不新增镜像实现或冒称修复。
+- 原生automation view成功显示，toml核id=automation、heartbeat、当前聊天、每小时ACTIVE/failed_runs_only，未变更/重复建。当前heartbeat已实际收到并完成上述独立开发/验证/同步节点，但scheduler整次终态尚未由工具确认；服务19940/20820仍仅127.0.0.1:8080/5174，未重启，compact=1保持。
+- 已读Bills完整listedRecords/月/查询与显示窗口结构，Bills/Profile暂无导出入口；下一项本机CSV导出当前月份与筛选完整快照（不只已展开60条），复用download，核整数金额/文本CSV与公式保护、显式下载、0额外服务器请求。合成数据测试，不读取/修改真实账本或导入/清理。GUI/真机/实际落盘/隔夜继续待工具，无需用户操作。

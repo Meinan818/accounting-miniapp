@@ -1,5 +1,9 @@
 ## 当前入口：登录返回原站内页面（2026-10-04）
 
+同步已核：c8bae2a58db1c8186906c2ba7c37140eb041d49d官方同SHA/force:false上传成功，1提交/15blob，login-return-sync保留；当前377项及最后两构建保持。Login初始异常提示已读真实模板与旧源：error || auth.error原有且切模式清理，两者优先级已接，不需重做。此前“只显示本页error”是未读完整模板的错误推测，已更正STATE，不冒称修复。
+
+原生automation view及toml再次核当前聊天01a103ce-1650-7d50-bbe6-8c08120e0346/每小时/ACTIVE/failed_runs_only，未改字段或重复建；本次heartbeat已实际执行多个独立节点，整次scheduler终态仍未由工具确认。服务19940/20820仍仅127.0.0.1:8080/5174，未重启，compact=1保持。下一项明细完整月份/筛选快照的本机CSV导出评估：Bills/Profile目前无导出入口，listedRecords覆盖完整筛选结果（不是60条显示窗口），可复用download工具；须校验安全整数分/文本转义与表格公式风险，显式下载、不追加服务器请求或导入/清理。前述“下一项初始auth.error”已取证完成，只读无改。
+
 377全量及demo/server两构建、50项登录/路由/auth/导航相关通过。getLoginReturnPath只接六个站内已知页面，保留query/hash，外部/未知/循环/数组/反斜线/控制字符回首页；router guest/failure/await后身份变化跳Login带目标，已认证访问Login返回安全目标，Login成功window.replace同样使用安全目标，auth失效保留当前站内path/search/hash。原默认首页与离页回执保护保持。
 
 login-return-before40项38通过2失败确认旧固定首页丢目标；首复验同URLpush未执行guard（测试时序），改新URL后真实对象path重定向丢query/hash，login-return-frontend376/377失败保留。按research-docs核本地Vue Router4.6.4 resolve源码，guard返回完整字符串，50项相关及377全量、最后源码两构建通过（*-final）。旧退出01b92eb4f5e0231039704f9e746e0314029d33a5官方同SHA/force:false核远端一致（logout-sync），本节点保存上传见login-return-sync。
