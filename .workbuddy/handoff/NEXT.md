@@ -4,6 +4,7 @@
 
 ## 最新任务与当前成果
 
+- 用户最新授权：后端常规开发及本地保存由Codex自主负责，用户最终验收，重大费用/上线/真实数据/隐私/权限问题再确认。本次会话第二次可识别compact后立即更新现有交接文件并新建全新聊天交接，不建codex.md；桌面使用create_thread承接/new，先保存再交接，不假报压缩次数或新建成功。
 - 2026-10-03用户明确恢复后端开发，并批准创建本机MySQL84独立开发库miaoji_dev；覆盖上一轮后端暂停/仅交接指令。较大改动前先存档；前端界面、个人资料、自定义照片头像、五页猫耳返回键已验收，不重做。
 - 原未跟踪backend草稿已完整ZIP存档到E盘.workbuddy/memory/backend-resume-2026-10-03/backend-before-resume.zip；复用Java21、Spring Boot3.5.16、Security、Spring JDBC与Flyway。暂不加MyBatis；本机已有Maven3.9.11及E盘缓存复用，PATH中的3.6.1低于Boot要求。
 - 后端注册、密码会话登录/退出、当前用户、按登录身份隔离的账单增改删查/分页/月收支总额可独立运行。金额强制JSON字符串，BigDecimal/DECIMAL；业务日期独立，更新/删除带版本，删除只作逻辑标记。CSRF默认保留，登录后需重取token；不相信前端传来的用户号。
