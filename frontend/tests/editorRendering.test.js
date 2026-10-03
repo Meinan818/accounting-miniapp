@@ -21,8 +21,8 @@ function evaluate(script, bindings, returned) {
   return new Function(...Object.keys(bindings), script + ';return {' + returned + '}')(...Object.values(bindings))
 }
 function node(tag) {
-  return { tag, children: [], props: {}, style: {}, parent: null, text: '', focusCount: 0,
-    focus() { this.focusCount++ }, showModal() { this.open = true }, close() { this.open = false } }
+  return { tag, children: [], props: {}, style: {}, parent: null, text: '', focusCount: 0, scrollCount: 0,
+    focus() { this.focusCount++ }, scrollIntoView() { this.scrollCount++ }, showModal() { this.open = true }, close() { this.open = false } }
 }
 const renderer = Vue.createRenderer({
   createElement: node, createText: text => ({ ...node('#text'), text }), createComment: text => ({ ...node('#comment'), text }),
@@ -114,21 +114,22 @@ test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚�
 
 function mountBills({ records = [{ ...original }], dateClock = {} } = {}) {
   const bills = source('views/Bills.vue'), calls = []
+  const route = Vue.reactive({ query: { month: '2026-10' } })
   let finish, fail, values
   const store = Vue.reactive({ records, storageError: '', refresh: async () => true,
     updateRecord: (...args) => { calls.push(['update', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) },
     deleteRecord: (...args) => { calls.push(['delete', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) } })
   const focusTarget = node('notice')
   const app = renderer.createApp({ setup() {
-    values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => Vue.reactive({ query: { month: '2026-10' } }),
+    values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
       useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords')
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit')
     values.noticeElement.value = focusTarget
     return () => Vue.h('main')
   } })
   app.mount(node('root')); values.edit(original)
-  return { values, calls, focusTarget, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
+  return { values, calls, route, focusTarget, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
 }
 
 test('编辑保存拒绝重复请求，离页后成功回执不改本页月份/提示', async () => {
@@ -224,4 +225,54 @@ test('明细跨日月只更新今日/昨日标签，保留历史月份/搜索/�
     assert.equal(events.size, 0)
     assert.equal(cleared, true)
   } finally { state?.dispose(); globalThis.Date = OriginalDate }
+})
+
+test('快速切换新账单定位时旧nextTick不滚动或聚焦，当前定位仍生效', async () => {
+  const state = mountBills({ records: [{ ...original }, { ...original, id: 'other' }] })
+  const first = node('first'), second = node('second')
+  try {
+    state.values.editingRecord.value = null
+    state.values.setRecordElement(original.id, first); state.values.setRecordElement('other', second)
+    state.route.query = { month: '2026-10', added: original.id }
+    await Vue.nextTick(() => { state.route.query = { month: '2026-10', added: 'other' } })
+    await Vue.nextTick(); await Vue.nextTick()
+    assert.equal(first.focusCount, 0)
+    assert.equal(first.scrollCount, 0)
+    assert.equal(second.focusCount, 1)
+    assert.equal(second.scrollCount, 1)
+  } finally { state.dispose() }
+})
+
+test('新账单定位等待DOM时用户开始搜索，不被旧回调抢走焦点或清筛选', async () => {
+  const state = mountBills(), target = node('receipt')
+  try {
+    state.values.editingRecord.value = null
+    state.values.setRecordElement(original.id, target)
+    state.route.query = { month: '2026-10', added: original.id }
+    await Vue.nextTick(() => { state.values.searchText.value = '合成' })
+    await Vue.nextTick()
+    assert.equal(target.focusCount, 0)
+    assert.equal(target.scrollCount, 0)
+    assert.equal(state.values.searchText.value, '合成')
+  } finally { state.dispose() }
+})
+
+test('连续翻页只由最新展开目标聚焦，正常单次展开仍定位到第一笔新增账单', async () => {
+  const records = Array.from({ length: 121 }, (_, id) => ({ ...original, id: String(id) }))
+  const state = mountBills({ records }), first = node('row60'), second = node('row120')
+  try {
+    state.values.editingRecord.value = null
+    state.values.setRecordElement('60', first); state.values.setRecordElement('120', second)
+    let pending = state.values.loadMoreRecords(); await pending
+    assert.equal(first.focusCount, 1)
+    first.focusCount = 0; first.scrollCount = 0
+    state.values.visibleLimit.value = 60
+    pending = state.values.loadMoreRecords()
+    const next = state.values.loadMoreRecords()
+    await Promise.all([pending, next])
+    assert.equal(first.focusCount, 0)
+    assert.equal(first.scrollCount, 0)
+    assert.equal(second.focusCount, 1)
+    assert.equal(second.scrollCount, 1)
+  } finally { state.dispose() }
 })

@@ -1,4 +1,10 @@
-## 当前入口：明细跨日标签（2026-10-04）
+## 当前入口：明细异步定位与翻页（2026-10-04）
+
+focus-before与focus-pages-before真实2/3失败：新定位/搜索与连续翻页后旧nextTick仍聚焦/滚动。定位watch onCleanup撤销过期回调，检查新定位/筛选/编辑/离页；翻页按当前查询与展开范围核目标，只最新展开聚焦。11项针对、314项全量与两构建通过，无依赖变化/真实账单/AI/邮件写入，不冒称GUI验收。668d00317cf900f263abe70bf7e3606fcbbff589普通Push及完整远端一致已核。compact=0，现有automation原生目标保持。
+
+下一项统计页默认月份跨月与图表异步渲染：useStatsMonthNavigation默认computed直接dayjs取月，Stats尚未响应本机日期；先实际setup取证，保留显式历史月份/类别/用户选日，不凭猜测改图表。
+
+## 前一节点：明细跨日标签（2026-10-04）
 
 Bills实际setup已复现缓存标签跨日仍“今天”，day-before/day-primed-before保留；getDateLabel依赖useLocalDay响应日，跨月/定时/focus更新“昨日”与固定日期。历史月份、搜索及编辑快照不变，0写入，时钟/监听卸载释放。8项针对、311项前端及demo/server两构建通过，材料editor-interactions-2026-10-04；GUI/真机/实际隔夜未验。13aff6f20b9a80b59189599571932410746f3172普通Push与ls-remote完整一致，交接两提交已一并上传。compact=0，automation原生目标保持，19940/20820仅本机监听且未重启。
 

@@ -952,3 +952,9 @@
 - 13aff6f20b9a80b59189599571932410746f3172普通Push及ls-remote与HEAD完整一致，源两交接提交同时上传；Bills本机模块HTTP200仅证明供给，服务19940/20820仍仅127.0.0.1，未重启。
 - day-before实际8项7通过1失败：首次跨日因搜索改变触发重算而正确，第二次无变化仍昨天；补读取缓存day-primed-before后第一次跨月仍今天。Bills分组computed未依赖响应时间是根因。getDateLabel接已有useLocalDay，跨月focus/定时更新日期标签，所选月/搜索/编辑快照保持，写请求0，时钟/监听释放。
 - 8项针对/311项全量及两构建通过，材料editor-interactions-2026-10-04。无新依赖/真实账本/AI/邮件写入，GUI/真机/实际隔夜未验，compact=0。下一项定位/翻页nextTick旧目标焦点取证，先验证快速新意图，不凭猜测。
+
+## 2026-10-04 · 明细异步定位与翻页
+
+- 668d00317cf900f263abe70bf7e3606fcbbff589普通Push后ls-remote完整一致已核；无部署/真实业务/AI/邮件写入。
+- focus-before10项8通过2失败，focus-pages-before11项8通过3失败：快速新定位/搜索时旧callback仍focus/scroll，连续翻页旧展开先抢焦点。定位watch用onCleanup及当前id/筛选/编辑/离页保护；翻页按查询/limit保留最新用户动作。原失败保留，搜索输入采用仍匹配旧行的“合成”，防止测试用已移除DOM夸大真实场景。
+- 11项实际setup/Editor模板挂载、314项全量及demo/server两构建通过；DOM方法替身只核调用，不代替GUI/真机。独立节点核保存后继续Stats默认月份跨月及图表渲染取证，compact=0。

@@ -100,19 +100,27 @@ const hiddenCount = computed(() => listedRecords.value.length - displayedCount.v
 const recordElements = new Map()
 function setRecordElement(id, element) { if (element) recordElements.set(id, element); else recordElements.delete(id) }
 async function loadMoreRecords() {
+  if (!active || editingRecord.value) return
+  const query = JSON.stringify([selectedMonth.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])
   const nextRecord = listedRecords.value.slice(visibleLimit.value, visibleLimit.value + displayBatchSize)
     .find(record => record.id !== highlightedId.value)
   visibleLimit.value += displayBatchSize
+  const limit = visibleLimit.value
   await nextTick()
+  if (!active || editingRecord.value || limit !== visibleLimit.value ||
+    query !== JSON.stringify([selectedMonth.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])) return
   const element = recordElements.get(nextRecord?.id)
   element?.focus({ preventScroll: true })
   element?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
 }
-watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => record.id === highlightedId.value)], async ([id]) => {
+watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => record.id === highlightedId.value)], async ([id], previous, onCleanup) => {
+  let current = true
+  onCleanup(() => { current = false })
   if (!id || !monthRecords.value.some(record => record.id === id)) return
   notice.value = '新账单已保存，已定位到刚刚记下的这一笔。'
   resetFilters()
   await nextTick()
+  if (!active || !current || id !== highlightedId.value || filtering.value || editingRecord.value) return
   const element = recordElements.get(id)
   element?.scrollIntoView({ block: 'center', behavior: 'auto' })
   element?.focus({ preventScroll: true })
