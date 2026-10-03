@@ -339,6 +339,35 @@ test('取消响应丢失、内容改变或身份变化保持待恢复，不自�
   }
 })
 
+test('等待草稿或确认期间原意图被另一页改变，拒绝旧请求及收尾覆盖', async () => {
+  for (const stage of ['draft', 'confirm', 'complete']) {
+    const storage = memory(); let posts = 0
+    const replacementId = '7ebf606b-a0d5-4053-98fb-194505f3d10d'
+    const replace = () => {
+      const values = JSON.parse(storage.getItem('miaoji_account_write_intents_v1_1'))
+      values['manual-original'].requestId = replacementId
+      storage.setItem('miaoji_account_write_intents_v1_1', JSON.stringify(values))
+    }
+    const api = createLedgerApi({ request: async (method, path, options) => {
+      if (method === 'PUT') {
+        if (stage === 'draft') replace()
+        return { id, version: 0, status: 'OPEN', records: options.body.records }
+      }
+      posts++
+      if (stage === 'confirm') replace()
+      return { records: [view] }
+    } }, { storage, owner: '1', newUuid: () => id })
+    if (stage === 'complete') {
+      await api.createBatch([input], 'manual-original'); replace()
+      assert.throws(() => api.completeManual('manual-original'), /确认意图已变化/)
+    } else await assert.rejects(api.createBatch([input], 'manual-original'), /确认意图已变化/)
+    assert.equal(posts, stage === 'draft' ? 0 : 1)
+    const original = JSON.parse(storage.getItem('miaoji_account_write_intents_v1_1'))['manual-original']
+    assert.equal(original.requestId, replacementId)
+    assert.equal(original.manualComplete, undefined)
+  }
+})
+
 test('修改删除带服务器版本，回执保留组标识', async () => {
   const calls = []
   const api = createLedgerApi({ request: async (...args) => { calls.push(args); return { ...view, version: 1 } } }, { storage: memory(), owner: '1' })

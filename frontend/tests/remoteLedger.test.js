@@ -119,6 +119,25 @@ test('正式账本不读取演示数据，删除事实排除汇总但保留卡�
   try { assert.equal(await test.store.refresh(), true); assert.equal(test.store.records.value.length, 0); assert.equal(test.store.recordsByIds([id])[0].deletedAt, '2026-10-03T01:00:00Z'); assert.throws(() => test.store.clearRecords(), /不提供/) }
   finally { test.dispose() }
 })
+
+test('另一标签页改变当前账号意图时更新恢复列表，其他账号事件忽略且离页解绑', () => {
+  const values = new Map(), owner = ref('1'), scope = effectScope(), listeners = new Map()
+  const events = { addEventListener: (name, fn) => listeners.set(name, fn), removeEventListener: (name, fn) => { if (listeners.get(name) === fn) listeners.delete(name) } }
+  const store = scope.run(() => createRemoteLedger({}, owner, { storage: { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }, eventTarget: events }))
+  try {
+    assert.deepEqual(store.manualRecovery.value.operations, [])
+    values.set('miaoji_account_write_intents_v1_1', JSON.stringify({ 'manual-original': { requestId: id, content: JSON.stringify({ records: [{ type: 'expense', amount: '0.29', date: '2026-10-03', time: '09:15', category: '餐饮', note: '合成午饭' }] }) } }))
+    const listener = listeners.get('storage')
+    assert.equal(typeof listener, 'function')
+    listener({ key: 'miaoji_account_write_intents_v1_2' })
+    assert.equal(store.manualRecovery.value.operations.length, 0)
+    listener({ key: 'miaoji_account_write_intents_v1_1' })
+    assert.equal(store.manualRecovery.value.operations.length, 1)
+    owner.value = '2'
+    assert.equal(store.manualRecovery.value.operations.length, 0)
+  } finally { scope.stop() }
+  assert.equal(listeners.size, 0)
+})
 test('重开页面后按回执ID恢复组条目关联，顺序变化及删除不丢最新事实', () => {
   const group = { id: 'g', recordIds: ['a', 'b'], items: [{ id: 'item1' }, { id: 'item2' }] }
   const linked = linkGroupRecords(group, [{ id: 'b', deletedAt: 'synthetic' }, { id: 'a', amount: 12 }])

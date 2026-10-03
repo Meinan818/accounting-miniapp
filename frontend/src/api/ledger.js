@@ -29,6 +29,8 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
   if (!/^\d+$/.test(String(owner))) throw new Error('缺少正式账号身份')
   const key = `miaoji_account_write_intents_v1_${owner}`
   const beforeSend = () => { if (!isCurrent()) throw new Error('登录身份已变化，本次操作没有发送。') }
+  const activeIntents = new Map()
+  const receiptIntents = new WeakMap()
   function intents() {
     const raw = storage.getItem(key)
     if (raw === null) return {}
@@ -56,6 +58,13 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     catch { throw new Error('确认标识无法保存，尚未发送入账请求。请保留草稿后再试。') }
     return requestId
   }
+  function assertIntent(batchId, expected = activeIntents.get(batchId)) {
+    beforeSend()
+    const actual = intents()[batchId]
+    if (!expected || !actual || expected.requestId !== actual.requestId || expected.content !== actual.content) {
+      throw new Error('原确认意图已变化，请保留内容并核对账单，不要重新入账。')
+    }
+  }
   function rememberDraftVersion(batchId, version) {
     const values = intents()
     const saved = values[batchId]
@@ -73,21 +82,29 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     const ids = inputs.map((value, index) => String(value.id ?? index))
     if (new Set(ids).size !== ids.length) throw new Error('草稿编号重复')
     const body = { records: inputs.map(toRecordInput) }
-    const requestId = intent(batchId, JSON.stringify(body))
-    const draft = await client.request('PUT', `/api/drafts/${requestId}`, { body, beforeSend })
+    const content = JSON.stringify(body)
+    const requestId = intent(batchId, content)
+    const expected = { requestId, content }
+    activeIntents.set(batchId, expected)
+    const guard = () => assertIntent(batchId, expected)
+    guard()
+    const draft = await client.request('PUT', `/api/drafts/${requestId}`, { body, beforeSend: guard })
+    guard()
     if (draft?.id !== requestId || !Number.isSafeInteger(draft.version) || draft.version < 0
       || !['OPEN', 'CONFIRMED'].includes(draft.status) || !Array.isArray(draft.records) || draft.records.length !== body.records.length
       || draft.records.some((record, index) => ['type', 'amount', 'date', 'category', 'note', 'time']
         .some(field => (record?.[field] ?? null) !== (body.records[index][field] ?? null)))) {
       throw new Error('服务端草稿状态或内容不一致，请保留原操作并核对账单。')
     }
-    beforeSend()
     const version = rememberDraftVersion(batchId, draft.version)
     const response = await client.request('POST', `/api/drafts/${requestId}/confirm`, {
-      body: { version }, headers: { 'Idempotency-Key': requestId }, beforeSend })
+      body: { version }, headers: { 'Idempotency-Key': requestId }, beforeSend: guard })
+    guard()
     const receipt = response?.records
     if (!Array.isArray(receipt) || receipt.length !== inputs.length) throw new Error('保存回执不完整，请用原操作重试。')
-    return receipt.map((value, index) => ({ ...fromRecordView(value), draftGroupId: batchId, draftItemId: ids[index] }))
+    const records = receipt.map((value, index) => ({ ...fromRecordView(value), draftGroupId: batchId, draftItemId: ids[index] }))
+    receiptIntents.set(records, expected)
+    return records
   }
   async function update(current, input) {
     const response = await client.request('PUT', `/api/records/${current.id}`, { body: { version: current.version, record: toRecordInput(input) }, beforeSend })
@@ -109,9 +126,9 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
       })
     } catch { throw new Error('原手动保存操作无法读取，请保留浏览器数据并核对账单，暂不另建一笔。') }
   }
-  function completeManual(batchId) {
+  function completeManual(batchId, receipt, expected = receipt ? receiptIntents.get(receipt) : activeIntents.get(batchId)) {
     if (!batchId.startsWith('manual-')) return
-    beforeSend()
+    assertIntent(batchId, expected)
     const values = intents()
     if (!Object.hasOwn(values, batchId)) throw new Error('原手动保存操作已变化，请核对账单。')
     values[batchId] = { ...values[batchId], manualComplete: true }
@@ -123,12 +140,15 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     const operation = pendingManual().find(value => value.batchId === batchId)
     if (!operation) throw new Error('原手动操作已变化，请使用原操作恢复并核对账单。')
     const saved = intents()[batchId]
+    const expected = { requestId: saved.requestId, content: saved.content }
+    activeIntents.set(batchId, expected)
+    const guard = () => assertIntent(batchId, expected)
     const body = JSON.parse(saved.content)
     const sameRecords = records => Array.isArray(records) && records.length === body.records.length
       && records.every((record, index) => ['type', 'amount', 'date', 'category', 'note', 'time']
         .every(field => (record?.[field] ?? null) === (body.records[index][field] ?? null)))
-    const draft = await client.request('GET', `/api/drafts/${saved.requestId}`, { beforeSend })
-    beforeSend()
+    const draft = await client.request('GET', `/api/drafts/${saved.requestId}`, { beforeSend: guard })
+    guard()
     if (draft?.id !== saved.requestId || !Number.isSafeInteger(draft.version) || draft.version < 0
       || (saved.draftVersion != null && saved.draftVersion !== draft.version)
       || !['OPEN', 'CANCELLED'].includes(draft.status)
@@ -136,12 +156,12 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
       throw new Error('草稿已确认或状态/内容已变化，请使用原操作恢复并核对账单。')
     }
     if (draft.status === 'OPEN') {
-      const cancelled = await client.request('POST', `/api/drafts/${saved.requestId}/cancel`, { body: { version: draft.version }, beforeSend })
-      beforeSend()
+      const cancelled = await client.request('POST', `/api/drafts/${saved.requestId}/cancel`, { body: { version: draft.version }, beforeSend: guard })
+      guard()
       if (cancelled?.id !== saved.requestId || cancelled.status !== 'CANCELLED' || cancelled.version !== draft.version
         || !sameRecords(cancelled.records)) throw new Error('取消回执不完整，请保留原操作恢复，暂不另建一笔。')
     }
-    completeManual(batchId)
+    completeManual(batchId, undefined, expected)
   }
   return { createBatch, update, remove, pendingManual, completeManual, cancelManual }
 }

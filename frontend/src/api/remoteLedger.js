@@ -1,10 +1,10 @@
-import { computed, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { createId } from '../utils/ledger.js'
 import { legacyCents, sumAmounts } from '../utils/money.js'
 import { createLedgerApi, fromRecordView } from './ledger.js'
 
-export function createRemoteLedger(client, owner, { storage } = {}) {
+export function createRemoteLedger(client, owner, { storage, eventTarget = globalThis.window } = {}) {
   const allRecords = ref([])
   const storageError = ref('正在读取正式账本…')
   const records = computed(() => allRecords.value.filter(record => !record.deletedAt))
@@ -37,6 +37,13 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     try { return { operations: ledger ? ledger.pendingManual() : [], error: '' } }
     catch (failure) { return { operations: [], error: failure.message } }
   })
+  if (eventTarget?.addEventListener) {
+    const listener = event => {
+      if (event.key == null || event.key === `miaoji_account_write_intents_v1_${owner.value}`) manualEpoch.value++
+    }
+    eventTarget.addEventListener('storage', listener)
+    onScopeDispose(() => eventTarget.removeEventListener('storage', listener))
+  }
   function ensure(current) {
     if (!ledger || current !== generation) throw new Error('登录身份已变化，请重新登录并核对账单。')
   }
@@ -109,7 +116,7 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     for (const record of saved) links.set(record.id, { source, draftGroupId: batchId, draftItemId: record.draftItemId })
     if (!await refresh(true)) throw new Error('服务器已确认保存，但最新账本暂未读到。请保留此组并用原操作重试，不要另建一组。')
     ensure(current)
-    currentLedger.completeManual(batchId); manualEpoch.value++
+    currentLedger.completeManual(batchId, saved); manualEpoch.value++
     return saved
   }
   async function addRecord(input, options = {}) { return (await addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options }))[0] }
