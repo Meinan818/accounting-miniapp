@@ -298,6 +298,47 @@ test('未收尾手动操作禁止另建标识，收尾存储失败仍保留恢�
   assert.equal(api.pendingManual().length, 1)
 })
 
+test('明确结束手动操作须核原内容并收到取消回执，已确认或未知状态不能放行', async () => {
+  for (const status of ['OPEN', 'CANCELLED', 'CONFIRMED', 'UNKNOWN']) {
+    const storage = memory()
+    storage.setItem('miaoji_account_write_intents_v1_1', JSON.stringify({ 'manual-original': { requestId: id, content: JSON.stringify({ records: [toRecordInput(input)] }), draftVersion: 0 } }))
+    const calls = []
+    const client = { request: async (method, path, options) => {
+      calls.push({ method, path, options })
+      const record = toRecordInput(input)
+      return { id, version: 0, status: method === 'GET' ? status : 'CANCELLED', records: [Object.fromEntries(Object.entries(record).reverse())] }
+    } }
+    const api = createLedgerApi(client, { storage, owner: '1' })
+    if (['OPEN', 'CANCELLED'].includes(status)) {
+      await api.cancelManual('manual-original')
+      assert.equal(api.pendingManual().length, 0)
+      assert.equal(calls.length, status === 'OPEN' ? 2 : 1)
+      if (status === 'OPEN') { assert.match(calls[1].path, /\/cancel$/); assert.deepEqual(calls[1].options.body, { version: 0 }) }
+    } else {
+      await assert.rejects(api.cancelManual('manual-original'), /原操作恢复/)
+      assert.equal(api.pendingManual().length, 1)
+      assert.equal(calls.length, 1)
+    }
+  }
+})
+
+test('取消响应丢失、内容改变或身份变化保持待恢复，不自动创建新键', async () => {
+  for (const mode of ['lost', 'changed', 'identity']) {
+    const storage = memory(); let current = true, calls = 0
+    storage.setItem('miaoji_account_write_intents_v1_1', JSON.stringify({ 'manual-original': { requestId: id, content: JSON.stringify({ records: [toRecordInput(input)] }) } }))
+    const original = storage.getItem('miaoji_account_write_intents_v1_1')
+    const api = createLedgerApi({ request: async method => {
+      calls++
+      if (method === 'POST') throw Error('合成取消响应丢失')
+      if (mode === 'identity') current = false
+      return { id, version: 0, status: 'OPEN', records: [toRecordInput(mode === 'changed' ? { ...input, amount: '0.30' } : input)] }
+    } }, { storage, owner: '1', isCurrent: () => current })
+    await assert.rejects(api.cancelManual('manual-original'))
+    assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), original)
+    assert.equal(calls, mode === 'lost' ? 2 : 1)
+  }
+})
+
 test('修改删除带服务器版本，回执保留组标识', async () => {
   const calls = []
   const api = createLedgerApi({ request: async (...args) => { calls.push(args); return { ...view, version: 1 } } }, { storage: memory(), owner: '1' })

@@ -26,6 +26,7 @@ export function useBillQuery(route, currentMonth = () => dayjs().format('YYYY-MM
 
 export function useManualRecordSave(store, router, batchId) {
   const saving = ref(false), error = ref(''), savedRecord = ref(null)
+  const restoredRecord = ref({}), notice = ref(''), cancelling = ref(false)
   let active = true
   onScopeDispose(() => { active = false })
   async function navigateSaved() {
@@ -37,7 +38,7 @@ export function useManualRecordSave(store, router, batchId) {
   }
   async function save(record, originalBatchId = batchId) {
     if (!active || saving.value) return false
-    saving.value = true; error.value = ''
+    saving.value = true; error.value = ''; notice.value = ''
     try {
       if (!savedRecord.value) {
         const saved = await store.addRecord(record, { batchId: originalBatchId, source: 'manual' })
@@ -50,7 +51,19 @@ export function useManualRecordSave(store, router, batchId) {
       return false
     } finally { if (active) saving.value = false }
   }
-  return { saving, error, savedRecord, save }
+  async function cancelPending(operation) {
+    if (!active || saving.value || savedRecord.value) return false
+    saving.value = true; cancelling.value = true; error.value = ''; notice.value = ''
+    try {
+      await store.cancelManualOperation(operation.batchId)
+      if (!active) return false
+      restoredRecord.value = { ...operation.record, id: undefined }
+      notice.value = '这笔草稿已取消且未入账。内容已保留，请核对后再保存。'
+      return true
+    } catch (failure) { if (active) error.value = failure.message; return false }
+    finally { if (active) { saving.value = false; cancelling.value = false } }
+  }
+  return { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling }
 }
 
 export function useStatsMonthNavigation(route, router, currentMonth = () => dayjs().format('YYYY-MM')) {

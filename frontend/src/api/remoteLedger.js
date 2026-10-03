@@ -113,6 +113,12 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     return saved
   }
   async function addRecord(input, options = {}) { return (await addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options }))[0] }
+  async function cancelManualOperation(batchId) {
+    const current = generation; ensure(current)
+    const currentLedger = ledger
+    try { await currentLedger.cancelManual(batchId); ensure(current) }
+    finally { if (current === generation) manualEpoch.value++ }
+  }
   async function recoverConflict(failure, id, current) {
     if (current === generation && ['STALE_VERSION', 'RECORD_NOT_FOUND'].includes(failure.code)) {
       const loaded = await refresh(true)
@@ -149,5 +155,5 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
   function recordsByIds(ids = []) { return allRecords.value.filter(record => ids.includes(record.id)) }
   function clearRecords() { throw new Error('正式账本不提供清空操作。') }
   return { records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
-    refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords, manualRecovery }
+    refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords, manualRecovery, cancelManualOperation }
 }

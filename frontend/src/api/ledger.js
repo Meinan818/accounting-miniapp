@@ -118,5 +118,30 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     try { storage.setItem(key, JSON.stringify(values)) }
     catch { throw new Error('服务器已保存，恢复状态暂未保存，请用原操作重试，不要另建一笔。') }
   }
-  return { createBatch, update, remove, pendingManual, completeManual }
+  async function cancelManual(batchId) {
+    beforeSend()
+    const operation = pendingManual().find(value => value.batchId === batchId)
+    if (!operation) throw new Error('原手动操作已变化，请使用原操作恢复并核对账单。')
+    const saved = intents()[batchId]
+    const body = JSON.parse(saved.content)
+    const sameRecords = records => Array.isArray(records) && records.length === body.records.length
+      && records.every((record, index) => ['type', 'amount', 'date', 'category', 'note', 'time']
+        .every(field => (record?.[field] ?? null) === (body.records[index][field] ?? null)))
+    const draft = await client.request('GET', `/api/drafts/${saved.requestId}`, { beforeSend })
+    beforeSend()
+    if (draft?.id !== saved.requestId || !Number.isSafeInteger(draft.version) || draft.version < 0
+      || (saved.draftVersion != null && saved.draftVersion !== draft.version)
+      || !['OPEN', 'CANCELLED'].includes(draft.status)
+      || !sameRecords(draft.records)) {
+      throw new Error('草稿已确认或状态/内容已变化，请使用原操作恢复并核对账单。')
+    }
+    if (draft.status === 'OPEN') {
+      const cancelled = await client.request('POST', `/api/drafts/${saved.requestId}/cancel`, { body: { version: draft.version }, beforeSend })
+      beforeSend()
+      if (cancelled?.id !== saved.requestId || cancelled.status !== 'CANCELLED' || cancelled.version !== draft.version
+        || !sameRecords(cancelled.records)) throw new Error('取消回执不完整，请保留原操作恢复，暂不另建一笔。')
+    }
+    completeManual(batchId)
+  }
+  return { createBatch, update, remove, pendingManual, completeManual, cancelManual }
 }

@@ -195,6 +195,13 @@ class AccountLedgerIntegrationTest {
         mvc.perform(post("/api/drafts/"+expired+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
                 .header("Idempotency-Key",expired).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
                 .andExpect(status().isGone());
+        mvc.perform(post("/api/drafts/"+expired+"/cancel").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.status").value("CANCELLED"));
+        mvc.perform(post("/api/drafts/"+expired+"/confirm").session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .header("Idempotency-Key",expired).contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("DRAFT_CLOSED"));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id=?",Long.class,owner)).isZero();
         mvc.perform(put("/api/drafts/"+UUID.randomUUID()).session(alice.session()).header("X-CSRF-TOKEN",alice.token())
                 .contentType(MediaType.APPLICATION_JSON).content("{\"records\":["+input("0.00")+"]}"))
                 .andExpect(status().isBadRequest());

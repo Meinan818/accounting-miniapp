@@ -11,7 +11,7 @@ import { useManualRecordSave } from '@/utils/navigation'
 const router = useRouter()
 const store = useRecordStore()
 const batchId = createId('manual')
-const { saving, error, savedRecord, save } = useManualRecordSave(store, router, batchId)
+const { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling } = useManualRecordSave(store, router, batchId)
 const recovery = computed(() => store.manualRecovery || { operations: [], error: '' })
 </script>
 <template>
@@ -24,16 +24,18 @@ const recovery = computed(() => store.manualRecovery || { operations: [], error:
         <p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p>
         <p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p>
         <p v-if="recovery.error" role="alert" class="warning">{{ recovery.error }}</p>
+        <p v-if="notice" role="status" class="intro">{{ notice }}</p>
         <section v-if="recovery.operations.length && !savedRecord" class="saved-recovery" aria-label="恢复上次手动保存">
           <p>还有上次未收尾的保存操作。先恢复并核对这笔，避免重复记账。</p>
           <div v-for="operation in recovery.operations" :key="operation.batchId">
             <p>{{ operation.record.date }} · {{ operation.record.type === 'income' ? '收入' : '支出' }} · {{ operation.record.category }} · ¥{{ operation.record.amount }}</p>
             <p v-if="operation.record.remark">{{ operation.record.remark }}</p>
             <button type="button" :disabled="saving" @click="save(operation.record, operation.batchId)">{{ saving ? '正在恢复…' : '恢复原保存操作' }}</button>
+            <button type="button" :disabled="saving" @click="cancelPending(operation)">核实并结束未入账草稿</button>
           </div>
           <p v-if="error" role="alert" class="warning">{{ error }}</p>
         </section>
-        <RecordForm v-else-if="!recovery.error && !savedRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push('/bills')" />
+        <RecordForm v-else-if="!recovery.error && !savedRecord && !cancelling" :record="restoredRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push('/bills')" />
         <div v-if="savedRecord" class="saved-recovery" role="status"><p>这笔账单已经保存，可以打开明细查看。</p><p v-if="error" role="alert" class="warning">{{ error }}</p><button type="button" :disabled="saving" @click="save()">{{ saving ? '正在打开明细…' : '打开已保存账单' }}</button></div>
       </article>
       <p class="local-note">{{ SERVER_MODE ? '正式账单保存到当前账号，不调用AI。' : '本地演示：账单保存在当前浏览器，不调用AI。' }}</p>

@@ -147,6 +147,41 @@ async function setupMonth(month = '2026-10') {
   return { router, navigation, dispose: () => scope.stop() }
 }
 
+test('原草稿取消后保留表单内容，取消失败不放行也不导航或重新写入', async () => {
+  let fail = true, cancellations = 0
+  const scope = effectScope()
+  const saver = scope.run(() => useManualRecordSave({ cancelManualOperation: async batchId => {
+    assert.equal(batchId, 'manual-original'); cancellations++
+    if (fail) throw Error('合成取消未确认')
+  }, addRecord: () => { throw Error('不得自动入账') } }, { push: () => { throw Error('不得自动跳转') } }, 'manual-new'))
+  const operation = { batchId: 'manual-original', record: { id: 'single', amount: '0.29', date: '2026-10-04', remark: '合成' } }
+  try {
+    assert.equal(await saver.cancelPending(operation), false)
+    assert.match(saver.error.value, /取消未确认/)
+    assert.deepEqual(saver.restoredRecord.value, {})
+    fail = false
+    assert.equal(await saver.cancelPending(operation), true)
+    assert.equal(saver.restoredRecord.value.amount, '0.29')
+    assert.equal(saver.restoredRecord.value.id, undefined)
+    assert.match(saver.notice.value, /未入账/)
+    assert.equal(cancellations, 2)
+  } finally { scope.stop() }
+})
+
+test('取消等待时阻断恢复或第二次取消，离页迟到不显示已取消状态', async () => {
+  let finish, calls = 0
+  const scope = effectScope()
+  const saver = scope.run(() => useManualRecordSave({ cancelManualOperation: () => { calls++; return new Promise(done => { finish = done }) } }, {}, 'manual-new'))
+  const operation = { batchId: 'manual-original', record: { amount: '0.29' } }
+  const pending = saver.cancelPending(operation)
+  assert.equal(await saver.cancelPending(operation), false)
+  assert.equal(await saver.save(operation.record, operation.batchId), false)
+  scope.stop(); finish()
+  assert.equal(await pending, false)
+  assert.equal(calls, 1)
+  assert.equal(saver.notice.value, '')
+})
+
 test('统计月份导航被拒绝时，月份仍与真实路由和账本一致', async () => {
   const scene = await setupMonth()
   try {
