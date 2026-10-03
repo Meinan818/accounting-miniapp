@@ -117,3 +117,30 @@ test('金额与日期同时明确纠正时不忽略其中一项', () => {
 test('没有活动草稿时纠正不会被误建成新账单', () => {
   assert.equal(draft('咖啡改成16').group, undefined)
 })
+
+test('总支出/本月总支出等汇总短句是查询，不生成记账草稿', () => {
+  for (const text of ['总支出','本月总支出','总收入','本月总收入','总支出是多少','总支出是多少钱','支出总共多少','收入总额','本月的总支出','这个月总开销','帮我看看本月总支出']) {
+    assert.equal(isQuery(text), true, text); assert.equal(draft(text).group, undefined, text)
+  }
+})
+test('存在待补充草稿时询问总支出只查询，不改金额或追问上下文', () => {
+  const g = draft('咖啡').group
+  for (const text of ['总支出','本月总支出','总收入是多少']) {
+    const result = send(g,text); assert.equal(result.action,'query',text); assert.deepEqual(result.group,g)
+  }
+})
+test('商品名带统计/总支出字样的真实消费仍创建草稿', () => {
+  for (const text of ['今天买统计书30元','买总支出统计书30元','买总收入手账25','吃午饭25元','今天支出20元']) {
+    assert.equal(isQuery(text),false,text); assert(draft(text).group,text)
+  }
+})
+test('明确历史范围的总支出先走查询，不生成草稿', () => {
+  for (const text of ['全部总支出','历史总支出','累计支出','今天总支出','上个月总支出']) {
+    assert.equal(isQuery(text),true,text); assert.equal(draft(text).group,undefined,text)
+  }
+})
+test('汇总金额陈述不作为实际消费入账，分类汇总短句仍为查询', () => {
+  for (const text of ['本月总支出20元','总支出是20元吗','本月餐饮总支出','餐饮总支出是多少','工资总收入']) {
+    assert.equal(isQuery(text),true,text); assert.equal(draft(text).group,undefined,text)
+  }
+})

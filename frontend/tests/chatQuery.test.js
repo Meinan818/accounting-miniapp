@@ -29,3 +29,17 @@ test('查询不改账本或历史文本，既有未来业务日期仍计入所�
   assert.match(getMonthQueryReply('查询本月支出', records, '2026-10'), /12.00/)
   assert.equal(JSON.stringify(records), original)
 })
+
+test('未指定月份的总支出查询明确只查本月，不冒充全部历史总额', () => {
+  const reply = getMonthQueryReply('总支出', [record({amount:12}),record({amount:100,date:'2026-09-01'})], '2026-10')
+  assert.match(reply,/只支持本月/); assert.match(reply,/不是全部历史总额/); assert.match(reply,/本月支出合计 ¥12\.00/)
+})
+test('明确全部/历史/累计范围的总额暂不支持，不能返回本月冒充', () => {
+  for (const text of ['全部总支出','历史总支出','累计支出']) {
+    assert.match(getMonthQueryReply(text,null,'2026-10'),/全部历史/)
+  }
+})
+test('明确本月的总支出/总收入按账本回答，不额外要求金额', () => {
+  assert.equal(getMonthQueryReply('本月总支出',[record({amount:12})],'2026-10'),'本月支出合计 ¥12.00。')
+  assert.equal(getMonthQueryReply('本月总收入',[record({type:'income',amount:20,category:'工资'})],'2026-10'),'本月收入合计 ¥20.00。')
+})
