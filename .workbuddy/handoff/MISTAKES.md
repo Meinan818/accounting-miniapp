@@ -169,3 +169,8 @@
 ## 2026-10-04 · 明细路径猜测失败
 
 - 读取时猜Records.vue/recordSearch.js，两路径实际不存在；随后rg --files确认实际Bills.vue/journal.js再读取，无修改影响。防范：已有路径核查规则必须在首次读取前执行，不照通用命名猜本项目文件；本次不把读失败称业务异常。
+
+## 2026-10-04 · 全局规则diff与资料路径核查
+
+- 在项目git diff传C盘全局规则，因不在仓库内被拒绝，无写操作；随后git diff --no-index用E盘备份对全局原文件完成逐行核查。以后全局文件使用no-index或文件对比，不将其加入项目Git。
+- rg查询附不存在的profileStore.js，实际资料状态在Profile.vue；读取已有源文件继续，无修改影响。以后先rg --files再核文件，不重复假设Store命名。

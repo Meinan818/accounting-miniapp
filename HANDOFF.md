@@ -4,6 +4,8 @@
 
 ## 最新授权与自动续办
 
+本聊天用户再次重申“不主动提问、不要停、全权负责”，已补全局规则与PROJECT_PLAN，并原生更新既有automation提示，保留每小时/ACTIVE/failed_runs_only/当前目标。全局修改前备份在E盘autonomy-reconfirmed-2026-10-04；常规节点继续写记录，需用户事项统一PENDING。用户粘贴旧AGENTS第2次计数不代表新事件，本聊天实际仍0。
+
 用户要求写入全局规划：Codex自主负责规划、开发、新功能、美化、创新、修复、优化、测试、文档、commit和Push；用户只给建议和审核，未来几天可能不回复。不要主动提问或等待回复，缺资料/凭据/明确预算等集中登记到.workbuddy/handoff/PENDING.md，暂缓依赖部分并继续独立工作。项目AGENTS顶部与全局C:/Users/Lqx24/.codex/AGENTS.md已同步；旧“不Push/不改全局/等用户继续”等已被覆盖。全局备份在E盘.workbuddy/memory/autonomy-2026-10-04/global-agents-before.md。保留零费用、本机、保护真实数据与凭据，不增加收费模型/生图，不擅自改变权限、可见性或生产资源。不要用子代理。
 
 原生heartbeat「喵叽智账自主开发续办」ID automation已ACTIVE，每小时一次，notificationPolicy=failed_runs_only。当前目标01a10312-42ac-7953-909e-b7f982a78353，源聊天原生update保留其余字段后转移，本聊天已view并只读核落盘。不重复创建、不手改toml。尚无实际定时运行成功证据；依赖电脑、Codex、连接和额度可用。正常阶段安静记录，压缩事件仍按规则明确汇报。
