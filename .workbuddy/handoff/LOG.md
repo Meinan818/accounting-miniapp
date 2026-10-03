@@ -801,3 +801,10 @@
 - 已实际识别本聊天第2次compact并明确告知，立即停止业务代码，STATE=2。同聊天恢复不归零，新窗口才0；heartbeat/摘要不计。更新HANDOFF/AGENTS/NEXT/STATE/PENDING/MISTAKES并按待续本地commit，不自动Push；原生改名成功为“喵叽智账：会话可靠性与分页待续交接”。创建与转移另以工具成功为证。
 - 新聊天先修分页失败并验证保存/核查Push，然后直接继续Add未知写入刷新重进恢复；现账号意图键可复用但尚未实施，不自动换键重写。无需用户回复，保持零费用、本机、原数据/凭据与低打扰授权。
 - 原生automation view成功，toml核每小时/ACTIVE/failed_runs_only/源聊天目标；收到并开工已验证，整个本次定时成功未验证，scheduledRunVerified仍false。原聊天创建交接后只核转移，不再业务开发，避免重复工作。
+
+## 2026-10-04 · 原生新聊天及heartbeat转移实际核验
+
+- 待续本地commit b5db5a7成功，9个相关文件、敏感模式0、提交后干净，未Push；分页1项失败未修改。原聊天名称已原生改为“喵叽智账：会话可靠性与分页待续交接”。
+- 原生create_thread显式model=gpt-6.1-sol/thinking=high成功，新聊天01a10369-4fe9-7c82-9502-a6593e36b203、host local、同项目本地目录。提示传递连续授权、真正新窗口基准0、已知失败/下一项、数据与费用边界及交接回执协作方式。
+- 原生automation_update成功将已有automation转到新聊天，ACTIVE；只读toml逐字段核目标改变而id/kind/name/prompt/status/rrule/notification_policy全部保持，每小时/failed_runs_only未变，无重复调度。当前收到heartbeat不证明本次开发节点全部成功，scheduledRunVerified保持false。
+- 源聊天再保存这些交接结果，写.workbuddy/memory/heartbeat-recovery-2026-10-04/transfer-result.json success回执后不再改共享文件；新聊天先只读，看到回执后设自身基准0并直接修分页/验证保存/核查Push，再继续未知入账恢复。源计数2保留至新聊天真正接手，不因创建动作替新窗口提前清零。
