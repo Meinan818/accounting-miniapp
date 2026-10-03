@@ -31,6 +31,21 @@ const auth = SERVER_MODE ? useAuthStore() : null
 const owner = auth?.user?.id
 let disposed = false
 const aiDraft = SERVER_MODE ? createAiDraftApi(auth.api, { isCurrent: () => !disposed && auth.user?.id === owner }) : null
+const aiElapsed = ref(0)
+const aiRunning = ref(false)
+let aiController = null
+let aiTimer = null
+let sendGeneration = 0
+function clearAiWait() {
+  if (aiTimer) window.clearInterval(aiTimer)
+  aiTimer = null; aiRunning.value = false; aiElapsed.value = 0
+}
+function stopAiWait() {
+  if (!aiController) return
+  aiController.abort(); aiController = null; clearAiWait(); sendGeneration++
+  conversationStore.setThinking(false); conversationStore.setMascotMood('happy')
+  reply('本次整理已停止，未入账。原草稿保留；平台任务可能仍在结束中，请稍后再发。')
+}
 
 // Temporary display name; user naming is planned, not implemented.
 const catDisplayName = '小宝'
@@ -152,6 +167,7 @@ function editDraft(messageId, { itemId, record }) {
 async function handleSend(userInput) {
   const text = String(userInput || '').trim()
   if (!text || conversationStore.isThinking || savingGroup.value || retryingPersistence.value) return
+  const generation = ++sendGeneration
   conversationStore.addMessage({ role: 'user', kind: 'text', content: text })
   conversationStore.setThinking(true); conversationStore.setMascotMood('thinking'); scrollToBottom()
   try {
@@ -171,7 +187,7 @@ async function handleSend(userInput) {
       if (result.group) conversationStore.addMessage({ role: 'assistant', kind: 'draft-group', group: result.group })
     }
   } catch { reply('本喵这次没整理好，草稿没有入账。可以再说清楚一些，或者用手动记账。') }
-  finally { conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() }
+  finally { if (generation === sendGeneration) { conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() } }
 }
 async function handleServerSend(text) {
   const active = activeDraftMessage.value
@@ -188,12 +204,17 @@ async function handleServerSend(text) {
     if (count && Number(count[1]) !== active.group.items.length) { reply('当前是' + active.group.items.length + '笔，请核对数量再确认。'); return }
     await saveDraft(active.id); return
   }
+  const controller = new AbortController()
+  aiController = controller; aiRunning.value = true; aiElapsed.value = 0
+  const started = Date.now()
+  aiTimer = window.setInterval(() => { aiElapsed.value = Math.floor((Date.now() - started) / 1000) }, 1000)
   try {
-    const result = await aiDraft.parse(text, { date: dayjs().format('YYYY-MM-DD'), group: active?.group })
+    const result = await aiDraft.parse(text, { date: dayjs().format('YYYY-MM-DD'), group: active?.group, signal: controller.signal })
     if (active) { conversationStore.updateGroup(active.id, result.group); actionErrors.value[active.id] = '' }
     else conversationStore.addMessage({ role: 'assistant', kind: 'draft-group', group: result.group })
     reply(result.reply)
-  } catch (error) { if (!disposed && auth.user?.id === owner) reply(error.message + '。原草稿保留，尚未入账。') }
+  } catch (error) { if (!controller.signal.aborted && !disposed && auth.user?.id === owner) reply(error.message + '。原草稿保留，尚未入账。') }
+  finally { if (aiController === controller) { aiController = null; clearAiWait() } }
 }
 function legacySaved(message) { return message.confirmed || recordStore.batchRecords('legacy-' + message.id).length > 0 }
 function legacyRecord(message) { return recordStore.batchRecords('legacy-' + message.id)[0] || recordStore.recordsByIds?.([message.record?.id])[0] || message.record }
@@ -239,6 +260,7 @@ onMounted(scrollToBottom)
 
 onBeforeUnmount(() => {
   disposed = true
+  aiController?.abort(); aiController = null; clearAiWait()
   if (moodTimer) {
     window.clearTimeout(moodTimer)
   }
@@ -313,7 +335,8 @@ onBeforeUnmount(() => {
 
         <div v-if="conversationStore.isThinking" class="message-enter miao-thinking">
           <img :src="miaoThinking" alt="猫猫托腮思考" />
-          <p>本喵正在整理…</p>
+          <div v-if="aiRunning" class="ai-wait-copy"><p>本喵正在整理 · 等待{{ aiElapsed }}秒</p><small>{{ aiElapsed >= 15 ? '模型响应有些慢，尚未入账。可以停止等待，原草稿会保留。' : '整理好后会显示待确认草稿，先不用重复发送。' }}</small><button type="button" class="ai-stop" @click="stopAiWait">停止本次整理</button></div>
+          <p v-else>本喵正在整理…</p>
         </div>
       </div>
     </main>
@@ -336,6 +359,7 @@ onBeforeUnmount(() => {
 .miao-chat :deep(.miao-bubble) { align-items:flex-end; min-width:0; }.miao-chat :deep(.chat-assistant-avatar) { width:42px; height:42px; padding:3px; border:1.5px solid #dbb9c7; background:#f5dcea; border-radius:16px; box-shadow:0 3px 0 #e9bdca; }.miao-chat :deep(.chat-bubble-body) { position:relative; max-width:calc(100% - 50px); padding:13px 15px 23px; border:1.5px solid #dcb7a5; border-radius:21px 23px 23px 9px; background:#fffaf0; color:var(--miao-ink); font-size:14px; line-height:1.9; box-shadow:0 4px 0 #ebcfb9; }.miao-chat :deep(.miao-bubble-user .chat-bubble-body) { max-width:88%; border-color:#d8a4b5; background:#f9dce8; border-radius:22px 22px 9px 22px; box-shadow:0 4px 0 #e9bacb; }.miao-chat :deep(.chat-bubble-tail) { display:none; }.miao-chat :deep(.bubble-paw) { position:absolute; bottom:8px; right:10px; width:18px; height:13px; opacity:.32; transform:rotate(-13deg); pointer-events:none; }.miao-chat :deep(.paw-pad),.miao-chat :deep(.paw-toe) { position:absolute; background:#a06b7e; }.miao-chat :deep(.paw-pad) { bottom:0; left:5px; width:9px; height:6px; border-radius:50%; }.miao-chat :deep(.paw-toe) { width:3px; height:4px; border-radius:50%; }.miao-chat :deep(.toe-one) { left:1px; top:5px; }.miao-chat :deep(.toe-two) { left:5px; top:1px; }.miao-chat :deep(.toe-three) { left:10px; top:1px; }.miao-chat :deep(.toe-four) { left:15px; top:5px; }
 .miao-chat :deep(.miao-record) { position:relative; margin-top:9px; padding:25px 15px 16px; border:1.5px solid #d7aac0; border-radius:24px 21px 26px 20px; background:linear-gradient(135deg,#fffaf0,#fff5f9); color:var(--miao-ink); box-shadow:0 5px 0 #e7bbcc; }.miao-chat :deep(.miao-record::before) { content:''; position:absolute; width:68px; height:18px; top:-9px; left:calc(50% - 34px); background:#dce6cd; border-radius:3px; transform:rotate(-4deg); }.miao-chat :deep(.record-heading) { font-size:16px; }.miao-chat :deep(.record-pending) { font-size:11px; padding:4px 7px; background:#eeddf1; border-radius:8px; white-space:nowrap; }.miao-chat :deep(.draft-items li) { border-bottom:1px solid #ebd6ca; }.miao-chat :deep(.draft-item-copy .category-icon) { width:39px; height:39px; }.miao-chat :deep(.draft-totals) { background:#fbe2e9; border-radius:13px; padding:9px 11px; color:#8e5465; }.miao-chat :deep(.miao-record button) { min-height:40px; border:1.5px solid #d7b9a5; border-radius:13px; background:#fffcf4; color:var(--miao-ink); }.miao-chat :deep(.miao-record button.bg-primary-400) { background:#f4c5d7; border-color:#cd9bb0; box-shadow:0 3px 0 #dfacc0; }.miao-chat :deep(.draft-items p) { color:#8b6b5d; }.miao-chat :deep(.draft-item-top strong) { font-size:16px; }
 .miao-thinking { display:flex; gap:8px; align-items:flex-end; font-size:13px; color:#8d6780; }.miao-thinking img { width:62px; height:68px; object-fit:contain; }.miao-thinking p { padding:12px; background:#eaddf1; border:1px solid #cbb6d8; border-radius:18px; }
+.ai-wait-copy { min-width:0; max-width:calc(100% - 70px); }.ai-wait-copy small { display:block; margin-top:6px; font-size:11px; line-height:1.7; overflow-wrap:anywhere; }.ai-stop { min-height:40px; padding:7px 12px; margin-top:7px; border:1px solid #cbb6d8; border-radius:12px; background:#f4eaf7; color:#795467; }
 .miao-chat :deep(.miao-input) { flex-shrink:0; padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px)); border-top:1.5px solid #e3c1af; background:linear-gradient(110deg,#fff0e4,#fce5ed); }.miao-chat :deep(.chat-compose) { max-width:488px; padding:5px 5px 5px 13px; border:1.5px solid #d0a4b1; border-radius:22px; background:#fffcf7; box-shadow:0 4px 0 #e8bac7; }.miao-chat :deep(.chat-compose:focus-within) { outline:2px solid #a26b8a; outline-offset:3px; }.miao-chat :deep(.miao-input input) { padding-block:9px; font-size:16px; color:var(--miao-ink); }.miao-chat :deep(.miao-input input:focus-visible) { outline:none; }.miao-chat :deep(.miao-input input::placeholder) { color:#9f867c; }.miao-chat :deep(.chat-send) { width:auto; min-width:61px; height:44px; padding-inline:12px; border:1.5px solid #c898ad; border-radius:16px; background:#f3c4d5; color:#7c4a60; box-shadow:0 3px 0 #dfacc0; font-size:13px; }.miao-chat :deep(.chat-send:disabled) { opacity:.55; }.miao-chat :deep(.chat-input-hint) { margin:9px auto 0; text-align:center; font-size:10px; color:#9e7c79; }
 .miao-chat :deep(button:focus-visible) { outline:2px solid #9b4c61; outline-offset:3px; }
 @media(max-width:359px) { .miao-header-content { padding-inline:12px; }.miao-brand { gap:7px; }.miao-header-cat { width:49px; height:57px; }.miao-title { font-size:21px; }.chat-header-flower { width:23px; height:23px; }.miao-summary { gap:6px; padding-inline:12px; }.miao-demo-label { font-size:9px; }.miao-manual-link { margin-left:0; }.miao-thread { padding-inline:12px; }.chat-query-tools { padding-inline:12px; } }

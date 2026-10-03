@@ -38,13 +38,18 @@ class GlmDraftParserTest {
             return response;
         });
         var proposal=service.parse(1,input);
-        assertThat(proposal.model()).isEqualTo("glm-4.7-flash");assertThat(proposal.status()).isEqualTo("ready");
+        assertThat(proposal.model()).isEqualTo("glm-4-flash-250414");assertThat(proposal.status()).isEqualTo("ready");
         assertThat(proposal.records()).hasSize(1);assertThat(proposal.records().get(0).amount()).isEqualTo("25.00");
     }
     @Test void clarificationReturnsNoBill() throws Exception {
         var response=reply("{\"records\":[],\"question\":\"午饭花了多少钱？\"}");
         var proposal=parser(r->response).parse(2,input);
         assertThat(proposal.status()).isEqualTo("needs_input");assertThat(proposal.records()).isEmpty();
+    }
+    @Test void completeGroupCannotSilentlyDropExistingCandidates() throws Exception {
+        var response=reply(json.writeValueAsString(Map.of("records",List.of(row),"question","")));
+        var existing=new RecordInput("expense","25.00",input.date(),"餐饮","午饭");
+        code(()->parser(r->response).parse(1,new GlmDraftParser.Input("追加地铁3元",input.date(),List.of(existing,existing))),"AI_INVALID_RESPONSE");
     }
     @Test void malformedJsonAndDuplicateFieldsAndTrailingTokensAreUpstreamErrors() throws Exception {
         for(var content:List.of("not json","null","{\"records\":[],\"question\":\"a\",\"question\":\"b\"}",

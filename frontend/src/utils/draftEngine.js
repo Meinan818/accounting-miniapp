@@ -103,7 +103,7 @@ export function resolveGroup(group) {
   if (group.pending?.kind === 'target') { group.status = 'needs_input'; return group }
   group.pending = null
   for (const item of group.items) {
-    for (const field of ['type', 'date', 'time', 'amountCents']) {
+    for (const field of (group.origin === 'ai' ? ['type', 'date', 'amountCents'] : ['type', 'date', 'time', 'amountCents'])) {
       if (item[field] == null) { group.pending = { kind: field, itemId: item.id }; group.status = 'needs_input'; return group }
     }
   }

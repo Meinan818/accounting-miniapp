@@ -638,3 +638,16 @@
 - OpenRouter公开官方models端点当前有qwen/qwen3.8-27b:free，prompt/completion都0，支持structured_outputs；FAQ明确免费有低每日限制及不适合生产保障，具体动态限额数字本轮未取得，不编造。需新平台密钥及本机网络实测，免费不保证可用性。
 - SiliconFlow旧llms.txt返回404，PowerShell显示了公开HTML，未取得该厂商当前免费型号的可靠依据，不以此推荐未经核实的Qwen名称。随后读官方docs根和导航成功，只作为研究材料，不伪称免费/限额已核。
 - 研究材料均保存原E盘目录；用户真实密钥/数据未新增外发或提交。下一步选定模型后由Codex普通接入/合成与真实验证，并改善等待反馈；不接受新费用/部署，正式GUI仍待验收。
+
+## 2026-10-04 · GLM-4-Flash-250414、等待停止与整组纠正保护
+
+- 用户明确选择先试免费GLM-4-Flash-250414，沿用现智谱项目密钥，不用子代理、不Push/部署、不新增费用/依赖/全局修改。官方free/glm-4-flash-250414.md与pricing.md实际核输入输出免费、JSON支持；限额仍需实测，不保证同平台限制消失。固定模型前后端同步，删除旧thinking参数，默认禁用与test外发隔离保留。
+- 新模型真实Java/MySQL脚本real-1791047055366/glm-real-result.json 9项通过，多笔43、追问不猜、完整纠正41、草稿不入账、确认重放不重复；实际模型调用1413/366/1646ms，首个8ms为匿名拒绝而非模型时延。所有新旧合成数据保留。
+- source-1791047232389原“昨天面包3.50”日期误为今天，source-1791047441686非法输出失败保留；提示补今天/昨天/前天明确日期及消费方向/分类/完整JSON示例，source-1791047721760/result.json 6项通过。仍不保证模型对任意相对日期理解，无假模拟成功。
+- 用户原句补测source-1791047813795在“咖啡改成16”返回1笔而非2笔。完整草稿明确金额/日期纠正及歧义编号改用已有applyDraftInput确定处理，保留其他候选与组/项标识；AI来源不强制消费时间。新整理/追问/追加仍真实模型。前后端拒绝ready结果少于当前候选数。最新正常服务source-1791048339634/result.json 5项通过，两笔43改为两笔41且未入账，不删除已有2条合成账单。
+- 等待秒数、15秒慢响应说明及“停止本次整理”接入；AbortSignal请求前/后保护、离页取消/清理、sendGeneration防旧finally干扰新发送。原草稿保留，客户端中止不保证远端立即取消。停止按钮/等待观感尚无GUI验证。
+- 前端追加包含“改成”被宽泛纠正规则拦截，新增测试frontend-append-before.log失败（请求次数2!=3）保留；显式追加排除本机纠正后frontend-test-final.log最终192项通过，build-demo-final.log 3.79s/server-final.log 3.82s通过。最新backend-package-correction.log全87项及package通过，含完整组缺笔拒绝。当前无lint/typecheck脚本，不虚报执行。
+- 本会话实际第1次compact已当场告诉用户并同步STATE=1；同聊天恢复不归零，未触发第2次、不新建聊天。第2次按规则停止代码、总结/改名/commit后创建gpt-6.1-sol/high，用户关心的交接要求持续保留。
+- 一次组合停止/启动/验证工具命令被自动审核拒绝，原文仅blocked by policy，无执行证据；随后只读核归属及独立最小停止/启动成功，不改权限/策略。首次新模型脚本在HTTP ready前请求fetch failed，real-1791047012435失败保留；以后实际CSRF200再验证。
+- 最新自身Java31204核命令后停止再package，正常服务19940启动（无legacy-registration开关）；CSRF200，Vite20820仍5174读取最新前端。真实SMTP用户已确认收到；完整邮箱注册GUI未获单独明确反馈。无浏览器交互工具，不绕过历史拒绝，不冒称GUI/窄屏/真机通过。原4.7网页AI_TIMEOUT/AI_PROVIDER_BUSY反馈依然保留，新模型最终网页待用户验收。
+- HANDOFF/NEXT/STATE/AGENTS/README/backend README及示例同步最新事实，材料全部E盘忽略，真实密钥仅本机properties。按持续授权核diff/归属/秘密后本地保存，提交实际返回为准，无Push/部署。下一步刷新重新登录5174验收原句、确认两笔41增量/刷新及等待停止；Codex按反馈修复。
