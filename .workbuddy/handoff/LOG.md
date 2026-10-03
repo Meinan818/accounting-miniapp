@@ -939,3 +939,10 @@
 
 - 实际结果：f2c9a52da1c24f9bc88dbfd7fd6f93cf4d0a0e01本地commit成功且工作区干净；原生create_thread显式gpt-6.1-sol/high返回01a103ce-1650-7d50-bbe6-8c08120e0346/local。automation原生update返回ACTIVE，toml逐字段核仅target_thread_id改变，name/prompt/kind/id/rrule/status/notification_policy/created_at保持，E盘before/after留存。
 - wait_threads一次即时快照核新聊天active且声明只读核交接，尚未修改共享文件。源只保存此次结果及本地commit，再写success/finalCommit回执后退出；新窗口自己设0。此次无Push、部署或真实业务/AI/邮件调用，不将创建/转移成功说成完整定时成功。
+
+## 2026-10-04 · 新窗口接手与编辑窗口时序
+
+- 回执success目标01a103ce-1650-7d50-bbe6-8c08120e0346与本环境一致；b690c5c完整finalCommit在Git历史、sourceWillModifySharedFiles=false，原生view及toml每小时/ACTIVE/failed_runs_only核一致。STATE compact=0，源2历史。Git干净/main，19940/20820仅127.0.0.1:8080/5174，未重启，无真实业务/AI/邮件/照片写入。
+- editor-interactions-2026-10-04/before.log真实5项2通过3失败：Editor删除确认返回输入/焦点调用通过，Bills保存迟到改变旧月份、删除迟到更新提示、冲突迟到更新旧错误。onScopeDispose撤销页面回调，Store事实仍正常处理；补页面存活保存/删除重试/版本恢复与旧入口拒绝，7项通过。
+- npm test 310项通过，npm run build/build:server均通过，无lint/typecheck脚本，无依赖/锁文件变化。native dialog/focus是离线方法调用，GUI/窄屏/真机未验。官方只读API核私有/无Pages/0 workflows/0 deployments，远端e28b727；交接两提交及本节点普通Push前核差异和秘密，不强推。
+- 下一项明细日期标签跨日取证，保留当前月份/筛选/编辑输入，不改业务日期或自动刷新账本。独立节点保存后直接继续，用户无需操作。

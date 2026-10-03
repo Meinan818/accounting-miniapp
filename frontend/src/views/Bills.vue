@@ -2,7 +2,7 @@
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onScopeDispose, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import RecordEditor from '@/components/record/RecordEditor.vue'
 import { centsText, getRecordTotals } from '@/utils/money'
@@ -34,6 +34,8 @@ const editConflict = ref(null)
 const notice = ref('')
 const noticeElement = ref(null)
 const searchInput = ref(null)
+let active = true
+onScopeDispose(() => { active = false })
 const displayBatchSize = 60
 const visibleLimit = ref(displayBatchSize)
 watch([selectedMonth, searchText, selectedType, selectedCategory], () => { visibleLimit.value = displayBatchSize })
@@ -125,20 +127,29 @@ function adoptLatestVersion() {
   editConflict.value = null; saveError.value = ''
 }
 async function saveEdit(input) {
-  if (saving.value || editConflict.value || !editingRecord.value) return
+  if (!active || saving.value || editConflict.value || !editingRecord.value) return
   saving.value = true; saveError.value = ''
-  try { const updated = await recordStore.updateRecord(editingRecord.value.id, input, { version: editingRecord.value.version }); selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。' }
-  catch (e) { handleEditFailure(e) }
-  finally { saving.value = false }
+  try {
+    const updated = await recordStore.updateRecord(editingRecord.value.id, input, { version: editingRecord.value.version })
+    if (!active) return
+    selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。'
+  }
+  catch (e) { if (active) handleEditFailure(e) }
+  finally { if (active) saving.value = false }
 }
 
 async function deleteEdit() {
-  if (saving.value || editConflict.value || !editingRecord.value) return
+  if (!active || saving.value || editConflict.value || !editingRecord.value) return
   if (typeof recordStore.deleteRecord !== 'function') { saveError.value = '当前页面仍使用旧版本数据模块。请先退出编辑并刷新页面，原账单尚未删除。'; return }
   saving.value = true; saveError.value = ''
-  try { await recordStore.deleteRecord(editingRecord.value.id, { version: editingRecord.value.version }); editingRecord.value = null; notice.value = '这笔账单已删除：首页、明细和聊天查询已同步。'; await nextTick(); noticeElement.value?.focus() }
-  catch (e) { handleEditFailure(e) }
-  finally { saving.value = false }
+  try {
+    await recordStore.deleteRecord(editingRecord.value.id, { version: editingRecord.value.version })
+    if (!active) return
+    editingRecord.value = null; notice.value = '这笔账单已删除：首页、明细和聊天查询已同步。'
+    await nextTick(); if (active) noticeElement.value?.focus()
+  }
+  catch (e) { if (active) handleEditFailure(e) }
+  finally { if (active) saving.value = false }
 }
 
 // 5. 方法

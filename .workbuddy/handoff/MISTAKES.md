@@ -234,3 +234,8 @@
 
 - openai-docs技能读取漏.system层级，空CODEX_HOME构造了不存在的自动化路径；均只读失败，按映射r1及已核真实路径重读成功。rg附不存在的composables目录亦只读失败，后续先rg --files全项目定路径。
 - 一次多文件patch错将MISTAKES文字当LOG上下文，原子拒绝，git status核无部分写入后修正；以后上下文必须来自对应文件。官方自动化页面403，不称文档已读取，按现有原生工具schema及实际回执核产品操作，不安装绕过工具。
+
+## 2026-10-04 · 明细编辑离页回执与交接patch
+
+- 实际Bills setup离页后迟到保存改旧月份、删除写提示、冲突回填旧错误，before5项2通过3失败保留；增加onScopeDispose守卫，7项针对/310项全量/两构建通过。Editor原表单往返与焦点调用本来通过，不误称原生GUI缺陷。以后异步业务需同时核Store事实与页面生命周期，并验证页面存活的正常重试。
+- 初次接手STATE patch基于success前读到的旧automation字段，原子拒绝无写入；重读源最终STATE后只改实际匹配的任务与计数。以后交接回执完成后重新读共享文件再patch，不沿用pending时的字段。

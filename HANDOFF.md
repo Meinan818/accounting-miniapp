@@ -1,4 +1,12 @@
-## 最新交接入口：第2次实际压缩（2026-10-04）
+## 当前入口：新窗口编辑窗口时序验证（2026-10-04）
+
+新聊天01a103ce-1650-7d50-bbe6-8c08120e0346核success、目标与b690c5c完整finalCommit在历史，原生automation落盘每小时/ACTIVE/failed_runs_only保持，源不再共享写入；compact基准0，旧2只历史。Git开工干净/main，服务19940/20820仍仅127.0.0.1:8080/5174，未重启。官方只读API现核私有/无Pages/0 workflows/0 deployments，交接两提交尚待本节点统一普通Push。
+
+编辑窗口真实脚本/Editor模板离线Vue renderer 7项通过：删除确认往返同一RecordForm初值实例，金额/备注/未知时间保留；取消/关闭焦点调用及overflow恢复。Bills实际setup离页后迟到保存/删除/冲突曾3失败，before.log保留；onScopeDispose守卫修复页面回调，Store账单事实不拦截。310项前端及demo/server两构建通过，材料editor-interactions-2026-10-04。不称native浏览器GUI/真机焦点已验，无真实账单/照片/AI/邮件写入，无依赖变化。
+
+下一项核明细日期标签是否随本机跨日变化，保持所选月/筛选与编辑输入；先离线取证后复用已有useLocalDay，不改账单业务日期或强制读账本。下方交接与旧下一步均历史。
+
+## 历史交接入口：第2次实际压缩（2026-10-04）
 
 实际结果：本地交接提交f2c9a52da1c24f9bc88dbfd7fd6f93cf4d0a0e01成功，已原生创建新聊天01a103ce-1650-7d50-bbe6-8c08120e0346（gpt-6.1-sol/high），automation原生update成功转到该目标，toml逐字段核仅target改变，提示/名称/每小时/ACTIVE/failed_runs_only及created_at保持。新聊天已运行且只读等回执。源只保存此次结果、本地commit并写success/finalCommit回执，之后不再修改共享文件；新聊天核回执后设compact=0并直接接续。本次未Push，GUI/真机等未验保持。
 
