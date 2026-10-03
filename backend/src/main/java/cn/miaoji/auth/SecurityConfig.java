@@ -32,7 +32,8 @@ public class SecurityConfig {
                 // CSRF已验证后、密码计算前限流；filter不注册为容器Bean，避免执行两次。
                 .addFilterBefore(new AuthAttemptFilter(limiter), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/csrf", "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/csrf", "/api/auth/register", "/api/auth/login",
+                                "/api/auth/email/code", "/api/auth/email/register").permitAll()
                         .anyRequest().authenticated())
                 .requestCache(cache -> cache.disable())
                 .exceptionHandling(errors -> errors

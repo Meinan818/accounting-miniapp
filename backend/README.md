@@ -29,7 +29,9 @@ cd E:\XiangMu\未定项目\backend
 | 方法与路径 | 输入/行为 |
 |---|---|
 | GET `/api/auth/csrf` | 返回 `headerName` 和 `token`，建立匿名会话 |
-| POST `/api/auth/register` | JSON `username` / `password`，成功 201，不自动登录 |
+| POST `/api/auth/register` | 旧入口默认403，不能绕过邮箱验证；旧账号仍可登录 |
+| POST `/api/auth/email/code` | JSON `email`；返回challengeId/expiresIn/resendAfter，不返回验证码 |
+| POST `/api/auth/email/register` | JSON `email,password,challengeId,code`；验证成功201，再调用登录 |
 | POST `/api/auth/login` | form-urlencoded `username` / `password`，成功 204 |
 | GET `/api/auth/me` | 返回当前账号 ID 和用户名 |
 | POST `/api/auth/logout` | 204，失效会话并删除会话 Cookie |
@@ -44,7 +46,7 @@ cd E:\XiangMu\未定项目\backend
 | GET `/api/statistics/month?month=2026-10` | `income, expense, balance, count`，排除已删除记录 |
 | GET `/api/statistics/month/detail?month=2026-10` | 同月收支/笔数及按收入、支出分别聚合的分类金额/笔数/占比 |
 
-所有写请求带 CSRF 响应指定的请求头，并保留会话 Cookie。登录/退出后旧 CSRF token 失效，必须重新 GET `/api/auth/csrf`。用户名为 3–32 位 ASCII 字母/数字/下划线并按小写唯一；密码为 12–64 位可见 ASCII，BCrypt 散列，不静默截断。
+所有写请求带 CSRF 响应指定的请求头，并保留会话 Cookie。登录/退出后旧 CSRF token 失效，必须重新 GET `/api/auth/csrf`。新账号使用验证邮箱登录；旧用户名为3–32位ASCII字母/数字/下划线，仍支持登录。密码为12–64位可见ASCII，BCrypt散列，不静默截断。
 
 创建账单时客户端为一次确认生成UUID请求键，网络超时、重复点击与重新登录后的同次重试必须复用它。相同账号/键/内容返回原入账回执，响应头`Idempotency-Replayed`标明`true/false`；金额`1`和`1.00`视为同一内容。不同内容、条目顺序或单笔/整组接口混用同键返回409 `REQUEST_KEY_REUSED`，不会覆盖旧内容；不同账号的同键彼此独立。
 
@@ -97,3 +99,28 @@ POST /{id}/confirm带{version}及Idempotency-Key（须等于草稿UUID）：行�
 GET /api/records/snapshot/page?size=500每段最多500条，按稳定账单UUID递增，包含逻辑删除事实。返回{records,revision,nextAfter}；续页必须携带after与第一段revision，末段nextAfter=null。同账号成功创建整组/修改/删除事务中增加ledger_revision；重放和失败不增加。每段repeatable-read读取版本和记录，中途写入版本变化409 LEDGER_CHANGED，客户端保护旧完整账本，不混合新旧页。旧snapshot仍保留5000上限兼容，正式前端改用分页并只在完整读取后替换。
 
 当前是分段传输，客户端仍保留完整账号账本作既有计算和列表展示；未宣称无限容量/虚拟列表或生产性能指标。单页SQL使用(user_id,id)键范围，不依赖OFFSET。
+
+## 163邮箱验证码注册（V8）
+
+新注册须先申请邮箱验证码，再提交邮箱/密码/挑战ID/6位码。验证码BCrypt散列，5分钟有效，同邮箱60秒重发间隔，5次错误后拒绝；重发撤销旧挑战，成功消费一次。账号/默认资料/消费状态同事务，发信失败回退挑战；失败次数独立提交，不能靠事务回滚绕过。新旧邮件入口与登录共享地址频率限制，仍需CSRF。V8只增加邮箱字段和挑战表，旧账号不自动绑定邮箱、不导入账本或照片。旧无验证注册默认禁止，仅测试兼容开关保留。
+
+1. 打开163网页版邮箱的「设置 → POP3/SMTP/IMAP」，按页面要求开启SMTP并取得客户端授权码。
+2. 在本机忽略文件`backend/.env.local.properties`填写以下配置；保留原数据库配置。授权码不要发到聊天或提交Git。
+
+```properties
+MIAOJI_EMAIL_ENABLED=true
+MIAOJI_SMTP_HOST=smtp.163.com
+MIAOJI_SMTP_PORT=465
+MIAOJI_SMTP_USERNAME=你的163邮箱
+MIAOJI_SMTP_AUTHORIZATION=在本机填写客户端授权码
+```
+
+3. 重启后端，在正式前端注册页填写你能收信的邮箱并点「发送邮箱验证码」。成功提交后检查收件箱/垃圾邮件，输入验证码及密码完成注册；登录后应看到独立空账本。首次真实投递仍需验证，不能把SMTP提交成功当成收件箱送达。
+
+默认禁用，缺配置或SMTP失败明确503；SSL、服务端证书身份校验及连接/读/写5秒超时已配置。未准备真实发信时保持`MIAOJI_EMAIL_ENABLED=false`。若本机执行策略阻止run.ps1，不修改系统策略，可在backend目录运行现有Java：
+
+```powershell
+& 'D:/JavaDev/jdk-21/bin/java.exe' '-Djava.io.tmpdir=E:/XiangMu/未定项目/.cache/backend/tmp' -jar './target/miaoji-backend-0.1.0.jar'
+```
+
+已通过72项后端测试、180项前端测试、两构建及9项真实MySQL HTTP检查；后者使用明确合成挑战，没有真实邮件。320px注册界面与未配置失败提示已观察；真实163投递、完整成功注册GUI和生产实际交互未验证。

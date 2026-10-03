@@ -601,3 +601,11 @@
 - 用户明确模型GLM-4.7-Flash、只本人及几个朋友用、零付费部署、先本机后决定访问方式；注册邮箱验证码，登录邮箱+密码。发信选163，已授权新增Spring Boot官方starter-mail，缓存/材料E盘。项目当前只有DB配置，无GLM/SMTP凭据，未发邮件/模型请求。
 - 智谱官方模型页和API定价.md已实际读取，本轮材料glm-4.7-flash-official.html/glm-pricing-official.md；定价GLM-4.7-Flash输入输出免费，endpoint open.bigmodel.cn/api/paas/v4/chat/completions/model glm-4.7-flash；不换FlashX、不用Kitool。未核账号额度/并发和真实调用，后续缺凭据只做合成。Spring Boot3.5邮件官方页已读，明确starter-mail/JavaMailSender及设置网络超时；不自行实现SMTP。
 - 下一步完善邮箱验证注册/163邮件接入并保护旧账号，再GLM草稿边界；零付费/不Push部署，不提前设置外网权限。新对话gpt-6.1-sol/high及交接前改名保持；本会话可识别compact计数0。
+
+## 2026-10-03 · 邮箱验证码注册及第一次compact
+
+- 官方starter-mail获用户采用授权，163/邮箱密码登录/先本机明确。V8只增邮箱和验证码挑战，旧账号保留、不自动绑定、不导入数据。六位SecureRandom/BCrypt、5分钟/60秒重发/5次错误、邮箱+UUID绑定、重发撤旧、成功一次消费；发信失败回退，错误次数返回结果后提交，Controller再抛错。账号/默认资料/消费同事务。旧无验证注册默认403；SMTP缺配置503，证书身份校验与5秒网络超时，秘密不输出。
+- 前端申请/邮箱改动撤销挑战/冷却/验证码注册及邮箱密码登录已接入，保留猫猫视觉和演示。72后端全测试与package成功email-package-final.log；180Node email-frontend-test-final.log；email-build-demo/server.log两构建通过。材料run-edc7df2757444e4e81c5afc245c3e57d均E盘不入Git。
+- email-http-1791038379011-8252fc78/result.json位于材料根（不是run目录下），9项真实Java/MySQL通过：旧注册禁止、SMTP未配失败回退、明确植入合成challenge hash、错误次数持久化、验证注册/邮箱登录隔离/消费重试/重启。首条标签仍V5，不将其冒称V8检查；V8以Flyway日志为准。没有真实邮件。浏览器JSON实际累计12项（此前统计8/9少算1，保留原记录），本轮新增320px注册无溢出和明确未配错误截图；完整成功注册GUI、真实163投递未验证。
+- 恢复时识别本会话第一次compact，STATE及时从0改1；不是旧会话第2次，不触发新建。后续第二次立即停代码、交接/commit、改名并创建gpt-6.1-sol/high新聊天。不修改全局设置。
+- 已核main与改动归属，所有新旧合成数据/资料/照片保留。收尾8080无监听、5174 PID31548；不Push/部署。README补本机SMTP配置步骤；真实配置不能在聊天发送。独立邮箱节点本地保存后持续GLM默认禁用/可验证草稿适配，不等用户继续。

@@ -15,7 +15,9 @@ public class AuthAttemptFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         var path = request.getRequestURI();
         return !request.getMethod().equals("POST") || !(path.equals(request.getContextPath() + "/api/auth/login")
-                || path.equals(request.getContextPath() + "/api/auth/register"));
+                || path.equals(request.getContextPath() + "/api/auth/register")
+                || path.equals(request.getContextPath() + "/api/auth/email/code")
+                || path.equals(request.getContextPath() + "/api/auth/email/register"));
     }
 
     @Override

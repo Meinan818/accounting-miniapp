@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
@@ -11,15 +11,46 @@ const password = ref('')
 const confirmation = ref('')
 const saving = ref(false)
 const error = ref('')
+const code = ref('')
+const challenge = ref(null)
+const sendingCode = ref(false)
+const resendUntil = ref(0)
+const now = ref(Date.now())
+const codeNote = ref('')
+const resendSeconds = computed(() => Math.max(0, Math.ceil((resendUntil.value - now.value) / 1000)))
+const clock = setInterval(() => { now.value = Date.now() }, 1000)
+onUnmounted(() => clearInterval(clock))
+watch([username, registering], () => { challenge.value = null; code.value = ''; codeNote.value = ''; error.value = '' })
+const validEmail = value => /^[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\.[A-Za-z0-9-]+$/.test(value) && value.length <= 254
+async function requestCode() {
+  if (sendingCode.value || saving.value || resendSeconds.value) return
+  const email = username.value.trim().toLowerCase()
+  if (!validEmail(email)) { error.value = '请先填写有效邮箱地址。'; return }
+  sendingCode.value = true; error.value = ''; codeNote.value = ''
+  try {
+    const receipt = await auth.requestRegistrationCode(email)
+    if (!registering.value || username.value.trim().toLowerCase() !== email) return
+    challenge.value = { ...receipt, email }
+    resendUntil.value = Date.now() + receipt.resendAfter * 1000
+    codeNote.value = '验证码邮件已提交发送，5分钟内有效；没找到可检查垃圾邮件。'
+  } catch (failure) { error.value = failure.message }
+  finally { sendingCode.value = false }
+}
 async function submit() {
   if (saving.value || !SERVER_MODE) return
   error.value = ''
-  if (!/^[A-Za-z0-9_]{3,32}$/.test(username.value)) { error.value = '账号请使用3–32位字母、数字或下划线。'; return }
+  const identifier = username.value.trim().toLowerCase()
+  if (registering.value ? !validEmail(identifier) : !(validEmail(identifier) || /^[A-Za-z0-9_]{3,32}$/.test(identifier))) {
+    error.value = registering.value ? '请输入有效邮箱地址。' : '请输入邮箱或已有的旧账号。'; return
+  }
   if (!/^[\x21-\x7E]{12,64}$/.test(password.value)) { error.value = '密码请使用12–64位英文字符、数字或符号，不包含空格。'; return }
   if (registering.value && password.value !== confirmation.value) { error.value = '两次密码不一致。'; return }
+  if (registering.value && (!challenge.value || challenge.value.email !== identifier || !/^\d{6}$/.test(code.value))) {
+    error.value = '请先申请邮件验证码并输入6位验证码。'; return
+  }
   saving.value = true
   try {
-    const success = await (registering.value ? auth.register(username.value, password.value) : auth.login(username.value, password.value))
+    const success = await (registering.value ? auth.register(identifier, password.value, challenge.value.challengeId, code.value) : auth.login(identifier, password.value))
     if (success) { password.value = ''; confirmation.value = ''; window.location.replace('/') }
   } catch (failure) { error.value = failure.message }
   finally { saving.value = false }
@@ -34,10 +65,15 @@ async function submit() {
         <p>{{ registering ? '准备一本新的小账本' : '欢迎回来，翻开今天的小日子' }}</p>
         <form @submit.prevent="submit">
           <fieldset :disabled="saving">
-            <label>账号<input v-model="username" aria-label="账号" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="32" required /></label>
+            <label>{{ registering ? '邮箱' : '邮箱 / 旧账号' }}<input v-model="username" :aria-label="registering ? '邮箱' : '邮箱 / 旧账号'" autocomplete="username" :inputmode="registering ? 'email' : 'text'" autocapitalize="none" spellcheck="false" maxlength="254" required /></label>
+            <template v-if="registering">
+              <button class="login-code" type="button" :disabled="sendingCode || resendSeconds > 0" @click="requestCode">{{ sendingCode ? '正在申请验证码…' : resendSeconds ? `${resendSeconds}秒后可重发` : '发送邮箱验证码' }}</button>
+              <label>验证码<input v-model="code" aria-label="验证码" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required /></label>
+              <p v-if="codeNote" class="login-hint" role="status">{{ codeNote }}</p>
+            </template>
             <label>密码<input v-model="password" aria-label="密码" type="password" :autocomplete="registering ? 'new-password' : 'current-password'" maxlength="64" required /></label>
             <label v-if="registering">确认密码<input v-model="confirmation" aria-label="确认密码" type="password" autocomplete="new-password" maxlength="64" required /></label>
-            <p class="login-hint">账号3–32位字母、数字或下划线；密码12–64位英文字符、数字或符号。</p>
+            <p class="login-hint">{{ registering ? '注册需验证邮箱；之后用邮箱和密码登录。' : '使用邮箱登录；原有旧账号仍可使用。' }}密码12–64位英文字符、数字或符号。</p>
             <p v-if="error || auth.error" class="login-error" role="alert">{{ error || auth.error }}</p>
             <button class="login-submit" type="submit">{{ saving ? '正在打开账本…' : registering ? '注册并打开账本' : '登录我的账本' }}</button>
             <button class="login-switch" type="button" @click="registering = !registering; error = ''; auth.error = ''; password = ''; confirmation = ''">{{ registering ? '已经有账号，去登录' : '第一次来，注册账号' }}</button>
@@ -56,4 +92,5 @@ async function submit() {
 fieldset { border:0; padding:0; min-width:0; }label { display:grid; gap:7px; text-align:left; margin-top:18px; font-size:14px; }input { width:100%; min-height:46px; border:1.5px solid #dec3cf; background:#fffdf9; border-radius:14px; padding:10px 12px; color:#775968; }
 input:focus-visible,button:focus-visible,a:focus-visible { outline:2px solid #ba859c; outline-offset:3px; }.login-hint,.login-data-note { font-size:12px; line-height:1.8; margin-top:16px; color:#9e8490; }.login-data-note .cat-nav-icon { width:24px; height:24px; vertical-align:middle; }
 .login-submit { display:block; width:100%; min-height:48px; padding:12px; margin-top:18px; border:1.5px solid #d4a4b5; border-radius:16px; background:#f6ccd9; box-shadow:0 4px 0 #e5b0c3; font-weight:700; }.login-switch { min-height:44px; margin-top:14px; padding:8px; font-size:13px; }.login-error { margin-top:16px; color:#a34f66; font-size:13px; overflow-wrap:anywhere; }fieldset:disabled { opacity:.65; }
+.login-code { min-height:44px; width:100%; margin-top:12px; padding:8px 12px; border:1.5px solid #dec3cf; border-radius:14px; background:#f4e4f1; font-size:13px; }.login-code:disabled { opacity:.65; }
 </style>

@@ -45,14 +45,22 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
       throw failure
     }
   }
-  async function register(username, password) {
-    await client.request('POST', '/api/auth/register', { body: { username, password } })
-    return login(username, password)
+  async function requestRegistrationCode(email) {
+    const value = await client.request('POST', '/api/auth/email/code', { body: { email } })
+    if (!value || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.challengeId)
+      || !Number.isInteger(value.expiresIn) || value.expiresIn < 1 || !Number.isInteger(value.resendAfter) || value.resendAfter < 1) {
+      throw new ApiError('验证码申请回执不完整，请保留邮箱后再试。', { code: 'INVALID_RESPONSE' })
+    }
+    return value
+  }
+  async function register(email, password, challengeId, code) {
+    await client.request('POST', '/api/auth/email/register', { body: { email, password, challengeId, code } })
+    return login(email, password)
   }
   async function logout() {
     try { await client.logout() }
     catch (failure) { if (failure.status !== 401) { error.value = failure.message; throw failure } }
     generation++; identity(null); status.value = 'guest'; error.value = ''
   }
-  return { user, status, error, restore, login, register, logout, expire }
+  return { user, status, error, restore, login, register, requestRegistrationCode, logout, expire }
 }

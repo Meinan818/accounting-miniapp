@@ -37,9 +37,10 @@ public class AccountService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) {
-        var accounts = jdbc.query("SELECT id, username, password_hash FROM app_user WHERE username = ?",
-                (rs, row) -> new AccountPrincipal(rs.getLong("id"), rs.getString("username"), rs.getString("password_hash")),
-                normalize(username));
+        var accounts = jdbc.query("SELECT id, username, email, password_hash FROM app_user WHERE username = ? OR email = ?",
+                (rs, row) -> new AccountPrincipal(rs.getLong("id"),
+                        rs.getString("email")==null?rs.getString("username"):rs.getString("email"),rs.getString("password_hash")),
+                normalize(username.trim()),normalize(username.trim()));
         if (accounts.isEmpty()) throw new UsernameNotFoundException("账号或密码错误");
         return accounts.getFirst();
     }

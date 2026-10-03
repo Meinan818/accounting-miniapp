@@ -7,3 +7,4 @@ spring:
 miaoji:
   auth:
     attempt-limit: 10000
+    legacy-registration: true

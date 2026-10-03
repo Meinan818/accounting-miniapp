@@ -2,15 +2,15 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "正式分段账本读取已验证；持续邮箱验证注册及GLM边界",
+  "currentTask": "邮箱验证码注册已验证待真实163投递；持续GLM草稿适配",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "实现163邮箱验证码注册与邮箱密码登录，保留旧账号，先合成邮件验证",
-  "nextStepReason": "用户明确新注册形式与零部署预算，模型选GLM-4.7-Flash；真实SMTP及GLM配置尚缺",
+  "nextStep": "接入GLM-4.7-Flash后端可验证待确认草稿，默认禁用并合成验证；SMTP配置后验证真实投递",
+  "nextStepReason": "邮箱节点已通过72后端/180前端/两构建/9MySQL检查；真实SMTP及GLM配置尚缺，独立适配可继续",
   "pendingUserDecision": "已选163/邮箱密码登录/官方mail依赖/先本机；凭据只通过后端本机配置，真实邮件和AI暂未验证",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03",
-  "observedCompactionCount": 0,
-  "compactionCountBasis": "全新交接会话基准0；旧会话2次不计入。本会话只统计实际可识别compact事件。"
+  "observedCompactionCount": 1,
+  "compactionCountBasis": "本会话已识别第一次compact；旧会话2次不计入。第二次实际事件立即停代码、交接、commit并创建指定模型新聊天。"
 }

@@ -37,7 +37,7 @@ test('注册成功后实际登录；注册失败不创建身份', async () => {
   const calls = []
   const session = createSession({ request: async (...args) => calls.push(args), login: async () => alice })
   await session.register('a', 'synthetic')
-  assert.equal(calls[0][1], '/api/auth/register'); assert.equal(session.user.value.id, '1')
+  assert.equal(calls[0][1], '/api/auth/email/register'); assert.equal(session.user.value.id, '1')
   const failed = createSession({ request: async () => { throw new ApiError('taken', { status: 409 }) } })
   await assert.rejects(failed.register('a', 'synthetic'), /taken/); assert.equal(failed.user.value, null)
 })
@@ -51,4 +51,24 @@ test('畸形服务身份拒绝登录，密码不放入会话状态', async () =>
   const session = createSession({ login: async () => ({ id: '../other', username: 'bad' }) })
   await assert.rejects(session.login('a', 'SyntheticPass123!'), /身份格式/)
   assert.equal(session.user.value, null); assert.equal(Object.hasOwn(session, 'password'), false)
+})
+test('邮箱验证码申请只接收挑战回执，注册传邮箱验证码并等待真实登录', async () => {
+  const calls = []; const challengeId = '7ebf606b-a0d5-4053-98fb-194505f3d10c'
+  const session = createSession({ request: async (...args) => {
+    calls.push(args)
+    return args[1].endsWith('/code') ? { challengeId, expiresIn: 300, resendAfter: 60 } : null
+  }, login: async (email, password) => {
+    assert.equal(email, 'synthetic@example.test'); assert.equal(password, 'SyntheticPass123!')
+    return { id: '1', username: email }
+  } })
+  assert.equal((await session.requestRegistrationCode('synthetic@example.test')).challengeId, challengeId)
+  await session.register('synthetic@example.test', 'SyntheticPass123!', challengeId, '123456')
+  assert.deepEqual(calls[1][2].body, { email: 'synthetic@example.test', password: 'SyntheticPass123!', challengeId, code: '123456' })
+  assert.equal(session.user.value.username, 'synthetic@example.test')
+  assert.equal(Object.hasOwn(session, 'code'), false); assert.equal(Object.hasOwn(session, 'password'), false)
+})
+test('验证码申请回执缺字段拒绝冒称已发送，注册失败不伪造登录', async () => {
+  const session = createSession({ request: async () => ({ challengeId: '../bad', expiresIn: 300, resendAfter: 60 }) })
+  await assert.rejects(session.requestRegistrationCode('synthetic@example.test'), /回执不完整/)
+  assert.equal(session.user.value, null)
 })
