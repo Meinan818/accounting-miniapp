@@ -6,7 +6,9 @@
 
 当前补充（2026-10-03）：已验收的猫猫手账外观、本地资料和照片功能保留。默认模式仍是独立演示；显式server模式已联通Java/MySQL的真实注册/登录、账号账单、统计及资料/私有照片。原演示账本、对话、照片不会自动导入。174项前端Node、49项后端H2及package、demo/server两种构建通过；5174开发版已实际操作，完整收尾证据尚缺，生产实际交互/真机/用户正式功能验收未完成。真实AI仍未接入、尚未部署。浏览器历史失败与后续恢复均保留，根因未知；完整状态见 [HANDOFF.md](HANDOFF.md)，后端运行见 [backend/README.md](backend/README.md)。
 
-前端工作目录运行 `npm run dev:server` 启用账号开发版，先按后端说明启动8080服务；`npm run build:server`输出dist-server。默认 `npm run dev` / `npm run build` 保留本地演示。Vite开发代理仅用于本机同源API，生产同源路由尚未部署配置。
+本机正常使用可双击根目录 [start-local.cmd](start-local.cmd)，使用已有Java、jar和前端依赖启动账号版；前后端HTTP就绪后显示 http://127.0.0.1:5174/login ，保留启动窗口，按Ctrl+C停止本次创建的服务。端口已被占用则退出提示，不停止已有服务；不会自动打开浏览器、安装依赖、编译后端或改动系统执行策略。已在运行时继续使用原网页即可。只检查环境可运行 `node scripts/local-dev.mjs --check`。详细说明见 [开发指南](docs/DEVELOPMENT.md)。
+
+手动开发仍可在前端目录运行 `npm run dev:server`，先按后端说明启动8080服务；`npm run build:server`输出dist-server。默认 `npm run dev` / `npm run build` 保留本地演示。Vite开发代理仅用于本机同源API，生产同源路由尚未部署配置。
 
 品牌主角是二维手绘猫，猫没有正式名字、自称“本喵”；聊天标题暂用“小宝”占位，用户起名功能尚未开发。画风为2D可爱手账，配色沿用奶油米黄与柔粉。首页、聊天、账单明细、统计与个人页已接入猫猫手账外观，明细导航也采用同款轻导航；其余占位页尚未全站统一。
 
@@ -51,7 +53,7 @@ npm test
 | 目标后端 | Java21、Spring Boot；一个应用按业务模块组织 |
 | 数据库 | MySQL8，Java侧校验用户归属和金额 |
 | 认证与访问 | Spring Security、Spring JDBC；MyBatis暂不引入 |
-| AI | Java后端调用，提供方/模型/费用后续确认，Spring AI作为候选 |
+| AI | Java后端直连智谱GLM-4-Flash-250414，密钥仅后端，确认后入账 |
 | 部署 | 本地优先，前端静态服务与Java运行环境/MySQL分别规划，费用和上线另行批准 |
 
 Java基础已建立；后续接口和阶段的完成情况以LOG实际证据为准。
@@ -76,7 +78,7 @@ docs/archive/supabase-route/ 作废路线资料和未执行SQL
 .workbuddy/memory/           E盘内部材料，不入Git
 ```
 
-backend/已复用原草稿并验证，前端仍独立演示。
+backend/已实现正式账号、本人账单与真实AI草稿；server前端已联通，demo保留独立演示。
 
 - [PROJECT_PLAN.md](./PROJECT_PLAN.md)：Java全栈阶段与验收目标。
 - [AGENTS.md](./AGENTS.md)：项目规则与当前限制入口；任务与历史证据见交接目录。

@@ -60,3 +60,11 @@ Java D:/JavaDev/jdk-21；Maven .workbuddy/memory/backend-foundation/apache-maven
 MySQL客户端C:/Program Files/MySQL/MySQL Server 8.4/bin/mysql.exe，工作目录必须.workbuddy/memory/backend-foundation，用相对--defaults-extra-file=mysql-client.cnf且不回显凭据。backend/storage、properties和内部材料忽略，不纳入Git；所有新旧合成数据保留。
 
 最新材料.workbuddy/memory/glm4-switch-2026-10-04；早期SMTP/4.7在glm-integration-2026-10-04。旧备份/失败/浏览器拒绝及恢复原文保留，详见LOG/MISTAKES。一次组合停止/启动/验证命令被自动审核拒绝，只返回blocked by policy；拒绝未执行，后续按独立最小工具操作核归属并成功，不更改权限或规避策略，不推断拒绝原因。
+
+## 最新本机启动入口（2026-10-04）
+
+用户已认可聊天并要求无事不打扰、自己继续开发。根start-local.cmd可双击启动已有Java jar和正式Vite；scripts/local-dev.mjs --check只读核环境和端口。无新依赖/收费/编译/MySQL启动/策略变更/浏览器切换，仅127.0.0.1的8080/5174；任一端口占用退出并保护原服务。HTTP CSRF与server模式模块就绪才报启动成功，Ctrl+C/失败/退出只停自己创建的子进程。缓存/临时/分次日志在项目.cache内，参数错误退出码保留。
+
+新增scripts/local-dev.test.mjs 8项通过，node --check及cmd检查通过；真实现有Java/MySQL/Vite独立临时端口启停7项通过，原5174前后CSRF200。未调AI/邮件或写账单，原Java19940/Vite20820保持。Windows GUI双击/直接关闭窗口未单独实测，源码变更后仍需手动package再启动。详见docs/DEVELOPMENT现行入口；下方旧演示说明明确历史。材料local-start-2026-10-04忽略保留。
+
+下一步继续聊天追加、日期与追问边界的离线检查/回归，无需用户操作；不重复要求已认可功能验收。本会话compact仍1，第二次停止/总结/改名/commit/指定模型新建规则保留。本轮验收文档替换误改及修正记录见MISTAKES，错误提交仅本地并已后续修正，无Push/部署。

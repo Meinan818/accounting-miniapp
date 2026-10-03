@@ -1,7 +1,34 @@
 # 喵叽智账 — 当前开发指南
 
-> 当前主线：Java/MySQL与正式前端已开发版联通，默认本地演示及已验收外观保留。正式模式运行`npm run dev:server`，构建`npm run build:server`；先按 [backend/README.md](../backend/README.md) 启动本机8080服务，Vite同源代理/api。174项Node、49项H2/package及两种前端构建通过；完整浏览器收尾证据、生产实际交互/真机/正式功能人工验收未完成，真实AI未接入。第2次compact后交接见 [HANDOFF.md](../HANDOFF.md)，下文旧清单供历史对照。
+> 当前主线：Vue正式账号版已连接Java/MySQL及GLM-4-Flash-250414，用户已认可本轮模型切换与聊天流程。原演示数据独立保留、不自动导入。最新业务验证87项后端/package、192项Node及两构建通过；本机启动入口另有8项Node和7项真实Java/Vite HTTP启停检查。真机、跨设备、生产交互及停止按钮未获单独逐项反馈，按实际证据记录。
 > 项目规则见AGENTS.md，目标/验收见PROJECT_PLAN.md，当前任务见STATE.json，历史证据见LOG.md；实现以代码和本轮验证为准。旧Supabase指南在docs/archive/supabase-route/，不能作为当前操作入口。
+
+## 当前本机使用入口
+
+已有本机环境、MySQL、忽略的backend/.env.local.properties、后端jar及前端依赖时，双击项目根目录[start-local.cmd](../start-local.cmd)。脚本不安装依赖、不重新打包、不改系统执行策略、不自动启动MySQL或打开浏览器。它仅监听127.0.0.1，后端8080和正式前端5174依次启动；实际CSRF响应与server模式模块就绪后才显示登录链接。
+
+保留启动窗口，自行打开 http://127.0.0.1:5174/login 。按Ctrl+C停止本次创建的前后端；一项启动失败或运行中意外退出会停止本次另一项并提示日志路径。端口已有监听时明确退出，不停止、不替换其他进程，正在使用的原网页不受影响。重新启动后需重新登录，MySQL账单仍保留。
+
+只检查环境、不启动服务：
+
+```powershell
+cd E:\XiangMu\未定项目
+node scripts/local-dev.mjs --check
+```
+
+检查只确认Java版本、jar/依赖/配置入口存在及端口状态，不证明数据库凭据、SMTP投递或模型配额有效。运行日志存入项目.cache/local-dev/run-*，Java及子进程临时目录指向项目.cache/backend/tmp；不改变系统TEMP/TMP。缺jar先按[后端说明](../backend/README.md)package，源码更新后需重新打包；缺依赖时先核E盘缓存再按实际需要准备。
+
+手动分别启动依然可用：后端见上述说明；正式前端在frontend目录执行：
+
+```powershell
+node .\node_modules\vite\bin\vite.js --mode server --host 127.0.0.1 --port 5174 --strictPort
+```
+
+默认`npm run dev`和`npm run build`仍是演示，正式构建用`npm run build:server`。前端`npm test`运行192项现有业务测试；根目录`node --test scripts/local-dev.test.mjs`单独运行启动入口8项测试，不发真实模型/邮件。当前无lint/typecheck脚本，不虚报执行。
+
+## 以下为演示模式与早期实现说明
+
+下方保留旧阶段设计和证据，用于历史对照；其中“后端未建立”“真实AI未接入”或旧测试数字不表示当前正式账号版状态。运行与当前限制以上方入口、HANDOFF及LOG最新条为准。
 
 ## 一、运行前端
 

@@ -4,6 +4,8 @@ Java 21、Spring Boot 3.5.16、Spring Security、Spring JDBC、Flyway、MySQL 8.
 
 ## 本地运行
 
+已有jar、前端依赖及本机配置时，可双击项目根目录[start-local.cmd](../start-local.cmd)同时启动本机账号版。它只启动已有构建，HTTP就绪后给出5174地址；端口占用则保留原服务。无需改PowerShell执行策略，不安装任何工具；重建后端仍按下方package步骤。Ctrl+C仅停止本次启动创建的服务，日志与临时目录在项目.cache内。
+
 需要 Java 21 与 Maven 3.6.3 或更新版本。项目内已有 Maven 3.9.11 时，脚本优先复用；否则使用 PATH 中的 Maven。脚本将 Maven 依赖和临时目录限定在项目盘，不安装全局工具、不更改系统 TEMP/TMP。
 
 ```powershell
