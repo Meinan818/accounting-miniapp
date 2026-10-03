@@ -16,6 +16,7 @@ import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfilePhoto
 import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
 import { createProfileApi } from '@/api/profile'
+import { useLocalDay } from '@/utils/calendar'
 
 const store = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
@@ -23,17 +24,18 @@ const profileOwner = auth?.user.id
 let disposed = false
 const isCurrentProfile = () => !disposed && auth?.user?.id === profileOwner
 const remoteProfile = auth ? createProfileApi(auth.api, { owner: profileOwner, isCurrent: isCurrentProfile }) : null
-const month = dayjs().format('YYYY-MM')
-const monthTitle = dayjs(month + '-01').format('YYYY年M月')
+const { today } = useLocalDay()
+const month = computed(() => today.value.slice(0, 7))
+const monthTitle = computed(() => dayjs(month.value + '-01').format('YYYY年M月'))
 const appVersion = packageInfo.version
 const calculated = computed(() => {
-  try { return { data: getMonthStatistics(store.records, month), error: '' } }
+  try { return { data: getMonthStatistics(store.records, month.value), error: '' } }
   catch (error) { return { data: null, error: error.message } }
 })
 const statistics = computed(() => calculated.value.data)
 const error = computed(() => store.storageError || calculated.value.error)
 const wideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents].some(value => centsText(value).length > 9))
-const recentDays = computed(() => getRecentDays(store.records, dayjs().format('YYYY-MM-DD')))
+const recentDays = computed(() => getRecentDays(store.records, today.value))
 const recordedDays = computed(() => recentDays.value.filter(day => day.count > 0).length)
 const profile = ref({ ...DEFAULT_PROFILE })
 const profileError = ref(SERVER_MODE ? '正在读取账号资料…' : '')

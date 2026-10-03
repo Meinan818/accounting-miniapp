@@ -1,3 +1,11 @@
+## 2026-10-04 · 个人页跨日月概况与足迹
+
+- profile-interactions-2026-10-04/clock-before.log真实6项5通过1失败：本机从10月31日跨到11月1日，Profile仍为2026年10月。月份是挂载常量，7天computed也未依赖响应日期。
+- Profile接已有useLocalDay，月标题/月概况/最近7天均响应本机日；不会改业务日期/资料输入/照片或请求网络。回归核跨月29分→31分、足迹末日更新、填写昵称保持、释放focus监听与时钟。
+- 6项Profile实际setup/300项全量及demo/server两构建通过；GUI/真机/实际隔夜待验。没有真实资料/账本/AI/邮件调用，无新依赖。
+- e0e0b10普通Push成功，完整e0e0b10f60e79c2aefe0fc5505fd1b30da34bdb0与远端一致已核。compact仍1，源聊天2仅历史，automation每小时ACTIVE既有ID保持，完整定时成功仍未证实。
+- 下一项继续个人页照片处理期间取消/替换及迟到图片结果的输入保护；现photoRequest守卫已存在，先离线验证组件脚本，不默认追加生图/照片上传/GUI工具。
+
 ## 2026-10-04 · 个人资料异步输入保护
 
 - profile-interactions-2026-10-04/before.log实际3项1通过2失败：重复打开的第二次读取覆盖已填昵称；较早GET在PUT保存新版本后返回，覆盖名片。openProfile串行并在已打开时保留表单；loadProfile按代次/身份/离页核响应，保存撤销旧读取。

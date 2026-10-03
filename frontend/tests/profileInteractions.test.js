@@ -2,26 +2,28 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { computed, effectScope, reactive, ref } from 'vue'
+import { computed, effectScope, reactive, ref, unref } from 'vue'
 import dayjs from 'dayjs'
 import { createProfileApi } from '../src/api/profile.js'
 import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile } from '../src/utils/localProfile.js'
 import { getMonthStatistics } from '../src/utils/statistics.js'
 import { getRecentDays } from '../src/utils/journal.js'
 import { centsText } from '../src/utils/money.js'
+import { useLocalDay } from '../src/utils/calendar.js'
 
 const original = { nickname: '合成名片', signature: '合成签名', avatar: 'cat', version: 0 }
-function scene() {
+function scene({ records = [], dateClock = {} } = {}) {
   const requests = [], cleanup = [], scope = effectScope()
   const auth = reactive({ user: { id: '1' }, api: { request(method, path, options) {
     return new Promise((resolve, reject) => requests.push({ method, path, options, resolve, reject }))
   } } })
   const script = readFileSync(new URL('../src/views/Profile.vue', import.meta.url), 'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
   const bindings = { computed, ref, dayjs, onMounted() {}, onBeforeUnmount: fn => cleanup.push(fn), SERVER_MODE: true,
-    useRecordStore: () => ({ records: [], storageError: '', refresh() { assert.fail('不可自动读账单') } }),
+    useRecordStore: () => ({ records, storageError: '', refresh() { assert.fail('不可自动读账单') } }),
     useAuthStore: () => auth, getMonthStatistics, getRecentDays, centsText, packageInfo: { version: 'synthetic' },
+    useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
     DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto() { assert.fail('不可处理真实照片') } }
-  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { profile, profileForm, profileError, profileDialog, loadProfile, openProfile, saveProfile, savingProfile, editError, loadingProfile }')(...Object.values(bindings)))
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, saveProfile, savingProfile, editError, loadingProfile }')(...Object.values(bindings)))
   let opens = 0
   view.profileDialog.value = { open: false, showModal() { opens++; this.open = true }, close() { this.open = false } }
   return { view, requests, get opens() { return opens }, dispose() { cleanup.forEach(fn => fn()); scope.stop() } }
@@ -102,4 +104,35 @@ test('迟到的资料重读不能覆盖已经保存的新版本', async () => {
     assert.equal(env.view.profile.value.nickname, '新昵称')
     assert.equal(env.view.profile.value.version, 1)
   } finally { env.dispose() }
+})
+
+test('个人页跨月同步月份与7天足迹，保留编辑输入且不读取网络', () => {
+  const OriginalDate = globalThis.Date
+  let time = new OriginalDate('2026-10-31T12:00:00'), day = '2026-10-31', cleared = false
+  globalThis.Date = class extends OriginalDate {
+    constructor(...args) { super(...(args.length ? args : [time.getTime()])) }
+    static now() { return time.getTime() }
+  }
+  const events = new Map()
+  let env
+  try {
+    env = scene({ records: [
+      { id: 'oct', type: 'expense', amount: 0.29, date: '2026-10-31', category: '餐饮' },
+      { id: 'nov', type: 'expense', amount: 0.31, date: '2026-11-01', category: '餐饮' },
+    ], dateClock: { now: () => day, documentTarget: null,
+      eventTarget: { addEventListener: (key, fn) => events.set(key, fn), removeEventListener: key => events.delete(key) },
+      timers: { setInterval: () => 1, clearInterval: () => { cleared = true } },
+    } })
+    assert.equal(env.view.statistics.value.expenseCents, 29)
+    assert.equal(env.view.recentDays.value.at(-1).date, '2026-10-31')
+    env.view.profileForm.value.nickname = '跨月仍在填写'
+    time = new OriginalDate('2026-11-01T12:00:00'); day = '2026-11-01'; events.get('focus')?.()
+    assert.equal(unref(env.view.monthTitle), '2026年11月')
+    assert.equal(env.view.statistics.value.expenseCents, 31)
+    assert.equal(env.view.recentDays.value.at(-1).date, '2026-11-01')
+    assert.equal(env.view.profileForm.value.nickname, '跨月仍在填写')
+    assert.equal(env.requests.length, 0)
+  } finally { env?.dispose(); globalThis.Date = OriginalDate }
+  assert.equal(events.size, 0)
+  assert.equal(cleared, true)
 })
