@@ -21,11 +21,11 @@
 
 ```
 src/
-├── views/              # Home / Chat / Bills；Add / Stats / Profile / Login仍占位
+├── views/              # Home / Chat / Bills / Add / Stats / Profile已实现；Login仍占位
 ├── components/         # calendar / common / layout / record / chart / mascot
 ├── stores/             # recordStore.js / conversationStore.js
 ├── router/index.js
-├── utils/              # format.js / mockAI.js（本地规则模拟，不是真实AI）
+├── utils/              # money / ledger / draftEngine / statistics / journal / navigation等；规则模拟不是真实AI
 ├── assets/design/      # 已接入的分类素材
 ├── styles/             # 首页局部视觉基准等
 ├── App.vue

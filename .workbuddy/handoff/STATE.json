@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "猫猫手账桌面版创新已实现并验证：今日便签/回今天、查询快捷键、只读明细搜索、分类环图/小发现、个人页七天足迹与六页原生纸张视觉；按自主授权本地保存并收尾",
-  "stage": "frontend_journal_edition_review",
+  "currentTask": "本轮新版体验打磨完成：搜索焦点/连续切页与滚动恢复、首页粉绿纸条、编辑面板轻动效与键盘细节已实现并分别本地保存，最终技术检查通过；实际观感仍待反馈",
+  "stage": "frontend_polish_saved_pending_visual_feedback",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "用户返回后打开本地首页、统计与我的看整体验，再试明细搜索和查询快捷键；按反馈做有界调整，后续范围/commit重新按用户授权，不自动Push或扩张后端",
-  "nextStepReason": "原功能保留且107项单元/129项开发版浏览器/30项生产构建浏览器检查通过；已有基线及新版存档，当前最有价值的是一次整体验收而非继续堆装饰",
-  "pendingUserDecision": "新版整体观感反馈；真机/跨设备尚未验证；Push/部署未授权。收尾后不把本次一小时授权延长为长期权限",
+  "nextStep": "保留当前本地可回退版本供实际体验，后续依据新版切页与纸条的实际反馈做小步调整；不重做核心前端或自动启动后端",
+  "nextStepReason": "本轮三项主要反馈及导航回归已处理，116项Node与Chrome开发/生产及Edge检查通过；接下来应以真实观感而非继续叠大装饰驱动，人工反馈与真机结果不能靠技术检查代替",
+  "pendingUserDecision": "无必须外部操作；本轮观感、真机与跨设备仍未反馈/验证，Push/部署/收费/后端不包含本轮授权",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
