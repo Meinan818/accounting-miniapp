@@ -997,3 +997,10 @@
 - 无真实账号/账本/对话/照片写入，无真实AI/邮件请求，无依赖变化；GUI/真机/实际隔夜未验，compact=0。核相关差异后本地保存，复用既有官方同SHA/force:false快进适配器上传，结果见api-sync/remote-final材料，不强推/改可见性。下一项同Pinia释放再建快照/错误状态与账号键恢复取证，保护原未保存对话。
 
 - 同步实际结果：既有官方Git数据库适配器成功准备逐SHA一致的25d39330/a0f71bfc，19个blob，force:false快进后GET核远端a0f71bfc0207238d558db985a564d0eefd2d1b02与HEAD一致，origin/main同步更新；api-sync.log完整保留。Git443失败原文未删，不改仓库可见性/权限/部署。当前服务19940/20820仍仅127.0.0.1:8080/5174，无重启，Git干净。339项及两构建保持，原生每小时续办字段与compact=0保持。同步结果文档独立保存，最后远端核见remote-final.log。
+
+## 2026-10-04 · 同Pinia对话Store释放再建
+
+- heartbeat开工干净/main/6cd15ee，服务19940/20820仍仅本机8080/5174，未重启；本次实际第1次压缩已告知，恢复补STATE=1。自动唤醒/摘要不计，不能归零。
+- 真实Pinia4.0.3与合成存储rebuild-before38项32通过6失败：setup当前读取被遗留state覆盖，损坏/已修复历史保护状态错误，未保存草稿新expectedRaw允许覆盖外部历史，同tick标记丢失，A旧历史回填B。Pinia本地pinia.js的dispose/hydrate源码已核；跳过hydrate同时按Pinia/账号保留未保存快照与原基准，JSON脱离旧实例引用，仅已保存历史重读当前存储。
+- 38项针对、346项全量、demo/server两构建通过（rebuild-after/frontend/demo/server日志），GUI/真机/实际隔夜仍未验。无真实业务/账号/照片/AI/邮件调用，无新依赖。官方只读API核私有/无Pages/0 workflows/0 deployments、远端6cd15ee完整一致；本节点保存上传实际结果见rebuild-sync。
+- 读依赖最初假定pinia.mjs及根目录node_modules路径失败，实际4.0.3入口为frontend/node_modules/pinia/dist/pinia.js，已按import.meta.resolve核实；只读错误未影响测试，不默认重装。下一项身份变化先于释放的retry/清空前未保存草稿取证；继续无需用户操作，compact=1保持。

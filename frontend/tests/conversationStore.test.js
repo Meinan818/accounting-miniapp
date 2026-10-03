@@ -1,7 +1,8 @@
 import test, { beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import { createPinia, setActivePinia } from 'pinia'
-import { nextTick } from 'vue'
+import { nextTick, reactive } from 'vue'
 import { useConversationStore } from '../src/stores/conversationStore.js'
 import { createDraft, applyDraftInput } from '../src/utils/draftEngine.js'
 let data, fail, writes
@@ -227,6 +228,87 @@ function storageEvents() {
   return { emit: event => { for (const listener of listeners) listener(event) }, count: () => listeners.size }
 }
 const textHistory = content => JSON.stringify([{ id:'external', role:'assistant', kind:'text', content }])
+test('同Pinia重建只读当前历史，追加不会把已保存旧快照覆盖回来', async () => {
+  const old = useConversationStore(); old.addMessage({ content: '此前已保存' }); await nextTick()
+  old.setThinking(true); old.setMascotMood('thinking'); old.$dispose()
+  const latest = textHistory('释放期间另一页面更新'); data.set(key, latest)
+  const before = writes, rebuilt = useConversationStore()
+  await nextTick()
+  assert.equal(JSON.stringify(rebuilt.messages), latest); assert.equal(writes, before)
+  assert.equal(rebuilt.isThinking, false); assert.equal(rebuilt.mascotMood, 'happy')
+  rebuilt.addMessage({ content: '新实例继续' }); await nextTick()
+  assert.equal(JSON.parse(data.get(key))[0].content, '释放期间另一页面更新')
+  assert.equal(JSON.parse(data.get(key)).length, 2)
+})
+test('同Pinia重建识别新损坏历史，旧正常状态不解除保护', async () => {
+  const old = useConversationStore(); old.$dispose(); data.set(key, '{new-damaged')
+  const rebuilt = useConversationStore(); await nextTick()
+  assert.equal(rebuilt.restorationBlocked, true); assert.match(rebuilt.persistenceError, /保护/)
+  rebuilt.addMessage({ content: '合成本页草稿' }); await nextTick()
+  assert.equal(data.get(key), '{new-damaged'); assert.equal(writes, 0)
+})
+test('同Pinia重建清除已过期读取错误，当前有效历史可继续保存', async () => {
+  data.set(key, '{prior-damaged'); const old = useConversationStore(); old.$dispose()
+  const latest = textHistory('已修复合成历史'); data.set(key, latest)
+  const rebuilt = useConversationStore(); await nextTick()
+  assert.equal(rebuilt.restorationBlocked, false); assert.equal(rebuilt.persistenceError, '')
+  assert.equal(JSON.stringify(rebuilt.messages), latest); assert.equal(writes, 0)
+  rebuilt.addMessage({ content: '继续保存' }); await nextTick()
+  assert.equal(JSON.parse(data.get(key)).length, 2)
+})
+test('重建保留失败写入的草稿与原基准，外部新历史不能被重试覆盖', async () => {
+  data.set(key, textHistory('原基准')); const old = useConversationStore()
+  fail = true; old.addMessage({ content: '失败写入的本页草稿' }); await nextTick(); old.$dispose()
+  fail = false; const latest = textHistory('另一页新历史'); data.set(key, latest)
+  const rebuilt = useConversationStore(), before = writes; await nextTick()
+  assert.equal(rebuilt.messages.at(-1).content, '失败写入的本页草稿')
+  assert.equal(rebuilt.hasUnsavedChanges, true); assert.equal(rebuilt.storageConflict, true)
+  assert.equal(await rebuilt.retryPersistence(), false)
+  assert.equal(data.get(key), latest); assert.equal(writes, before)
+})
+test('重建保留同tick释放前尚未执行监听的草稿，可显式重试且脱离旧实例引用', async () => {
+  const old = useConversationStore(); old.addMessage({ content: '同tick未保存草稿' }); old.$dispose()
+  const rebuilt = useConversationStore(); await nextTick()
+  assert.equal(rebuilt.hasUnsavedChanges, true); assert.equal(writes, 0)
+  old.messages.at(-1).content = '旧实例迟到修改'
+  assert.equal(rebuilt.messages.at(-1).content, '同tick未保存草稿')
+  assert.equal(await rebuilt.retryPersistence(), true)
+  assert.equal(JSON.parse(data.get(key)).at(-1).content, '同tick未保存草稿')
+})
+test('重建保留坏历史期间新增草稿，多次释放仍保护两份内容', async () => {
+  data.set(key, '{protected-damaged'); const old = useConversationStore()
+  old.addMessage({ content: '坏历史期间本页草稿' }); await nextTick(); old.$dispose()
+  const latest = textHistory('外部修复历史'); data.set(key, latest)
+  const first = useConversationStore(); first.$dispose(); const rebuilt = useConversationStore()
+  assert.equal(rebuilt.messages.at(-1).content, '坏历史期间本页草稿')
+  assert.equal(await rebuilt.retryPersistence(), false)
+  assert.equal(data.get(key), latest); assert.equal(writes, 0)
+})
+test('正式同Pinia重建按账号键隔离，A未保存草稿不回填或写入B历史', async () => {
+  const auth = reactive({ user: { id: 'synthetic-A' } })
+  const sourceUrl = new URL('../src/stores/conversationStore.js', import.meta.url)
+  let source = await readFile(sourceUrl, 'utf8')
+  globalThis.__conversationAuth = auth
+  source = source.replace("import { SERVER_MODE } from '../api/mode.js'", 'const SERVER_MODE = true')
+    .replace("import { useAuthStore } from './authStore.js'", 'const useAuthStore = () => globalThis.__conversationAuth')
+    .replace(/from '([^']+)'/g, (_, path) => `from '${path.startsWith('.') ? new URL(path, sourceUrl).href : import.meta.resolve(path)}'`)
+  const { useConversationStore: useServerConversation } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)
+  const aKey = 'miaoji_account_conversation_v1_synthetic-A', bKey = 'miaoji_account_conversation_v1_synthetic-B'
+  const aRaw = textHistory('A历史'), bRaw = textHistory('B历史'); data.set(aKey, aRaw); data.set(bKey, bRaw)
+  try {
+    const a = useServerConversation(); fail = true; a.addMessage({ content: 'A未保存草稿' }); await nextTick(); a.$dispose()
+    fail = false; auth.user = { id: 'synthetic-B' }
+    const b = useServerConversation(); await nextTick()
+    assert.equal(JSON.stringify(b.messages), bRaw); assert.equal(b.hasUnsavedChanges, false)
+    assert.equal(b.persistenceError, ''); assert.equal(writes, 0)
+    b.addMessage({ content: 'B继续' }); await nextTick()
+    assert.equal(JSON.parse(data.get(bKey))[0].content, 'B历史'); assert.equal(data.get(aKey), aRaw)
+    b.$dispose(); auth.user = { id: 'synthetic-A' }; const restoredA = useServerConversation()
+    assert.equal(restoredA.messages.at(-1).content, 'A未保存草稿')
+    assert.equal(await restoredA.retryPersistence(), true)
+    assert.equal(JSON.parse(data.get(aKey)).at(-1).content, 'A未保存草稿'); restoredA.$dispose()
+  } finally { delete globalThis.__conversationAuth }
+})
 test('存储事件只提示冲突，不自动重读或覆盖，显式重读不产生写入', async () => {
   const events = storageEvents(), store = useConversationStore(), before = JSON.stringify(store.messages)
   const latest = textHistory('另一页面最新历史'); data.set(key, latest); events.emit({ key, newValue: latest })

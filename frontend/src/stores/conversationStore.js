@@ -1,11 +1,14 @@
 import { nextTick, onScopeDispose, ref, watch } from 'vue'
-import { defineStore } from 'pinia'
+import { defineStore, getActivePinia, skipHydrate } from 'pinia'
 import { createId, validDate, validateRecord } from '../utils/ledger.js'
 import { MAX_CENTS } from '../utils/money.js'
 import { SERVER_MODE } from '../api/mode.js'
 import { useAuthStore } from './authStore.js'
 
 const STORAGE_KEY = 'zhizhang_conversation'
+// Only unsaved content survives a disposed instance, scoped to its Pinia and account.
+// Saved history and transient UI state are read afresh instead of Pinia's retained state.
+const unsavedSnapshots = new WeakMap()
 function welcome() { return { id: 'welcome-message', role: 'assistant', kind: 'text', content: '本喵来啦～今天买了什么呀？整理好后，由你确认再记下。', createdAt: new Date().toISOString() } }
 
 
@@ -85,12 +88,13 @@ export const useConversationStore = defineStore('conversation', () => {
   const owner = SERVER_MODE ? useAuthStore().user?.id : null
   if (SERVER_MODE && !owner) throw new Error('请先登录再打开对话')
   const key = SERVER_MODE ? `miaoji_account_conversation_v1_${owner}` : STORAGE_KEY
+  const pinia = getActivePinia()
+  const retained = unsavedSnapshots.get(pinia)?.get(key)
   let active = true
-  onScopeDispose(() => { active = false })
-  const persistenceError = ref('')
-  const restorationBlocked = ref(false)
-  const storageConflict = ref(false)
-  const hasUnsavedChanges = ref(false)
+  const persistenceError = skipHydrate(ref(''))
+  const restorationBlocked = skipHydrate(ref(false))
+  const storageConflict = skipHydrate(ref(false))
+  const hasUnsavedChanges = skipHydrate(ref(false))
   let expectedRaw
   let restoring = false
   let initial = [welcome()]
@@ -99,9 +103,32 @@ export const useConversationStore = defineStore('conversation', () => {
   }
   try { const history = readHistory(key); initial = history.messages; expectedRaw = history.raw }
   catch { restorationBlocked.value = true; blockedMessage() }
-  const messages = ref(initial)
-  const isThinking = ref(false)
-  const mascotMood = ref('happy')
+  let cleanMessagesRaw = JSON.stringify(initial)
+  if (retained) {
+    const changed = expectedRaw !== retained.expectedRaw
+    initial = retained.messages
+    cleanMessagesRaw = retained.cleanMessagesRaw
+    expectedRaw = retained.expectedRaw
+    hasUnsavedChanges.value = true
+    restorationBlocked.value ||= retained.restorationBlocked
+    storageConflict.value = retained.storageConflict || changed
+    if (!persistenceError.value) persistenceError.value = retained.persistenceError
+  }
+  const messages = skipHydrate(ref(initial))
+  const isThinking = skipHydrate(ref(false))
+  const mascotMood = skipHydrate(ref('happy'))
+  if (storageConflict.value) conflictMessage()
+  onScopeDispose(() => {
+    active = false
+    const currentRaw = JSON.stringify(messages.value)
+    if (currentRaw !== cleanMessagesRaw) {
+      let snapshots = unsavedSnapshots.get(pinia)
+      if (!snapshots) { snapshots = new Map(); unsavedSnapshots.set(pinia, snapshots) }
+      snapshots.set(key, { messages: JSON.parse(currentRaw), cleanMessagesRaw, expectedRaw,
+        restorationBlocked: restorationBlocked.value, storageConflict: storageConflict.value,
+        persistenceError: persistenceError.value })
+    } else unsavedSnapshots.get(pinia)?.delete(key)
+  })
   function addMessage(message) {
     const entry = { id: message.id || createId('message'), role: message.role || 'assistant', kind: message.kind || 'text',
       content: message.content || '', record: message.record || null, confirmed: Boolean(message.confirmed),
@@ -131,6 +158,8 @@ export const useConversationStore = defineStore('conversation', () => {
         window.localStorage.setItem(key, nextRaw)
       }
       expectedRaw = nextRaw
+      cleanMessagesRaw = nextRaw
+      unsavedSnapshots.get(pinia)?.delete(key)
       hasUnsavedChanges.value = false
       persistenceError.value = ''; return true
     } catch {
@@ -153,6 +182,7 @@ export const useConversationStore = defineStore('conversation', () => {
       restoring = true
       messages.value = recovered.messages
       expectedRaw = recovered.raw
+      cleanMessagesRaw = JSON.stringify(recovered.messages)
       restorationBlocked.value = false; storageConflict.value = false
       await nextTick()
       if (!active) return false

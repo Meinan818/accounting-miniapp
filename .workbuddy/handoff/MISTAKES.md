@@ -273,3 +273,7 @@
 ## 2026-10-04 · 对话Store释放后的重试
 
 - 页面守卫不能阻止Store内部retryPersistence等待nextTick后继续persist；真实Pinia31项29通过2失败，原文保留。Store scope释放active守卫persist与异步恢复，31项针对/339项全量/两构建通过，原合成存储保持。以后页面和Store资源生命周期分别验证，不能仅靠页面忽略回执推断持久化已停止。
+
+## 2026-10-04 · 对话重建hydrate与未保存基准
+- Pinia $dispose保留state，而新setup读当前存储后hydrate旧refs；原消息/错误回填，expectedRaw却来自新存储，可能覆盖其他页历史或把A内容写入B键。rebuild-before38项32通过6失败保留，38项针对/346全量/两构建修复后通过。只跳过hydrate会丢未保存草稿，必须同时保留按Pinia/账号隔离的未保存快照及原写入基准；同tick释放须比较消息快照，不仅依赖异步watch标记。
+- 本轮只读依赖查询假定pinia.mjs及根node_modules，Node print+ESM错误；按frontend工作目录、import.meta.resolve确定pinia.js后已核实际源码。今后先核包入口再读取版本和实现，不安装依赖解决路径猜错。

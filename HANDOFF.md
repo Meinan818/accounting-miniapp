@@ -1,4 +1,12 @@
-## 当前入口：对话Store释放后持久化（2026-10-04）
+## 当前入口：对话Store同Pinia重建（2026-10-04）
+
+本聊天实际第1次上下文压缩已告知并补STATE=1，同聊天恢复不归零。rebuild-before38项32通过6失败，Pinia4.0.3的dispose保留state、setup后hydrate旧refs，导致旧历史/错误覆盖新读取，旧账号对话回填新账号，未保存标记/基准不一致。消息和生命周期refs skipHydrate，WeakMap按Pinia和账号仅保存未保存快照/原expectedRaw，释放捕获同tick更改并JSON脱离旧引用；已保存内容重读当前存储，不写入初始化。
+
+38项对话Store/346项全量及demo/server两构建通过，含坏历史/修复历史、外部冲突、未保存草稿、多次重建与合成账号A→B→A。材料conversation-lifecycle-2026-10-04/rebuild-*。真实账号/账本/照片/AI/邮件调用0，无依赖变化，GUI/真机/实际隔夜待验。官方只读API现核远端6cd15ee完整一致，私有/无Pages/0 workflows/0 deployments；本节点保存上传结果另记实际日志。
+
+继续下一项：账号变化发生在释放前的旧retryPersistence与未保存草稿保留。现有身份watch清空messages，仅设置restorationBlocked，先取证再修，不把账号切换当允许写旧账号存储。原生每小时续办及静音沿用，不需用户操作。
+
+## 前一节点：对话Store释放后持久化（2026-10-04）
 
 同步结果已核：官方Git数据库同SHA/force:false适配器成功上传25d3933及a0f71bf两个提交、19个新blob，远端完整a0f71bfc0207238d558db985a564d0eefd2d1b02一致，Git443失败原日志保留；api-sync.log是实际成功证据，下方“提交后同步”仅前置说明。当前干净/main，服务19940/20820仍仅127.0.0.1:8080/5174，未重启。常规成果无需外部操作，后续原生续办按STATE接手下一项。
 
