@@ -1,12 +1,12 @@
 package cn.miaoji.ledger;
 
 import cn.miaoji.common.ApiException;
+import jakarta.validation.Validator;
 import java.time.DateTimeException;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +17,11 @@ public class LedgerService {
             "expense", Set.of("餐饮", "交通", "购物", "娱乐", "住房", "医疗", "学习", "其他"),
             "income", Set.of("工资", "红包", "兼职", "理财", "退款", "其他"));
     private final LedgerRepository repository;
-    public LedgerService(LedgerRepository repository) { this.repository = repository; }
+    private final Validator validator;
+    public LedgerService(LedgerRepository repository, Validator validator) {
+        this.repository = repository;
+        this.validator = validator;
+    }
     public record MonthSummary(String income, String expense, String balance, long count) {}
     public record RecordPage(List<RecordView> records, int page, int size) {}
 
@@ -30,14 +34,6 @@ public class LedgerService {
     public RecordView get(long owner, String id) {
         return repository.find(owner, id).orElseThrow(() ->
                 new ApiException(HttpStatus.NOT_FOUND, "RECORD_NOT_FOUND", "账单不存在"));
-    }
-
-    @Transactional
-    public RecordView create(long owner, RecordInput input) {
-        validate(input);
-        var id = UUID.randomUUID().toString();
-        repository.insert(owner, id, input);
-        return get(owner, id);
     }
 
     @Transactional
@@ -70,7 +66,8 @@ public class LedgerService {
         } catch (DateTimeException error) { throw invalid(); }
     }
 
-    private void validate(RecordInput input) {
+    void validate(RecordInput input) {
+        if (input == null || !validator.validate(input).isEmpty()) throw invalid();
         if (input.money().signum() <= 0 || input.date().getYear() < 1000 || input.date().getYear() > 9998
                 || !CATEGORIES.getOrDefault(input.type(), Set.of()).contains(input.category())) throw invalid();
     }

@@ -3,8 +3,11 @@ package cn.miaoji.ledger;
 import cn.miaoji.auth.AccountPrincipal;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -12,8 +15,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class LedgerController {
     private final LedgerService ledger;
-    public LedgerController(LedgerService ledger) { this.ledger = ledger; }
+    private final LedgerWriteService writes;
+    public LedgerController(LedgerService ledger, LedgerWriteService writes) {
+        this.ledger = ledger;
+        this.writes = writes;
+    }
     public record UpdateRequest(@NotNull Long version, @NotNull @Valid RecordInput record) {}
+    public record BatchRequest(@NotNull @Size(min = 1, max = 5) List<@NotNull @Valid RecordInput> records) {}
+    public record BatchResponse(List<RecordView> records) {}
 
     @GetMapping("/records")
     public LedgerService.RecordPage list(@AuthenticationPrincipal AccountPrincipal user,
@@ -23,9 +32,19 @@ public class LedgerController {
     }
 
     @PostMapping("/records")
-    @ResponseStatus(HttpStatus.CREATED)
-    public RecordView create(@AuthenticationPrincipal AccountPrincipal user, @Valid @RequestBody RecordInput input) {
-        return ledger.create(user.id(), input);
+    public ResponseEntity<RecordView> create(@AuthenticationPrincipal AccountPrincipal user,
+            @RequestHeader("Idempotency-Key") UUID requestId, @Valid @RequestBody RecordInput input) {
+        var receipt = writes.single(user.id(), requestId, input);
+        return ResponseEntity.status(receipt.replayed() ? HttpStatus.OK : HttpStatus.CREATED)
+                .header("Idempotency-Replayed", Boolean.toString(receipt.replayed())).body(receipt.records().getFirst());
+    }
+
+    @PostMapping("/records/batch")
+    public ResponseEntity<BatchResponse> batch(@AuthenticationPrincipal AccountPrincipal user,
+            @RequestHeader("Idempotency-Key") UUID requestId, @Valid @RequestBody BatchRequest input) {
+        var receipt = writes.batch(user.id(), requestId, input.records());
+        return ResponseEntity.status(receipt.replayed() ? HttpStatus.OK : HttpStatus.CREATED)
+                .header("Idempotency-Replayed", Boolean.toString(receipt.replayed())).body(new BatchResponse(receipt.records()));
     }
 
     @GetMapping("/records/{id}")

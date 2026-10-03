@@ -3,6 +3,15 @@ package cn.miaoji;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import cn.miaoji.ledger.LedgerRepository;
+import cn.miaoji.ledger.LedgerWriteRepository;
+import cn.miaoji.ledger.LedgerWriteService;
+import cn.miaoji.ledger.RecordInput;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -16,10 +25,14 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.http.MediaType;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -31,6 +44,9 @@ class AccountLedgerIntegrationTest {
     @Autowired ObjectMapper json;
     @Autowired JdbcTemplate jdbc;
     @Autowired PasswordEncoder encoder;
+    @Autowired LedgerWriteService writes;
+    @MockitoSpyBean LedgerRepository records;
+    @MockitoSpyBean LedgerWriteRepository requests;
 
     private record Browser(MockHttpSession session, String token) {}
 
@@ -68,7 +84,7 @@ class AccountLedgerIntegrationTest {
     }
 
     private JsonNode create(Browser browser, String amount) throws Exception {
-        var result = mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+        var result = mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input(amount))).andExpect(status().isCreated()).andReturn();
         return json.readTree(result.getResponse().getContentAsString());
     }
@@ -77,7 +93,7 @@ class AccountLedgerIntegrationTest {
         mvc.perform(get("/api/records").param("month", "2026-10")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/statistics/month").param("month", "2026-10")).andExpect(status().isUnauthorized());
         var browser = anonymous();
-        mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+        mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input("1.00"))).andExpect(status().isUnauthorized());
     }
 
@@ -119,7 +135,7 @@ class AccountLedgerIntegrationTest {
         mvc.perform(post("/api/auth/login").param("username", "example").param("password", PASSWORD))
                 .andExpect(status().isForbidden());
         var browser = account();
-        mvc.perform(post("/api/records").session(browser.session()).contentType(MediaType.APPLICATION_JSON)
+        mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).contentType(MediaType.APPLICATION_JSON)
                 .content(input("1.00"))).andExpect(status().isForbidden());
         mvc.perform(post("/api/auth/logout").session(browser.session())).andExpect(status().isForbidden());
     }
@@ -145,7 +161,7 @@ class AccountLedgerIntegrationTest {
     @Test void unknownOwnerFieldsAreRejectedRatherThanTrusted() throws Exception {
         var browser = account();
         var body = input("1.00").replace("}", ",\"user_id\":123}");
-        mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+        mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
     }
 
@@ -174,10 +190,10 @@ class AccountLedgerIntegrationTest {
         var browser = account();
         create(browser, "0.10");
         create(browser, "0.20");
-        mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+        mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input("100.00").replace("expense", "income").replace("餐饮", "工资")))
                 .andExpect(status().isCreated());
-        mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+        mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input("10.00").replace("2026-10-03", "2026-11-01")))
                 .andExpect(status().isCreated());
         mvc.perform(get("/api/statistics/month").session(browser.session()).param("month", "2026-10"))
@@ -188,7 +204,7 @@ class AccountLedgerIntegrationTest {
     @ParameterizedTest @ValueSource(strings = {"0", "-1", "1.001", "1e3", "NaN", "1000000000", "01.00"})
     void invalidMoneyCannotBeWritten(String amount) throws Exception {
         var browser = account();
-        mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+        mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input(amount))).andExpect(status().isBadRequest());
     }
 
@@ -196,7 +212,7 @@ class AccountLedgerIntegrationTest {
         var browser = account();
         for (var body : java.util.List.of(input("1").replace("2026-10-03", "2026-02-30"),
                 input("1").replace("餐饮", "工资"), input("1").replace("2026-10-03", "0001-01-01"))) {
-            mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+            mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                     .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
         }
         mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-13")).andExpect(status().isBadRequest());
@@ -225,7 +241,7 @@ class AccountLedgerIntegrationTest {
         var browser = account();
         for (var body : java.util.List.of(input("1.20").replace("\"1.20\"", "1.20"),
                 input("1.20").replace("\"amount\":\"1.20\",", ""))) {
-            mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+            mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                     .contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isBadRequest());
         }
         mvc.perform(get("/api/statistics/month").session(browser.session()).param("month", "2026-10"))
@@ -239,7 +255,7 @@ class AccountLedgerIntegrationTest {
         register(browser, name, PASSWORD).andExpect(status().isCreated());
         mvc.perform(post("/api/auth/login").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .param("username", name).param("password", PASSWORD)).andExpect(status().isNoContent());
-        mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+        mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input("1.00"))).andExpect(status().isForbidden());
         var authenticated = refresh(browser.session());
         var first = create(authenticated, "1.00").path("id").asText();
@@ -253,5 +269,133 @@ class AccountLedgerIntegrationTest {
         var id0 = json.readTree(page0.getResponse().getContentAsString()).path("records").get(0).path("id").asText();
         var id1 = json.readTree(page1.getResponse().getContentAsString()).path("records").get(0).path("id").asText();
         assertThat(java.util.Set.of(id0, id1)).containsExactlyInAnyOrder(first, second);
+    }
+
+    private long owner(Browser browser) throws Exception {
+        var result = mvc.perform(get("/api/auth/me").session(browser.session())).andReturn();
+        return json.readTree(result.getResponse().getContentAsString()).path("id").asLong();
+    }
+
+    private ResultActions write(Browser browser, UUID key, String body, boolean batch) throws Exception {
+        return mvc.perform(post(batch ? "/api/records/batch" : "/api/records").session(browser.session())
+                .header("X-CSRF-TOKEN", browser.token()).header("Idempotency-Key", key.toString())
+                .contentType(MediaType.APPLICATION_JSON).content(body));
+    }
+
+    private String batch(String... amounts) {
+        return "{\"records\":[" + String.join(",", java.util.Arrays.stream(amounts).map(this::input).toList()) + "]}";
+    }
+
+    private void noWrites(long owner) {
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id = ?", Long.class, owner)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_write_request WHERE user_id = ?", Long.class, owner)).isZero();
+    }
+
+    @Test void sameKeySameMeaningReplaysAndOtherPayloadOrEndpointConflicts() throws Exception {
+        var browser = account();
+        var key = UUID.randomUUID();
+        var original = write(browser, key, input("1"), false).andExpect(status().isCreated())
+                .andExpect(header().string("Idempotency-Replayed", "false")).andReturn();
+        var replay = write(browser, key, input("1.00"), false).andExpect(status().isOk())
+                .andExpect(header().string("Idempotency-Replayed", "true")).andReturn();
+        assertThat(replay.getResponse().getContentAsString()).isEqualTo(original.getResponse().getContentAsString());
+        write(browser, key, input("2.00"), false).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("REQUEST_KEY_REUSED"));
+        write(browser, key, batch("1.00"), true).andExpect(status().isConflict());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id = ?", Long.class, owner(browser))).isEqualTo(1);
+    }
+
+    @Test void requestKeysAreScopedToAccountAndDeletedRecordIsNeverRecreatedByRetry() throws Exception {
+        var alice = account();
+        var bob = account();
+        var key = UUID.randomUUID();
+        var original = write(alice, key, input("2.00"), false).andExpect(status().isCreated()).andReturn();
+        var id = json.readTree(original.getResponse().getContentAsString()).path("id").asText();
+        var other = write(bob, key, input("9.00"), false).andExpect(status().isCreated()).andReturn();
+        assertThat(json.readTree(other.getResponse().getContentAsString()).path("id").asText()).isNotEqualTo(id);
+        mvc.perform(delete("/api/records/" + id).session(alice.session()).header("X-CSRF-TOKEN", alice.token())
+                .param("version", "0")).andExpect(status().isNoContent());
+        write(alice, key, input("2.00"), false).andExpect(status().isOk()).andExpect(jsonPath("$.id").value(id));
+        mvc.perform(get("/api/records/" + id).session(alice.session())).andExpect(status().isNotFound());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id = ?", Long.class, owner(alice))).isEqualTo(1);
+    }
+
+    @Test void mixedBatchCommitsOnceAndSemanticOrStructuralErrorsCommitNothing() throws Exception {
+        var browser = account();
+        var key = UUID.randomUUID();
+        var invalid = batch("1.00", "2.00").replace("2.00", "0.00");
+        write(browser, key, invalid, true).andExpect(status().isBadRequest());
+        for (var invalidBody : List.of(batch(), batch("1", "2", "3", "4", "5", "6"),
+                "{\"records\":[null]}", batch("1").replace("餐饮", "工资"))) {
+            write(browser, key, invalidBody, true).andExpect(status().isBadRequest());
+        }
+        noWrites(owner(browser));
+        var body = "{\"records\":[" + input("0.10") + "," + input("100.00").replace("expense", "income").replace("餐饮", "工资") + "]}";
+        var original = write(browser, key, body, true).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.records.length()").value(2)).andReturn();
+        var replay = write(browser, key, body, true).andExpect(status().isOk()).andReturn();
+        assertThat(replay.getResponse().getContentAsString()).isEqualTo(original.getResponse().getContentAsString());
+        mvc.perform(get("/api/statistics/month").session(browser.session()).param("month", "2026-10"))
+                .andExpect(jsonPath("$.income").value("100.00")).andExpect(jsonPath("$.expense").value("0.10"))
+                .andExpect(jsonPath("$.count").value(2));
+    }
+
+    @Test void storageFailureAfterSecondInsertRollsBackWholeBatchAndAllowsSameKeyRetry() throws Exception {
+        var browser = account();
+        var owner = owner(browser);
+        var key = UUID.randomUUID();
+        var count = new AtomicInteger();
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            if (count.incrementAndGet() == 2) throw new DataIntegrityViolationException("synthetic storage fault");
+            return null;
+        }).when(records).insert(eq(owner), anyString(), any(RecordInput.class));
+        write(browser, key, batch("0.10", "0.20"), true).andExpect(status().isServiceUnavailable());
+        noWrites(owner);
+        reset(records);
+        write(browser, key, batch("0.10", "0.20"), true).andExpect(status().isCreated());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id = ?", Long.class, owner)).isEqualTo(2);
+    }
+
+    @Test void receiptFailureRollsBackRecordAndRequestKeyTogether() throws Exception {
+        var browser = account();
+        var owner = owner(browser);
+        var key = UUID.randomUUID();
+        doThrow(new DataIntegrityViolationException("synthetic receipt fault"))
+                .when(requests).complete(eq(owner), anyString(), anyString());
+        write(browser, key, input("1.00"), false).andExpect(status().isServiceUnavailable());
+        noWrites(owner);
+        reset(requests);
+        write(browser, key, input("1.00"), false).andExpect(status().isCreated());
+    }
+
+    @Test void concurrentIdenticalRequestsOnlyCreateOneRecord() throws Exception {
+        var browser = account();
+        var owner = owner(browser);
+        var key = UUID.randomUUID();
+        var start = new CountDownLatch(1);
+        var input = new RecordInput("expense", "1.20", java.time.LocalDate.of(2026, 10, 3), "餐饮", "合成并发测试");
+        try (var executor = Executors.newFixedThreadPool(6)) {
+            var futures = java.util.stream.IntStream.range(0, 6).mapToObj(index -> executor.submit(() -> {
+                start.await();
+                return writes.single(owner, key, input);
+            })).toList();
+            start.countDown();
+            var receipts = new java.util.ArrayList<LedgerWriteService.WriteReceipt>();
+            for (var future : futures) receipts.add(future.get(15, TimeUnit.SECONDS));
+            assertThat(receipts.stream().filter(receipt -> !receipt.replayed()).count()).isEqualTo(1);
+            assertThat(receipts.stream().map(receipt -> receipt.records().getFirst().id()).distinct().count()).isEqualTo(1);
+        }
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id = ?", Long.class, owner)).isEqualTo(1);
+    }
+
+    @Test void missingAndInvalidRequestKeysCannotWrite() throws Exception {
+        var browser = account();
+        mvc.perform(post("/api/records").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+                .contentType(MediaType.APPLICATION_JSON).content(input("1.00"))).andExpect(status().isBadRequest());
+        mvc.perform(post("/api/records/batch").session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+                .header("Idempotency-Key", "invalid-key").contentType(MediaType.APPLICATION_JSON).content(batch("1.00")))
+                .andExpect(status().isBadRequest());
+        noWrites(owner(browser));
     }
 }
