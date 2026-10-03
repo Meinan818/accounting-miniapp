@@ -15,33 +15,38 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     user.value = value === null ? null : { id: value.id, username: value.username }
     if (previous !== (value?.id ?? null)) onIdentityChange(value?.id ?? null, previous)
   }
-  function expire() { generation++; identity(null); status.value = 'guest'; error.value = '登录已失效，请重新登录。' }
+  function expire() { generation++; restoration = null; identity(null); status.value = 'guest'; error.value = '登录已失效，请重新登录。' }
   async function restore() {
-    if (restoration) return restoration
+    if (restoration) return restoration.promise
     const current = generation
     status.value = 'loading'; error.value = ''
-    restoration = (async () => {
+    const attempt = { promise: null }
+    restoration = attempt
+    attempt.promise = (async () => {
       try {
         const value = await client.request('GET', '/api/auth/me')
         if (current !== generation) return false
         identity(value); status.value = 'authenticated'; return true
       } catch (failure) {
-        if (failure.status === 401) { if (current === generation) { identity(null); status.value = 'guest' }; return false }
-        if (current === generation) { identity(null); status.value = 'unavailable'; error.value = failure.message }
+        if (current !== generation) return false
+        if (failure.status === 401) { identity(null); status.value = 'guest'; return false }
+        identity(null); status.value = 'unavailable'; error.value = failure.message
         throw failure
-      } finally { restoration = null }
+      } finally { if (restoration === attempt) restoration = null }
     })()
-    return restoration
+    return attempt.promise
   }
   async function login(username, password) {
     const current = ++generation
+    restoration = null
     identity(null); status.value = 'loading'; error.value = ''
     try {
       const value = await client.login(username, password)
       if (current !== generation) return false
       identity(value); status.value = 'authenticated'; return true
     } catch (failure) {
-      if (current === generation) { status.value = failure.status === 401 ? 'guest' : 'unavailable'; error.value = failure.message }
+      if (current !== generation) return false
+      status.value = failure.status === 401 ? 'guest' : 'unavailable'; error.value = failure.message
       throw failure
     }
   }
@@ -54,13 +59,27 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     return value
   }
   async function register(email, password, challengeId, code) {
-    await client.request('POST', '/api/auth/email/register', { body: { email, password, challengeId, code } })
+    const current = ++generation
+    restoration = null
+    try {
+      await client.request('POST', '/api/auth/email/register', { body: { email, password, challengeId, code } })
+    } catch (failure) {
+      if (current !== generation) return false
+      throw failure
+    }
+    if (current !== generation) return false
     return login(email, password)
   }
   async function logout() {
+    const current = ++generation
+    restoration = null
     try { await client.logout() }
-    catch (failure) { if (failure.status !== 401) { error.value = failure.message; throw failure } }
-    generation++; identity(null); status.value = 'guest'; error.value = ''
+    catch (failure) {
+      if (current !== generation) return false
+      if (failure.status !== 401) { error.value = failure.message; throw failure }
+    }
+    if (current !== generation) return false
+    identity(null); status.value = 'guest'; error.value = ''
   }
   return { user, status, error, restore, login, register, requestRegistrationCode, logout, expire }
 }

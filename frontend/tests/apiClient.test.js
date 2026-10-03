@@ -5,6 +5,18 @@ import { createLedgerApi, fromRecordView, toRecordInput } from '../src/api/ledge
 
 const response = (status, data) => new Response(status === 204 ? null : JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } })
 const token = { headerName: 'X-CSRF-TOKEN', token: 'synthetic-csrf' }
+
+test('旧账号401或身份变化回执不撤销已切换的新账号', async () => {
+  for (const [status, code] of [[401, 'UNAUTHORIZED'], [409, 'ACCOUNT_CHANGED']]) {
+    let owner = '1', changed = 0, resolve
+    const api = createApiClient({ getOwner: () => owner, onUnauthorized: () => changed++, fetcher: () => new Promise(done => { resolve = done }) })
+    const pending = api.request('GET', '/api/auth/me')
+    owner = '2'
+    resolve(response(status, { code }))
+    await assert.rejects(pending, failure => failure.status === status)
+    assert.equal(changed, 0)
+  }
+})
 const id = '7ebf606b-a0d5-4053-98fb-194505f3d10c'
 const input = { id: 'item1', type: 'expense', amount: '0.29', date: '2026-10-03', time: '09:15', category: '餐饮', remark: '合成午饭' }
 test('AI可设置更长的单次期限，普通请求保持原默认期限', async () => {

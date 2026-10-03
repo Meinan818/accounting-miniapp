@@ -13,6 +13,7 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
   let csrfLoading = null
   async function send(method, path, { body, headers = {}, signal, requestTimeoutMs = timeoutMs } = {}) {
     if (!path.startsWith('/api/') || path.includes('://')) throw new Error('接口须使用同源/api路径')
+    const ownerAtSend = getOwner()
     const timeout = new AbortController()
     const timer = setTimeout(() => timeout.abort(), requestTimeoutMs)
     const abort = () => timeout.abort()
@@ -28,7 +29,7 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
         if (hasBody) { try { data = JSON.parse(text) } catch { /* HTML代理错误不能直接显示原文。 */ } }
       }
       if (!response.ok) {
-        if (response.status === 401 || data?.code === 'ACCOUNT_CHANGED') { csrf = null; onUnauthorized() }
+        if ((response.status === 401 || data?.code === 'ACCOUNT_CHANGED') && getOwner() === ownerAtSend) { csrf = null; onUnauthorized() }
         const message = response.status === 401 ? (path === '/api/auth/login' ? '账号或密码不正确。' : '登录已失效，请重新登录。')
           : response.status === 403 ? '安全校验未通过，请重新登录后再试。'
             : typeof data?.message === 'string' ? data.message : '服务暂不可用，请稍后重试。'

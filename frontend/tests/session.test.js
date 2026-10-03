@@ -5,6 +5,69 @@ import { ApiError } from '../src/api/client.js'
 
 const alice = { id: '1', username: 'synthetic_alice' }
 const bob = { id: '2', username: 'synthetic_bob' }
+
+test('失效后立即恢复发送新请求，旧响应和finally不清新恢复', async () => {
+  const resolvers = []
+  const session = createSession({ request: () => new Promise(done => resolvers.push(done)) })
+  const first = session.restore()
+  session.expire()
+  const second = session.restore()
+  assert.equal(resolvers.length, 2)
+  resolvers[0](alice)
+  assert.equal(await first, false)
+  const joined = session.restore()
+  assert.equal(resolvers.length, 2)
+  resolvers[1](bob)
+  await Promise.all([second, joined])
+  assert.equal(session.user.value.id, '2')
+})
+
+test('退出迟到回执不清除退出后新登录的身份', async () => {
+  let finishLogout
+  let account = alice
+  const session = createSession({ login: async () => account, logout: () => new Promise(done => { finishLogout = done }) })
+  await session.login('a', 'synthetic')
+  const pending = session.logout()
+  account = bob
+  await session.login('b', 'synthetic')
+  finishLogout()
+  await pending
+  assert.equal(session.user.value.id, '2')
+  assert.equal(session.status.value, 'authenticated')
+})
+
+test('注册迟到成功在身份失效后不继续登录或恢复旧操作', async () => {
+  let finishRegistration
+  let logins = 0
+  const session = createSession({ request: () => new Promise(done => { finishRegistration = done }), login: async () => { logins++; return alice } })
+  const pending = session.register('synthetic@example.test', 'SyntheticPass123!', 'synthetic', '123456')
+  session.expire()
+  finishRegistration()
+  assert.equal(await pending, false)
+  assert.equal(logins, 0)
+  assert.equal(session.user.value, null)
+})
+
+test('退出开始时阻断先前未完成登录，迟到登录不恢复身份', async () => {
+  let finishLogin
+  const session = createSession({ login: () => new Promise(done => { finishLogin = done }), logout: async () => {} })
+  const login = session.login('a', 'synthetic')
+  await session.logout()
+  finishLogin(alice)
+  assert.equal(await login, false)
+  assert.equal(session.user.value, null)
+})
+
+test('旧恢复的网络失败不冒泡干扰已成功登录的新身份', async () => {
+  let rejectRestore
+  const session = createSession({ request: () => new Promise((_, fail) => { rejectRestore = fail }), login: async () => bob })
+  const pending = session.restore()
+  await session.login('b', 'synthetic')
+  rejectRestore(new ApiError('旧账号网络失败'))
+  assert.equal(await pending, false)
+  assert.equal(session.error.value, '')
+  assert.equal(session.user.value.id, '2')
+})
 test('恢复只读真实会话，401保持未登录，不假造演示用户', async () => {
   const session = createSession({ request: async () => { throw new ApiError('expired', { status: 401 }) } })
   assert.equal(await session.restore(), false); assert.equal(session.user.value, null); assert.equal(session.status.value, 'guest')
