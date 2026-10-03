@@ -1,14 +1,15 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
-import dayjs from 'dayjs'
+import { useLocalDay } from '../utils/calendar.js'
 import { createId } from '../utils/ledger.js'
 import { legacyCents, sumAmounts } from '../utils/money.js'
 import { createLedgerApi, fromRecordView } from './ledger.js'
 
-export function createRemoteLedger(client, owner, { storage, eventTarget = globalThis.window } = {}) {
+export function createRemoteLedger(client, owner, { storage, eventTarget = globalThis.window, dateClock = {} } = {}) {
   const allRecords = ref([])
   const storageError = ref('正在读取正式账本…')
   const records = computed(() => allRecords.value.filter(record => !record.deletedAt))
-  const monthRecords = computed(() => records.value.filter(record => record.date.startsWith(dayjs().format('YYYY-MM'))))
+  const { today } = useLocalDay(dateClock)
+  const monthRecords = computed(() => records.value.filter(record => record.date.startsWith(today.value.slice(0, 7))))
   const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
   const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
   function categories(type) {

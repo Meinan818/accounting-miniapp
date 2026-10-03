@@ -138,6 +138,33 @@ test('另一标签页改变当前账号意图时更新恢复列表，其他账�
   } finally { scope.stop() }
   assert.equal(listeners.size, 0)
 })
+
+test('账本版本未变时跨月仍更新本月汇总，保留完整记录且不写入', async () => {
+  const OriginalDate = globalThis.Date
+  let time = new OriginalDate('2026-10-31T12:00:00'), reads = 0
+  globalThis.Date = class extends OriginalDate {
+    constructor(...args) { super(...(args.length ? args : [time.getTime()])) }
+    static now() { return time.getTime() }
+  }
+  const listeners = new Map(), events = { addEventListener: (key, fn) => listeners.set(key, fn), removeEventListener: key => listeners.delete(key) }
+  const scope = effectScope(), owner = ref('1'), storage = { getItem: () => null, setItem: () => { throw Error('禁止写入') } }
+  const store = scope.run(() => createRemoteLedger({ request: async method => {
+    assert.equal(method, 'GET'); reads++
+    return { revision: '0', nextAfter: null, records: [{ record: { ...value, date: '2026-10-31' } },
+      { record: { ...value, id: 'eabf606b-a0d5-4053-98fb-194505f3d10c', amount: '0.31', date: '2026-11-01' } }] }
+  } }, owner, { storage, dateClock: { eventTarget: events, documentTarget: events,
+    timers: { setInterval: () => 1, clearInterval: () => {} } } }))
+  try {
+    await store.refresh()
+    assert.equal(store.monthExpense.value, 0.29)
+    time = new OriginalDate('2026-11-01T12:00:00')
+    listeners.get('focus')?.()
+    await store.refresh()
+    assert.equal(store.monthExpense.value, 0.31)
+    assert.equal(store.records.value.length, 2)
+    assert.equal(reads, 2)
+  } finally { scope.stop(); globalThis.Date = OriginalDate }
+})
 test('重开页面后按回执ID恢复组条目关联，顺序变化及删除不丢最新事实', () => {
   const group = { id: 'g', recordIds: ['a', 'b'], items: [{ id: 'item1' }, { id: 'item2' }] }
   const linked = linkGroupRecords(group, [{ id: 'b', deletedAt: 'synthetic' }, { id: 'a', amount: 12 }])

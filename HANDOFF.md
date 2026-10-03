@@ -1,3 +1,10 @@
+## 2026-10-04 · 正式与演示账本跨月缓存
+
+- ledger-month-clock-2026-10-04/before.log实际复现：两个月账单均已加载，时间跨月后同revision重读省去替换，monthExpense仍0.29而不是新月0.31。computed只有records依赖，直接dayjs取月不触发更新。
+- 正式/演示月getter接入已提取useLocalDay响应本机日；不改月筛选口径/账单日期，不强制替换同版本账本，不发写请求。正式跨月仍只2次首页读取，演示跨月0写入且dispose释放focus/storage监听。
+- 31项正式账本针对、277项全量及demo/server两构建通过；3d361fa为此前独立保持行为时钟提取节点。没有新增真实账单/模型/邮件，GUI/真机未验，compact=0。
+- 本次私有仓库/无Pages/0 workflows/0 deployments再由官方GitHub只读API核实，remote=915b933；普通Push后继续核完整SHA，不强推。下一项开发期Pinia热更新生命周期与缓存保留：已核本地4.0.3导出dist/pinia.js，hot临时Store不自动dispose，须离线取证再确定最小处理，不能冒称正式生产故障。
+
 ## 2026-10-04 · 手动取消时保留真实表单实例
 
 - 使用已有Vue3.5.43/compiler-dom3.5.43、实际Add模板及RecordForm初始化脚本在Node自定义renderer验证组件时序，不安装依赖/浏览器，不称GUI。首轮harness漏SERVER_MODE导致3项不能渲染，修正后before-fixed-harness.log2通过1真实失败：用户12.34输入取消另一页草稿后变成0.29。

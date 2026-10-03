@@ -204,3 +204,5 @@
 
 ## 2026-10-04 · 取消另一页草稿误覆盖当前输入
 - 本轮取消用cancelling参与v-if卸载RecordForm，已填12.34因此被0.29旧草稿初值覆盖。实际Add模板/Vue挂载复现2通过1失败；改v-show保留实例及仅原始未修改表单回填，3针对/275全量和两构建通过。测试harness最初漏SERVER_MODE的3渲染失败单独保留，不冒称3业务缺陷。以后恢复流程必须验证用户已有编辑和真实挂载顺序。
+
+- 本轮曾猜Pinia旧版本dist/pinia.mjs导致只读文件不存在；随后核package exports和rg --files --no-ignore确认4.0.3实际dist/pinia.js。node_modules下嵌套dist会受项目忽略规则过滤，依赖核查须读实际exports并明确no-ignore；未改依赖或业务数据。

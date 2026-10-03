@@ -6,6 +6,7 @@ import { legacyCents, sumAmounts, MAX_CENTS } from '../utils/money.js'
 import { SERVER_MODE } from '../api/mode.js'
 import { createRemoteLedger } from '../api/remoteLedger.js'
 import { useAuthStore } from './authStore.js'
+import { useLocalDay } from '../utils/calendar.js'
 
 export const RECORD_STORAGE_KEY = 'zhizhang_mock_records'
 
@@ -55,7 +56,8 @@ export const useRecordStore = defineStore('record', () => {
   const allRecords = ref(initial)
   // All pages read active bills; batch lookup also retains deletion facts for old chat cards.
   const records = computed(() => allRecords.value.filter(r => !r.deletedAt))
-  const monthRecords = computed(() => records.value.filter(r => r.date?.startsWith(dayjs().format('YYYY-MM'))))
+  const { today } = useLocalDay()
+  const monthRecords = computed(() => records.value.filter(r => r.date?.startsWith(today.value.slice(0, 7))))
   const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
   const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
   function categories(type) {

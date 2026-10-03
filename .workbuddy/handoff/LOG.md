@@ -873,3 +873,10 @@
 - 单笔上限误套月汇总未复现：sumAmounts/legacyCents没有套parseCents的单笔上限，按现场纠正推测，不修改猜测问题。极大账本安全整数累计另有潜在范围，未作全站安全验证。
 - 为修账本月getter的日期非响应缓存，先将已验证本机日期时钟抽为useLocalDay，Home公共接口/行为保持；10项针对、275全量及两构建通过，refactor日志在calendar-day-2026-10-04。仅calendar模块重排，无新依赖，独立保存后继续跨月功能修复，compact=0。
 - 915b933 Push已成功，远端完整915b933c65d7117c4dc1cf383bfc4da1e003ffc0与本地一致，前两日历节点一并上传，旧失败保留。
+
+## 2026-10-04 · 正式与演示账本跨月缓存
+
+- ledger-month-clock-2026-10-04/before.log实际复现：两个月账单均已加载，时间跨月后同revision重读省去替换，monthExpense仍0.29而不是新月0.31。computed只有records依赖，直接dayjs取月不触发更新。
+- 正式/演示月getter接入已提取useLocalDay响应本机日；不改月筛选口径/账单日期，不强制替换同版本账本，不发写请求。正式跨月仍只2次首页读取，演示跨月0写入且dispose释放focus/storage监听。
+- 31项正式账本针对、277项全量及demo/server两构建通过；3d361fa为此前独立保持行为时钟提取节点。没有新增真实账单/模型/邮件，GUI/真机未验，compact=0。
+- 本次私有仓库/无Pages/0 workflows/0 deployments再由官方GitHub只读API核实，remote=915b933；普通Push后继续核完整SHA，不强推。下一项开发期Pinia热更新生命周期与缓存保留：已核本地4.0.3导出dist/pinia.js，hot临时Store不自动dispose，须离线取证再确定最小处理，不能冒称正式生产故障。

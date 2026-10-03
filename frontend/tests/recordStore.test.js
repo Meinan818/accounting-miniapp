@@ -19,6 +19,28 @@ test('整组只写一次，同源手动添加与直接修改保持原账单', ()
   assert.equal(store.records.length, 3); assert.equal(store.records.find(r => r.id === saved[0].id).amount, 12)
   assert.equal(JSON.parse(data.get(RECORD_STORAGE_KEY)).length, 3)
 })
+
+test('演示账本跨月更新本月汇总但不改存储，释放时钟和存储监听', () => {
+  const OriginalDate = globalThis.Date
+  let time = new OriginalDate('2026-10-31T12:00:00')
+  globalThis.Date = class extends OriginalDate {
+    constructor(...args) { super(...(args.length ? args : [time.getTime()])) }
+    static now() { return time.getTime() }
+  }
+  const listeners = new Map()
+  window.addEventListener = (key, fn) => listeners.set(key, fn)
+  window.removeEventListener = key => listeners.delete(key)
+  data.set(RECORD_STORAGE_KEY, JSON.stringify([record({ date: '2026-10-31' }), record({ id: 'next', amount: 16, date: '2026-11-01' })]))
+  const store = useRecordStore()
+  try {
+    assert.equal(store.monthExpense, 25)
+    time = new OriginalDate('2026-11-01T12:00:00'); listeners.get('focus')()
+    assert.equal(store.monthExpense, 16)
+    assert.equal(store.records.length, 2)
+    assert.equal(writes, 0)
+  } finally { store.$dispose(); globalThis.Date = OriginalDate }
+  assert.equal(listeners.size, 0)
+})
 test('账单写入失败不会修改内存、也不留下部分账单，恢复后可重试', () => {
   const store = useRecordStore(); fail = true
   assert.throws(() => store.addRecords([record({}), record({ id: 'b' })], { batchId: 'g' }), /未保存/)
