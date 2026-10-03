@@ -73,6 +73,33 @@ test('模型少返回一笔时保留原组，含修改字样的追加仍请求�
   assert.equal(JSON.stringify(original), before)
 })
 
+test('多段纠正交给真实接口，不把第二笔金额误改到第一笔', async () => {
+  let calls = 0, response = { ...ready, records: [record, { ...record, amount: '18.00', note: '咖啡' }] }
+  const api = createAiDraftApi({ request: async () => { calls++; return response } }, { makeId })
+  const original = (await api.parse('午饭25，咖啡18', { date })).group
+  const before = JSON.stringify(original)
+  response = { ...ready, records: [{ ...record, amount: '20.00' }, { ...record, amount: '18.00', note: '咖啡', date: '2026-10-03' }] }
+  const changed = await api.parse('咖啡改成昨天，午饭改成20', { date, group: original })
+  assert.equal(calls, 2)
+  assert.equal(changed.group.items[0].amountCents, 2000); assert.equal(changed.group.items[0].date, date)
+  assert.equal(changed.group.items[1].amountCents, 1800); assert.equal(changed.group.items[1].date, '2026-10-03')
+  assert.equal(JSON.stringify(original), before)
+})
+
+test('单笔千分位改价与日期纠正保留金额、其他条目和原业务时间', async () => {
+  let calls = 0
+  const api = createAiDraftApi({ request: async () => {
+    calls++; return { ...ready, records: [record, { ...record, amount: '18.00', note: '咖啡' }] }
+  } }, { makeId })
+  const first = (await api.parse('午饭25，咖啡18', { date })).group
+  const amount = (await api.parse('咖啡改成1,200.50', { date, group: first })).group
+  assert.equal(amount.items[1].amountCents, 120050); assert.equal(amount.items[0].amountCents, 2500)
+  const yesterday = (await api.parse('第2笔改成昨天。', { date, group: amount })).group
+  assert.equal(yesterday.items[1].date, '2026-10-03'); assert.equal(yesterday.items[1].amountCents, 120050)
+  assert.equal(yesterday.items[0].date, date); assert.equal(yesterday.items[1].time, undefined)
+  assert.equal(calls, 1); assert.equal(yesterday.status, 'ready')
+})
+
 test('异常输出不覆盖原草稿，不静默使用模拟结果', async () => {
   for (const response of [{ ...ready, model: 'glm-4.7-flashx' }, { ...ready, records: [] }, { ...clarification, records: [record] },
     { ...ready, records: [{ ...record, amount: 25 }] }, { ...ready, records: [{ ...record, category: '虚构' }] },

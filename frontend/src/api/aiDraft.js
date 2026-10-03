@@ -25,8 +25,13 @@ export function createAiDraftApi(client, { isCurrent = () => true, makeId = crea
       throw new Error('这次整理的文字（含待补充内容）最多1000字，请精简后重试，或取消这组重新描述。')
     }
     const isAddition = /^(?:再加(?:一笔)?|另外加(?:一笔)?|追加)/.test(message)
+    // 单笔确定操作不处理多段指令；否则后一句的金额可能误套给前一句的目标。
+    const correctionText = message.replace(/\d{1,3}(?:,\d{3})+(?:\.\d+)?/g, token => token.replaceAll(',', ''))
+      .replace(/[。！!?？]+$/u, '')
+    const multipleClauses = /[，,、;；。\n]|然后|另外|同时|以及|还有|并且|和|与/.test(correctionText)
+      || (message.match(/改成|改为|改到|改一下/g) || []).length > 1
     if (group && !isAddition && (group.pending?.kind === 'target' || (group.status === 'ready'
-      && /改成|改为|改到|改一下|那笔|第[1-5一二三四五]笔.*(?:是|金额|日期)/.test(message)))) {
+      && !multipleClauses && /改成|改为|改到|改一下|那笔|第[1-5一二三四五]笔.*(?:是|金额|日期)/.test(message)))) {
       // 不让单笔改价的模型结果替换整个组；既有规则只修改明确目标，歧义先问编号。
       const result = applyDraftInput({ ...group, origin: 'ai' }, message, { date, makeId })
       guard()
