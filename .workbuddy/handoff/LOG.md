@@ -695,5 +695,12 @@
 - 已接手源交接cdecd3c，main工作区最初干净。源聊天名称「喵叽智账：免费GLM、个人页调整与全权自动续办交接」，原生create_thread显式gpt-6.1-sol/high已核；本聊天01a10312-42ac-7953-909e-b7f982a78353，compact基准0，旧2仅历史。原生heartbeat automation已转到当前ID，toml与view核ACTIVE/每小时/failed_runs_only，未重复创建，scheduledRunVerified仍false。
 - 原服务PID19940/20820与127.0.0.1监听核实，8080 CSRF与5174/profile均200；不重启、不改原账号/账本/照片/合成数据或忽略凭据。Git fetch本轮低速超时，仍不Push/部署，PENDING更新为Codex外部重试。
 - 先新增7项离线回归，18项中11通过/7失败，ai-before.log完整保留：待选编号误套旧改价、复合/名称/时间纠正被截取、追问跨天日期基准变化、追加无新候选被接受、5笔后仍发追加请求。修复路由为纯金额/日期及纯编号确定操作，其他语义交现有真实接口；复杂待选输入携带旧修改摘要。追问referenceDate持久化，连续/追加追问各用该次请求基准，旧数据兼容创建日。
-- 共享规则新明确纠正先于旧编号意图；非法目标保留原pending。新增共享规则测试进一步复现演示复合输入被当第2笔日期纠正（首次全量203中202通过/1失败，frontend-test.log保留）；演示待选复合输入改为原草稿保持并要求逐筆选择，未放宽断言。
+- 共享规则新明确纠正先于旧编号意图；非法目标保留原pending。新增共享规则测试进一步复现演示复合输入被当第2笔日期纠正（首次全量203中202通过/1失败，frontend-test.log保留）；演示待选复合输入改为原草稿保持并要求逐笔选择，未放宽断言。
 - 最终203项frontend-test-after.log及build-demo/build-server通过；无lint/typecheck脚本，不虚构。材料E盘.workbuddy/memory/chat-boundaries-2026-10-04，缓存与任务TEMP/TMP仍E盘。真实新句模型、GUI/真机未验证，未外发或入账；既有87后端与模型证据只作历史。下一项继续大账本重复加载与并发刷新保护，无需外部操作。
+
+## 2026-10-04 · 大账本重复分页与迟到快照保护
+
+- 聊天节点已本地保存1137a09后继续独立账本模块，不停在建议。新增5项remoteLedger回归先复现3项失败（before.log）：1201条未变化账本仍再读3页；编辑/删除成功后先前请求返回的旧快照会重新覆盖新金额/删除标记。另账号切换及同版本畸形页校验基线通过。
+- 每次仍请求snapshot首页核真实服务器revision，只复用当前账号已完整加载的同版本内存，省后续分页与整本替换；首页字段/删除状态/游标/重复ID仍校验。改删/整组确认成功后计数更新、版本缓存失效，旧读取拒绝覆盖本页新事实；账号切换清缓存。后端现有advanceRevision在写事务中及snapshotPage REPEATABLE_READ现场代码已核，未改后端或库表。
+- 增加并发强制刷新用例进一步复现：等待refreshing后原代码调用refresh()丢force，forced-before.log中19项18通过/1失败；改为refresh(true)，保留完整分页要求。最终frontend-test-final.log209项通过，build-demo-final/build-server-final通过；未虚构lint/typecheck。材料在.workbuddy/memory/ledger-refresh-2026-10-04，任务临时目录与npm缓存仍E盘。
+- 离线合成1201条显示未变刷新从3页到1页，版本变化/强制读取完整3页；此前5001条完整分页/删除事实回归仍通过。这是模拟接口行为证据，无新真实数据库/模型/邮件请求、无GUI/真机或真实性能验收。初次加载仍全量内存，继续明细显示窗口优化，保留全月统计与组合筛选口径。compact仍0，自动化目标不变，未Push/部署。

@@ -112,6 +112,114 @@ test('分页中途版本变化或重复游标保留上次完整账本', async ()
     assert.equal(test.store.records.value[0].id, id); assert.match(test.store.storageError.value, /重复/)
   } finally { test.dispose() }
 })
+
+test('大账本无变化只读首页核版本，强制刷新及远端变更仍完整分页', async () => {
+  const entries = Array.from({ length: 1201 }, (_, index) => ({ record: { ...value,
+    id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}` } }))
+  let reads = 0, revision = '8'
+  const test = setup({ request: async (method, path) => {
+    reads++; const params = new URL(path, 'http://synthetic').searchParams
+    const after = params.get('after'), start = after ? entries.findIndex(entry => entry.record.id === after) + 1 : 0
+    const records = entries.slice(start, start + 500)
+    return { revision, records, nextAfter: start + 500 < entries.length ? records.at(-1).record.id : null }
+  } })
+  try {
+    assert.equal(await test.store.refresh(), true); assert.equal(reads, 3)
+    const original = test.store.records.value
+    assert.equal(await test.store.refresh(), true); assert.equal(reads, 4)
+    assert.equal(test.store.records.value, original)
+    assert.equal(await test.store.refresh(true), true); assert.equal(reads, 7)
+    revision = '9'; entries[0].record = { ...entries[0].record, amount: '0.30', version: 1 }
+    assert.equal(await test.store.refresh(), true); assert.equal(reads, 10)
+    assert.equal(test.store.records.value[0].amount, 0.30)
+  } finally { test.dispose() }
+})
+
+test('同版本首段畸形仍拒绝，不能借版本缓存跳过字段校验', async () => {
+  let page = { revision: '8', records: [{ record: value }], nextAfter: null }
+  const test = setup({ request: async () => page })
+  try {
+    assert.equal(await test.store.refresh(), true)
+    for (const record of [{ ...value, amount: 'bad' }, { ...value, version: -1 }]) {
+      page = { ...page, records: [{ record }] }
+      assert.equal(await test.store.refresh(), false); assert.equal(test.store.records.value[0].amount, 0.29)
+    }
+    page = { ...page, records: [{ record: value, deletedAt: 'bad' }] }
+    assert.equal(await test.store.refresh(), false); assert.equal(test.store.records.value.length, 1)
+  } finally { test.dispose() }
+})
+
+test('强制刷新等待已有读取后仍完整分页，不能降为版本缓存检查', async () => {
+  let reads = 0, release
+  const first = { revision: '8', records: [{ record: value }], nextAfter: id }
+  const second = { revision: '8', records: [{ record: { ...value, id: 'aabf606b-a0d5-4053-98fb-194505f3d10c' } }], nextAfter: null }
+  const test = setup({ request: async (method, path) => {
+    reads++
+    if (reads === 3) return new Promise(done => { release = done })
+    return new URL(path, 'http://synthetic').searchParams.has('after') ? second : first
+  } })
+  try {
+    await test.store.refresh(); assert.equal(reads, 2)
+    const pending = test.store.refresh(), forced = test.store.refresh(true)
+    release(first); assert.equal(await pending, true); assert.equal(await forced, true)
+    assert.equal(reads, 5); assert.equal(test.store.records.value.length, 2)
+  } finally { test.dispose() }
+})
+
+test('编辑成功后迟到的旧分页快照不能覆盖新金额或新版本', async () => {
+  let release, reading = false, latest = value
+  const test = setup({ request: async (method) => {
+    if (method === 'PUT') { latest = { ...value, amount: '0.31', version: 1 }; return latest }
+    if (reading) return new Promise(done => { release = done })
+    return { revision: String(latest.version), nextAfter: null, records: [{ record: latest }] }
+  } })
+  try {
+    await test.store.refresh(); reading = true
+    const pending = test.store.refresh()
+    await test.store.updateRecord(id, { ...input, amount: '0.31' })
+    release({ revision: '0', nextAfter: null, records: [{ record: value }] })
+    assert.equal(await pending, false)
+    assert.equal(test.store.records.value[0].amount, 0.31); assert.equal(test.store.records.value[0].version, 1)
+    reading = false; assert.equal(await test.store.refresh(), true)
+    assert.equal(test.store.storageError.value, '')
+  } finally { test.dispose() }
+})
+
+test('删除成功后迟到旧快照不能恢复条目，下一次读取保存删除事实', async () => {
+  let release, reading = false, deleted = false
+  const test = setup({ request: async (method) => {
+    if (method === 'DELETE') { deleted = true; return null }
+    if (reading) return new Promise(done => { release = done })
+    return { revision: deleted ? '1' : '0', nextAfter: null, records: [{ record: { ...value, version: deleted ? 1 : 0 },
+      deletedAt: deleted ? '2026-10-04T01:00:00Z' : null }] }
+  } })
+  try {
+    await test.store.refresh(); reading = true
+    const pending = test.store.refresh(); await test.store.deleteRecord(id)
+    release({ revision: '0', nextAfter: null, records: [{ record: value }] })
+    assert.equal(await pending, false); assert.equal(test.store.records.value.length, 0)
+    assert.equal(test.store.recordsByIds([id])[0].version, 1)
+    reading = false; assert.equal(await test.store.refresh(), true)
+    assert.equal(test.store.records.value.length, 0)
+    assert.equal(test.store.recordsByIds([id])[0].deletedAt, '2026-10-04T01:00:00Z')
+  } finally { test.dispose() }
+})
+
+test('账号切换不复用旧版本缓存，即使两个账号版本相同也读新账号分页', async () => {
+  let reads = 0
+  const secondId = 'aabf606b-a0d5-4053-98fb-194505f3d10c'
+  const test = setup({ request: async () => {
+    reads++
+    if (reads <= 2) return { revision: '0', nextAfter: null, records: [{ record: value }] }
+    if (reads === 3) return { revision: '0', nextAfter: id, records: [{ record: value }] }
+    return { revision: '0', nextAfter: null, records: [{ record: { ...value, id: secondId } }] }
+  } })
+  try {
+    await test.store.refresh(); await test.store.refresh(); test.owner.value = '2'
+    assert.equal(await test.store.refresh(), true); assert.equal(reads, 4)
+    assert.equal(test.store.records.value.length, 2)
+  } finally { test.dispose() }
+})
 test('CSRF等待期间账号变化，真正发送写请求之前阻断', async () => {
   let resolve, current = true, writes = 0
   const api = createApiClient({ fetcher: async path => {

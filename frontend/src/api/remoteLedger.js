@@ -19,11 +19,13 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
   const categoryExpenses = computed(() => categories('expense'))
   const categoryIncome = computed(() => categories('income'))
   let generation = 0
+  let localChanges = 0
+  let snapshotRevision = null
   let refreshing = null
   let ledger = null
   let links = new Map()
   watch(owner, value => {
-    generation++; allRecords.value = []; refreshing = null; links = new Map()
+    generation++; localChanges++; snapshotRevision = null; allRecords.value = []; refreshing = null; links = new Map()
     storageError.value = value ? '正在读取正式账本…' : '请先登录正式账号。'
     const current = generation
     ledger = value ? createLedgerApi(client, { storage, owner: value, isCurrent: () => current === generation }) : null
@@ -33,8 +35,13 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
   }
   async function refresh(force = false) {
     if (!ledger) return false
-    if (refreshing) { const result = await refreshing; return force === true ? refresh() : result }
+    if (refreshing) { const result = await refreshing; return force === true ? refresh(true) : result }
     const current = generation
+    const changesAtStart = localChanges
+    function ensureSnapshotCurrent() {
+      ensure(current)
+      if (changesAtStart !== localChanges) throw new Error('读取期间账本已更新，已保留最新改动，请重新读取账本。')
+    }
     const pending = (async () => {
       try {
         const entries = []
@@ -44,7 +51,7 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
         do {
           const query = new URLSearchParams({ size: '500', ...(after ? { after, revision } : {}) })
           const page = await client.request('GET', `/api/records/snapshot/page?${query}`)
-          ensure(current)
+          ensureSnapshotCurrent()
           if (!Array.isArray(page?.records) || page.records.length > 500 || typeof page.revision !== 'string'
             || !/^\d+$/.test(page.revision) || (revision !== null && page.revision !== revision)
             || !(page.nextAfter === null || typeof page.nextAfter === 'string')) {
@@ -58,6 +65,14 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
           }
           if (page.nextAfter !== null && (page.records.length === 0 || page.nextAfter !== page.records.at(-1).record?.id
             || (after !== null && page.nextAfter <= after))) throw new Error('账本分页位置不合法，原账本已保留。')
+          // 仍请求首页核服务器版本；相同已完整加载版本省去剩余分页与整本替换。
+          if (after === null && force !== true && snapshotRevision === revision) {
+            for (const entry of page.records) {
+              fromRecordView(entry.record)
+              if (entry.deletedAt != null && (typeof entry.deletedAt !== 'string' || !Number.isFinite(Date.parse(entry.deletedAt)))) throw new Error('删除状态不合法')
+            }
+            storageError.value = ''; return true
+          }
           after = page.nextAfter
         } while (after !== null)
         const previous = new Map(allRecords.value.map(record => [record.id, record]))
@@ -66,7 +81,8 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
           return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
         })
         if (new Set(next.map(record => record.id)).size !== next.length) throw new Error('账本回执编号重复')
-        allRecords.value = next; storageError.value = ''; return true
+        ensureSnapshotCurrent()
+        allRecords.value = next; snapshotRevision = revision; storageError.value = ''; return true
       } catch (failure) { if (current === generation) storageError.value = failure.message; return false }
       finally { if (current === generation) refreshing = null }
     })()
@@ -76,6 +92,7 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
   async function addRecords(inputs, { batchId = createId('batch'), source = 'chat' } = {}) {
     const current = generation; ensure(current)
     const saved = await ledger.createBatch(inputs, batchId); ensure(current)
+    localChanges++; snapshotRevision = null
     // 原回执只建立关联，当前事实继续由snapshot读取，不能恢复删除或覆盖编辑。
     for (const record of saved) links.set(record.id, { source, draftGroupId: batchId, draftItemId: record.draftItemId })
     if (!await refresh(true)) throw new Error('服务器已确认保存，但最新账本暂未读到。请保留此组并用原操作重试，不要另建一组。')
@@ -88,6 +105,7 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     const record = allRecords.value.find(record => record.id === id && !record.deletedAt)
     if (!record) throw new Error('账单不存在，请重新读取明细。')
     const updated = await ledger.update({ ...record, version: version ?? record.version }, input); ensure(current)
+    localChanges++; snapshotRevision = null
     allRecords.value = allRecords.value.map(record => record.id === id ? updated : record)
     storageError.value = ''; return updated
   }
@@ -96,6 +114,7 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     const record = allRecords.value.find(record => record.id === id && !record.deletedAt)
     if (!record) throw new Error('账单不存在，请重新读取明细。')
     await ledger.remove({ ...record, version: version ?? record.version }); ensure(current)
+    localChanges++; snapshotRevision = null
     const removed = { ...record, deletedAt: new Date().toISOString(), version: record.version + 1 }
     allRecords.value = allRecords.value.map(record => record.id === id ? removed : record)
     storageError.value = ''; return removed
