@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "用户已审核认可单笔删除/新增定位/热更新修复并授权本地commit；开始A3月度统计方案准备，统计业务尚未实施",
-  "stage": "a3_monthly_statistics_scope_pending",
+  "currentTask": "本地月度统计最小版及同源联动已技术验证，用户授权commit保存；后续A3剩余边界方案待确认，不提前实施",
+  "stage": "a3_statistics_local_save_authorized",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "确认A3统计页最小范围：月份切换、月收支/结余、收支分类金额/占比及同源改删联动，确认后实施；暂缓的明细排序方案不启动",
-  "nextStepReason": "先保存已认可的有界成果，再按原前端路线推进当前占位统计页；复用已有有效账单，不重做A1/数据层，不提前做后端或模型质量指标",
-  "pendingUserDecision": "A3统计页最小方案实施确认；Push仍需另行授权",
+  "nextStep": "先核查A阶段剩余前端数据/对话服务边界并提出最小方案，确认后实施；统计页如有实际反馈再做有界调整",
+  "nextStepReason": "独立统计成果已获保存授权，优先保留可回退节点；不重复开发、不恢复暂停排序或提前进入后端，剩余范围先确认",
+  "pendingUserDecision": "后续A3剩余服务边界最小范围确认；Push仍需另行授权",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
