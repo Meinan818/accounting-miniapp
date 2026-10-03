@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { getScrollPosition } from '@/utils/navigation'
 
 const routes = [
   {
@@ -52,12 +53,7 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
-  scrollBehavior(to, from, savedPosition) {
-    // 浏览器前进/返回保留阅读位置；切换页面从标题开始，不继承上一页的滚动高度。
-    if (savedPosition) return savedPosition
-    if (to.path === from.path) return false
-    return { left: 0, top: 0 }
-  },
+  scrollBehavior: getScrollPosition,
 })
 
 // 当前为公开演示模式；requiresAuth预留给后续Java认证，未接入前不伪造登录。
