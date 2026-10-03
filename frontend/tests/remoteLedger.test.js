@@ -242,7 +242,7 @@ test('新照片保存时才上传并使用返回版本更新资料，部分失�
     calls.push(args); if (args[0] === 'POST') return { ...profile, avatar: 'photo', avatarUrl: '/api/profile/avatar', version: 1 }
     throw Error('synthetic profile conflict')
   } })
-  await assert.rejects(api.save(profile, { ...profile, avatar: 'photo', photo: 'data:image/jpeg;base64,/9j/' }), /照片已保存.*昵称或签名尚未保存/)
+  await assert.rejects(api.save(profile, { ...profile, avatar: 'photo', photo: 'data:image/jpeg;base64,/9j/' }), /照片已保存.*昵称或签名的保存尚未确认/)
   assert.equal(calls[0][2].multipart, true); assert.equal(calls[1][2].body.version, 1)
 })
 test('预置资料保存不上传照片，Unicode超长不发请求', async () => {
@@ -250,4 +250,50 @@ test('预置资料保存不上传照片，Unicode超长不发请求', async () =
   const api = createProfileApi({ request: async () => { calls++; return { ...profile, version: 1 } } })
   await api.save(profile, profile); assert.equal(calls, 1)
   await assert.rejects(api.save(profile, { ...profile, nickname: '😀'.repeat(21) })); assert.equal(calls, 1)
+})
+
+test('照片部分保存失败提供已保存版本，重试只保存文字不重复上传', async () => {
+  const calls = [], original = { nickname: '猫', signature: '', avatar: 'cat', version: 0 }
+  let fail = true
+  const api = createProfileApi({ request: async (method, path, options) => {
+    calls.push(method)
+    if (method === 'POST') return { ...original, avatar: 'photo', avatarUrl: '/api/profile/avatar', version: 1 }
+    if (fail) throw Object.assign(Error('offline'), { code: 'NETWORK_ERROR', status: 0 })
+    assert.equal(options.body.version, 1)
+    return { ...original, ...options.body, avatarUrl: '/api/profile/avatar', version: 2 }
+  } }, { owner: '1' })
+  const form = { ...original, nickname: '新昵称', signature: '未保存签名', avatar: 'photo', photo: 'data:image/jpeg;base64,/9j/' }
+  let failure
+  try { await api.save(original, form) } catch (error) { failure = error }
+  assert.equal(failure.partialProfile.version, 1); assert.equal(failure.code, 'NETWORK_ERROR')
+  assert.equal(failure.partialProfile.photo, '/api/profile/avatar?v=1&expectedAccount=1')
+  fail = false
+  const result = await api.save(failure.partialProfile, { ...form, photo: failure.partialProfile.photo })
+  assert.equal(result.nickname, '新昵称'); assert.equal(result.signature, '未保存签名')
+  assert.deepEqual(calls, ['POST', 'PUT', 'PUT'])
+})
+
+test('照片上传后账号变化阻断文字保存，旧资料读取迟到也不能接收', async () => {
+  const original = { nickname: '猫', signature: '', avatar: 'cat', version: 0 }
+  let current = true, calls = 0
+  const api = createProfileApi({ request: async () => {
+    calls++; current = false; return { ...original, avatar: 'photo', avatarUrl: '/api/profile/avatar', version: 1 }
+  } }, { isCurrent: () => current })
+  await assert.rejects(api.save(original, { ...original, avatar: 'photo', photo: 'data:image/jpeg;base64,/9j/' }), /身份已变化/)
+  assert.equal(calls, 1)
+  current = true; await assert.rejects(api.read(), /身份已变化/); assert.equal(calls, 2)
+  await assert.rejects(api.save(original, original), /身份已变化/); assert.equal(calls, 2)
+})
+
+test('资料保存等待CSRF期间账号变化，在真实写入发送前停止', async () => {
+  let release, current = true, writes = 0
+  const client = createApiClient({ fetcher: async path => {
+    if (path.endsWith('/csrf')) return new Promise(done => { release = done })
+    writes++; return new Response('{}')
+  } })
+  const api = createProfileApi(client, { isCurrent: () => current })
+  const profile = { nickname: '猫', signature: '', avatar: 'cat', version: 0 }
+  const pending = api.save(profile, profile)
+  current = false; release(new Response(JSON.stringify({ headerName: 'X-CSRF-TOKEN', token: 'synthetic' })))
+  await assert.rejects(pending, /身份已变化/); assert.equal(writes, 0)
 })

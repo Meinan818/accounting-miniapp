@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronRight } from 'lucide-vue-next'
 import NotebookBack from '@/components/common/NotebookBack.vue'
@@ -19,7 +19,10 @@ import { createProfileApi } from '@/api/profile'
 
 const store = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
-const remoteProfile = auth ? createProfileApi(auth.api, { owner: auth.user.id }) : null
+const profileOwner = auth?.user.id
+let disposed = false
+const isCurrentProfile = () => !disposed && auth?.user?.id === profileOwner
+const remoteProfile = auth ? createProfileApi(auth.api, { owner: profileOwner, isCurrent: isCurrentProfile }) : null
 const month = dayjs().format('YYYY-MM')
 const monthTitle = dayjs(month + '-01').format('YYYY年M月')
 const appVersion = packageInfo.version
@@ -38,6 +41,7 @@ const profileNotice = ref('')
 const profileDialog = ref(null)
 const profileForm = ref({ ...DEFAULT_PROFILE })
 const editError = ref('')
+const profileConflict = ref(false)
 const photoInput = ref(null)
 const processingPhoto = ref(false)
 const savingProfile = ref(false)
@@ -49,12 +53,12 @@ async function loadProfile() {
     if (remoteProfile) { profile.value = await remoteProfile.read(); profileError.value = ''; return }
     const result = readLocalProfile(window.localStorage)
     profile.value = result.profile; profileSnapshot = result.snapshot; profileError.value = result.error
-  } catch (error) { profileError.value = '本地资料暂时无法读取。' + error.message }
+  } catch (error) { if (!disposed && (!remoteProfile || isCurrentProfile())) profileError.value = (remoteProfile ? '账号' : '本地') + '资料暂时无法读取。' + error.message }
 }
 async function openProfile() {
   await loadProfile()
   if (profileError.value) return
-  profileForm.value = { ...profile.value }; editError.value = ''; profileNotice.value = ''
+  profileForm.value = { ...profile.value }; editError.value = ''; profileNotice.value = ''; profileConflict.value = false
   profileDialog.value.showModal()
 }
 function closeProfile(event) { if (savingProfile.value) { event?.preventDefault?.(); return }; photoRequest++; processingPhoto.value = false; profileDialog.value.close() }
@@ -81,9 +85,19 @@ async function saveProfile() {
     const result = saveLocalProfile(window.localStorage, profileForm.value, profileSnapshot)
     profile.value = result.profile; profileSnapshot = result.snapshot
     savingProfile.value = false; closeProfile(); profileNotice.value = '本地资料已保存，只保存在当前浏览器。'
-  } catch (error) { editError.value = error.message; if (remoteProfile) await loadProfile() }
+  } catch (error) {
+    if (disposed || (remoteProfile && !isCurrentProfile())) return
+    editError.value = error.message
+    profileConflict.value = error.code === 'STALE_PROFILE'
+    if (error.partialProfile) {
+      profile.value = error.partialProfile
+      profileForm.value = { ...profileForm.value, photo: error.partialProfile.photo }
+    }
+    if (remoteProfile) await loadProfile()
+  }
   finally { savingProfile.value = false }
 }
+onBeforeUnmount(() => { disposed = true; photoRequest++ })
 async function logout() {
   try { await auth.logout() }
   catch (failure) { profileError.value = failure.message }
@@ -163,6 +177,12 @@ onMounted(() => { store.refresh(); loadProfile() })
         <label>一句签名 <span>最多60个字，可留空</span><textarea :disabled="savingProfile" v-model="profileForm.signature" aria-label="一句签名" rows="3" /></label>
         <p class="profile-editor-note">{{ SERVER_MODE ? '保存到当前登录账号；不会改变账单和对话。' : '仅保存在当前浏览器，不代表注册或登录；不会改变账单和对话。' }}</p>
         <p v-if="editError" class="profile-error" role="alert">{{ editError }}</p>
+        <div v-if="profileConflict" class="profile-error" role="status">
+          <p>资料已在别处更新。你填写的内容仍保留，请对照后再保存。</p>
+          <template v-if="!profileError"><p>当前昵称：{{ profile.nickname }}</p><p>当前签名：{{ profile.signature || '未填写' }}</p><p>当前头像：{{ profile.avatar === 'photo' ? '照片' : avatars.find(avatar => avatar.key === profile.avatar)?.label }}</p></template>
+          <p v-else>最新资料暂时无法读取，请稍后重试；你的输入没有丢失。</p>
+        </div>
+        <div v-if="remoteProfile && profileError" class="profile-error"><p>{{ profileError }}</p><button type="button" :disabled="savingProfile" @click="loadProfile">重新读取最新资料</button></div>
         <div class="profile-editor-actions"><button type="button" @click="closeProfile">取消</button><button type="submit" :disabled="processingPhoto || savingProfile">{{ SERVER_MODE ? '保存账号资料' : '保存本地资料' }}</button></div>
       </form>
     </dialog>

@@ -718,3 +718,10 @@
 - 既有原生heartbeat automation先view/只读核，再原生update成功，保留名称/原提示全文/每小时/ACTIVE/failed_runs_only及目标01a10312-42ac-7953-909e-b7f982a78353，仅追加本次授权强调。落盘字段一致，不重复创建、不手改配置；仍无实际定时运行成功证据。OpenAI Docs官方automations页实际403，不引用未读取内容，以工具返回/本机配置作为执行事实。
 - 用户粘贴替换规则中的源第2次compact为历史提及，不计本聊天事件；实际compact仍0。原Java/Vite及数据/照片/凭据保持，不追加费用。
 - git diff误用仓库外C盘规则路径被拒绝，未改变文件；改为git diff --no-index对E盘备份与原文件，实际仅新增一条约定，正常有diff退出1不冒称失败。已按授权继续资料部分保存/身份切换边界离线复现与修复，验证结果另独立记录。
+
+## 2026-10-04 · 资料部分保存恢复与账号边界
+
+- 授权文档节点已保存59e3922后继续资料实现。新增2项先复现失败：部分照片成功后错误不带新版本，恢复困难/重试重复上传；账号切换后仍可能继续PUT或接收旧GET。before.log21项19通过/2失败保留。
+- ProfileApi使用isCurrent及beforeSend/返回守卫；上传成功但文字保存异常携带partialProfile、code/status/cause，明确文字保存“尚未确认”，不把网络失败说成服务端一定未保存。Profile先保留已上传照片版本，将表单data URL换成已上传URL，保留昵称/签名；GET最新失败也不丢已知回执。资料冲突展示服务器当前昵称/签名/头像，输入保留，用户再次保存前可核对；编辑窗提供最新资料重读。离页/身份变化不应用旧错误或资料。
+- 补真实ApiClient等待CSRF期间身份变化阻断的离线用例，3项新增、最终215项前端及demo/server两构建通过；Profile模块200，材料profile-recovery-2026-10-04。没有写真实账号照片/资料、无新增模型/邮件调用；GUI/真机仍未验证。原服务和原数据保持，compact仍0。
+- Git fetch本轮已成功，origin/main现场计算ahead28。匿名REST404不能确定可见性；使用已有Git credential非交互仅内存认证只读核仓库private/main/push=true，hooks/workflows/deployments/environments/当前main检查与状态均0，无可见部署入口。本次无原始凭据输出/写盘。全部待上传28提交同一作者，快进成立，历史补丁秘密模式扫描0，每一提交禁止文件扫描0；配置只有环境变量/示例，忽略的本机properties/storage/memory未混入。资料保存后自主推送，成功结果另记，不预写成功。

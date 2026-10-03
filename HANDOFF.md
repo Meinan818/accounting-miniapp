@@ -65,6 +65,8 @@ backend/storage、properties、.workbuddy/memory、.cache、target/dist/node_mod
 
 ## 新聊天已执行（2026-10-04）
 
+- 用户重申全权授权后继续资料恢复：部分上传回执携带partialProfile与原错误code/status，Profile保留文本并将已上传照片换为服务端地址，读最新失败仍保留已知版本；STALE_PROFILE展示当前名片且保留输入，编辑窗可重读。真实客户端beforeSend/返回及离页身份保护阻断跨账号旧资料请求。3项新增回归先复现2失败后通过，最终215项与两构建通过；Profile模块200，真实账号照片写入/GUI/真机未补验。材料profile-recovery-2026-10-04。下一项统计跨月/读取失败保护。
+- GitHub连接本轮恢复，fetch成功；已用现有Git认证只读核私有仓库/main/可Push，hooks/workflows/deployments/environments/checks/statuses均0，凭据只在进程内存不回显。待上传28项历史均同一作者/相关项目节点，快进祖先成立，历史敏感模式与禁止文件扫描0。资料提交后准备自主Push，不能把此准备写成实际已上传。
 - 源聊天原生创建/改名/自动化转移已核，当前compact基准0。原Java19940/Vite20820仍仅127.0.0.1监听，8080 CSRF和5174/profile均200，未重启或操作原数据。
 - 聊天边界已离线修复：待选编号的新纠正不套旧金额，只有纯编号应用旧意图；名称/时间/多段纠正交真实接口，携带待选修改；追问保存referenceDate，跨天恢复用提问日，旧追问退回创建日。明确追加至少增加一候选，已有5笔不发送追加请求。演示待选复合句保留原草稿。
 - ai-before.log先复现7项失败；新增共享规则测试又复现1项演示复合指令误改日期，原frontend-test.log保留。修复后203项前端及demo/server两构建通过，材料chat-boundaries-2026-10-04。新增日期存储合法/损坏保护检查；未调用真实模型/邮件、未入账、未做GUI或真机验收。

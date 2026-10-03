@@ -5,25 +5,34 @@ export function fromProfileView(value, owner) {
   return { nickname: value.nickname, signature: value.signature, avatar: value.avatar, version: value.version,
     ...(value.avatar === 'photo' ? { photo: `${value.avatarUrl}?v=${value.version}${owner ? '&expectedAccount=' + encodeURIComponent(owner) : ''}` } : {}) }
 }
-export function createProfileApi(client, { owner } = {}) {
-  async function read() { return fromProfileView(await client.request('GET', '/api/profile'), owner) }
+export function createProfileApi(client, { owner, isCurrent = () => true } = {}) {
+  function guard() { if (!isCurrent()) throw new Error('登录身份已变化，本次资料操作已停止。') }
+  async function request(method, path, options = {}) {
+    guard()
+    const result = await client.request(method, path, { ...options, beforeSend: guard })
+    guard()
+    return result
+  }
+  async function read() { return fromProfileView(await request('GET', '/api/profile'), owner) }
   async function save(current, form) {
+    guard()
     const nickname = form.nickname.trim(), signature = form.signature.trim()
     if (!nickname || [...nickname].length > 20 || [...signature].length > 60 || !['cat', 'paw', 'flower', 'photo'].includes(form.avatar)) {
       throw new Error('昵称须为1–20个字，签名最多60个字，请选择有效头像。')
     }
-    let version = current.version, uploaded = false
+    let version = current.version, uploadedProfile = null
     if (form.avatar === 'photo' && form.photo?.startsWith('data:image/jpeg;base64,')) {
       const encoded = form.photo.slice('data:image/jpeg;base64,'.length)
       if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded) || encoded.length > 3 * 1024 * 1024) throw new Error('照片数据不合法')
       const bytes = Uint8Array.from(atob(encoded), character => character.charCodeAt(0))
       const body = new FormData(); body.append('image', new Blob([bytes], { type: 'image/jpeg' }), 'avatar.jpg')
-      const photo = fromProfileView(await client.request('POST', `/api/profile/avatar?version=${version}`, { body, multipart: true }), owner)
-      version = photo.version; uploaded = true
+      const photo = fromProfileView(await request('POST', `/api/profile/avatar?version=${version}`, { body, multipart: true }), owner)
+      version = photo.version; uploadedProfile = photo
     }
-    try { return fromProfileView(await client.request('PUT', '/api/profile', { body: { version, nickname, signature, avatar: form.avatar } }), owner) }
+    try { return fromProfileView(await request('PUT', '/api/profile', { body: { version, nickname, signature, avatar: form.avatar } }), owner) }
     catch (failure) {
-      if (uploaded) throw new Error('照片已保存，但昵称或签名尚未保存。' + failure.message + ' 请重新核对后再试。')
+      if (uploadedProfile) throw Object.assign(new Error('照片已保存，但昵称或签名的保存尚未确认。' + failure.message + ' 请重新核对后再试。'),
+        { code: failure.code, status: failure.status, partialProfile: uploadedProfile, cause: failure })
       throw failure
     }
   }
