@@ -1,3 +1,11 @@
+## 2026-10-04 · 账本热更新快照与资源生命周期
+
+- 本聊天实际compact=1，STATE已同步；同聊天恢复保留，第二次按规则立即停止代码交接。8项真实Pinia4.0.3热更新/实际Store源码离线集成、285项全量与demo/server两构建通过；GUI/真机/真实Vite页面未验证。
+- before.log实际3失败：正式热更新快照变空，演示/正式监听由3变6。返回allRecords状态保留快照；Vite hot.data沿用按Pinia隔离的资源scope，热更新释放旧时钟/账号/storage监听，原Store dispose释放当前版本；用公开API，不改依赖或刷新页面。
+- 补测发现返回状态后，dispose再换账号创建会回填原快照，recreate-before.log5通过1失败；skipHydrate限制新Store回填，热更新仍保留状态。旧请求scope退出即撤销代次，迟到读取/编辑不覆盖当前事实、不自动后续请求；跨月时钟和删除/组事实保持。
+- 材料record-hmr-2026-10-04。新增离线测试纳npm入口，不安装依赖，不发真实账单/模型/邮件请求。先前1a1e163完整SHA=1a1e1632d5a5cda5e53d014ef8aed66efbf22735已核远端一致；服务19940/20820仍仅127.0.0.1:8080/5174，无部署。
+- 下一项直接继续累计金额边界取证。已核统计有安全整数保护，sumAmounts/分类累加尚无同等保护；不冒称全站金额全面安全。自动续办沿用既有automation，不重复创建。
+
 ## 2026-10-04 · 正式与演示账本跨月缓存
 
 - ledger-month-clock-2026-10-04/before.log实际复现：两个月账单均已加载，时间跨月后同revision重读省去替换，monthExpense仍0.29而不是新月0.31。computed只有records依赖，直接dayjs取月不触发更新。

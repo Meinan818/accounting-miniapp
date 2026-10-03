@@ -1,11 +1,14 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
+import { skipHydrate } from 'pinia'
 import { useLocalDay } from '../utils/calendar.js'
 import { createId } from '../utils/ledger.js'
 import { legacyCents, sumAmounts } from '../utils/money.js'
 import { createLedgerApi, fromRecordView } from './ledger.js'
 
 export function createRemoteLedger(client, owner, { storage, eventTarget = globalThis.window, dateClock = {} } = {}) {
-  const allRecords = ref([])
+  // HMR transfers this state, but a newly created account store must read its
+  // own snapshot rather than hydrate data left by a previously disposed store.
+  const allRecords = skipHydrate(ref([]))
   const storageError = ref('正在读取正式账本…')
   const records = computed(() => allRecords.value.filter(record => !record.deletedAt))
   const { today } = useLocalDay(dateClock)
@@ -25,6 +28,8 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   let refreshing = null
   let ledger = null
   let links = new Map()
+  // Retire pending callbacks with the resource scope (including hot updates).
+  onScopeDispose(() => { generation++; ledger = null; refreshing = null })
   const manualEpoch = ref(0)
   watch(owner, value => {
     generation++; localChanges++; snapshotRevision = null; allRecords.value = []; refreshing = null; links = new Map()
@@ -162,6 +167,6 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   function batchRecords(id) { return allRecords.value.filter(record => record.draftGroupId === id) }
   function recordsByIds(ids = []) { return allRecords.value.filter(record => ids.includes(record.id)) }
   function clearRecords() { throw new Error('正式账本不提供清空操作。') }
-  return { records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
+  return { allRecords, records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
     refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords, manualRecovery, cancelManualOperation }
 }

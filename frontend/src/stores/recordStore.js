@@ -1,5 +1,5 @@
 import { computed, onScopeDispose, ref } from 'vue'
-import { acceptHMRUpdate, defineStore } from 'pinia'
+import { acceptHMRUpdate, skipHydrate } from 'pinia'
 import dayjs from 'dayjs'
 import { createId, prepareBatch, prepareUpdate, prepareDelete, validDate } from '../utils/ledger.js'
 import { legacyCents, sumAmounts, MAX_CENTS } from '../utils/money.js'
@@ -7,6 +7,7 @@ import { SERVER_MODE } from '../api/mode.js'
 import { createRemoteLedger } from '../api/remoteLedger.js'
 import { useAuthStore } from './authStore.js'
 import { useLocalDay } from '../utils/calendar.js'
+import { defineScopedStore } from '../utils/storeLifecycle.js'
 
 export const RECORD_STORAGE_KEY = 'zhizhang_mock_records'
 
@@ -29,7 +30,10 @@ function createSampleRecords() {
 
 
 
-export const useRecordStore = defineStore('record', () => {
+// Vite carries this registry to the next module so a hot setup can retire the
+// previous listeners without replacing the live store or reloading the page.
+const lifetimes = import.meta.hot ? (import.meta.hot.data.recordLifetimes ??= new WeakMap()) : new WeakMap()
+export const useRecordStore = defineScopedStore('record', () => {
   if (SERVER_MODE) {
     const auth = useAuthStore()
     return createRemoteLedger(auth.api, computed(() => auth.user?.id), { storage: window.localStorage })
@@ -53,7 +57,7 @@ export const useRecordStore = defineStore('record', () => {
   }
   let initial
   try { initial = readLatest() } catch (e) { initial = []; storageError.value = e.message }
-  const allRecords = ref(initial)
+  const allRecords = skipHydrate(ref(initial))
   // All pages read active bills; batch lookup also retains deletion facts for old chat cards.
   const records = computed(() => allRecords.value.filter(r => !r.deletedAt))
   const { today } = useLocalDay()
@@ -110,9 +114,9 @@ export const useRecordStore = defineStore('record', () => {
     window.addEventListener('storage', listener)
     onScopeDispose(() => window.removeEventListener('storage', listener))
   }
-  return { records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
+  return { allRecords, records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
     addRecord, addRecords, updateRecord, deleteRecord, batchRecords, refresh, clearRecords }
-})
+}, lifetimes)
 
 // Keep an already-open development page on the current actions/getters without clearing its ledger.
 export function createRecordStoreHMRHandler(hot) {

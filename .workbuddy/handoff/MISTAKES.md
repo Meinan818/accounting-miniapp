@@ -206,3 +206,10 @@
 - 本轮取消用cancelling参与v-if卸载RecordForm，已填12.34因此被0.29旧草稿初值覆盖。实际Add模板/Vue挂载复现2通过1失败；改v-show保留实例及仅原始未修改表单回填，3针对/275全量和两构建通过。测试harness最初漏SERVER_MODE的3渲染失败单独保留，不冒称3业务缺陷。以后恢复流程必须验证用户已有编辑和真实挂载顺序。
 
 - 本轮曾猜Pinia旧版本dist/pinia.mjs导致只读文件不存在；随后核package exports和rg --files --no-ignore确认4.0.3实际dist/pinia.js。node_modules下嵌套dist会受项目忽略规则过滤，依赖核查须读实际exports并明确no-ignore；未改依赖或业务数据。
+
+## 2026-10-04 · 账本热更新状态与监听取证
+- 真实Pinia热更新复现正式快照丢失及监听翻倍：隐藏的allRecords不迁移，临时Store资源未退休。按Pinia隔离的可替换effectScope与返回状态修复，8项HMR/285全量及两构建通过，before.log保留。
+- 实现后补测发现新Store回填旧账号快照，未提交中间版本；skipHydrate限制生命周期重建回填，仍允许HMR迁移，原5通过1失败保留。以后改变Pinia状态可见性必须同时验证HMR、dispose/重建、身份切换和迟到读写。
+- 首轮日志目录误按frontend相对目录建立导致重定向失败，测试未执行；改根memory路径后真实复现。补测demo输入漏time被校验拒绝，补完整合成输入后验证，不混作业务故障。
+- 自动审批以blocked by policy拒绝包含空目录清理的整条命令，未执行；未绕过，误建frontend/.workbuddy/memory/record-hmr-2026-10-04空目录保留，不含文件。文档另行执行，不声称清理成功。
+- Node下Pinia无应用注入上下文提示R1004；HMR harness安装createApp/Pinia后消除，不抑制警告、不称本机生产故障。API依据为本机Pinia4.0.3/Vue3.5.43源码与类型声明。
