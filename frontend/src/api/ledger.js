@@ -35,7 +35,8 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     const value = JSON.parse(raw)
     if (!value || typeof value !== 'object' || Array.isArray(value)
       || Object.values(value).some(v => !v || !UUID.test(v.requestId) || typeof v.content !== 'string'
-        || (v.draftVersion != null && (!Number.isSafeInteger(v.draftVersion) || v.draftVersion < 0)))) {
+        || (v.draftVersion != null && (!Number.isSafeInteger(v.draftVersion) || v.draftVersion < 0))
+        || (v.manualComplete != null && typeof v.manualComplete !== 'boolean'))) {
       throw new Error('确认记录无法读取，原内容已保护，请勿清除存储。')
     }
     return value
@@ -47,6 +48,7 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
       if (values[batchId].content !== content) throw new Error('这次确认的内容已改变，请先核对账单，不要重新入账。')
       return values[batchId].requestId
     }
+    if (batchId.startsWith('manual-') && pendingManual().length) throw new Error('还有原手动保存操作待恢复，请先核对，不要另建一笔。')
     const requestId = newUuid()
     if (!UUID.test(requestId)) throw new Error('无法生成安全的确认标识')
     values[batchId] = { requestId, content }
@@ -94,5 +96,27 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
   async function remove(current) {
     return client.request('DELETE', `/api/records/${current.id}?version=${current.version}`, { beforeSend })
   }
-  return { createBatch, update, remove }
+  function pendingManual() {
+    beforeSend()
+    try {
+      return Object.entries(intents()).filter(([batchId, value]) => batchId.startsWith('manual-') && !value.manualComplete).map(([batchId, value]) => {
+        const body = JSON.parse(value.content)
+        if (!Array.isArray(body?.records) || body.records.length !== 1) throw Error('invalid manual content')
+        const original = body.records[0]
+        const record = { ...original, remark: original.note, id: 'single' }
+        if (JSON.stringify({ records: [toRecordInput(record)] }) !== value.content) throw Error('invalid manual content')
+        return { batchId, record }
+      })
+    } catch { throw new Error('原手动保存操作无法读取，请保留浏览器数据并核对账单，暂不另建一笔。') }
+  }
+  function completeManual(batchId) {
+    if (!batchId.startsWith('manual-')) return
+    beforeSend()
+    const values = intents()
+    if (!Object.hasOwn(values, batchId)) throw new Error('原手动保存操作已变化，请核对账单。')
+    values[batchId] = { ...values[batchId], manualComplete: true }
+    try { storage.setItem(key, JSON.stringify(values)) }
+    catch { throw new Error('服务器已保存，恢复状态暂未保存，请用原操作重试，不要另建一笔。') }
+  }
+  return { createBatch, update, remove, pendingManual, completeManual }
 }

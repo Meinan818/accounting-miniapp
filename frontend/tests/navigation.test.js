@@ -86,6 +86,21 @@ test('手动写入等待时重复点击不发第二次写入', async () => {
   } finally { scope.stop() }
 })
 
+test('恢复入口沿用被选原操作标识，导航失败后再点只打开明细', async () => {
+  const keys = []; let fail = true
+  const scope = effectScope()
+  const saver = scope.run(() => useManualRecordSave({ addRecord: async (record, options) => {
+    keys.push(options.batchId); assert.equal(record.amount, '0.29')
+    return { id: 'synthetic', date: '2026-10-04' }
+  } }, { push: async () => fail ? { type: 4 } : undefined }, 'manual-new-mount'))
+  try {
+    await saver.save({ amount: '0.29' }, 'manual-original')
+    fail = false
+    await saver.save()
+    assert.deepEqual(keys, ['manual-original'])
+  } finally { scope.stop() }
+})
+
 test('手动写入失败后同次请求键保持，导航异常只重试打开', async () => {
   let failWrite = true, failNavigation = true, writes = 0
   const keys = []

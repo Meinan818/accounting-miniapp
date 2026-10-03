@@ -1,5 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
+import { computed } from 'vue'
 import NotebookBack from '@/components/common/NotebookBack.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import RecordForm from '@/components/record/RecordForm.vue'
@@ -11,6 +12,7 @@ const router = useRouter()
 const store = useRecordStore()
 const batchId = createId('manual')
 const { saving, error, savedRecord, save } = useManualRecordSave(store, router, batchId)
+const recovery = computed(() => store.manualRecovery || { operations: [], error: '' })
 </script>
 <template>
   <main class="manual-page notebook-evolution">
@@ -18,7 +20,22 @@ const { saving, error, savedRecord, save } = useManualRecordSave(store, router, 
       <header><NotebookBack to="/bills" label="返回账单明细" /><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
       <router-link to="/chat" class="chat-link">更想说一说？和小宝聊着记 →</router-link>
       <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
-      <article class="manual-card"><p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p><p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p><RecordForm :saving="saving || Boolean(savedRecord)" :error="error" @save="save" @cancel="router.push('/bills')" /><div v-if="savedRecord" class="saved-recovery" role="status"><p>这笔账单已经保存，可以打开明细查看。</p><button type="button" :disabled="saving" @click="save()">{{ saving ? '正在打开明细…' : '打开已保存账单' }}</button></div></article>
+      <article class="manual-card">
+        <p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p>
+        <p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p>
+        <p v-if="recovery.error" role="alert" class="warning">{{ recovery.error }}</p>
+        <section v-if="recovery.operations.length && !savedRecord" class="saved-recovery" aria-label="恢复上次手动保存">
+          <p>还有上次未收尾的保存操作。先恢复并核对这笔，避免重复记账。</p>
+          <div v-for="operation in recovery.operations" :key="operation.batchId">
+            <p>{{ operation.record.date }} · {{ operation.record.type === 'income' ? '收入' : '支出' }} · {{ operation.record.category }} · ¥{{ operation.record.amount }}</p>
+            <p v-if="operation.record.remark">{{ operation.record.remark }}</p>
+            <button type="button" :disabled="saving" @click="save(operation.record, operation.batchId)">{{ saving ? '正在恢复…' : '恢复原保存操作' }}</button>
+          </div>
+          <p v-if="error" role="alert" class="warning">{{ error }}</p>
+        </section>
+        <RecordForm v-else-if="!recovery.error && !savedRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push('/bills')" />
+        <div v-if="savedRecord" class="saved-recovery" role="status"><p>这笔账单已经保存，可以打开明细查看。</p><p v-if="error" role="alert" class="warning">{{ error }}</p><button type="button" :disabled="saving" @click="save()">{{ saving ? '正在打开明细…' : '打开已保存账单' }}</button></div>
+      </article>
       <p class="local-note">{{ SERVER_MODE ? '正式账单保存到当前账号，不调用AI。' : '本地演示：账单保存在当前浏览器，不调用AI。' }}</p>
     </section>
   </main>

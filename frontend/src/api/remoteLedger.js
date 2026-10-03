@@ -24,12 +24,19 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
   let refreshing = null
   let ledger = null
   let links = new Map()
+  const manualEpoch = ref(0)
   watch(owner, value => {
     generation++; localChanges++; snapshotRevision = null; allRecords.value = []; refreshing = null; links = new Map()
     storageError.value = value ? '正在读取正式账本…' : '请先登录正式账号。'
     const current = generation
     ledger = value ? createLedgerApi(client, { storage, owner: value, isCurrent: () => current === generation }) : null
+    manualEpoch.value++
   }, { immediate: true, flush: 'sync' })
+  const manualRecovery = computed(() => {
+    manualEpoch.value
+    try { return { operations: ledger ? ledger.pendingManual() : [], error: '' } }
+    catch (failure) { return { operations: [], error: failure.message } }
+  })
   function ensure(current) {
     if (!ledger || current !== generation) throw new Error('登录身份已变化，请重新登录并核对账单。')
   }
@@ -93,12 +100,16 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
   }
   async function addRecords(inputs, { batchId = createId('batch'), source = 'chat' } = {}) {
     const current = generation; ensure(current)
-    const saved = await ledger.createBatch(inputs, batchId); ensure(current)
+    const currentLedger = ledger
+    let saved
+    try { saved = await currentLedger.createBatch(inputs, batchId); ensure(current) }
+    finally { if (current === generation) manualEpoch.value++ }
     localChanges++; snapshotRevision = null
     // 原回执只建立关联，当前事实继续由snapshot读取，不能恢复删除或覆盖编辑。
     for (const record of saved) links.set(record.id, { source, draftGroupId: batchId, draftItemId: record.draftItemId })
     if (!await refresh(true)) throw new Error('服务器已确认保存，但最新账本暂未读到。请保留此组并用原操作重试，不要另建一组。')
     ensure(current)
+    currentLedger.completeManual(batchId); manualEpoch.value++
     return saved
   }
   async function addRecord(input, options = {}) { return (await addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options }))[0] }
@@ -138,5 +149,5 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
   function recordsByIds(ids = []) { return allRecords.value.filter(record => ids.includes(record.id)) }
   function clearRecords() { throw new Error('正式账本不提供清空操作。') }
   return { records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
-    refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords }
+    refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords, manualRecovery }
 }

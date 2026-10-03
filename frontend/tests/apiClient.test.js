@@ -248,6 +248,56 @@ test('草稿版本持久化失败或服务端内容不符时不发送确认', as
   await assert.rejects(createLedgerApi(client, { storage: properStorage, owner: '1' }).createBatch([input], 'g'), /内容不一致/)
   assert.equal(writes, 0)
 })
+test('手动未知确认重开后恢复原内容与原键，完成后不再列为待恢复', async () => {
+  const storage = memory(); let fail = true; const keys = []
+  const client = { request: async (method, path, options) => {
+    if (method === 'PUT') return { id, version: 0, status: 'OPEN', records: options.body.records }
+    keys.push(options.headers['Idempotency-Key'])
+    if (fail) throw Error('合成回执丢失')
+    return { records: [view] }
+  } }
+  await assert.rejects(createLedgerApi(client, { storage, owner: '1', newUuid: () => id }).createBatch([input], 'manual-original'))
+  const reopened = createLedgerApi(client, { storage, owner: '1', newUuid: () => { throw Error('不可换键') } })
+  const [operation] = reopened.pendingManual()
+  assert.equal(operation.batchId, 'manual-original')
+  assert.deepEqual(toRecordInput(operation.record), toRecordInput(input))
+  assert.deepEqual(createLedgerApi(client, { storage, owner: '2' }).pendingManual(), [])
+  fail = false
+  await reopened.createBatch([operation.record], operation.batchId)
+  reopened.completeManual(operation.batchId)
+  assert.deepEqual(keys, [id, id])
+  assert.deepEqual(reopened.pendingManual(), [])
+  assert.equal(JSON.parse(storage.getItem('miaoji_account_write_intents_v1_1'))['manual-original'].requestId, id)
+})
+
+test('恢复仅列出单笔手动操作，损坏内容或存储不可用保持原文且不发送', () => {
+  const storage = memory(); let calls = 0
+  const original = JSON.stringify({ 'manual-broken': { requestId: id, content: '{broken' }, chat: { requestId: id, content: '{}' } })
+  storage.setItem('miaoji_account_write_intents_v1_1', original)
+  const api = createLedgerApi({ request: () => { calls++ } }, { storage, owner: '1' })
+  assert.throws(() => api.pendingManual(), /原手动保存操作无法读取/)
+  assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), original)
+  assert.equal(calls, 0)
+})
+
+test('未收尾手动操作禁止另建标识，收尾存储失败仍保留恢复入口', async () => {
+  const storage = memory(); let calls = 0
+  const client = { request: async (method, path, options) => {
+    calls++
+    if (method === 'PUT') return { id, version: 0, status: 'OPEN', records: options.body.records }
+    throw Error('lost receipt')
+  } }
+  const api = createLedgerApi(client, { storage, owner: '1', newUuid: () => id })
+  await assert.rejects(api.createBatch([input], 'manual-original'))
+  await assert.rejects(api.createBatch([input], 'manual-new'), /原手动保存操作待恢复/)
+  assert.equal(calls, 2)
+  const original = storage.getItem('miaoji_account_write_intents_v1_1')
+  storage.setItem = () => { throw Error('quota') }
+  assert.throws(() => api.completeManual('manual-original'), /恢复状态暂未保存/)
+  assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), original)
+  assert.equal(api.pendingManual().length, 1)
+})
+
 test('修改删除带服务器版本，回执保留组标识', async () => {
   const calls = []
   const api = createLedgerApi({ request: async (...args) => { calls.push(args); return { ...view, version: 1 } } }, { storage: memory(), owner: '1' })

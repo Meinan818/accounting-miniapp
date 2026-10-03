@@ -79,6 +79,41 @@ function setup(client) {
   const store = scope.run(() => createRemoteLedger(client, owner, { storage: { getItem: k => values.get(k) ?? null, setItem: (k, v) => values.set(k, v) } }))
   return { store, owner, values, dispose: () => scope.stop() }
 }
+test('手动回执丢失重开恢复原键，读失败仍待恢复，完成后不覆盖已删除事实', async () => {
+  const values = new Map(), storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }
+  const keys = []; let lost = true, readFail = false
+  const client = { request: async (method, path, options) => {
+    if (method === 'PUT') return { id: path.split('/').at(-1), version: 0, status: 'CONFIRMED', records: options.body.records }
+    if (method === 'POST') {
+      keys.push(options.headers['Idempotency-Key'])
+      if (lost) throw Error('合成确认回执丢失')
+      return { records: [value] }
+    }
+    if (readFail) throw Error('合成快照读取失败')
+    return { revision: '1', nextAfter: null, records: [{ record: value, deletedAt: '2026-10-04T00:00:00Z' }] }
+  } }
+  let scope = effectScope(), owner = ref('1')
+  let store = scope.run(() => createRemoteLedger(client, owner, { storage }))
+  await assert.rejects(store.addRecord(input, { batchId: 'manual-original' }), /回执丢失/)
+  scope.stop()
+  scope = effectScope()
+  store = scope.run(() => createRemoteLedger(client, owner, { storage }))
+  try {
+    const [operation] = store.manualRecovery.value.operations
+    assert.equal(operation.batchId, 'manual-original')
+    lost = false; readFail = true
+    await assert.rejects(store.addRecord(operation.record, { batchId: operation.batchId }), /已确认保存/)
+    assert.equal(store.manualRecovery.value.operations.length, 1)
+    readFail = false
+    await store.addRecord(operation.record, { batchId: operation.batchId })
+    assert.equal(new Set(keys).size, 1)
+    assert.equal(store.records.value.length, 0)
+    assert.ok(store.recordsByIds([id])[0].deletedAt)
+    assert.equal(store.manualRecovery.value.operations.length, 0)
+    owner.value = '2'
+    assert.equal(store.manualRecovery.value.operations.length, 0)
+  } finally { scope.stop() }
+})
 test('正式账本不读取演示数据，删除事实排除汇总但保留卡片定位', async () => {
   const test = setup({ request: async () => ({ revision: '0', nextAfter: null, records: [{ record: value, deletedAt: '2026-10-03T01:00:00Z' }] }) })
   try { assert.equal(await test.store.refresh(), true); assert.equal(test.store.records.value.length, 0); assert.equal(test.store.recordsByIds([id])[0].deletedAt, '2026-10-03T01:00:00Z'); assert.throws(() => test.store.clearRecords(), /不提供/) }

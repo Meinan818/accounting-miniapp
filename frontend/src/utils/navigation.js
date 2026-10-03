@@ -35,12 +35,12 @@ export function useManualRecordSave(store, router, batchId) {
     if (failure) throw new Error('账单已保存，暂时未能打开明细，请重试打开；无需再次入账。')
     return true
   }
-  async function save(record) {
+  async function save(record, originalBatchId = batchId) {
     if (!active || saving.value) return false
     saving.value = true; error.value = ''
     try {
       if (!savedRecord.value) {
-        const saved = await store.addRecord(record, { batchId, source: 'manual' })
+        const saved = await store.addRecord(record, { batchId: originalBatchId, source: 'manual' })
         if (!active) return false
         savedRecord.value = saved
       }
