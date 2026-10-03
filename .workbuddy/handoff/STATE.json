@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "持续自主开发首轮创新已实现并本地保存：月度复盘/每日支出/上月对照/日期小票联动/聊天本月复盘；127项Node、1806模块构建、44项开发浏览器检查通过，最终人工验收未完成",
-  "stage": "autonomous_product_review_edition",
+  "currentTask": "准备新对话交接：最新猫猫实体手账与动效源码已本地保存，交接入口已整理；保留新主角/参考图超时/正式账号后台未完成和服务未启动限制，本轮不扩功能",
+  "stage": "handoff_cat_candy_visual_saved",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "推进Java/MySQL基础：核本机工具与服务、核官方兼容版本，再落实后端工程/账单API与未来真实AI边界，不再等待逐页观感批准",
-  "nextStepReason": "核心前端已具备草稿到入账和账本复盘，继续复制装饰页价值有限；按规划转向真实持久化与服务能力，同时保留演示与最终人工验收的明确边界",
-  "pendingUserDecision": "普通规划/开发/交接/提交/发布判断不需用户逐项决定；费用、账号/凭据、不可逆真实数据或隐私权限变化出现时再给必要操作，最终成果由用户验收纠错",
+  "nextStep": "新对话先核NEXT/规则/计划/STATE/最新LOG与Git/源码/端口和工具权限，合法恢复本地预览，再推进账号密码与Java/MySQL用户隔离；新主角需核Kitool用量/获新调用授权/审图后才接入",
+  "nextStepReason": "已有前端和新动效无需重做；服务状态/图生图费用与支持/真实登录均不能由旧记录猜测，交接后以当前证据继续核心后端能力，不重复旧授权或强制清演示数据",
+  "pendingUserDecision": "查看本地页面需在frontend手动npm run dev（后台启动被工具策略拒绝，未绕过）；Kitool参考图HTTP524无成品/扣费未知，先核用量再授权新请求，未审图不接入；最终观感仍由用户验收纠错",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
