@@ -87,3 +87,8 @@
 #app .profile-entry-icon { width:46px; height:46px; border:0; background:transparent; transform:none; }
 #app .profile-entry { border-bottom-style:solid; border-bottom-color:#eed8c2; }
 #app .profile-entry-icon .cat-nav-icon { width:42px; height:42px; }
+
+/* 分类图案承载分类语义；小票只用于明细导航。 */
+#app .home-record-stamp, #app .stats-category-stamp { flex:0 0 46px; height:46px; border:0; background:transparent; border-radius:0; }
+#app .bills-record-stamp { flex-basis:46px; height:46px; }
+#app .stats-category-name { align-items:center; }

@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { validateRecord } from '@/utils/ledger'
+import CategoryIcon from '@/components/common/CategoryIcon.vue'
 const props = defineProps({ record: { type: Object, default: () => ({}) }, saving: Boolean, error: { type: String, default: '' }, submitLabel: { type: String, default: '保存账单' } })
 const emit = defineEmits(['save', 'cancel'])
 const form = ref({ type: props.record.type || 'expense', amount: props.record.amount != null ? String(props.record.amount) : '',
@@ -24,9 +25,16 @@ function save() {
       <div class="type-options"><button v-for="type in ['expense', 'income']" :key="type" type="button" :aria-pressed="form.type === type" :class="{ selected: form.type === type }" @click="changeType(type)">{{ type === 'income' ? '收入' : '支出' }}</button></div>
       <div class="field-grid">
         <label>金额<input v-model="form.amount" aria-label="金额" inputmode="decimal" type="text" placeholder="如25.50" autocomplete="off" required /></label>
-        <label>分类<select v-model="form.category" aria-label="分类"><option v-for="c in categories" :key="c.label" :value="c.label">{{ c.label }}</option></select></label>
         <label>日期<input v-model="form.date" aria-label="日期" type="date" required /></label>
         <label>时间<input v-model="form.time" aria-label="时间" type="time" required /></label>
+      </div>
+      <div class="category-picker" role="group" aria-label="选择账单分类">
+        <p class="category-picker-heading">给这笔选一张贴纸 <span>已选 · {{ form.category }}</span></p>
+        <div class="category-picker-grid">
+          <button v-for="category in categories" :key="category.label" type="button" class="category-choice" :class="{ selected: form.category === category.label }" :aria-label="'分类：' + category.label" :aria-pressed="form.category === category.label" @click="form.category = category.label">
+            <CategoryIcon :category="category.label" :type="form.type" /><span>{{ category.label }}</span><span v-if="form.category === category.label" class="category-choice-check" aria-hidden="true">✓</span>
+          </button>
+        </div>
       </div>
       <label>备注<input v-model="form.remark" aria-label="备注" type="text" maxlength="120" placeholder="这笔用在了哪里？" /></label>
     </fieldset>
@@ -45,9 +53,21 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 button.selected, button.primary { background: #f6ddd8; }
 .type-options button, .form-actions button { flex: 1; }
 .field-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; margin: 12px 0; }
+.field-grid > label:first-child { grid-column:1 / -1; }
+.field-grid > label:first-child input { font-size:24px; font-variant-numeric:tabular-nums; background:#fff6e7; min-height:58px; }
+.category-picker { margin:18px 0; }
+.category-picker-heading { display:flex; align-items:baseline; justify-content:space-between; gap:8px; font-size:13px; margin-bottom:10px; }
+.category-picker-heading span { color:#937663; font-size:11px; }
+.category-picker-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px 8px; }
+.category-choice { display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; min-height:86px; padding:6px 2px; gap:4px; border:1.5px solid #e8d0be; border-radius:17px; background:#fffbf2; box-shadow:0 3px 0 #f0decd; font-size:12px; }
+.category-choice .category-icon { width:44px; height:44px; }
+.category-choice.selected { border-color:#c58f9e; background:#fde8ec; box-shadow:0 3px 0 #ecc0cb; }
+.category-choice-check { position:absolute; top:3px; right:4px; display:grid; place-items:center; width:16px; height:16px; border-radius:50%; color:#fff; background:#ba7e91; font-size:10px; }
 label { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 input, select { width: 100%; min-width: 0; box-sizing: border-box; }
-.form-actions { display: flex; gap: 10px; margin-top: 18px; }
+.form-actions { display: flex; gap: 10px; margin-top: 18px; padding-block:8px; position:sticky; bottom:0; background:linear-gradient(#fffdf800,#fffdf8 20%); z-index:2; }
+.form-actions button { border-width:1.5px; box-shadow:0 3px 0 #ead2bc; }
+.form-actions button.primary { background:#f7ccd7; border-color:#d9a5b6; box-shadow:0 3px 0 #e6acbe; }
 .form-error { color: #aa594d; margin-top: 12px; overflow-wrap: anywhere; }
 input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid #8c6c50; outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) { button { transition: background-color 140ms ease, border-color 140ms ease; } }

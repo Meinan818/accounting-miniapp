@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { CATEGORY_OPTIONS, getCategoryMeta } from '@/utils/mockAI'
 import { formatCurrency, formatRecordTime } from '@/utils/format'
 import { validateRecord } from '@/utils/ledger'
+import CategoryIcon from '@/components/common/CategoryIcon.vue'
 
 // 2. Props
 const props = defineProps({
@@ -101,7 +102,8 @@ watch(
       <div class="mb-4 space-y-2">
         <div class="flex items-center justify-between gap-4">
           <span class="text-gray-600">类型</span>
-          <span class="font-medium text-gray-900">
+          <span class="confirm-category-label font-medium text-gray-900">
+            <CategoryIcon v-if="catAppearance" :category="record.category" :type="record.type" />
             {{ typeLabel }} · {{ record.category }} <template v-if="!catAppearance">{{ recordMeta?.icon }}</template>
           </span>
         </div>
@@ -235,3 +237,8 @@ watch(
     </form>
   </article>
 </template>
+
+<style scoped>
+.confirm-category-label { display:inline-flex; align-items:center; gap:6px; }
+.confirm-category-label .category-icon { width:32px; height:32px; }
+</style>

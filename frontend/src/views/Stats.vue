@@ -2,7 +2,8 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
-import { ArrowLeft, ChevronLeft, ChevronRight, ReceiptText } from 'lucide-vue-next'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import CategoryWheel from '@/components/common/CategoryWheel.vue'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
@@ -105,9 +106,10 @@ onMounted(() => store.refresh())
           <div v-if="categoryRows.length" class="stats-wheel-scene"><span class="stats-wheel-label edition-ribbon">本月账本色谱</span><CategoryWheel :categories="categoryRows" :type="selectedType" :label="typeLabel + '分类分布，共' + categoryRows.length + '类'"><div class="stats-wheel-center"><span>{{ selectedType === 'income' ? '收入来源' : '支出去向' }}</span><strong>{{ categoryRows.length }}<small>类</small></strong><span>{{ statistics[selectedType + 'Count'] }}笔有效账单</span></div></CategoryWheel><JournalSticker kind="spark" tone="honey" class="stats-wheel-spark" /><JournalSticker kind="flower" tone="lilac" class="stats-wheel-flower" /></div>
           <aside v-if="leadingCategory" class="stats-insight desk-note" aria-label="基于实际账单的小发现"><JournalSticker tone="sage" /><div><p class="edition-kicker">账本小发现 · 非AI预测</p><p>本月{{ typeLabel }}最多的是 <strong>{{ leadingCategory.category }}</strong></p><span>¥{{ centsText(leadingCategory.amountCents) }} · 占{{ leadingCategory.percent.toFixed(1) }}%</span></div></aside>
           <p class="stats-category-note">{{ statistics[selectedType + 'Count'] }} 笔{{ typeLabel }} · 金额从高到低</p>
+          <p v-if="categoryRows.length" class="stats-category-link-hint">点分类贴纸，翻开这一类的小票</p>
           <ol v-if="categoryRows.length" class="stats-category-list">
             <li v-for="(item, index) in categoryRows" :key="item.category" class="stats-category-row" :data-category="item.category">
-              <div class="stats-category-line"><div class="stats-category-name"><span class="stats-category-stamp" aria-hidden="true"><ReceiptText :size="18" :stroke-width="1.5" /></span><span>{{ item.category }}</span></div><div class="stats-category-value"><strong>¥{{ centsText(item.amountCents) }}</strong><span>{{ item.percent.toFixed(1) }}% · {{ item.count }}笔</span></div></div>
+              <router-link class="stats-category-line stats-category-link" :to="{path:'/bills',query:{month:selectedMonth,type:selectedType,category:item.category}}" :aria-label="'查看' + monthTitle + typeLabel + '分类' + item.category + '的账单'"><div class="stats-category-name"><span class="stats-category-stamp" aria-hidden="true"><CategoryIcon :category="item.category" :type="selectedType" /></span><span>{{ item.category }}</span></div><div class="stats-category-value"><strong>¥{{ centsText(item.amountCents) }}</strong><span>{{ item.percent.toFixed(1) }}% · {{ item.count }}笔 <span aria-hidden="true">›</span></span></div></router-link>
               <div class="stats-bar-track" aria-hidden="true"><span class="stats-bar-fill" :class="selectedType" :style="{ width: item.barPercent + '%', background: JOURNAL_COLORS[index % JOURNAL_COLORS.length] }"></span></div>
             </li>
           </ol>
@@ -122,6 +124,10 @@ onMounted(() => store.refresh())
 </template>
 
 <style scoped>
+.stats-category-link-hint { font-size:11px; color:#997c67; margin-top:7px; }
+.stats-category-link { padding:5px 7px; margin-inline:-7px; min-height:54px; border-radius:15px; text-decoration:none; color:inherit; }
+.stats-category-link:hover { background:#fff0df; }
+.stats-category-link:focus-visible { outline:2px solid #94644c; outline-offset:2px; }
 .review-kicker { font-size: 10px; letter-spacing: 1.5px; color: #8b725e; margin-bottom: 12px; }
 .review-trend { margin: 22px 0; padding: 22px 16px 17px; border-top: 2px solid #cfbaa0; border-bottom: 1px solid #dac8b0; background: repeating-linear-gradient(transparent 0 31px,#f0e5d5 31px 32px),#fffaf0; }
 .review-section-title { display: flex; justify-content: space-between; align-items: start; gap: 10px; }.review-section-title h2 { font-size: 18px; margin-top: 5px; }.review-section-title > span { flex-shrink: 0; font-size: 11px; color: #79634f; padding-top: 5px; }

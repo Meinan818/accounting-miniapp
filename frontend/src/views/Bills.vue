@@ -1,5 +1,5 @@
 <script setup>
-import CatNavIcon from '@/components/common/CatNavIcon.vue'
+import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, nextTick, ref, watch } from 'vue'
@@ -13,7 +13,9 @@ import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
-import { searchRecords } from '@/utils/journal'
+import { filterRecords } from '@/utils/journal'
+import { CATEGORY_OPTIONS } from '@/utils/categories'
+import { getCategoryArtwork } from '@/utils/categoryArtwork'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
@@ -29,6 +31,8 @@ const notice = ref('')
 const noticeElement = ref(null)
 const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0,120) : '')
 const searchInput = ref(null)
+const selectedType = ref(['income', 'expense'].includes(route.query.type) ? route.query.type : 'all')
+const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category.slice(0,120) : '')
 
 // 4. 计算属性
 const monthTitle = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY年M月'))
@@ -44,7 +48,26 @@ const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
 const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
 const monthBalance = computed(() => (legacyCents(monthIncome.value) - legacyCents(monthExpense.value)) / 100)
 
-const listedRecords = computed(() => searchRecords(monthRecords.value, searchText.value))
+const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
+const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
+const filterCategories = computed(() => {
+  const counts = new Map()
+  for (const record of monthRecords.value) {
+    if (selectedType.value !== 'all' && record.type !== selectedType.value) continue
+    const key = JSON.stringify([record.type, record.category])
+    if (!counts.has(key)) counts.set(key, { type:record.type, category:record.category, count:0 })
+    counts.get(key).count++
+  }
+  const options = Object.values(CATEGORY_OPTIONS).flat().map(item => item.label)
+  return [...counts.values()].sort((a,b) => options.indexOf(a.category) - options.indexOf(b.category))
+})
+function chooseType(type) { selectedType.value = type; selectedCategory.value = '' }
+function chooseCategory(item) {
+  const alreadyChosen = selectedType.value === item.type && selectedCategory.value === item.category
+  selectedType.value = item.type
+  selectedCategory.value = alreadyChosen ? '' : item.category
+}
+function resetFilters() { selectedType.value = 'all'; selectedCategory.value = ''; searchText.value = '' }
 const groupedRecords = computed(() => {
   const groups = new Map()
 
@@ -71,6 +94,7 @@ function setRecordElement(id, element) { if (element) recordElements.set(id, ele
 watch([highlightedId, selectedMonth], async ([id]) => {
   if (!id || !monthRecords.value.some(record => record.id === id)) return
   notice.value = '新账单已保存，已定位到刚刚记下的这一笔。'
+  resetFilters()
   await nextTick()
   const element = recordElements.get(id)
   element?.scrollIntoView({ block: 'center', behavior: 'auto' })
@@ -104,6 +128,7 @@ async function clearSearch() {
 
 function changeMonth(offset) {
   notice.value = ''
+  selectedCategory.value = ''
   selectedMonth.value = dayjs(`${selectedMonth.value}-01`).add(offset, 'month').format('YYYY-MM')
 }
 
@@ -186,7 +211,12 @@ function getSign(record) {
         </dl>
       </section>
 
-      <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input ref="searchInput" id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" @click="clearSearch">清除</button></div><p v-if="searchText && !recordStore.storageError" class="bills-search-feedback" role="status">找到 {{ listedRecords.length }} 笔 · 搜索只影响列表，本月汇总不变</p></section>
+      <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input ref="searchInput" id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" @click="clearSearch">清除</button></div></section>
+      <section v-if="!recordStore.storageError && monthRecords.length" class="bills-filter-shelf" aria-label="按收支和分类筛选">
+        <div class="bills-filter-heading"><span>挑一张分类贴纸</span><div class="bills-type-tabs" aria-label="筛选收支"><button v-for="type in ['all','expense','income']" :key="type" type="button" :aria-pressed="selectedType === type" :class="{ selected:selectedType === type }" @click="chooseType(type)">{{ type === 'all' ? '全部' : type === 'income' ? '收入' : '支出' }}</button></div></div>
+        <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
+      </section>
+      <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" @click="resetFilters">查看全部</button></div>
       <p class="bills-storage-note">账单保存在当前浏览器；这里的修改会同步到首页和聊天查询</p>
       <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
 
@@ -220,7 +250,7 @@ function getSign(record) {
               @keydown.space.prevent="edit(record)"
             >
               <div class="bills-record-main">
-                <span class="bills-record-stamp" aria-hidden="true"><CatNavIcon kind="receipt" /></span>
+                <span class="bills-record-stamp" aria-hidden="true"><CategoryIcon :category="record.category" :type="record.type" /></span>
                 <div class="bills-record-text">
                   <p>{{ record.category }} <span v-if="record.id === highlightedId" class="bills-added-tag">刚刚记下</span></p>
                   <p class="bills-subtitle">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>
@@ -242,8 +272,8 @@ function getSign(record) {
 
       <section v-else-if="!recordStore.storageError" class="bills-empty" aria-label="无账单">
         <img :src="receiptKitten" alt="拿着小票的奶油猫" />
-        <p>{{ searchText ? '没有找到匹配的小票' : '这个月还没有小账单' }}</p>
-        <p class="bills-subtitle">{{ searchText ? '试试其他关键词，或清除搜索条件' : '点下面的 +，本喵帮你记一笔' }}</p>
+        <p>{{ filtering ? '这张分类贴纸下，还没有小票' : '这个月还没有小账单' }}</p>
+        <p class="bills-subtitle">{{ filtering ? '换一张贴纸、调整关键词，或查看全部' : '点下面的 +，本喵帮你记一笔' }}</p>
       </section>
     </main>
 
@@ -253,6 +283,21 @@ function getSign(record) {
 </template>
 
 <style scoped>
+.bills-filter-shelf { margin-top:18px; }
+.bills-filter-heading { display:flex; align-items:center; justify-content:space-between; gap:6px; color:#846450; font-size:12px; }
+.bills-type-tabs { display:flex; gap:3px; border:1px solid #e5cbb5; border-radius:15px; background:#fff7ec; padding:3px; }
+.bills-type-tabs button { min-height:38px; padding:0 11px; border-radius:12px; }
+.bills-type-tabs button.selected { background:#f4d2d9; color:#814d60; box-shadow:0 2px 0 #e8bac6; }
+.bills-filter-chips { display:flex; gap:9px; overflow-x:auto; padding:13px 2px 9px; }
+.bills-category-chip { display:flex; align-items:center; gap:5px; position:relative; flex:0 0 auto; padding:7px 11px 7px 6px; min-height:52px; border:1.5px solid #e2c8b4; border-radius:18px; background:#fffaf1; box-shadow:0 3px 0 #edd9c4; color:#775440; font-size:12px; }
+.bills-category-chip .category-icon { width:34px; height:34px; }
+.bills-category-chip small { color:#8b7262; font-size:10px; padding-left:2px; }
+.bills-category-chip.selected { background:var(--chip-paper); border-color:#b68b77; box-shadow:0 3px 0 #d5b4a1; }
+.bills-filter-result { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; padding:11px 12px; border-radius:14px; background:#fff1e0; }
+.bills-filter-result .bills-search-feedback { margin:0; color:#815b46; }
+.bills-filter-result .bills-search-feedback span { color:#a18470; }
+.bills-filter-result button { flex-shrink:0; min-height:44px; padding:6px 10px; border:1px solid #dfbfa7; border-radius:12px; background:#fffaf0; font-size:12px; }
+.bills-type-tabs button:focus-visible, .bills-category-chip:focus-visible, .bills-filter-result button:focus-visible { outline:2px solid #91664e; outline-offset:2px; }
 .bills-search-card { position: relative; margin-top: 21px; padding: 13px 13px 11px; background: #ede6f0; border: 1px solid #c8b8d0; border-radius: 9px 16px 10px 15px; }
 .bills-search-card::before { content: ''; position:absolute; width:44px; height:14px; background:#f3e3bc; opacity:.8; top:-7px; left:17px; transform:rotate(-5deg); }
 .bills-search-row { display: flex; align-items: center; gap: 9px; margin-top: 4px; min-height:44px; color:#8a7591; }.bills-search-row input { min-width:0; width:100%; font-size:14px; background:transparent; color:#624f6b; outline:none; }.bills-search-row input:focus-visible { outline: none; }

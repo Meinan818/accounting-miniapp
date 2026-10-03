@@ -18,6 +18,14 @@ export function searchRecords(records, query = '') {
   })
 }
 
+// 类型/分类精确匹配，文字搜索仍按原规则；筛选绝不改变月汇总或原账本。
+export function filterRecords(records, { query = '', type = 'all', category = '' } = {}) {
+  if (!['all', 'income', 'expense'].includes(type) || typeof category !== 'string') throw new Error('筛选条件无效')
+  return searchRecords(records, query).filter(record => (
+    (type === 'all' || record.type === type) && (!category || record.category === category)
+  ))
+}
+
 // Geometry from actual cents. All labels/amounts remain normal accessible page text.
 export function getCategoryWheel(categories) {
   if (!Array.isArray(categories)) throw new Error('分类数据无法读取')

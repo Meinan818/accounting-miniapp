@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import { centsText, legacyCents } from '@/utils/money'
 import RecordEditor from '@/components/record/RecordEditor.vue'
+import CategoryIcon from '@/components/common/CategoryIcon.vue'
 const props = defineProps({ group: { type: Object, required: true }, savedRecords: { type: Array, default: () => [] }, busy: Boolean, error: String })
 const emit = defineEmits(['confirm', 'cancel', 'update'])
 const editing = ref(null)
@@ -24,7 +25,7 @@ function update(record) { emit('update', { itemId: editing.value, record }); edi
     <div class="draft-heading"><h2 class="record-heading">这组小账单 · {{ items.length }}笔</h2><span class="record-pending">{{ statusLabel }}</span></div>
     <ol class="draft-items">
       <li v-for="(item, index) in items" :key="item.id" :data-item-id="item.id" :class="{ 'deleted-item': item.deleted }">
-        <div class="draft-item-top"><span>{{ index + 1 }}. {{ item.description }}</span><strong :class="item.type">{{ item.deleted ? '已删除' : item.amountCents == null ? '待补金额' : '¥' + centsText(item.amountCents) }}</strong></div>
+        <div class="draft-item-top"><span class="draft-item-copy"><CategoryIcon v-if="['income','expense'].includes(item.type)" :category="item.category" :type="item.type" /><span>{{ index + 1 }}. {{ item.description }}</span></span><strong :class="item.type">{{ item.deleted ? '已删除' : item.amountCents == null ? '待补金额' : '¥' + centsText(item.amountCents) }}</strong></div>
         <p v-if="!item.deleted">{{ item.type === 'income' ? '收入' : item.type === 'expense' ? '支出' : '待定收支' }} · {{ item.category }} · {{ item.date || '待补日期' }} {{ item.time || '待补时间' }}</p>
         <p v-else>已从当前账本移除，不计入合计。</p>
         <button v-if="!['saved', 'cancelled'].includes(status)" type="button" :disabled="busy" :aria-label="'编辑第' + (index + 1) + '笔草稿'" @click="editing = item.id">编辑这笔</button>
@@ -43,6 +44,10 @@ function update(record) { emit('update', { itemId: editing.value, record }); edi
 .draft-items { margin-top: 12px; }
 .draft-items li { padding: 12px 0; border-bottom: 1px dashed #d9c5a9; }
 .draft-item-top > span { min-width: 0; overflow-wrap: anywhere; }
+.draft-item-copy { display:flex; align-items:center; gap:7px; }
+.draft-item-copy > span { min-width:0; }
+.draft-item-copy .category-icon { width:34px; height:34px; }
+.deleted-item .category-icon { opacity:.45; }
 strong { font-weight: 400; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 .draft-items p { font-size: 12px; color: #aa8a70; margin-top: 5px; }
 .draft-items button { margin-top: 6px; padding: 6px 10px; font-size: 12px; min-height: 36px; }

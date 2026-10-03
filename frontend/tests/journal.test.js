@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { searchRecords, getCategoryWheel, JOURNAL_COLORS } from '../src/utils/journal.js'
+import { searchRecords, filterRecords, getCategoryWheel, JOURNAL_COLORS } from '../src/utils/journal.js'
 const rows = [
   { id:'a',type:'expense',amount:12.5,category:'餐饮',remark:'Coffee 咖啡',date:'2026-10-03',time:'12:00' },
   { id:'b',type:'income',amount:100,category:'工资',remark:'九月工资',date:'2026-10-02',time:'09:00' },
@@ -17,6 +17,29 @@ test('搜索无匹配返回空数组，特殊字符按字面不执行正则', ()
 })
 test('搜索不改对象身份，坏列表明确失败', () => {
   assert.equal(searchRecords(rows,'Coffee')[0],rows[0]);assert.throws(()=>searchRecords(null,'a'),/读取/)
+})
+test('分类筛选精确匹配，不把备注里提及餐饮的购物当餐饮', () => {
+  const input = [...rows, { id:'shopping', type:'expense', amount:3, category:'购物', remark:'餐饮用品' }]
+  assert.deepEqual(filterRecords(input, { category:'餐饮' }).map(r=>r.id), ['a'])
+  assert.deepEqual(filterRecords(input, { query:'餐饮', category:'购物' }).map(r=>r.id), ['shopping'])
+})
+test('同名其他分类可按收入/支出区分，组合关键词不覆盖分类条件', () => {
+  const input = [{ id:'out', type:'expense', category:'其他', remark:'旧记事', amount:1 }, { id:'in', type:'income', category:'其他', remark:'旧记事', amount:2 }]
+  assert.deepEqual(filterRecords(input, {type:'income',category:'其他',query:'旧'}).map(r=>r.id), ['in'])
+  assert.deepEqual(filterRecords(input, {type:'expense',category:'其他',query:'不存在'}), [])
+})
+test('筛选保持记录顺序/对象身份，删除排除，空条件回到全月有效列表', () => {
+  const before = JSON.stringify(rows)
+  assert.deepEqual(filterRecords(rows).map(r=>r.id), ['a','b'])
+  assert.equal(filterRecords(rows, {type:'expense'})[0], rows[0])
+  assert.equal(JSON.stringify(rows), before)
+  assert.throws(()=>filterRecords(rows,{type:'unknown'}),/筛选/)
+  assert.throws(()=>filterRecords(rows,{category:null}),/筛选/)
+})
+test('旧分类与原型同名分类按字面过滤，不擅自替换账本分类', () => {
+  const input = [{id:'old',type:'expense',category:'旧分类',amount:1},{id:'proto',type:'expense',category:'__proto__',amount:2}]
+  assert.deepEqual(filterRecords(input,{category:'__proto__'}).map(r=>r.id),['proto'])
+  assert.deepEqual(filterRecords(input,{category:'旧分类'}).map(r=>r.id),['old'])
 })
 test('分类色谱按实际整数分铺满100%，保留分类顺序/输入', () => {
   const input=[{category:'餐饮',amountCents:100},{category:'交通',amountCents:300}],before=JSON.stringify(input)

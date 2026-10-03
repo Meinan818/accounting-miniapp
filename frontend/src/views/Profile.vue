@@ -64,7 +64,7 @@ onMounted(() => store.refresh())
         </template>
       </section>
 
-      <section v-if="!error" class="profile-footprints" aria-labelledby="profile-footprints-title"><div class="profile-section-heading"><h2 id="profile-footprints-title">最近7天的小足迹</h2><span>{{ recordedDays }}个日期有记录</span></div><div class="profile-footprint-row"><div v-for="day in recentDays" :key="day.date" class="profile-footprint-item" :class="{ recorded: day.count > 0 }" role="group" :aria-label="day.date + '，' + day.count + '笔有效账单'"><JournalSticker :tone="day.count ? 'pink' : 'sage'" :class="{ 'profile-footprint-muted': !day.count }" /><span>{{ day.day }}</span></div></div><p>按账单业务日期整理，不是连续打卡；未确认和已删除的不计入。</p></section>
+      <section v-if="!error" class="profile-footprints" aria-labelledby="profile-footprints-title"><div class="profile-section-heading"><h2 id="profile-footprints-title">最近7天的小足迹</h2><span>{{ recordedDays }}个日期有记录</span></div><div class="profile-footprint-row"><router-link v-for="day in recentDays" :key="day.date" :to="{path:'/bills',query:{month:day.date.slice(0,7),q:day.date}}" class="profile-footprint-item" :class="{ recorded: day.count > 0 }" :aria-label="'查看' + day.date + '的' + day.count + '笔有效账单'"><JournalSticker :tone="day.count ? 'pink' : 'sage'" :class="{ 'profile-footprint-muted': !day.count }" /><span>{{ day.day }}</span></router-link></div><p>点爪印翻开当天小票。按业务日期整理，不是连续打卡；未确认和已删除的不计入。</p></section>
       <section class="profile-entry-card" aria-labelledby="profile-entry-title">
         <h2 id="profile-entry-title">常用入口</h2>
         <router-link v-for="entry in entries" :key="entry.to" :to="entry.to" class="profile-entry">
@@ -82,7 +82,7 @@ onMounted(() => store.refresh())
 
       <section class="profile-help-card" aria-labelledby="profile-help-title">
         <h2 id="profile-help-title">记账小贴士</h2>
-        <ul><li>聊天是主入口，每组最多5笔，确认前不入账。</li><li>问“本月总支出”可以查汇总，目前只支持本月。</li><li>手动记账是备用；改错或删除，可点明细里的整条账单。</li></ul>
+        <ul><li>聊天是主入口，每组最多5笔，确认前不入账。</li><li>问“本月总支出”可以查汇总，目前只支持本月。</li><li>点明细里的分类贴纸可以筛选；统计中的同款贴纸能直接翻开对应小票。</li><li>手动记账是备用；改错或删除，可点明细里的整条账单。</li></ul>
       </section>
       <footer class="profile-about">喵叽智账 · 前端演示 v{{ appVersion }}<br /><span>好好记账，也好好生活</span></footer>
     </main>
@@ -91,6 +91,8 @@ onMounted(() => store.refresh())
 </template>
 
 <style scoped>
+.profile-footprint-item { min-height:58px; text-decoration:none; }
+.profile-footprint-item:focus-visible { outline:2px solid #88624d; outline-offset:2px; }
 .profile-footprints { position:relative; margin-top:22px; padding:17px 13px 13px; border:1px dashed #bfba9c; border-radius:4px 18px 5px 16px; background:#f3f3e7; }.profile-footprint-row { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; margin-top:13px; }.profile-footprint-item { min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px 0; color:#a39a84; font-size:10px; }.profile-footprint-item.recorded { color:#667457; }.profile-footprint-item .journal-sticker { width:27px; height:27px; }.profile-footprint-dot { width:27px; height:27px; border:1px dashed #c7c4aa; border-radius:50%; background:#fbfaf1; }.profile-footprints > p { margin-top:9px; font-size:10px; line-height:1.8; color:#817c63; }
 
 .profile-edition-label { margin-bottom: 14px; }.profile-flower { position:absolute; right:-5px; top:-15px; width:39px; height:39px; opacity:.8; }

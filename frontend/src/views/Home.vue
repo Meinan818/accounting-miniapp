@@ -5,7 +5,7 @@ import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, ref } from 'vue'
 import dayjs from 'dayjs'
-import { ReceiptText } from 'lucide-vue-next'
+import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
 import miaoConfused from '@/assets/design/mascot/poses/miao-confused.png'
 import CalendarCard from '@/components/calendar/CalendarCard.vue'
@@ -108,7 +108,7 @@ function getRecordSign(record) {
             class="home-record"
           >
             <div class="home-record-main">
-              <span class="home-record-stamp" aria-hidden="true"><ReceiptText :size="20" :stroke-width="1.5" /></span>
+              <span class="home-record-stamp" aria-hidden="true"><CategoryIcon :category="record.category" :type="record.type" /></span>
               <div class="home-record-text">
                 <p>{{ record.category }}</p>
                 <p class="home-subtitle">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>
