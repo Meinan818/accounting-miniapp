@@ -12,7 +12,7 @@ import { centsText } from '../src/utils/money.js'
 import { useLocalDay } from '../src/utils/calendar.js'
 
 const original = { nickname: '合成名片', signature: '合成签名', avatar: 'cat', version: 0 }
-function scene({ records = [], dateClock = {} } = {}) {
+function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail('不可处理真实照片') } } = {}) {
   const requests = [], cleanup = [], scope = effectScope()
   const auth = reactive({ user: { id: '1' }, api: { request(method, path, options) {
     return new Promise((resolve, reject) => requests.push({ method, path, options, resolve, reject }))
@@ -22,8 +22,8 @@ function scene({ records = [], dateClock = {} } = {}) {
     useRecordStore: () => ({ records, storageError: '', refresh() { assert.fail('不可自动读账单') } }),
     useAuthStore: () => auth, getMonthStatistics, getRecentDays, centsText, packageInfo: { version: 'synthetic' },
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
-    DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto() { assert.fail('不可处理真实照片') } }
-  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, saveProfile, savingProfile, editError, loadingProfile }')(...Object.values(bindings)))
+    DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto: createPhoto }
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, loadingProfile }')(...Object.values(bindings)))
   let opens = 0
   view.profileDialog.value = { open: false, showModal() { opens++; this.open = true }, close() { this.open = false } }
   return { view, requests, get opens() { return opens }, dispose() { cleanup.forEach(fn => fn()); scope.stop() } }
@@ -38,6 +38,63 @@ test('重复打开资料编辑不能用迟到读取覆盖用户刚填的昵称',
     env.requests[1]?.resolve({ ...original, nickname: '迟到旧名片' }); await second
     assert.equal(env.view.profileForm.value.nickname, '正在填写的昵称')
     assert.equal(env.opens, 1)
+    assert.equal(env.requests.length, 1)
+  } finally { env.dispose() }
+})
+
+test('头像本地处理完成保留期间输入的昵称签名，确认前不上传', async () => {
+  let complete
+  const env = scene({ createPhoto: () => new Promise(resolve => { complete = resolve }) })
+  try {
+    const opened = env.view.openProfile(); env.requests[0].resolve(original); await opened
+    const input = { files: [{ type: 'image/jpeg', size: 24 }], value: 'synthetic-file' }
+    const pending = env.view.choosePhoto({ target: input })
+    assert.equal(input.value, '')
+    assert.equal(env.view.processingPhoto.value, true)
+    env.view.profileForm.value.nickname = '处理期间的昵称'
+    env.view.profileForm.value.signature = '处理期间的签名'
+    complete('data:image/jpeg;base64,/9j/AA=='); await pending
+    assert.equal(env.view.profileForm.value.avatar, 'photo')
+    assert.equal(env.view.profileForm.value.nickname, '处理期间的昵称')
+    assert.equal(env.view.profileForm.value.signature, '处理期间的签名')
+    assert.equal(env.view.processingPhoto.value, false)
+    assert.equal(env.requests.length, 1)
+    assert.equal(env.requests[0].method, 'GET')
+  } finally { env.dispose() }
+})
+
+test('取消头像处理再打开编辑，旧照片迟到不会替换新名片', async () => {
+  let complete
+  const env = scene({ createPhoto: () => new Promise(resolve => { complete = resolve }) })
+  try {
+    const opened = env.view.openProfile(); env.requests[0].resolve(original); await opened
+    const pending = env.view.choosePhoto({ target: { files: [{}], value: '' } })
+    env.view.closeProfile()
+    assert.equal(env.view.processingPhoto.value, false)
+    const reopened = env.view.openProfile(); env.requests[1].resolve({ ...original, nickname: '再次编辑' }); await reopened
+    env.view.profileForm.value.nickname = '新的输入'
+    complete('data:image/jpeg;base64,/9j/AA=='); await pending
+    assert.equal(env.view.profileForm.value.avatar, 'cat')
+    assert.equal(env.view.profileForm.value.nickname, '新的输入')
+    assert.equal(env.view.editError.value, '')
+    assert.equal(env.view.processingPhoto.value, false)
+    assert.equal(env.requests.length, 2)
+  } finally { env.dispose() }
+})
+
+test('替换头像后旧处理失败不干扰最新照片或忙碌状态', async () => {
+  const photos = []
+  const env = scene({ createPhoto: () => new Promise((resolve, reject) => photos.push({ resolve, reject })) })
+  try {
+    const opened = env.view.openProfile(); env.requests[0].resolve(original); await opened
+    const first = env.view.choosePhoto({ target: { files: [{}], value: '' } })
+    const second = env.view.choosePhoto({ target: { files: [{}], value: '' } })
+    photos[0].reject(Error('旧图片失败')); await first
+    assert.equal(env.view.processingPhoto.value, true)
+    assert.equal(env.view.editError.value, '')
+    photos[1].resolve('data:image/jpeg;base64,/9j/AQ=='); await second
+    assert.equal(env.view.profileForm.value.photo, 'data:image/jpeg;base64,/9j/AQ==')
+    assert.equal(env.view.processingPhoto.value, false)
     assert.equal(env.requests.length, 1)
   } finally { env.dispose() }
 })
