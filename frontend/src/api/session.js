@@ -1,0 +1,58 @@
+import { ref } from 'vue'
+import { ApiError } from './client.js'
+
+export function createSession(client, { onIdentityChange = () => {} } = {}) {
+  const user = ref(null)
+  const status = ref('unknown')
+  const error = ref('')
+  let generation = 0
+  let restoration = null
+  function identity(value) {
+    if (value !== null && (!/^\d+$/.test(value.id) || typeof value.username !== 'string')) {
+      throw new ApiError('账号身份格式不正确，请重新登录。', { code: 'INVALID_RESPONSE' })
+    }
+    const previous = user.value?.id ?? null
+    user.value = value === null ? null : { id: value.id, username: value.username }
+    if (previous !== (value?.id ?? null)) onIdentityChange(value?.id ?? null, previous)
+  }
+  function expire() { generation++; identity(null); status.value = 'guest'; error.value = '登录已失效，请重新登录。' }
+  async function restore() {
+    if (restoration) return restoration
+    const current = generation
+    status.value = 'loading'; error.value = ''
+    restoration = (async () => {
+      try {
+        const value = await client.request('GET', '/api/auth/me')
+        if (current !== generation) return false
+        identity(value); status.value = 'authenticated'; return true
+      } catch (failure) {
+        if (failure.status === 401) { if (current === generation) { identity(null); status.value = 'guest' }; return false }
+        if (current === generation) { identity(null); status.value = 'unavailable'; error.value = failure.message }
+        throw failure
+      } finally { restoration = null }
+    })()
+    return restoration
+  }
+  async function login(username, password) {
+    const current = ++generation
+    identity(null); status.value = 'loading'; error.value = ''
+    try {
+      const value = await client.login(username, password)
+      if (current !== generation) return false
+      identity(value); status.value = 'authenticated'; return true
+    } catch (failure) {
+      if (current === generation) { status.value = failure.status === 401 ? 'guest' : 'unavailable'; error.value = failure.message }
+      throw failure
+    }
+  }
+  async function register(username, password) {
+    await client.request('POST', '/api/auth/register', { body: { username, password } })
+    return login(username, password)
+  }
+  async function logout() {
+    try { await client.logout() }
+    catch (failure) { if (failure.status !== 401) { error.value = failure.message; throw failure } }
+    generation++; identity(null); status.value = 'guest'; error.value = ''
+  }
+  return { user, status, error, restore, login, register, logout, expire }
+}
