@@ -23,6 +23,7 @@ import { linkGroupRecords } from '@/utils/groupRecords'
 import { SERVER_MODE } from '@/api/mode'
 import { createAiDraftApi, draftControl } from '@/api/aiDraft'
 import { useAuthStore } from '@/stores/authStore'
+import { downloadJson } from '@/utils/download'
 
 // 2. 组合式函数
 const conversationStore = useConversationStore()
@@ -106,6 +107,17 @@ const visibleMessages = computed(() => pinnedDraft.value ? [pinnedDraft.value, .
 const hiddenCount = computed(() => Math.max(0, conversationStore.messages.length - visibleMessages.value.length))
 const loadingHistory = ref(false)
 const retryingPersistence = ref(false)
+const backupNote = ref('')
+function backupConversation() {
+  if (!isCurrentView()) return
+  try {
+    const backup = conversationStore.createBackup()
+    downloadJson(backup, `miaoji-conversation-${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
+    backupNote.value = backup.storedHistory.readable
+      ? '已发起备份下载，请确认文件已保存后再刷新。'
+      : '已发起本页备份下载。浏览器中的旧对话仍无法读取，请保留本页且不要清除存储。'
+  } catch { backupNote.value = '备份下载未启动，请保留本页内容，稍后重试。' }
+}
 async function loadEarlier() {
   if (!isCurrentView() || loadingHistory.value) return
   loadingHistory.value = true
@@ -320,7 +332,12 @@ onBeforeUnmount(() => {
         <p v-if="SERVER_MODE" class="miao-history-note">整理时，你发送的文字和当前候选草稿会交给智谱处理；每组最多5笔，核对后再确认。</p>
         <div v-if="conversationStore.persistenceError" class="miao-storage-error" role="alert">
           <p>{{ conversationStore.persistenceError }}</p>
-          <button type="button" class="miao-history-button" :disabled="retryingPersistence || conversationStore.isThinking || Boolean(savingGroup)" @click="retryConversation">{{ conversationStore.storageConflict ? '重新读取最新对话' : conversationStore.restorationBlocked ? '重新读取旧对话' : '重试对话保存' }}</button>
+          <div class="miao-storage-actions">
+            <button type="button" class="miao-history-button" @click="backupConversation">下载对话备份</button>
+            <button type="button" class="miao-history-button" :disabled="retryingPersistence || conversationStore.isThinking || Boolean(savingGroup)" @click="retryConversation">{{ conversationStore.storageConflict ? '重新读取最新对话' : conversationStore.restorationBlocked ? '重新读取旧对话' : '重试对话保存' }}</button>
+          </div>
+          <p class="miao-backup-note">备份含本页消息及浏览器中的对话原文，仅下载到你的设备。</p>
+          <p v-if="backupNote" role="status">{{ backupNote }}</p>
         </div>
         <div v-if="hiddenCount" class="miao-history-controls">
           <button type="button" class="miao-history-button" :disabled="loadingHistory || conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="loadEarlier">查看更早对话（还有{{ hiddenCount }}条）</button>
@@ -363,6 +380,8 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.miao-storage-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+.miao-backup-note { margin-top:8px; font-size:11px; }
 
 .miao-chat { --miao-paper:var(--zz-home-bg); --miao-white:var(--zz-home-paper); --miao-ink:var(--zz-home-ink); --miao-soft:var(--zz-home-ink-soft); --miao-line:#dbb0a1; --miao-pink:#f7cfdf; --miao-yellow:#fae4bf; display:flex; flex-direction:column; height:100dvh; overflow:hidden; color:var(--miao-ink); font-family:var(--zz-home-font); }
 .miao-header { flex-shrink:0; background:linear-gradient(115deg,#fce3ea,#fff3e5 65%,#e5eeda); border-bottom:1.5px solid #e2beb0; box-shadow:0 5px 15px #ab7b6810; }

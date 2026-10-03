@@ -5,6 +5,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { nextTick, reactive } from 'vue'
 import { useConversationStore } from '../src/stores/conversationStore.js'
 import { createDraft, applyDraftInput } from '../src/utils/draftEngine.js'
+import { downloadJson } from '../src/utils/download.js'
 let data, fail, writes
 const key = 'zhizhang_conversation'
 beforeEach(() => { data = new Map(); fail = false; writes = 0; globalThis.window = { localStorage: { getItem: k => data.get(k) ?? null, setItem: (k,v) => { if(fail) throw Error('full'); writes++; data.set(k,v) } } }; setActivePinia(createPinia()) })
@@ -322,6 +323,7 @@ test('身份先变化再释放，A未保存草稿保留到回到A的新实例，
     const a = useServerConversation(); fail = true; a.addMessage({ content: 'A身份变化前未保存' }); await nextTick(); fail = false
     auth.user = { id: 'synthetic-B' }
     assert.deepEqual(a.messages, []); assert.equal(await a.retryPersistence(), false)
+    assert.throws(() => a.createBackup(), /账号或页面已变化/)
     a.$dispose(); const b = useServerConversation()
     assert.equal(JSON.stringify(b.messages), bRaw); assert.equal(writes, 0); b.$dispose()
     auth.user = { id: 'synthetic-A' }; const newA = useServerConversation()
@@ -469,4 +471,54 @@ test('冲突页确认账单仍走同一账本，历史未覆盖且重复确认�
   assert.equal(saved.length,1); assert.equal(ledger.records.length,1)
   ledger.addRecords(group.items, {batchId:group.id,source:'chat'}); assert.equal(ledger.records.length,1)
   assert.equal(conversation.messages.find(m=>m.id==='draft').group.status,'saved')
+})
+test('显式备份保留本页未保存草稿和损坏存储原文，不改变存储或错误', () => {
+  const raw = '{bad-history'; data.set(key, raw); const store = useConversationStore()
+  store.addMessage({ content: '本页未保存草稿' })
+  const priorError = store.persistenceError, backup = store.createBackup()
+  assert.equal(backup.hasUnsavedChanges, true); assert.equal(backup.mode, 'demo')
+  assert.equal(backup.messages.at(-1).content, '本页未保存草稿')
+  assert.deepEqual(backup.storedHistory, { readable: true, raw })
+  backup.messages.at(-1).content = '修改备份副本'
+  assert.equal(store.messages.at(-1).content, '本页未保存草稿')
+  assert.equal(store.persistenceError, priorError); assert.equal(data.get(key), raw); assert.equal(writes, 0)
+  store.$dispose(); assert.throws(() => store.createBackup(), /账号或页面已变化/)
+})
+test('冲突备份同时保留本页快照与另一页面当前原文，未读取无关存储键', async () => {
+  const events = storageEvents(), store = useConversationStore(); fail = true; store.addMessage({ content: '本页草稿' }); await nextTick()
+  fail = false; const raw = textHistory('外部原文'); data.set(key, raw); events.emit({ key })
+  const reads = [], get = window.localStorage.getItem
+  window.localStorage.getItem = name => { reads.push(name); return get(name) }
+  const backup = store.createBackup()
+  assert.equal(backup.messages.at(-1).content, '本页草稿'); assert.equal(backup.storedHistory.raw, raw)
+  assert.deepEqual(reads, [key]); assert.equal(writes, 0); assert.equal(store.storageConflict, true)
+})
+test('浏览器存储不可读时仍能备份本页，明确标识缺少存储原文', () => {
+  const store = useConversationStore(); store.addMessage({ content: '合成本页内容' })
+  window.localStorage.getItem = () => { throw Error('denied') }
+  const backup = store.createBackup()
+  assert.deepEqual(backup.storedHistory, { readable: false, raw: null })
+  assert.equal(backup.messages.at(-1).content, '合成本页内容'); assert.equal(writes, 0)
+  store.$dispose()
+})
+test('备份下载生成完整JSON，仅点击本机链接且延后释放对象URL', async () => {
+  let blob, clicked = 0, removed = 0, timer, revoked = 0
+  const anchor = { click() { clicked++ }, remove() { removed++ } }
+  const environment = { URL: { createObjectURL(value) { blob = value; return 'blob:synthetic' }, revokeObjectURL(value) { assert.equal(value, 'blob:synthetic'); revoked++ } },
+    document: { createElement(name) { assert.equal(name, 'a'); return anchor }, body: { appendChild(value) { assert.equal(value, anchor) } } },
+    setTimeout(fn, delay) { assert.equal(delay, 1000); timer = fn } }
+  const backup = { messages: [{ content: '本页草稿' }], storedHistory: { readable: true, raw: '{damaged' } }
+  downloadJson(backup, 'conversation.json', environment)
+  assert.deepEqual(JSON.parse(await blob.text()), backup); assert.equal(blob.type, 'application/json;charset=utf-8')
+  assert.equal(anchor.href, 'blob:synthetic'); assert.equal(anchor.download, 'conversation.json')
+  assert.equal(clicked, 1); assert.equal(removed, 1); assert.equal(revoked, 0)
+  timer(); assert.equal(revoked, 1)
+})
+test('备份下载启动失败时仍释放链接和对象URL，不吞掉失败', () => {
+  let removed = 0, revoked = 0
+  const environment = { URL: { createObjectURL: () => 'blob:synthetic', revokeObjectURL: () => { revoked++ } },
+    document: { createElement: () => ({ click() { throw Error('download failed') }, remove() { removed++ } }), body: { appendChild() {} } },
+    setTimeout() { assert.fail('失败不保留定时任务') } }
+  assert.throws(() => downloadJson({}, 'conversation.json', environment), /download failed/)
+  assert.equal(removed, 1); assert.equal(revoked, 1)
 })

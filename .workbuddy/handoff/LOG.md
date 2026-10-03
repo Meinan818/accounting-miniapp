@@ -1016,3 +1016,10 @@
 - 身份节点2d3e23ce37eede73332e77e68446365fdfdb9e27已由官方同SHA/force:false接口上传并核远端完整一致，1提交/9blob，identity-sync保留。既有Git443失败不抹除。
 - recovery-before45项41通过4失败：restoring suppress watch隐去await期间新编辑，回执错误清未保存标记，外部冲突后再重读可能覆盖新编辑；重复retry产生多次读写。retrying在首await前锁定、finally释放；恢复await后对cleanMessagesRaw核真实编辑，先标未保存再核外部原文，正常保存/失败保留/冲突阻断。
 - 45项针对/353全量/demo与server两构建通过，材料recovery-before/after/frontend/demo/server。无真实业务/账号/照片/AI/邮件调用，无新依赖/部署，compact=1保持，GUI/真机/实际隔夜待验。下一项显式本机备份受保护对话，现提示先备份但无出口；保留本页消息与当前存储原文，不清理/导入/远传，合成下载验证。本节点保存上传实际见recovery-sync。
+
+## 2026-10-04 · 受保护对话本机备份出口
+
+- 恢复节点24023bcde8b34bb5446fdea5ea10ec40817793eb官方同SHA/force:false接口上传成功，1提交/9blob，远端完整一致（recovery-sync）；原Git443失败保留。
+- Chat存储异常区新增显式下载按钮；Store createBackup只读本页快照与当前对话键原文，JSON脱离引用，标未保存/读取不可用，损坏原文照存字符串。下载工具用真实Blob及临时a/objectURL，成功延后释放、失败立即释放；不清除/导入/远传。页面回执只说已发起，原文不可读明确部分备份。
+- 50项Store+17项Chat共67项针对、360全量与demo/server构建通过（backup-*），Chat本机模块200，服务19940/20820仍仅本机8080/5174无重启。所有数据/下载/请求为合成替身，无真实账号/账本/照片/AI/邮件调用，无依赖变化；GUI/窄屏/实际下载落盘/真机/隔夜仍待验。
+- 初始patch上下文误将合并CSS当独立行，以及同patch重复文件操作，各失败且核无落盘改动，按实际源行/单文件操作修正后67/360通过，不改业务迁就测试。compact=1保持；下一项authStore同Pinia重建与createSession迟到回执，合成身份/CSRF隔离取证。本节点保存上传见backup-sync，不需用户操作。

@@ -150,6 +150,17 @@ export const useConversationStore = defineStore('conversation', () => {
   function setThinking(v) { if (isCurrent()) isThinking.value = Boolean(v) }
   function setMascotMood(v) { if (isCurrent()) mascotMood.value = v }
   function clearConversation() { if (!isCurrent()) return; messages.value = [welcome()]; mascotMood.value = 'happy' }
+  function createBackup() {
+    if (!isCurrent()) throw new Error('账号或页面已变化，请在当前账号的聊天页备份。')
+    const snapshot = JSON.stringify(messages.value)
+    let storedHistory
+    try {
+      if (typeof window === 'undefined') throw new Error('no browser storage')
+      storedHistory = { readable: true, raw: window.localStorage.getItem(key) }
+    } catch { storedHistory = { readable: false, raw: null } }
+    return { schemaVersion: 1, product: '喵叽智账', mode: SERVER_MODE ? 'server' : 'demo', exportedAt: new Date().toISOString(),
+      messages: JSON.parse(snapshot), storedHistory, hasUnsavedChanges: snapshot !== cleanMessagesRaw }
+  }
   function conflictMessage() {
     storageConflict.value = true
     persistenceError.value = '另一页面已更新对话，本页已暂停写入，不会用旧历史覆盖。'
@@ -242,5 +253,5 @@ export const useConversationStore = defineStore('conversation', () => {
     }, { flush: 'sync' })
   }
   return { messages, isThinking, mascotMood, persistenceError, restorationBlocked, storageConflict, hasUnsavedChanges, retryPersistence,
-    addMessage, updateRecord, markRecordConfirmed, updateGroup, setThinking, setMascotMood, clearConversation }
+    addMessage, updateRecord, markRecordConfirmed, updateGroup, setThinking, setMascotMood, clearConversation, createBackup }
 })

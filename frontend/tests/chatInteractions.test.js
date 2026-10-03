@@ -12,10 +12,12 @@ const script = readFileSync(new URL('../src/views/Chat.vue', import.meta.url), '
   .split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
 function scene({ server = true, syntheticAi = false } = {}) {
   const scope = Vue.effectScope(), cleanup = [], scrolls = [], timers = [], writes = [], queries = [], facts = []
-  const aiRequests = [], intervals = [], clearedIntervals = []
+  const aiRequests = [], intervals = [], clearedIntervals = [], downloads = []
+  let downloadFails = false
   let finish, retries = 0, top = 200
   const conversation = Vue.reactive({ messages: Array.from({ length: 90 }, (_, id) => ({ id: String(id), kind: 'text', role: 'assistant', content: '合成历史' })),
     isThinking: false, retryPersistence: () => { retries++; return new Promise(resolve => { finish = resolve }) },
+    createBackup: () => ({ messages: [{ content: '合成备份' }], storedHistory: { readable: !conversation.backupPartial, raw: '{synthetic' } }),
     addMessage: message => conversation.messages.push(message),
     updateGroup: (id, group) => { conversation.messages.find(message => message.id === id).group = group },
     updateRecord: (id, record) => { conversation.messages.find(message => message.id === id).record = record },
@@ -31,18 +33,44 @@ function scene({ server = true, syntheticAi = false } = {}) {
   } } })
   const bindings = { ...Vue, onMounted() {}, onBeforeUnmount: callback => cleanup.push(callback), SERVER_MODE: server, createAiDraftApi, getMonthQueryReply, draftControl, dayjs,
     createDraft, applyDraftInput, groupReply, isQuery, resolveGroup,
+    downloadJson: (value, filename) => { if (downloadFails) throw Error('合成下载失败'); downloads.push({ value, filename }) },
     window: { setTimeout: callback => { timers.push(callback); return timers.length }, clearTimeout() {},
       setInterval: callback => { intervals.push(callback); return intervals.length }, clearInterval: id => clearedIntervals.push(id) },
     useAuthStore: () => auth, useConversationStore: () => conversation,
     useRecordStore: () => store }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {loadEarlier, retryConversation, messagesContainer, visibleLimit, loadingHistory, retryingPersistence, actionErrors, queryReply, saveDraft, handleConfirmRecord, savingGroup, handleSend, stopAiWait, aiRunning}')(...Object.values(bindings)))
+    ';return {loadEarlier, retryConversation, backupConversation, backupNote, messagesContainer, visibleLimit, loadingHistory, retryingPersistence, actionErrors, queryReply, saveDraft, handleConfirmRecord, savingGroup, handleSend, stopAiWait, aiRunning}')(...Object.values(bindings)))
   const container = { scrollHeight: 1000, get scrollTop() { return top }, set scrollTop(value) { top = value; scrolls.push(value) } }
   view.messagesContainer.value = container
-  return { view, auth, conversation, writes, queries, facts, timers, aiRequests, clearedIntervals, container, scrolls, get retries() { return retries }, finish: value => finish(value), dispose() {
+  return { view, auth, conversation, writes, queries, facts, timers, aiRequests, clearedIntervals, downloads, failDownload() { downloadFails = true }, container, scrolls, get retries() { return retries }, finish: value => finish(value), dispose() {
     cleanup.splice(0).forEach(callback => callback()); scope.stop(); view.messagesContainer.value = null
   } }
 }
+
+test('聊天备份由点击触发，下载回执不冒称文件已保存，存储不可读时明确部分备份', () => {
+  const env = scene()
+  try {
+    assert.equal(env.downloads.length, 0)
+    env.view.backupConversation(); assert.equal(env.downloads.length, 1)
+    assert.match(env.downloads[0].filename, /^miaoji-conversation-.*\.json$/)
+    assert.equal(env.downloads[0].value.messages[0].content, '合成备份')
+    assert.match(env.view.backupNote.value, /已发起.*确认文件/)
+    env.conversation.backupPartial = true; env.view.backupConversation()
+    assert.match(env.view.backupNote.value, /旧对话仍无法读取/)
+    env.failDownload(); env.view.backupConversation()
+    assert.match(env.view.backupNote.value, /未启动/)
+    assert.equal(env.writes.length, 0); assert.equal(env.queries.length, 0); assert.equal(env.aiRequests.length, 0)
+  } finally { env.dispose() }
+})
+test('离页或账号变化后聊天备份入口不触发下载', () => {
+  for (const changeOwner of [false, true]) {
+    const env = scene()
+    try {
+      if (changeOwner) env.auth.user = { id: 'other-synthetic' }; else env.dispose()
+      env.view.backupConversation(); assert.equal(env.downloads.length, 0); assert.equal(env.view.backupNote.value, '')
+    } finally { env.dispose() }
+  }
+})
 
 test('展开历史保留阅读位置并阻止重复展开；存活页面重读清理旧错误和历史窗口', async () => {
   const env = scene()

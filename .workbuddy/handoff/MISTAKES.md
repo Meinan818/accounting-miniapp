@@ -283,3 +283,6 @@
 
 ## 2026-10-04 · 恢复抑制watch隐去用户编辑
 - restoring为避免重读自动持久化而抑制watch，但也吞掉nextTick间隙真实用户编辑，末尾又清hasUnsavedChanges；无忙碌锁导致重复retry额外写入。recovery-before45项41通过4失败保留。首await前锁+finally释放，恢复后对cleanMessagesRaw检查新编辑再核存储基准，45项针对/353全量/两构建通过。以后抑制回填监听必须验证期间的新编辑/写入失败/外部冲突及重复操作，不能只测纯只读重载。
+
+## 2026-10-04 · 备份入口patch核查
+- 首patch把合并CSS的一部分当独立上下文行，随后测试patch重复对同文件Update，工具均拒绝；实际git status/rg核无部分落盘。改用实际style标签位置及每文件单Update后67项针对/360全量/两构建通过。今后多文件patch先核精确源行，拒绝后现场核是否落盘，不能假定修改成功或把工具失败混作业务测试失败。

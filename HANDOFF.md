@@ -1,4 +1,12 @@
-## 当前入口：对话恢复期间编辑（2026-10-04）
+## 当前入口：受保护对话本机备份（2026-10-04）
+
+聊天存储异常区提供“下载对话备份”，createBackup只读当前键原文及JSON脱离引用的本页消息，metadata区分未保存/原文不可读/原文不存在；不解析坏原文、不清理/导入/远传。downloadJson生成application/json Blob，用临时a下载并延后释放URL，启动失败亦释放；页面提示仅发起下载，需确认文件保存，存储不可读明确部分备份。离页/旧账号入口拒绝，正常重试及聊天保留。
+
+50项Store+17项Chat共67针对、360全量及两构建通过（backup-tests/frontend/demo/server），本机Chat模块200仅供给证据；服务19940/20820仅本机未重启。真实账号/账本/照片/AI/邮件调用0，无新依赖，GUI/实际文件落盘/窄屏/真机/隔夜待工具补验。本聊天compact=1保持，第二次才停代码交接。24023bcde8b34bb5446fdea5ea10ec40817793eb完整远端一致已核（recovery-sync），本节点上传实际见backup-sync。
+
+下一项authStore同Pinia释放再建与createSession迟到回执，读取session源码和已有合成测试，核旧身份hydrate/CSRF隔离；不使用真实凭据或认证请求。原生静音每小时續办保持，无需用户操作。预览http://127.0.0.1:5174，异常提示出现时可点备份；不能故意损坏真实存储触发验收。
+
+## 前一节点：对话恢复期间编辑（2026-10-04）
 
 45项Store/353项全量及demo/server两构建通过。recovery-before45项41通过4失败：restoring suppress watch后新消息没写却误报已保存，外部冲突丢新编辑标记，重复retry产生额外写入。retrying在首次await前锁定且finally释放，恢复await后对cleanMessagesRaw检测新编辑，再核外部基准；新编辑正常保存，写入失败或外部冲突保持草稿/未保存状态，原只读重载0写入。
 
