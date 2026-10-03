@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "本轮新版体验打磨完成：搜索焦点/连续切页与滚动恢复、首页粉绿纸条、编辑面板轻动效与键盘细节已实现并分别本地保存，最终技术检查通过；实际观感仍待反馈",
-  "stage": "frontend_polish_saved_pending_visual_feedback",
+  "currentTask": "持续自主开发首轮创新已实现并本地保存：月度复盘/每日支出/上月对照/日期小票联动/聊天本月复盘；127项Node、1806模块构建、44项开发浏览器检查通过，最终人工验收未完成",
+  "stage": "autonomous_product_review_edition",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "保留当前本地可回退版本供实际体验，后续依据新版切页与纸条的实际反馈做小步调整；不重做核心前端或自动启动后端",
-  "nextStepReason": "本轮三项主要反馈及导航回归已处理，116项Node与Chrome开发/生产及Edge检查通过；接下来应以真实观感而非继续叠大装饰驱动，人工反馈与真机结果不能靠技术检查代替",
-  "pendingUserDecision": "无必须外部操作；本轮观感、真机与跨设备仍未反馈/验证，Push/部署/收费/后端不包含本轮授权",
+  "nextStep": "推进Java/MySQL基础：核本机工具与服务、核官方兼容版本，再落实后端工程/账单API与未来真实AI边界，不再等待逐页观感批准",
+  "nextStepReason": "核心前端已具备草稿到入账和账本复盘，继续复制装饰页价值有限；按规划转向真实持久化与服务能力，同时保留演示与最终人工验收的明确边界",
+  "pendingUserDecision": "普通规划/开发/交接/提交/发布判断不需用户逐项决定；费用、账号/凭据、不可逆真实数据或隐私权限变化出现时再给必要操作，最终成果由用户验收纠错",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
