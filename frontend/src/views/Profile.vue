@@ -12,7 +12,7 @@ import { getMonthStatistics } from '@/utils/statistics'
 import { getRecentDays } from '@/utils/journal'
 import { centsText } from '@/utils/money'
 import packageInfo from '../../package.json'
-import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile } from '@/utils/localProfile'
+import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfilePhoto } from '@/utils/localProfile'
 
 const store = useRecordStore()
 const month = dayjs().format('YYYY-MM')
@@ -33,6 +33,9 @@ const profileNotice = ref('')
 const profileDialog = ref(null)
 const profileForm = ref({ ...DEFAULT_PROFILE })
 const editError = ref('')
+const photoInput = ref(null)
+const processingPhoto = ref(false)
+let photoRequest = 0
 let profileSnapshot = null
 const avatars = [{ key: 'cat', label: '猫猫' }, { key: 'paw', label: '爪印' }, { key: 'flower', label: '小花' }]
 function loadProfile() {
@@ -47,11 +50,25 @@ function openProfile() {
   profileForm.value = { ...profile.value }; editError.value = ''; profileNotice.value = ''
   profileDialog.value.showModal()
 }
+function closeProfile() { photoRequest++; processingPhoto.value = false; profileDialog.value.close() }
+async function choosePhoto(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) return
+  const request = ++photoRequest
+  processingPhoto.value = true; editError.value = ''
+  try {
+    const photo = await createProfilePhoto(file)
+    if (request === photoRequest && profileDialog.value?.open) profileForm.value = { ...profileForm.value, avatar: 'photo', photo }
+  } catch (error) { if (request === photoRequest) editError.value = error.message }
+  finally { if (request === photoRequest) processingPhoto.value = false }
+}
 function saveProfile() {
+  if (processingPhoto.value) return
   try {
     const result = saveLocalProfile(window.localStorage, profileForm.value, profileSnapshot)
     profile.value = result.profile; profileSnapshot = result.snapshot
-    profileDialog.value.close(); profileNotice.value = '本地资料已保存，只保存在当前浏览器。'
+    closeProfile(); profileNotice.value = '本地资料已保存，只保存在当前浏览器。'
   } catch (error) { editError.value = '没有保存：' + error.message }
 }
 const entries = [
@@ -72,7 +89,7 @@ onMounted(() => { store.refresh(); loadProfile() })
 
       <p class="edition-ribbon profile-edition-label">给认真生活的你 · 一张手账名片</p>
       <section class="profile-identity" aria-label="本地账本说明">
-        <div class="profile-person-avatar"><CatNavIcon v-if="profile.avatar === 'cat'" kind="profile" /><JournalSticker v-else :kind="profile.avatar" :tone="profile.avatar === 'flower' ? 'lilac' : 'pink'" /></div>
+        <div class="profile-person-avatar"><img v-if="profile.avatar === 'photo'" :src="profile.photo" alt="自定义照片头像" class="profile-custom-photo" /><CatNavIcon v-else-if="profile.avatar === 'cat'" kind="profile" /><JournalSticker v-else :kind="profile.avatar" :tone="profile.avatar === 'flower' ? 'lilac' : 'pink'" /></div>
         <JournalSticker kind="flower" tone="lilac" class="profile-flower" />
         <div class="profile-person-copy"><span class="profile-id-eyebrow">MY LITTLE JOURNAL</span><h2>{{ profile.nickname }}</h2><p>{{ profile.signature || '给生活留一点小空白。' }}</p><span class="profile-local-badge">本地资料 · 尚未登录</span><button class="profile-edit-button" type="button" :disabled="Boolean(profileError)" @click="openProfile">编辑本地资料 <ChevronRight :size="14" /></button></div>
       </section>
@@ -119,15 +136,17 @@ onMounted(() => { store.refresh(); loadProfile() })
       </section>
       <footer class="profile-about">喵叽智账 · 前端演示 v{{ appVersion }}<br /><span>好好记账，也好好生活</span></footer>
     </main>
-    <dialog ref="profileDialog" class="profile-editor" aria-labelledby="profile-editor-title">
-      <header><div><p>属于你的手账名片</p><h2 id="profile-editor-title">编辑本地资料</h2></div><button type="button" aria-label="关闭资料编辑" @click="profileDialog.close()">×</button></header>
+    <dialog ref="profileDialog" class="profile-editor" aria-labelledby="profile-editor-title" @cancel="closeProfile">
+      <header><div><p>属于你的手账名片</p><h2 id="profile-editor-title">编辑本地资料</h2></div><button type="button" aria-label="关闭资料编辑" @click="closeProfile">×</button></header>
       <form @submit.prevent="saveProfile">
-        <fieldset><legend>选一个头像贴纸</legend><div class="profile-avatar-options"><button v-for="avatar in avatars" :key="avatar.key" type="button" :aria-label="'头像：' + avatar.label" :aria-pressed="profileForm.avatar === avatar.key" @click="profileForm.avatar = avatar.key"><CatNavIcon v-if="avatar.key === 'cat'" kind="profile" /><JournalSticker v-else :kind="avatar.key" :tone="avatar.key === 'flower' ? 'lilac' : 'pink'" /><span>{{ avatar.label }}</span></button></div></fieldset>
+        <fieldset :disabled="processingPhoto"><legend>头像贴纸，或自己的照片</legend><div class="profile-avatar-options"><button v-for="avatar in avatars" :key="avatar.key" type="button" :aria-label="'头像：' + avatar.label" :aria-pressed="profileForm.avatar === avatar.key" @click="profileForm.avatar = avatar.key"><CatNavIcon v-if="avatar.key === 'cat'" kind="profile" /><JournalSticker v-else :kind="avatar.key" :tone="avatar.key === 'flower' ? 'lilac' : 'pink'" /><span>{{ avatar.label }}</span></button></div>
+          <div class="profile-photo-choice"><img v-if="profileForm.avatar === 'photo'" :src="profileForm.photo" alt="自定义头像预览" /><button type="button" @click="photoInput.click()">{{ processingPhoto ? '正在处理照片…' : profileForm.avatar === 'photo' ? '更换照片' : '选择照片' }}</button><input ref="photoInput" type="file" accept="image/jpeg,image/png,image/webp" aria-label="选择头像照片" hidden @change="choosePhoto" /></div><p class="profile-editor-note">JPG / PNG / WebP，10MB以内。照片会居中裁成头像，只在本机处理，保存前可以取消。</p>
+        </fieldset>
         <label>昵称 <span>最多20个字</span><input v-model="profileForm.nickname" aria-label="昵称" autocomplete="off" required /></label>
         <label>一句签名 <span>最多60个字，可留空</span><textarea v-model="profileForm.signature" aria-label="一句签名" rows="3" /></label>
         <p class="profile-editor-note">仅保存在当前浏览器，不代表注册或登录；不会改变账单和对话。</p>
         <p v-if="editError" class="profile-error" role="alert">{{ editError }}</p>
-        <div class="profile-editor-actions"><button type="button" @click="profileDialog.close()">取消</button><button type="submit">保存本地资料</button></div>
+        <div class="profile-editor-actions"><button type="button" @click="closeProfile">取消</button><button type="submit" :disabled="processingPhoto">保存本地资料</button></div>
       </form>
     </dialog>
     <BottomNav active="profile" />
@@ -135,6 +154,8 @@ onMounted(() => { store.refresh(); loadProfile() })
 </template>
 
 <style scoped>
+.profile-custom-photo { width:100%; height:100%; object-fit:cover; border-radius:27px 22px 29px 21px; }
+.profile-photo-choice { display:flex; align-items:center; gap:12px; margin-top:14px; }.profile-photo-choice img { width:64px; height:64px; object-fit:cover; border-radius:17px; border:1.5px solid #d6afba; }.profile-photo-choice button { min-height:44px; padding:8px 15px; border:1.5px solid #c9a9c9; border-radius:14px; background:#eee1f2; box-shadow:0 3px 0 #dcc6e0; color:#785982; font-size:12px; }.profile-editor button:disabled { opacity:.5; }
 .profile-id-eyebrow { font-size:10px; color:#9b697b; letter-spacing:1.5px; }
 .profile-person-avatar { display:grid; place-items:center; width:86px; height:96px; flex-shrink:0; border-radius:29px 24px 31px 23px; background:#fff9eb; border:1.5px solid #dabca5; box-shadow:0 4px 0 #e8c5b6; transform:rotate(-4deg); }
 .profile-person-avatar .cat-nav-icon { width:70px; height:70px; }.profile-person-avatar .journal-sticker { width:60px; height:60px; }

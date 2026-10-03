@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { LOCAL_PROFILE_KEY, DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, validateLocalProfile } from '../src/utils/localProfile.js'
+import { LOCAL_PROFILE_KEY, DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, validateLocalProfile, validatePhotoFile } from '../src/utils/localProfile.js'
 
 function storage(initial = {}) {
   const values = new Map(Object.entries(initial))
@@ -53,4 +53,19 @@ test('存储读取失败提供错误，保存失败不报告成功', () => {
   store.setItem = () => { throw new Error('空间不足') }
   assert.throws(() => saveLocalProfile(store, DEFAULT_PROFILE, null), /空间不足/)
   assert.equal(store.getItem(LOCAL_PROFILE_KEY), null)
+})
+test('照片输入限制格式、空文件与10MB上限', () => {
+  for (const type of ['image/jpeg', 'image/png', 'image/webp']) assert.doesNotThrow(() => validatePhotoFile({ type, size: 10 * 1024 * 1024 }))
+  for (const file of [{ type: 'image/svg+xml', size: 100 }, { type: 'image/jpeg', size: 0 }, { type: 'image/png', size: 10 * 1024 * 1024 + 1 }]) assert.throws(() => validatePhotoFile(file))
+})
+test('自定义照片可保存并与预置头像兼容', () => {
+  const store = storage()
+  const photo = 'data:image/jpeg;base64,/9j/AAAA'
+  const saved = saveLocalProfile(store, { ...DEFAULT_PROFILE, avatar: 'photo', photo }, null)
+  assert.equal(readLocalProfile(store).profile.photo, photo)
+  saveLocalProfile(store, DEFAULT_PROFILE, saved.snapshot)
+  assert.deepEqual(readLocalProfile(store).profile, DEFAULT_PROFILE)
+})
+test('资料拒绝外部照片地址、SVG内容与过大头像内容', () => {
+  for (const photo of ['https://other/photo.jpg', 'data:image/svg+xml;base64,AAAA', 'data:image/jpeg;base64,/9j/' + 'A'.repeat(160000)]) assert.throws(() => validateLocalProfile({ ...DEFAULT_PROFILE, avatar: 'photo', photo }), /照片/)
 })

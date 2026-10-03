@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "接手问题核查：完整权限截图后原内置浏览器5174访问成功，58项开发版浏览器断言及三宽度检查通过；仅更新交接，后端暂停，无业务源码修改",
-  "stage": "handoff_category_browser_verified_visual_feedback_pending",
+  "currentTask": "已先存档再升级聊天手账风、个人资料与照片头像、五页实体猫耳返回键；142项Node/构建/49界面+11照片浏览器检查通过，按用户授权保存同步，后端暂停",
+  "stage": "frontend_chat_profile_photo_visual_feedback_pending",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "用户查看原5173页面观感并反馈，Codex按实际反馈有界纠错；交接说明按当前保存授权处理，后端继续暂停",
-  "nextStepReason": "分类操作与窄屏已在5174合成账本实际验证，技术检查仍不代替用户观感；不触碰5173原账本，不重做已有功能",
-  "pendingUserDecision": "本轮访问阻碍已解除但此前拒绝根因未知，失败原文必须保留；不再索要已提供的权限列截图。页面人工观感、生产版/真机/跨设备未验收；后端保持暂停，收费生图无新授权，新主角无成品；原账本不清空/自动上传/绑定首次账号",
+  "nextStep": "Codex继续按实际反馈完善聊天与个人页统一体验，较大改动前先存档；用户可刷新5173查看，无需替Codex确认普通commit/Push，后端继续暂停",
+  "nextStepReason": "本轮已按反馈完成界面和自定义照片；保留可回退保存点，技术验证不代替人工观感，也不自动恢复后端",
+  "pendingUserDecision": "当前不需要外部操作。页面人工观感、生产版操作/真机/跨设备未验收；后端需用户明确恢复，正式登录/头像后端同步/真实AI未接通。此前权限拒绝根因未知且失败原文保留，当前5174可用；原账本不清空/自动上传/归属首次账号",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
