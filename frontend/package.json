@@ -9,7 +9,7 @@
     "build": "vite build",
     "build:server": "vite build --mode server --outDir dist-server",
     "preview": "vite preview",
-    "test": "node --test tests/draftEngine.test.js tests/ledger.test.js tests/moneyTotals.test.js tests/recordStore.test.js tests/recordHmr.test.js tests/conversationStore.test.js tests/statistics.test.js tests/chatQuery.test.js tests/journal.test.js tests/navigation.test.js tests/manualRendering.test.js tests/editorRendering.test.js tests/calendar.test.js tests/monthReview.test.js tests/localProfile.test.js tests/profileInteractions.test.js tests/apiClient.test.js tests/session.test.js tests/remoteLedger.test.js tests/aiDraft.test.js"
+    "test": "node --test tests/draftEngine.test.js tests/ledger.test.js tests/moneyTotals.test.js tests/recordStore.test.js tests/recordHmr.test.js tests/conversationStore.test.js tests/statistics.test.js tests/statsInteractions.test.js tests/chatQuery.test.js tests/journal.test.js tests/navigation.test.js tests/manualRendering.test.js tests/editorRendering.test.js tests/calendar.test.js tests/monthReview.test.js tests/localProfile.test.js tests/profileInteractions.test.js tests/apiClient.test.js tests/session.test.js tests/remoteLedger.test.js tests/aiDraft.test.js"
   },
   "dependencies": {
     "dayjs": "^1.11.23",

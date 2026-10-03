@@ -958,3 +958,9 @@
 - 668d00317cf900f263abe70bf7e3606fcbbff589普通Push后ls-remote完整一致已核；无部署/真实业务/AI/邮件写入。
 - focus-before10项8通过2失败，focus-pages-before11项8通过3失败：快速新定位/搜索时旧callback仍focus/scroll，连续翻页旧展开先抢焦点。定位watch用onCleanup及当前id/筛选/编辑/离页保护；翻页按查询/limit保留最新用户动作。原失败保留，搜索输入采用仍匹配旧行的“合成”，防止测试用已移除DOM夸大真实场景。
 - 11项实际setup/Editor模板挂载、314项全量及demo/server两构建通过；DOM方法替身只核调用，不代替GUI/真机。独立节点核保存后继续Stats默认月份跨月及图表渲染取证，compact=0。
+
+## 2026-10-04 · 统计默认月份跨月
+
+- a5e1ecf07425867903b8f02ecdd593b91482a6e8普通Push及ls-remote完整远端一致已核。
+- stats-interactions-2026-10-04/before.log实际3项2通过1失败：默认selectedMonth computed跨月保留2026-10，统计仍旧月。Stats接useLocalDay并将响应当前月份传既有导航helper；显式历史月份仍保持，默认概况29分→31分，旧选日撤销而收支类别保留，时钟释放，0请求。图表等待时用户选日保护原来通过，无需改图表。
+- 3项针对/317项全量及demo/server两构建通过。无依赖/锁文件变化，无真实业务/AI/邮件/照片调用；GUI/真机/实际隔夜未验，compact=0。下一项Chat历史展开与重读离页回调取证，先证据再最小修复。

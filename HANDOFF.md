@@ -1,4 +1,10 @@
-## 当前入口：明细异步定位与翻页（2026-10-04）
+## 当前入口：统计默认月份跨月（2026-10-04）
+
+Stats实际setup before.log3项2通过1失败：缓存默认2026-10在跨到11月后仍旧月。接useLocalDay向useStatsMonthNavigation传响应默认月份，显式month不跟随；月底概况29分→31分，收支类别保持、旧选日撤销、0账本请求与时钟释放。原图表用户选日保护本来通过，不误称需修复。3项针对/317项全量及两构建通过，材料stats-interactions-2026-10-04，无依赖变化/真实业务/AI/邮件调用，GUI/真机/实际隔夜未验。
+
+a5e1ecf07425867903b8f02ecdd593b91482a6e8普通Push与完整远端一致已核，compact=0，原生automation目标保持。下一项Chat历史loadEarlier/retryConversation离页与迟到回调取证，复用当前依赖及合成Store，只核本地状态，不发AI/邮件/真实业务请求；先复现再最小修复。
+
+## 前一节点：明细异步定位与翻页（2026-10-04）
 
 focus-before与focus-pages-before真实2/3失败：新定位/搜索与连续翻页后旧nextTick仍聚焦/滚动。定位watch onCleanup撤销过期回调，检查新定位/筛选/编辑/离页；翻页按当前查询与展开范围核目标，只最新展开聚焦。11项针对、314项全量与两构建通过，无依赖变化/真实账单/AI/邮件写入，不冒称GUI验收。668d00317cf900f263abe70bf7e3606fcbbff589普通Push及完整远端一致已核。compact=0，现有automation原生目标保持。
 
