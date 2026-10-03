@@ -47,6 +47,7 @@ class AccountLedgerIntegrationTest {
     @Autowired LedgerWriteService writes;
     @MockitoSpyBean LedgerRepository records;
     @MockitoSpyBean LedgerWriteRepository requests;
+    @MockitoSpyBean cn.miaoji.ledger.LedgerAuditRepository audit;
 
     private record Browser(MockHttpSession session, String token) {}
 
@@ -87,6 +88,74 @@ class AccountLedgerIntegrationTest {
         var result = mvc.perform(post("/api/records").header("Idempotency-Key", UUID.randomUUID().toString()).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content(input(amount))).andExpect(status().isCreated()).andReturn();
         return json.readTree(result.getResponse().getContentAsString());
+    }
+
+    @Test void auditTracksCommittedVersionsAndNeverDuplicatesReplaysOrRejectedChanges() throws Exception {
+        var alice = account(); var bob = account(); var key = UUID.randomUUID().toString();
+        var result = mvc.perform(post("/api/records").session(alice.session()).header("X-CSRF-TOKEN", alice.token())
+                .header("Idempotency-Key", key).contentType(MediaType.APPLICATION_JSON).content(input("1.00")))
+                .andExpect(status().isCreated()).andReturn();
+        var id = json.readTree(result.getResponse().getContentAsString()).path("id").asText();
+        mvc.perform(post("/api/records").session(alice.session()).header("X-CSRF-TOKEN", alice.token())
+                .header("Idempotency-Key", key).contentType(MediaType.APPLICATION_JSON).content(input("1.00")))
+                .andExpect(status().isOk());
+        mvc.perform(put("/api/records/" + id).session(bob.session()).header("X-CSRF-TOKEN", bob.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"record\":" + input("2.00") + "}"))
+                .andExpect(status().isNotFound());
+        mvc.perform(put("/api/records/" + id).session(alice.session()).header("X-CSRF-TOKEN", alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"record\":" + input("2.00") + "}"))
+                .andExpect(status().isOk());
+        mvc.perform(delete("/api/records/" + id).param("version", "0").session(alice.session())
+                .header("X-CSRF-TOKEN", alice.token())).andExpect(status().isConflict());
+        mvc.perform(delete("/api/records/" + id).param("version", "1").session(alice.session())
+                .header("X-CSRF-TOKEN", alice.token())).andExpect(status().isNoContent());
+        var rows = jdbc.queryForList("SELECT action,before_version,after_version,request_id,user_id FROM ledger_audit WHERE record_id=? ORDER BY id", id);
+        assertThat(rows).hasSize(3);
+        assertThat(rows.stream().map(row -> row.get("action"))).containsExactly("CREATE", "UPDATE", "DELETE");
+        assertThat(rows.get(0).get("before_version")).isNull();
+        assertThat(rows.get(0).get("request_id")).isEqualTo(key);
+        assertThat(rows.stream().map(row -> row.get("after_version"))).containsExactly(0L, 1L, 2L);
+        assertThat(rows.get(1).get("before_version")).isEqualTo(0L);
+        assertThat(rows.get(2).get("before_version")).isEqualTo(1L);
+        assertThat(rows.stream().map(row -> row.get("user_id")).distinct()).hasSize(1);
+    }
+
+    @Test void failedAuditRollsBackBatchRequestAndAllCreatedRecords() throws Exception {
+        var alice = account(); var key = UUID.randomUUID().toString();
+        var me = mvc.perform(get("/api/auth/me").session(alice.session())).andExpect(status().isOk()).andReturn();
+        var owner = json.readTree(me.getResponse().getContentAsString()).path("id").asLong();
+        doCallRealMethod().doThrow(new DataIntegrityViolationException("synthetic audit failure"))
+                .when(audit).append(eq(owner), anyString(), eq("CREATE"), isNull(), eq(0L), eq(key));
+        var body = "{\"records\":[" + input("1.00") + "," + input("2.00") + "]}";
+        mvc.perform(post("/api/records/batch").session(alice.session()).header("X-CSRF-TOKEN", alice.token())
+                .header("Idempotency-Key", key).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isServiceUnavailable());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id=?", Long.class, owner)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE user_id=?", Long.class, owner)).isZero();
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_write_request WHERE user_id=?", Long.class, owner)).isZero();
+        reset(audit);
+        mvc.perform(post("/api/records/batch").session(alice.session()).header("X-CSRF-TOKEN", alice.token())
+                .header("Idempotency-Key", key).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE user_id=?", Long.class, owner)).isEqualTo(2);
+    }
+
+    @Test void failedAuditRollsBackUpdatesAndLogicalDeletion() throws Exception {
+        var alice = account(); var record = create(alice, "1.00"); var id = record.path("id").asText();
+        doThrow(new DataIntegrityViolationException("synthetic audit failure")).when(audit)
+                .append(anyLong(), eq(id), eq("UPDATE"), eq(0L), eq(1L), isNull());
+        mvc.perform(put("/api/records/" + id).session(alice.session()).header("X-CSRF-TOKEN", alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"record\":" + input("2.00") + "}"))
+                .andExpect(status().isServiceUnavailable());
+        mvc.perform(get("/api/records/" + id).session(alice.session())).andExpect(jsonPath("$.amount").value("1.00"))
+                .andExpect(jsonPath("$.version").value(0));
+        doThrow(new DataIntegrityViolationException("synthetic audit failure")).when(audit)
+                .append(anyLong(), eq(id), eq("DELETE"), eq(0L), eq(1L), isNull());
+        mvc.perform(delete("/api/records/" + id).param("version", "0").session(alice.session())
+                .header("X-CSRF-TOKEN", alice.token())).andExpect(status().isServiceUnavailable());
+        mvc.perform(get("/api/records/" + id).session(alice.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.version").value(0));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE record_id=?", Long.class, id)).isEqualTo(1);
     }
 
     @Test void snapshotIncludesOwnedHistoryAndDeletionFactsButNeverOtherAccount() throws Exception {

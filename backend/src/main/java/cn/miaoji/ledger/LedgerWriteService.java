@@ -23,12 +23,15 @@ public class LedgerWriteService {
     private final LedgerRepository records;
     private final LedgerWriteRepository requests;
     private final ObjectMapper json;
+    private final LedgerAuditRepository audit;
 
-    public LedgerWriteService(LedgerService ledger, LedgerRepository records, LedgerWriteRepository requests, ObjectMapper json) {
+    public LedgerWriteService(LedgerService ledger, LedgerRepository records, LedgerWriteRepository requests, ObjectMapper json,
+            LedgerAuditRepository audit) {
         this.ledger = ledger;
         this.records = records;
         this.requests = requests;
         this.json = json;
+        this.audit = audit;
     }
 
     public record WriteReceipt(List<RecordView> records, boolean replayed) {}
@@ -74,6 +77,7 @@ public class LedgerWriteService {
         for (var input : canonical) {
             var recordId = UUID.randomUUID().toString();
             records.insert(owner, recordId, input);
+            audit.append(owner, recordId, "CREATE", null, 0, id);
             created.add(ledger.get(owner, recordId));
         }
         try {

@@ -18,9 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class LedgerService {
     private final LedgerRepository repository;
     private final Validator validator;
-    public LedgerService(LedgerRepository repository, Validator validator) {
+    private final LedgerAuditRepository audit;
+    public LedgerService(LedgerRepository repository, Validator validator, LedgerAuditRepository audit) {
         this.repository = repository;
         this.validator = validator;
+        this.audit = audit;
     }
     public record MonthSummary(String income, String expense, String balance, long count) {}
     public record RecordPage(List<RecordView> records, int page, int size, long total) {}
@@ -63,6 +65,7 @@ public class LedgerService {
         get(owner, id); // 他人/不存在账单统一404，不泄漏所属者。
         if (version < 0) throw invalid();
         if (!repository.update(owner, id, version, input)) throw conflict();
+        audit.append(owner, id, "UPDATE", version, version + 1, null);
         return get(owner, id);
     }
 
@@ -71,6 +74,7 @@ public class LedgerService {
         get(owner, id);
         if (version < 0) throw invalid();
         if (!repository.delete(owner, id, version)) throw conflict();
+        audit.append(owner, id, "DELETE", version, version + 1, null);
     }
 
     public MonthSummary summary(long owner, String month) {

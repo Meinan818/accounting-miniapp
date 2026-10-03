@@ -60,7 +60,7 @@ cd E:\XiangMu\未定项目\backend
 
 ## 尚未完成
 
-当前不是完整B/C验收：自定义分类、登录限流、服务端草稿/审计、大账本分页适配、真实AI均未实现。正式前端已开发版联通，生产实际交互、真机及用户正式功能验收未完成；聊天历史暂按账号隔离存在浏览器。整组接口直接接收用户已确认内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署或收费调用。
+当前不是完整B/C验收：自定义分类、登录限流、服务端草稿、大账本分页适配、真实AI均未实现。正式前端已开发版联通，生产实际交互、真机及用户正式功能验收未完成；聊天历史暂按账号隔离存在浏览器。整组接口直接接收用户已确认内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署或收费调用。
 
 兼容性依据：[Spring Boot 3.5 环境要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)、[Spring Security 会话](https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html)、[CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)。实际验证见项目交接 LOG。
 
@@ -73,3 +73,7 @@ POST `/api/profile/avatar?version=N`使用multipart字段`image`，只接受2MB�
 GET同路径只向当前登录身份返回其照片，响应JPEG及`Cache-Control: no-store`；未上传404、匿名401。用户不能指定文件路径或照片所属账号。所有写入保留CSRF；照片文件采用随机UUID，数据库保存失败清理本次新文件，旧头像文件保留，不执行历史清理。
 
 默认文件存于`backend/storage/`，可用`MIAOJI_STORAGE_DIR`指定独立路径；multipart和Java临时目录位于项目盘，`run.ps1`只设置当前进程环境并恢复。storage、凭据、缓存不入Git。正式备份需要同时保存数据库与storage，当前仅本机开发，尚无生产容量/备份策略或照片删除功能。
+
+## 账单操作审计（V5）
+
+账单创建、修改、逻辑删除的操作与前后版本在ledger_audit中与业务同事务保存，失败一起回退；入账防重重放不追加事件。只记录账号、账单ID、操作、版本、创建请求键和时间，不复制金额、备注、照片或认证信息。旧账单不补造历史事件；当前没有审计查询界面或管理端，记录仅供后续可靠性核查，未实现完整合规审计。
