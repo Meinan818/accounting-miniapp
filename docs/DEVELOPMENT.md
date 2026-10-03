@@ -74,7 +74,7 @@ npm run build
 - frontend/src/utils/ledger.js / money.js：共享金额/日期/分类校验，批量保存与按ID修改；整数分运算，保存适配旧amount字段。
 - RecordStore：从旧key读取最新账单，再整体校验和单次持久化；保存成功再更新响应式数据。编辑保留ID/来源/组标识。旧草稿仅是历史，不得成为修改后账单的事实来源。
 - ConversationStore：捕获对话写入异常，保护损坏内容；保存状态在UI优先用账单组标识恢复，对话和账单两个localStorage键不是数据库事务。
-- 前端无新依赖，包锁未改；正式可复跑的95项Node测试在frontend/tests，命令npm test。内部浏览器检查脚本/截图在E盘.workbuddy/memory/home-visual。测试只用独立profile和固定用例日期，不清用户浏览器数据；真机键盘/跨设备未验证。
+- 前端无新依赖，包锁未改；正式可复跑的107项Node测试在frontend/tests，命令npm test。内部浏览器检查脚本/截图在E盘.workbuddy/memory/home-visual。测试只用独立profile和固定用例日期，不清用户浏览器数据；真机键盘/跨设备未验证。
 - 真实Java/AI阶段以用户身份授权的后端账单接口为唯一事实来源，当前浏览器同步不是登录隔离/云端同步。
 
 ## A2单笔删除的数据边界
@@ -112,3 +112,7 @@ draftEngine.isQuery识别汇总短句（总支出/本月总收入/支出总共�
 ## 本地演示个人页
 
 Profile复用RecordStore.records及getMonthStatistics，月收入/支出/有效笔数与统计口径一致；异常隐藏金额/计数，保护原文并可显式读取。使用现有猫素材/共用BottomNav，版本从前端package.json读入，不新建账本、依赖或假认证。15项浏览器覆盖导航/跨页联动/零数据/损坏保护恢复/大金额/三种宽度，只用独立E盘profile，人工观感待反馈。
+
+## 手账桌面版的只读探索
+
+journal.js包含searchRecords、getCategoryWheel和getRecentDays，均只读、保持输入身份/顺序，不写账本。明细按现有月列表搜索分类/备注/日期/金额/收支，按原顺序分组，月总额仍读完整月；输入按字面匹配，不执行正则。色谱由整数分分类金额生成固定调色板扇区，空/损坏/超安全范围有明确结果；近期足迹使用7个业务日期的有效条目计数，不是打卡。JournalSticker为原生SVG装饰，aria-hidden，不影响操作。journal-evolution.css保留原字号/猫素材/导航语义，调整纸张印章书签票据层次；CalendarCard月汇总前置，大金额单列不拆字。读取失败不把未知财务数据显示成0。

@@ -1,0 +1,53 @@
+import dayjs from 'dayjs'
+import { validDate } from './ledger.js'
+import { centsText, legacyCents } from './money.js'
+export const JOURNAL_COLORS = Object.freeze(['#b6c9ab', '#dfb0a5', '#dfc98d', '#b2c6ce', '#c3adcc', '#cdb69a'])
+
+// Read-only search: never reorders, writes or resurrects deleted records.
+export function searchRecords(records, query = '') {
+  if (!Array.isArray(records)) throw new Error('账单列表无法读取')
+  const terms = String(query).trim().toLowerCase().split(/\s+/).filter(Boolean)
+  return records.filter(record => {
+    if (!record || record.deletedAt) return false
+    if (!terms.length) return true
+    const cents = legacyCents(record.amount)
+    const amount = Number.isSafeInteger(cents) ? centsText(cents) : ''
+    const searchable = [record.category, record.remark, record.description, record.date, record.time, record.amount, amount,
+      record.type === 'income' ? '收入' : '支出'].map(value => String(value ?? '')).join(' ').toLowerCase()
+    return terms.every(term => searchable.includes(term))
+  })
+}
+
+// Geometry from actual cents. All labels/amounts remain normal accessible page text.
+export function getCategoryWheel(categories) {
+  if (!Array.isArray(categories)) throw new Error('分类数据无法读取')
+  if (!categories.length) return { background: '#eee5d6', segments: [] }
+  let total = 0
+  for (const item of categories) {
+    if (!Number.isSafeInteger(item.amountCents) || item.amountCents <= 0) throw new Error('分类金额无效')
+    total += item.amountCents
+    if (!Number.isSafeInteger(total)) throw new Error('分类金额超出安全范围')
+  }
+  let cursor = 0
+  const segments = categories.map((item, index) => {
+    const start = cursor
+    cursor = index === categories.length - 1 ? 100 : cursor + item.amountCents / total * 100
+    return { category: item.category, color: JOURNAL_COLORS[index % JOURNAL_COLORS.length], start, end: cursor }
+  })
+  return { segments, background: 'conic-gradient(' + segments.map(segment => `${segment.color} ${segment.start}% ${segment.end}%`).join(', ') + ')' }
+}
+
+// Footprints are counts of actual business dates, not a fabricated continuous check-in streak.
+export function getRecentDays(records, today) {
+  if (!Array.isArray(records) || !validDate(today)) throw new Error('记录日期无法读取')
+  const counts = new Map()
+  for (const record of records) {
+    if (record && !record.deletedAt && ['expense', 'income'].includes(record.type) && typeof record.date === 'string' && validDate(record.date)) {
+      counts.set(record.date, (counts.get(record.date) || 0) + 1)
+    }
+  }
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = dayjs(today).subtract(6 - index, 'day').format('YYYY-MM-DD')
+    return { date, day: dayjs(date).format('DD'), count: counts.get(date) || 0 }
+  })
+}

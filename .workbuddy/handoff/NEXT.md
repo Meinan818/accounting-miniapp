@@ -38,7 +38,7 @@ A1聊天闭环、A2手动/修改/单笔删除、A3最小统计页均已接入并
 - 视图：frontend/src/views/Home.vue、Chat.vue、Bills.vue、Add.vue、Stats.vue；Login仍为占位，Profile最小本地演示页已接入，不能声称认证或全站完整。
 - 组件：components/record/ManualEntry.vue、RecordForm.vue、RecordEditor.vue；components/common/DraftGroupCard.vue，旧ConfirmCard保留兼容。
 - 数据：stores/recordStore.js、conversationStore.js；utils/ledger.js、money.js、draftEngine.js、categories.js、statistics.js、chatQuery.js；mockAI保留旧兼容材料，当前聊天查询不再调用它。
-- npm test：Node内置test/assert，共95项（此前75+旧快照保护12+汇总识别8），测试入口包含frontend/tests/statistics.test.js；没有lint/typecheck脚本，不虚报执行。
+- npm test：Node内置test/assert，共107项（此前95+手账只读探索12），测试入口包含frontend/tests/statistics.test.js；没有lint/typecheck脚本，不虚报执行。
 - statistics.js为只读纯计算，不另建账本；按业务日期月份/整数分聚合，Map分类不受原型同名键影响，累计超安全范围明确失败。RecordStore.records只公开有效账单，batchRecords含删除事实用于防重和卡片。
 
 ## 验证证据：本轮边界实施与历史分开
@@ -83,3 +83,9 @@ A1聊天闭环、A2手动/修改/单笔删除、A3最小统计页均已接入并
 ## 最新现场与创新窗口（2026-10-03）
 
 原旧快照/总支出修复已分别本地保存；个人页最小版源码已实现，95项Node/1801模块构建（3.01秒）/15项浏览器检查通过，原始截图与证据在.workbuddy/memory/home-visual/autonomous-2026-10-03/profile。先存个人页基线，再大胆手账视觉/实用交互创新。用户最新一小时授权截止北京时间12:02:27（覆盖前轮截止），方向/commit自主，不逐项询问；可少量收费工具但不夸张，暂无实际收费。保护账本/原图，不Push/部署/清数据，不恢复暂缓排序，全部新视觉以返回后人工验收为准。
+
+## 最终当前成果：手账桌面版（2026-10-03）
+
+个人页及原两项修复已有保存基线；本轮六页视觉创新/只读搜索/查询快捷键/分类环图/七天业务日期足迹已技术验证，按自主授权保存并收尾。107项Node、1804模块构建3.49秒、129项开发版浏览器+30项生产构建浏览器通过，页面/控制台错误0。基线/新版源码ZIP在autonomous-2026-10-03/archives，截图/summary.json/edition-overview.png在edition；不含浏览器账单备份，不入Git。无新图/API费用/依赖/数据迁移/Push/部署，不恢复暂缓排序。
+
+第一步用户返回看首页/统计/我的新视觉，试明细搜索与查询按钮，按实际反馈调整。不反复重做原A1/A2，不把本轮截至12:02:27的一小时授权延长为下轮默认，也不把自动检查当人审/真机/跨设备已通过。4173仅本轮生产构建验证，5173为本地开发预览，以现场服务为准。

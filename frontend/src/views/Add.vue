@@ -19,10 +19,11 @@ function save(record) {
 }
 </script>
 <template>
-  <main class="manual-page">
+  <main class="manual-page notebook-evolution">
     <section class="manual-content">
       <header><router-link to="/bills" class="back" aria-label="返回账单明细"><ArrowLeft :size="20" /></router-link><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
       <router-link to="/chat" class="chat-link">更想说一说？和小宝聊着记 →</router-link>
+      <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
       <article class="manual-card"><p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p><p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p><RecordForm :saving="saving" :error="error" @save="save" @cancel="router.push('/bills')" /></article>
       <p class="local-note">本地演示：账单保存在当前浏览器，不调用AI。</p>
     </section>

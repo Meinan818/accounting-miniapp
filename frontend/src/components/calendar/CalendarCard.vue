@@ -13,6 +13,8 @@ const props = defineProps({
   expense: { type: Number, default: 0 },
 })
 
+const wideAmounts = computed(() => Math.max(props.income, props.expense).toFixed(2).length > 9)
+
 // 3. Emits
 const emit = defineEmits(['update:month', 'update:selected-date'])
 
@@ -108,6 +110,23 @@ function getDayNumberClass(cell) {
       </button>
     </div>
 
+    <div class="calendar-totals">
+      <div class="calendar-summary-grid grid grid-cols-2 gap-2" :class="{ 'calendar-summary-grid-wide': wideAmounts }">
+        <div class="calendar-summary calendar-summary-income">
+          <div class="min-w-0">
+            <p class="text-xs text-[var(--zz-home-ink-soft)]">本月收入</p>
+            <p class="calendar-amount text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
+          </div>
+        </div>
+        <div class="calendar-summary calendar-summary-expense">
+          <div class="min-w-0">
+            <p class="text-xs text-[var(--zz-home-ink-soft)]">本月支出</p>
+            <p class="calendar-amount text-[var(--zz-home-pink)]">{{ `¥${expense.toFixed(2)}` }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="calendar-weekdays">
       <span v-for="(weekday, index) in weekdays" :key="weekday" :class="{ 'calendar-weekend': index === 0 || index === 6 }">
         {{ weekday }}
@@ -135,22 +154,7 @@ function getDayNumberClass(cell) {
       </button>
     </div>
 
-    <div class="calendar-totals">
-      <div class="grid grid-cols-2 gap-2">
-        <div class="calendar-summary calendar-summary-income">
-          <div class="min-w-0">
-            <p class="text-xs text-[var(--zz-home-ink-soft)]">本月收入</p>
-            <p class="calendar-amount text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
-          </div>
-        </div>
-        <div class="calendar-summary calendar-summary-expense">
-          <div class="min-w-0">
-            <p class="text-xs text-[var(--zz-home-ink-soft)]">本月支出</p>
-            <p class="calendar-amount text-[var(--zz-home-pink)]">{{ `¥${expense.toFixed(2)}` }}</p>
-          </div>
-        </div>
-      </div>
-    </div>
+
   </section>
 </template>
 
@@ -181,11 +185,12 @@ function getDayNumberClass(cell) {
 .calendar-day-selected { border-color: var(--zz-home-line); background: var(--zz-home-pink-soft); }
 .calendar-today-label { font-size: 11px; color: var(--zz-home-ink-soft); }
 .calendar-record-dot { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--zz-home-ink-soft); }
-.calendar-totals { margin-top: 17px; padding-top: 14px; border-top: 1px dashed var(--zz-home-line); }
+.calendar-totals { margin: 2px 0 15px; padding-bottom: 14px; border-bottom: 1px dashed var(--zz-home-line); }
 .calendar-summary { min-width: 0; padding: 10px 12px; border-radius: 14px 11px 15px 12px; }
+.calendar-summary-grid-wide { grid-template-columns: 1fr; }.calendar-summary-grid-wide .calendar-summary > div { display:flex; align-items:center; justify-content:space-between; gap:8px; }.calendar-summary-grid-wide .calendar-amount { margin-top:0; }
 .calendar-summary-income { background: var(--zz-home-income-panel); }
 .calendar-summary-expense { background: var(--zz-home-expense-panel); }
-.calendar-amount { margin-top: 3px; font-size: clamp(14px, 4vw, 19px); font-weight: 400; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; line-height: 1.4; }
+.calendar-amount { margin-top: 3px; font-size: clamp(14px, 4vw, 19px); font-weight: 400; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1.4; }
 button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 2px; }
 @media (pointer: coarse) { .calendar-day { min-height: 42px; } }
 </style>

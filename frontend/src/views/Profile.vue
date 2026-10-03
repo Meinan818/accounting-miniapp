@@ -2,10 +2,12 @@
 import { computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { ArrowLeft, ReceiptText, BarChart3, ChevronRight, Plus } from 'lucide-vue-next'
+import JournalSticker from '@/components/common/JournalSticker.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
 import { useRecordStore } from '@/stores/recordStore'
 import { getMonthStatistics } from '@/utils/statistics'
+import { getRecentDays } from '@/utils/journal'
 import { centsText } from '@/utils/money'
 import packageInfo from '../../package.json'
 
@@ -20,6 +22,8 @@ const calculated = computed(() => {
 const statistics = computed(() => calculated.value.data)
 const error = computed(() => store.storageError || calculated.value.error)
 const wideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents].some(value => centsText(value).length > 9))
+const recentDays = computed(() => getRecentDays(store.records, dayjs().format('YYYY-MM-DD')))
+const recordedDays = computed(() => recentDays.value.filter(day => day.count > 0).length)
 const entries = [
   { title: '账单明细', note: '查看和修改已经记下的小账单', icon: ReceiptText, to: '/bills' },
   { title: '收支统计', note: '按月份看看钱花在哪里', icon: BarChart3, to: '/stats' },
@@ -29,16 +33,17 @@ onMounted(() => store.refresh())
 </script>
 
 <template>
-  <div class="journal-profile">
+  <div class="journal-profile notebook-evolution">
     <main class="profile-content">
       <header class="profile-header">
         <router-link to="/" class="profile-back" aria-label="返回日历主页"><ArrowLeft :size="20" :stroke-width="1.5" /></router-link>
         <div><h1 class="profile-title">我的小账本</h1><p class="profile-subtitle">喵叽智账 · 本地演示</p></div>
       </header>
 
+      <p class="edition-ribbon profile-edition-label">本喵的手账护照</p>
       <section class="profile-identity" aria-label="本地账本说明">
         <img :src="miaoAvatar" alt="手绘猫猫陪你记账" class="profile-avatar" />
-        <div><h2>每一笔，都好好记下</h2><p>这里是当前浏览器里的小账本。<br />本喵陪你整理，你来确认。</p><span class="profile-local-badge">不需要登录即可体验</span></div>
+        <JournalSticker kind="flower" tone="lilac" class="profile-flower" /><div><h2>每一笔，都好好记下</h2><p>这里是当前浏览器里的小账本。<br />本喵陪你整理，你来确认。</p><span class="profile-local-badge">不需要登录即可体验</span></div>
       </section>
 
       <section class="profile-ledger-card" aria-labelledby="profile-ledger-title">
@@ -58,6 +63,7 @@ onMounted(() => store.refresh())
         </template>
       </section>
 
+      <section v-if="!error" class="profile-footprints" aria-labelledby="profile-footprints-title"><div class="profile-section-heading"><h2 id="profile-footprints-title">最近7天的小足迹</h2><span>{{ recordedDays }}个日期有记录</span></div><div class="profile-footprint-row"><div v-for="day in recentDays" :key="day.date" class="profile-footprint-item" :class="{ recorded: day.count > 0 }" role="group" :aria-label="day.date + '，' + day.count + '笔有效账单'"><JournalSticker v-if="day.count" tone="sage" /><span v-else class="profile-footprint-dot" aria-hidden="true"></span><span>{{ day.day }}</span></div></div><p>按账单业务日期整理，不是连续打卡；未确认和已删除的不计入。</p></section>
       <section class="profile-entry-card" aria-labelledby="profile-entry-title">
         <h2 id="profile-entry-title">常用入口</h2>
         <router-link v-for="entry in entries" :key="entry.to" :to="entry.to" class="profile-entry">
@@ -84,6 +90,10 @@ onMounted(() => store.refresh())
 </template>
 
 <style scoped>
+.profile-footprints { position:relative; margin-top:22px; padding:17px 13px 13px; border:1px dashed #bfba9c; border-radius:4px 18px 5px 16px; background:#f3f3e7; }.profile-footprint-row { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; margin-top:13px; }.profile-footprint-item { min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px 0; color:#a39a84; font-size:10px; }.profile-footprint-item.recorded { color:#667457; }.profile-footprint-item .journal-sticker { width:27px; height:27px; }.profile-footprint-dot { width:27px; height:27px; border:1px dashed #c7c4aa; border-radius:50%; background:#fbfaf1; }.profile-footprints > p { margin-top:9px; font-size:10px; line-height:1.8; color:#817c63; }
+
+.profile-edition-label { margin-bottom: 14px; }.profile-flower { position:absolute; right:-5px; top:-15px; width:39px; height:39px; opacity:.8; }
+
 .journal-profile { min-height: 100dvh; padding: 18px 16px calc(var(--zz-home-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px)); background: var(--zz-home-bg); color: var(--zz-home-ink); font-family: var(--zz-home-font); font-weight: 400; }
 .profile-content { max-width: var(--zz-home-content-width); margin-inline: auto; }
 .profile-header { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }

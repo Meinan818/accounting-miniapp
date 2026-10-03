@@ -8,6 +8,8 @@ import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import { useRecordStore } from '@/stores/recordStore'
 import { centsText } from '@/utils/money'
+import JournalSticker from '@/components/common/JournalSticker.vue'
+import { getCategoryWheel, JOURNAL_COLORS } from '@/utils/journal'
 import { getMonthStatistics, isValidMonth } from '@/utils/statistics'
 const route = useRoute()
 const router = useRouter()
@@ -24,6 +26,8 @@ const statistics = computed(() => calculated.value.data)
 const error = computed(() => store.storageError || calculated.value.error)
 const needsWideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents, statistics.value.balanceCents].some(value => centsText(value).length > 7))
 const categoryRows = computed(() => statistics.value?.categories[selectedType.value] || [])
+const wheel = computed(() => getCategoryWheel(categoryRows.value))
+const leadingCategory = computed(() => categoryRows.value[0] || null)
 const typeLabel = computed(() => selectedType.value === 'income' ? '收入' : '支出')
 function changeMonth(offset) {
   const next = dayjs(selectedMonth.value + '-01').add(offset, 'month').format('YYYY-MM')
@@ -36,7 +40,7 @@ onMounted(() => store.refresh())
 </script>
 
 <template>
-  <div class="journal-stats">
+  <div class="journal-stats notebook-evolution">
     <main class="stats-content">
       <header class="stats-header">
         <router-link to="/" class="stats-back" aria-label="返回日历主页"><ArrowLeft :size="20" :stroke-width="1.5" /></router-link>
@@ -62,11 +66,13 @@ onMounted(() => store.refresh())
       <template v-else-if="statistics">
         <section class="stats-category-card" aria-labelledby="stats-category-title">
           <div class="stats-category-heading"><h2 id="stats-category-title">{{ typeLabel }}分类</h2><div class="stats-type-switch" aria-label="选择分类统计类型"><button v-for="type in ['expense', 'income']" :key="type" type="button" :aria-pressed="selectedType === type" :class="{ selected: selectedType === type }" @click="selectedType = type">{{ type === 'income' ? '收入' : '支出' }}</button></div></div>
+          <div v-if="categoryRows.length" class="stats-wheel-scene"><span class="stats-wheel-label edition-ribbon">本月账本色谱</span><div class="stats-wheel" role="img" :aria-label="typeLabel + '分类分布，共' + categoryRows.length + '类'" :style="{ background: wheel.background }"><div class="stats-wheel-center"><span>{{ selectedType === 'income' ? '收入来源' : '支出去向' }}</span><strong>{{ categoryRows.length }}<small>类</small></strong><span>{{ statistics[selectedType + 'Count'] }}笔有效账单</span></div></div><JournalSticker kind="spark" tone="honey" class="stats-wheel-spark" /><JournalSticker kind="flower" tone="lilac" class="stats-wheel-flower" /></div>
+          <aside v-if="leadingCategory" class="stats-insight desk-note" aria-label="基于实际账单的小发现"><JournalSticker tone="sage" /><div><p class="edition-kicker">账本小发现 · 非AI预测</p><p>本月{{ typeLabel }}最多的是 <strong>{{ leadingCategory.category }}</strong></p><span>¥{{ centsText(leadingCategory.amountCents) }} · 占{{ leadingCategory.percent.toFixed(1) }}%</span></div></aside>
           <p class="stats-category-note">{{ statistics[selectedType + 'Count'] }} 笔{{ typeLabel }} · 金额从高到低</p>
           <ol v-if="categoryRows.length" class="stats-category-list">
-            <li v-for="item in categoryRows" :key="item.category" class="stats-category-row" :data-category="item.category">
+            <li v-for="(item, index) in categoryRows" :key="item.category" class="stats-category-row" :data-category="item.category">
               <div class="stats-category-line"><div class="stats-category-name"><span class="stats-category-stamp" aria-hidden="true"><ReceiptText :size="18" :stroke-width="1.5" /></span><span>{{ item.category }}</span></div><div class="stats-category-value"><strong>¥{{ centsText(item.amountCents) }}</strong><span>{{ item.percent.toFixed(1) }}% · {{ item.count }}笔</span></div></div>
-              <div class="stats-bar-track" aria-hidden="true"><span class="stats-bar-fill" :class="selectedType" :style="{ width: item.barPercent + '%' }"></span></div>
+              <div class="stats-bar-track" aria-hidden="true"><span class="stats-bar-fill" :class="selectedType" :style="{ width: item.barPercent + '%', background: JOURNAL_COLORS[index % JOURNAL_COLORS.length] }"></span></div>
             </li>
           </ol>
           <div v-else class="stats-empty"><img :src="receiptKitten" alt="奶油小猫拿着空白小票" /><p>{{ statistics.recordCount === 0 ? '这个月还没有账单' : '这个月还没有' + typeLabel + '账单' }}</p><span>{{ statistics.recordCount === 0 ? '记下第一笔后，这里会自动整理收支。' : '切换收支类型，可以查看已有账单。' }}</span></div>
@@ -80,6 +86,12 @@ onMounted(() => store.refresh())
 </template>
 
 <style scoped>
+.stats-wheel-scene { position:relative; display:flex; align-items:center; justify-content:center; padding:32px 0 23px; margin:7px 0 3px; background:radial-gradient(ellipse at center,#f9eedc 0 45%,transparent 66%); }
+.stats-wheel-label { position:absolute; top:6px; left:0; }.stats-wheel { width:188px; height:188px; border-radius:50%; display:grid; place-items:center; box-shadow:4px 5px 0 #e0d3c2; outline:1px solid #c5b19a; outline-offset:4px; transform:rotate(-3deg); }
+.stats-wheel-center { width:130px; height:130px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:50%; border:1px dashed #c5b19a; background:#fffaf0; color:var(--zz-home-ink-soft); transform:rotate(3deg); }.stats-wheel-center span { font-size:11px; }.stats-wheel-center strong { font-size:31px; font-weight:400; line-height:1.2; color:var(--zz-home-ink); }.stats-wheel-center small { font-size:12px; margin-left:5px; }
+.stats-wheel-spark { position:absolute; right:14%; top:33px; width:35px; height:35px; }.stats-wheel-flower { position:absolute; left:12%; bottom:11px; width:34px; height:34px; }
+.stats-insight { display:flex; align-items:center; gap:10px; padding:13px 11px; margin:6px 0 17px; background:#f1f3e5; }.stats-insight > div { min-width:0; }.stats-insight p { font-size:12px; line-height:1.9; overflow-wrap:anywhere; }.stats-insight strong { font-weight:400; color:#6c7757; background:#e1e8ce; padding:2px 4px; }.stats-insight span { font-size:11px; color:var(--zz-home-ink-soft); }
+
 .journal-stats { min-height: 100dvh; padding: 18px 16px calc(var(--zz-home-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px)); background: var(--zz-home-bg); color: var(--zz-home-ink); font-family: var(--zz-home-font); font-weight: 400; }
 .stats-content { max-width: var(--zz-home-content-width); margin-inline: auto; }
 .stats-header { display: flex; align-items: center; gap: 9px; margin-bottom: 26px; }

@@ -1,4 +1,5 @@
 <script setup>
+import JournalSticker from '@/components/common/JournalSticker.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, ref } from 'vue'
@@ -26,6 +27,10 @@ const visibleMonthRecords = computed(() => recordStore.records.filter((record) =
   record.date?.startsWith(calendarMonth.value)
 )))
 
+const todayRecords = computed(() => recordStore.records.filter(record => record.date === today))
+const todayExpense = computed(() => sumAmounts(todayRecords.value, 'expense'))
+const weekdayLabel = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dayjs(today).day()]
+function returnToday() { calendarMonth.value = todayMonth; selectedDate.value = today }
 const monthIncome = computed(() => sumAmounts(visibleMonthRecords.value, 'income'))
 const monthExpense = computed(() => sumAmounts(visibleMonthRecords.value, 'expense'))
 
@@ -55,7 +60,7 @@ function getRecordSign(record) {
 </script>
 
 <template>
-  <div class="journal-home">
+  <div class="journal-home notebook-evolution">
     <main class="home-content">
       <header class="home-header">
         <img :src="miaoAvatar" alt="手绘猫猫" class="home-header-cat" />
@@ -66,10 +71,15 @@ function getRecordSign(record) {
         <span class="home-header-note">每一笔，都好好记下</span>
       </header>
 
-      <ManualEntry class="home-manual-link" />
-      <p v-if="recordStore.storageError" class="home-storage-error" role="alert">{{ recordStore.storageError }}</p>
+      <section class="home-desk-hero desk-note" aria-label="今日记账便签">
+        <div class="home-date-bookmark" aria-label="今天的日期"><span>{{ dayjs(today).format('M月') }}</span><strong>{{ dayjs(today).format('DD') }}</strong><span>{{ weekdayLabel }}</span></div>
+        <div class="home-note-copy"><p class="edition-kicker">每天一页 · 慢慢记下</p><h2>把小开销，写成小日子</h2><p v-if="!recordStore.storageError" class="home-today-line">今天 {{ todayRecords.length }} 笔 · 支出 {{ formatCurrency(todayExpense) }}</p><p v-else class="home-today-line">先保留账本，再慢慢整理</p><router-link to="/chat" class="journal-action home-chat-action">和本喵聊着记 <span aria-hidden="true">↗</span></router-link></div>
+        <JournalSticker kind="spark" tone="honey" class="home-hero-sticker" />
+      </section>
+      <div class="home-tools"><ManualEntry class="home-manual-link" /><button type="button" class="home-return-today" @click="returnToday">回到今天</button></div>
+      <div v-if="recordStore.storageError" class="home-storage-error" role="alert"><p>{{ recordStore.storageError }}</p><button type="button" class="home-return-today" @click="recordStore.refresh()">重新读取账单</button></div>
 
-      <CalendarCard
+      <CalendarCard v-if="!recordStore.storageError"
         :month="calendarMonth"
         :selected-date="selectedDate"
         :records="recordStore.records"
@@ -79,7 +89,7 @@ function getRecordSign(record) {
         @update:selected-date="selectedDate = $event"
       />
 
-      <section class="home-ledger" aria-label="当天账单">
+      <section v-if="!recordStore.storageError" class="home-ledger" aria-label="当天账单">
         <div class="home-ledger-heading">
           <div>
             <p class="home-subtitle">当天的小账单</p>
@@ -127,6 +137,16 @@ function getRecordSign(record) {
 </template>
 
 <style scoped>
+.home-desk-hero { display: flex; align-items: center; gap: 14px; padding: 16px 15px 15px 12px; margin: 14px 0 20px; overflow: hidden; }
+.home-date-bookmark { width: 64px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 9px 4px 12px; border: 1px solid #cbb99b; border-radius: 4px 4px 16px 3px; background: #e5ebda; color: #657859; transform: rotate(-4deg); }
+.home-date-bookmark strong { font-weight: 400; font-size: 32px; line-height: 1.15; font-variant-numeric: tabular-nums; }.home-date-bookmark span { font-size: 11px; }
+.home-note-copy { min-width: 0; position: relative; z-index: 1; }.home-note-copy h2 { font-size: 16px; font-weight: 400; margin: 3px 0 6px; line-height: 1.7; }.home-today-line { color: var(--zz-home-ink-soft); font-size: 11px; line-height: 1.8; }
+.home-chat-action { display: inline-flex; align-items: center; gap: 12px; min-height: 44px; margin-top: 5px; color: #755743; padding: 0 10px; border: 1px solid #d3b694; border-radius: 13px 6px 14px 7px; background: #f6e3c9; box-shadow: 2px 2px 0 #e4d1b7; font-size: 12px; text-decoration: none; }
+.home-hero-sticker { position: absolute; right: -3px; top: 3px; opacity: .6; }
+.home-tools { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 21px; }.home-tools .home-manual-link { margin-bottom: 0; }
+.home-return-today { min-height: 44px; padding: 8px 10px; font-size: 12px; color: #786650; border-bottom: 1px dashed #bcaa94; }.home-return-today:focus-visible, .home-chat-action:focus-visible { outline: 2px solid #785746; outline-offset: 3px; }
+@media(max-width:359px) { .home-desk-hero { gap: 10px; padding-inline: 10px; }.home-date-bookmark { width: 53px; }.home-note-copy h2 { font-size: 14px; }.home-today-line { font-size: 10px; } }
+
 .home-manual-link { margin-bottom: 18px; }
 .home-storage-error { font-size: 12px; color: #aa594d; margin-bottom: 12px; }
 .journal-home {

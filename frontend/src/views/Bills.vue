@@ -12,6 +12,7 @@ import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
+import { searchRecords } from '@/utils/journal'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
@@ -25,6 +26,7 @@ const saving = ref(false)
 const saveError = ref('')
 const notice = ref('')
 const noticeElement = ref(null)
+const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0,120) : '')
 
 // 4. 计算属性
 const monthTitle = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY年M月'))
@@ -40,10 +42,11 @@ const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
 const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
 const monthBalance = computed(() => (legacyCents(monthIncome.value) - legacyCents(monthExpense.value)) / 100)
 
+const listedRecords = computed(() => searchRecords(monthRecords.value, searchText.value))
 const groupedRecords = computed(() => {
   const groups = new Map()
 
-  monthRecords.value.forEach((record) => {
+  listedRecords.value.forEach((record) => {
     if (!groups.has(record.date)) {
       groups.set(record.date, [])
     }
@@ -117,7 +120,7 @@ function getSign(record) {
 </script>
 
 <template>
-  <div class="journal-bills">
+  <div class="journal-bills notebook-evolution">
     <main class="bills-content">
       <header class="bills-header">
         <router-link
@@ -159,7 +162,7 @@ function getSign(record) {
           </button>
         </div>
 
-        <dl class="bills-totals">
+        <dl v-if="!recordStore.storageError" class="bills-totals">
           <div class="bills-total-income">
             <dt>收入</dt>
             <dd class="bills-income">{{ formatCurrency(monthIncome) }}</dd>
@@ -175,6 +178,7 @@ function getSign(record) {
         </dl>
       </section>
 
+      <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" @click="searchText = ''">清除</button></div><p v-if="searchText && !recordStore.storageError" class="bills-search-feedback" role="status">找到 {{ listedRecords.length }} 笔 · 搜索只影响列表，本月汇总不变</p></section>
       <p class="bills-storage-note">账单保存在当前浏览器；这里的修改会同步到首页和聊天查询</p>
       <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
 
@@ -228,10 +232,10 @@ function getSign(record) {
         </div>
       </section>
 
-      <section v-else class="bills-empty" aria-label="无账单">
+      <section v-else-if="!recordStore.storageError" class="bills-empty" aria-label="无账单">
         <img :src="receiptKitten" alt="拿着小票的奶油猫" />
-        <p>这个月还没有小账单</p>
-        <p class="bills-subtitle">点下面的 +，本喵帮你记一笔</p>
+        <p>{{ searchText ? '没有找到匹配的小票' : '这个月还没有小账单' }}</p>
+        <p class="bills-subtitle">{{ searchText ? '试试其他关键词，或清除搜索条件' : '点下面的 +，本喵帮你记一笔' }}</p>
       </section>
     </main>
 
@@ -241,6 +245,11 @@ function getSign(record) {
 </template>
 
 <style scoped>
+.bills-search-card { position: relative; margin-top: 21px; padding: 13px 13px 11px; background: #ede6f0; border: 1px solid #c8b8d0; border-radius: 9px 16px 10px 15px; }
+.bills-search-card::before { content: ''; position:absolute; width:44px; height:14px; background:#f3e3bc; opacity:.8; top:-7px; left:17px; transform:rotate(-5deg); }
+.bills-search-row { display: flex; align-items: center; gap: 9px; margin-top: 4px; min-height:44px; color:#8a7591; }.bills-search-row input { min-width:0; width:100%; font-size:14px; background:transparent; color:#624f6b; outline:none; }.bills-search-row input:focus-visible { outline:1px dashed #80648d; outline-offset:4px; }.bills-search-row input::placeholder { color:#7c6684; opacity:1; }
+.bills-search-row button { min-height:44px; min-width:44px; font-size:12px; flex-shrink:0; }.bills-search-feedback { margin-top:5px; font-size:11px; line-height:1.8; color:#7b6984; }
+
 .bills-manual-link { margin-bottom: 18px; }
 .bills-record-actions { display: flex; flex-direction: row; align-items: flex-end; gap: 5px; flex-shrink: 0; min-width: 75px; max-width: 43%; }
 .bills-record-chevron { flex-shrink: 0; color: #b6a18d; }
