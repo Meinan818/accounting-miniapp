@@ -17,6 +17,32 @@ test('旧账号401或身份变化回执不撤销已切换的新账号', async ()
     assert.equal(changed, 0)
   }
 })
+
+test('同账号重新登录重置校验后，旧401不撤销新会话或清新token', async () => {
+  let finishOld, expired = 0, csrfReads = 0
+  const api = createApiClient({ getOwner: () => '1', onUnauthorized: () => expired++, fetcher: async path => {
+    if (path.endsWith('/csrf')) { csrfReads++; return response(200, token) }
+    return new Promise(done => { finishOld = done })
+  } })
+  const pending = api.request('GET', '/api/records/snapshot')
+  api.resetCsrf()
+  await api.getCsrf()
+  finishOld(response(401, {}))
+  await assert.rejects(pending, failure => failure.status === 401)
+  assert.equal(expired, 0)
+  await api.getCsrf()
+  assert.equal(csrfReads, 1)
+})
+
+test('写入拿到校验后beforeSend重置同账号校验时，旧token不得发出', async () => {
+  let writes = 0
+  const api = createApiClient({ getOwner: () => '1', fetcher: async path => {
+    if (path.endsWith('/csrf')) return response(200, token)
+    writes++; return response(200, {})
+  } })
+  await assert.rejects(api.request('POST', '/api/profile', { body: {}, beforeSend: () => api.resetCsrf() }), failure => failure.code === 'STALE_CSRF')
+  assert.equal(writes, 0)
+})
 const id = '7ebf606b-a0d5-4053-98fb-194505f3d10c'
 const input = { id: 'item1', type: 'expense', amount: '0.29', date: '2026-10-03', time: '09:15', category: '餐饮', remark: '合成午饭' }
 test('AI可设置更长的单次期限，普通请求保持原默认期限', async () => {
