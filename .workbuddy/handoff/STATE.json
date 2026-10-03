@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "已先存档再升级聊天手账风、个人资料与照片头像、五页实体猫耳返回键；142项Node/构建/49界面+11照片浏览器检查通过，按用户授权保存同步，后端暂停",
+  "currentTask": "已先存档再升级聊天手账风、个人资料与照片头像、五页实体猫耳返回键；142项Node/构建/49界面+11照片浏览器检查通过，已按用户授权commit/Push并实际读回一致，后端暂停",
   "stage": "frontend_chat_profile_photo_visual_feedback_pending",
   "blocked": false,
   "blockedReason": "",
