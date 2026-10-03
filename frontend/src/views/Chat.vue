@@ -16,7 +16,7 @@ import miaoThinking from '@/assets/design/mascot/poses/miao-thinking.png'
 import { useConversationStore } from '@/stores/conversationStore'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
-import { getFakeAIResponse } from '@/utils/mockAI'
+import { getMonthQueryReply } from '@/utils/chatQuery'
 
 // 2. 组合式函数
 const conversationStore = useConversationStore()
@@ -59,19 +59,55 @@ function resetMoodLater() {
 
 const savingGroup = ref(null)
 const actionErrors = ref({})
-const activeDraftMessage = computed(() => [...conversationStore.messages].reverse().find(m => m.kind === 'draft-group' && m.group
-  && ['needs_input', 'ready'].includes(m.group.status) && recordStore.batchRecords(m.group.id).length === 0))
+const activeDraftMessage = computed(() => {
+  const messages = conversationStore.messages
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i]
+    if (m.kind === 'draft-group' && m.group && ['needs_input', 'ready'].includes(m.group.status)
+      && recordStore.batchRecords(m.group.id).length === 0) return m
+  }
+  return null
+})
+// Display a window, not a storage limit. Older active drafts stay reachable.
+const historyBatchSize = 40
+const visibleLimit = ref(historyBatchSize)
+const recentMessages = computed(() => conversationStore.messages.slice(-visibleLimit.value))
+const pinnedDraft = computed(() => activeDraftMessage.value && !recentMessages.value.includes(activeDraftMessage.value) ? activeDraftMessage.value : null)
+const visibleMessages = computed(() => pinnedDraft.value ? [pinnedDraft.value, ...recentMessages.value] : recentMessages.value)
+const hiddenCount = computed(() => Math.max(0, conversationStore.messages.length - visibleMessages.value.length))
+const loadingHistory = ref(false)
+const retryingPersistence = ref(false)
+async function loadEarlier() {
+  if (loadingHistory.value) return
+  loadingHistory.value = true
+  const container = messagesContainer.value
+  const previousHeight = container?.scrollHeight || 0
+  const previousTop = container?.scrollTop || 0
+  visibleLimit.value += historyBatchSize
+  await nextTick()
+  if (container) container.scrollTop = previousTop + container.scrollHeight - previousHeight
+  loadingHistory.value = false
+}
+async function retryConversation() {
+  if (retryingPersistence.value || conversationStore.isThinking || savingGroup.value) return
+  retryingPersistence.value = true
+  try {
+    if (await conversationStore.retryPersistence()) {
+      actionErrors.value = {}
+      visibleLimit.value = historyBatchSize
+      scrollToBottom()
+    }
+  } finally { retryingPersistence.value = false }
+}
 function reply(content) { conversationStore.addMessage({ role: 'assistant', kind: 'text', content }) }
 function queryReply(text) {
   if (!recordStore.refresh()) { reply(recordStore.storageError); return }
-  if (/上个月|下个月|去年|今年|昨天|前天|今天|本周|上周|\d{4}[-年]|\d{1,2}月/.test(text)) { reply('这版查询先支持本月汇总；其他日期请到明细切月查看。本喵不会拿本月数据冒充其他日期。'); return }
-  const result = getFakeAIResponse(text, { monthExpense: recordStore.monthExpense, monthIncome: recordStore.monthIncome,
-    categoryExpenses: recordStore.categoryExpenses, categoryIncome: recordStore.categoryIncome })
-  reply(result.type === 'query' ? result.reply : '本喵暂时只支持查询本月收入、支出与分类汇总。账单以明细里的最新数据为准。')
+  try { reply(getMonthQueryReply(text, recordStore.records)) }
+  catch (error) { reply('本月查询暂时无法显示：' + error.message + '。账单没有改变。') }
 }
 function saveDraft(messageId) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message?.group || message.group.status !== 'ready' || savingGroup.value) return
+  if (!message?.group || message.group.status !== 'ready' || savingGroup.value || retryingPersistence.value) return
   savingGroup.value = messageId
   actionErrors.value[messageId] = ''
   try {
@@ -84,13 +120,13 @@ function saveDraft(messageId) {
 }
 function cancelDraft(messageId) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message?.group || savingGroup.value || recordStore.batchRecords(message.group.id).length) return
+  if (!message?.group || savingGroup.value || retryingPersistence.value || recordStore.batchRecords(message.group.id).length) return
   const result = applyDraftInput(message.group, '取消这组')
   conversationStore.updateGroup(messageId, result.group); actionErrors.value[messageId] = ''; reply(result.reply)
 }
 function editDraft(messageId, { itemId, record }) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message?.group || savingGroup.value || ['saved', 'cancelled'].includes(message.group.status) || recordStore.batchRecords(message.group.id).length) return
+  if (!message?.group || savingGroup.value || retryingPersistence.value || ['saved', 'cancelled'].includes(message.group.status) || recordStore.batchRecords(message.group.id).length) return
   const group = JSON.parse(JSON.stringify(message.group))
   const item = group.items.find(i => i.id === itemId)
   if (!item) return
@@ -103,7 +139,7 @@ function editDraft(messageId, { itemId, record }) {
 }
 async function handleSend(userInput) {
   const text = String(userInput || '').trim()
-  if (!text || conversationStore.isThinking || savingGroup.value) return
+  if (!text || conversationStore.isThinking || savingGroup.value || retryingPersistence.value) return
   conversationStore.addMessage({ role: 'user', kind: 'text', content: text })
   conversationStore.setThinking(true); conversationStore.setMascotMood('thinking'); scrollToBottom()
   try {
@@ -128,13 +164,14 @@ function legacySaved(message) { return message.confirmed || recordStore.batchRec
 function legacyRecord(message) { return recordStore.batchRecords('legacy-' + message.id)[0] || message.record }
 function handleUpdateRecord(messageId, updatedRecord) {
   const message = conversationStore.messages.find(m => m.id === messageId)
+  if (retryingPersistence.value) return
   if (!message || legacySaved(message)) { reply('这笔已入账，请直接到明细修改。'); return }
   conversationStore.updateRecord(messageId, updatedRecord)
   reply('已经帮你改好啦，再核对一下就可以记账了。')
 }
 function handleConfirmRecord(messageId, record) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message || legacySaved(message)) return
+  if (!message || retryingPersistence.value || legacySaved(message)) return
   try {
     recordStore.addRecord(record, { batchId: 'legacy-' + messageId, source: 'chat' })
     conversationStore.markRecordConfirmed(messageId)
@@ -195,14 +232,23 @@ onBeforeUnmount(() => {
 
     <main ref="messagesContainer" class="miao-messages">
       <div class="miao-thread" aria-live="polite">
-        <p v-if="recordStore.storageError || conversationStore.persistenceError" class="miao-storage-error" role="alert">{{ recordStore.storageError || conversationStore.persistenceError }}</p>
-        <template v-for="message in conversationStore.messages" :key="message.id">
+        <p v-if="recordStore.storageError" class="miao-storage-error" role="alert">{{ recordStore.storageError }}</p>
+        <div v-if="conversationStore.persistenceError" class="miao-storage-error" role="alert">
+          <p>{{ conversationStore.persistenceError }}</p>
+          <button type="button" class="miao-history-button" :disabled="retryingPersistence || conversationStore.isThinking || Boolean(savingGroup)" @click="retryConversation">{{ conversationStore.restorationBlocked ? '重新读取旧对话' : '重试对话保存' }}</button>
+        </div>
+        <div v-if="hiddenCount" class="miao-history-controls">
+          <button type="button" class="miao-history-button" :disabled="loadingHistory || conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="loadEarlier">查看更早对话（还有{{ hiddenCount }}条）</button>
+          <p>这里只分批显示，全部历史仍保留。</p>
+        </div>
+        <div v-for="message in visibleMessages" :key="message.id" :data-message-id="message.id">
+          <p v-if="pinnedDraft?.id === message.id" class="miao-history-note">更早的未完成草稿 · 可以继续补充或确认</p>
           <ChatBubble v-if="message.kind === 'text'" :message="message" cat-appearance />
           <DraftGroupCard
             v-if="message.kind === 'draft-group' && message.group"
             :group="message.group"
             :saved-records="recordStore.batchRecords(message.group.id)"
-            :busy="savingGroup === message.id || conversationStore.isThinking"
+            :busy="savingGroup === message.id || conversationStore.isThinking || retryingPersistence"
             :error="actionErrors[message.id]"
             @confirm="saveDraft(message.id)"
             @cancel="cancelDraft(message.id)"
@@ -217,7 +263,7 @@ onBeforeUnmount(() => {
             @confirm="handleConfirmRecord(message.id, $event)"
             @update="handleUpdateRecord(message.id, $event)"
           />
-        </template>
+        </div>
 
         <div v-if="conversationStore.isThinking" class="message-enter miao-thinking">
           <img :src="miaoThinking" alt="猫猫托腮思考" />
@@ -226,7 +272,7 @@ onBeforeUnmount(() => {
       </div>
     </main>
 
-    <ChatInput :disabled="conversationStore.isThinking || Boolean(savingGroup)" cat-appearance @send="handleSend" @voice="handleVoice" />
+    <ChatInput :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" cat-appearance @send="handleSend" @voice="handleVoice" />
   </div>
 </template>
 
@@ -263,6 +309,11 @@ onBeforeUnmount(() => {
 .miao-summary p span { font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .miao-manual-link { justify-self: start; }
 .legacy-deleted-note { padding: 16px; border: 1px dashed #d9c5a9; border-radius: 16px; font-size: 13px; line-height: 1.8; color: #9c806c; background: #fffaf2; }
+.miao-history-controls { text-align: center; }
+.miao-history-controls p, .miao-history-note { color: var(--miao-soft); font-size: 12px; line-height: 1.8; }
+.miao-history-note { margin-bottom: 8px; }
+.miao-history-button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--miao-line); border-radius: 12px; background: var(--miao-white); color: var(--miao-soft); font-size: 13px; }
+.miao-history-button:disabled { opacity: .55; }
 .miao-storage-error { font-size: 12px; color: #aa594d; line-height: 1.8; }
 .miao-demo-label { color: var(--miao-soft); }
 .miao-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
