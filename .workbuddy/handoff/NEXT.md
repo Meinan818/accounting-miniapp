@@ -35,7 +35,7 @@ A1聊天闭环、A2手动/修改/单笔删除、A3最小统计页均已接入并
 
 ## 关键代码与正式测试
 
-- 视图：frontend/src/views/Home.vue、Chat.vue、Bills.vue、Add.vue、Stats.vue；Login/Profile仍为占位，不能声称认证或全站完整。
+- 视图：frontend/src/views/Home.vue、Chat.vue、Bills.vue、Add.vue、Stats.vue；Login仍为占位，Profile最小本地演示页已接入，不能声称认证或全站完整。
 - 组件：components/record/ManualEntry.vue、RecordForm.vue、RecordEditor.vue；components/common/DraftGroupCard.vue，旧ConfirmCard保留兼容。
 - 数据：stores/recordStore.js、conversationStore.js；utils/ledger.js、money.js、draftEngine.js、categories.js、statistics.js、chatQuery.js；mockAI保留旧兼容材料，当前聊天查询不再调用它。
 - npm test：Node内置test/assert，共95项（此前75+旧快照保护12+汇总识别8），测试入口包含frontend/tests/statistics.test.js；没有lint/typecheck脚本，不虚报执行。
@@ -79,3 +79,7 @@ A1聊天闭环、A2手动/修改/单笔删除、A3最小统计页均已接入并
 ## 最新授权（2026-10-03，北京时间）
 
 用户认可其他页面体验，指出“我的”仍占位，已同意最小个人页和先commit保存修复。自主开发/本地commit窗口10:43:25—11:43:25，仅此轮，不Push/部署/收费/清数据/加依赖/启动后端。已批准个人页为现用猫猫手账外观、有效账单笔数/本月收支、明细/统计/聊天入口、本地演示数据说明/帮助，不加上传头像/猫命名/预算/假登录退出/清空按钮。窗口内分步验证保存，结束前收尾；已有75/87/95项证据按各历史轮区分，不把旧记录当新结果。
+
+## 最新现场与创新窗口（2026-10-03）
+
+原旧快照/总支出修复已分别本地保存；个人页最小版源码已实现，95项Node/1801模块构建（3.01秒）/15项浏览器检查通过，原始截图与证据在.workbuddy/memory/home-visual/autonomous-2026-10-03/profile。先存个人页基线，再大胆手账视觉/实用交互创新。用户最新一小时授权截止北京时间12:02:27（覆盖前轮截止），方向/commit自主，不逐项询问；可少量收费工具但不夸张，暂无实际收费。保护账本/原图，不Push/部署/清数据，不恢复暂缓排序，全部新视觉以返回后人工验收为准。
