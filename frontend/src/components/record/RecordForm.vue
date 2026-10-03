@@ -12,6 +12,16 @@ const form = ref({ type: props.record.type || 'expense', amount: props.record.am
   category: props.record.category || '餐饮', date: props.record.date || dayjs().format('YYYY-MM-DD'),
   time: props.record.time || (unknownTime ? '' : dayjs().format('HH:mm')), remark: props.record.remark || '' })
 const localError = ref('')
+let initialForm = JSON.stringify(form.value)
+function restorePristine(record) {
+  if (JSON.stringify(form.value) !== initialForm) return false
+  form.value = { type: record.type || 'expense', amount: record.amount != null ? String(record.amount) : '',
+    category: record.category || '餐饮', date: record.date || dayjs().format('YYYY-MM-DD'),
+    time: record.time || '', remark: record.remark || '' }
+  initialForm = JSON.stringify(form.value); localError.value = ''
+  return true
+}
+defineExpose({ restorePristine })
 const categories = computed(() => CATEGORY_OPTIONS[form.value.type])
 function changeType(type) { form.value.type = type; if (!categories.value.some(c => c.label === form.value.category)) form.value.category = categories.value[0].label }
 function save() {

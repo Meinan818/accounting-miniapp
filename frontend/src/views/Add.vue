@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from 'vue-router'
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import NotebookBack from '@/components/common/NotebookBack.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import RecordForm from '@/components/record/RecordForm.vue'
@@ -13,6 +13,10 @@ const store = useRecordStore()
 const batchId = createId('manual')
 const { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling } = useManualRecordSave(store, router, batchId)
 const recovery = computed(() => store.manualRecovery || { operations: [], error: '' })
+const manualForm = ref(null)
+watch(restoredRecord, record => {
+  if (manualForm.value?.restorePristine(record) === false) notice.value = '草稿已取消且未入账，你当前填写的内容已保留。'
+}, { flush: 'post' })
 </script>
 <template>
   <main class="manual-page notebook-evolution">
@@ -35,7 +39,7 @@ const recovery = computed(() => store.manualRecovery || { operations: [], error:
           </div>
           <p v-if="error" role="alert" class="warning">{{ error }}</p>
         </section>
-        <RecordForm v-if="!savedRecord && !cancelling" v-show="!recovery.error && !recovery.operations.length" :record="restoredRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push('/bills')" />
+        <RecordForm v-if="!savedRecord" v-show="!cancelling && !recovery.error && !recovery.operations.length" ref="manualForm" :record="restoredRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push('/bills')" />
         <div v-if="savedRecord" class="saved-recovery" role="status"><p>这笔账单已经保存，可以打开明细查看。</p><p v-if="error" role="alert" class="warning">{{ error }}</p><button type="button" :disabled="saving" @click="save()">{{ saving ? '正在打开明细…' : '打开已保存账单' }}</button></div>
       </article>
       <p class="local-note">{{ SERVER_MODE ? '正式账单保存到当前账号，不调用AI。' : '本地演示：账单保存在当前浏览器，不调用AI。' }}</p>
