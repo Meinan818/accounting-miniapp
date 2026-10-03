@@ -970,3 +970,9 @@
 - 495c0acecb7b054ef5a6e62923b74ae57b02ddb8普通Push与ls-remote完整一致已核。
 - chat-interactions-2026-10-04/before-fixed-harness3项1通过2失败：历史展开离页仍滚旧容器，重读迟到清旧错误及展开范围。复用disposed/owner的isCurrentView保护入口/回执与底部滚动，容器核同一实例；4项针对/321项全量/两构建通过，包含账号变化与正常阅读/重读、重复阻断。
 - 首轮正常测试晚于await更新假高度而误失败，before.log保留；调整高度在microtask前反映渲染后正常通过，不修业务来迁就替身。无真实业务/AI/邮件/照片调用，无新依赖，GUI/真机未验，compact=0。继续查询与整组/旧单笔确认迟到回执取证，账单事实不随离页丢弃。
+
+## 2026-10-04 · 聊天查询与确认迟到回执
+
+- c9112af4bad5c912d34b39b0374308d0b377eac0普通Push与ls-remote完整一致已核。
+- actions-before实际7项4通过3失败：查询/整组/旧单笔确认迟到追加旧对话，整组创建情绪计时器。isCurrentView保护入口和await回执，reply与计时器分别保护；成功Store事实不撤销，组状态离页保留并继续按batchRecords识别已确认。10项Chat针对/327项全量与两构建通过，补正常确认/失败重试/重复阻断及离页失败。
+- 本轮全为合成Store，未写真实账本/对话/照片或发AI/邮件；GUI/真机未验。compact=0，automation目标保持。下一项演示handleSend延时/refresh间隙离页取证，保护新页面thinking，不触发真实模型。

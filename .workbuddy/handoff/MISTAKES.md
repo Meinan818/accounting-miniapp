@@ -256,3 +256,7 @@
 
 - loadEarlier捕获容器后离页仍scroll，retryConversation迟到清旧状态；before-fixed-harness1通过2失败保留。isCurrentView/当前容器保护，4项针对/321项全量/两构建通过。
 - 首轮正常阅读断言预期800，假高度在await重复调用后才设1600，此时旧callback已读1000，因此200正确。修正替身时序，原业务正常路径通过；今后渲染高度在nextTick回调前更新，不把harness调度错误称产品缺陷。
+
+## 2026-10-04 · 聊天查询与确认迟到消息
+
+- 历史与AI保护并未覆盖queryReply/saveDraft/旧单笔确认的await回执，真实setup7项4通过3失败，actions-before保留。守卫页面通知/草稿/情绪计时器，保留Store成功账单事实，10项针对/327项全量/两构建通过。以后异步确认同时核事实防重、离页消息及定时器，不把停止页面更新等同撤销已发送的写请求。

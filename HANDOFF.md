@@ -1,4 +1,10 @@
-## 当前入口：聊天历史生命周期（2026-10-04）
+## 当前入口：聊天查询与确认回执（2026-10-04）
+
+actions-before真实7项4通过3失败：离页查询仍追加回复，整组/旧单笔确认迟到更新旧对话，整组追加情绪计时器。复用isCurrentView保护入口/await回执与reply/计时器，Store成功账单事实保留；离页组未改saved仍由batchRecords事实防重。10项Chat实际setup/327项全量及两构建通过，材料chat-interactions-2026-10-04，正常查询/确认/失败重试/重复阻断与迟到失败均覆盖。无真实业务/AI/邮件/照片调用，无新依赖，GUI/真机未验。
+
+c9112af4bad5c912d34b39b0374308d0b377eac0普通Push与完整远端一致已核，compact=0、原生automation目标保持。下一项演示handleSend的600ms延时/refresh间隙离页取证，真实模型不调用；核退出后旧流程不能追加草稿/确认或干扰新页面thinking状态，先复现再最小修复。
+
+## 前一节点：聊天历史生命周期（2026-10-04）
 
 Chat loadEarlier捕获旧容器、retryConversation缺离页回执守卫，before-fixed-harness实际3项1通过2失败；复用disposed和owner封装isCurrentView，历史/重试入口与回执拒绝旧身份/离页，滚动核当前容器。4项真实setup/321项全量及两构建通过，材料chat-interactions-2026-10-04。首轮正常阅读测试高度设置晚于microtask导致误失败，修正替身时序后原正常流程通过，不混作业务错误。原对话/账本/账号未写，无真实AI/邮件请求，无依赖变化，GUI/真机未验。
 

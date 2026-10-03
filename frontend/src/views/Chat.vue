@@ -75,12 +75,13 @@ function wait(milliseconds) {
 }
 
 function resetMoodLater() {
+  if (!isCurrentView()) return
   if (moodTimer) {
     window.clearTimeout(moodTimer)
   }
 
   moodTimer = window.setTimeout(() => {
-    conversationStore.setMascotMood('happy')
+    if (isCurrentView()) conversationStore.setMascotMood('happy')
   }, 1800)
 }
 
@@ -129,24 +130,28 @@ async function retryConversation() {
     }
   } finally { if (isCurrentView()) retryingPersistence.value = false }
 }
-function reply(content) { conversationStore.addMessage({ role: 'assistant', kind: 'text', content }) }
+function reply(content) { if (isCurrentView()) conversationStore.addMessage({ role: 'assistant', kind: 'text', content }) }
 async function queryReply(text) {
-  if (!await recordStore.refresh()) { reply(recordStore.storageError); return }
+  if (!isCurrentView()) return
+  const loaded = await recordStore.refresh()
+  if (!isCurrentView()) return
+  if (!loaded) { reply(recordStore.storageError); return }
   try { reply(getMonthQueryReply(text, recordStore.records)) }
   catch (error) { reply('本月查询暂时无法显示：' + error.message + '。账单没有改变。') }
 }
 async function saveDraft(messageId) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message?.group || message.group.status !== 'ready' || savingGroup.value || retryingPersistence.value) return
+  if (!isCurrentView() || !message?.group || message.group.status !== 'ready' || savingGroup.value || retryingPersistence.value) return
   savingGroup.value = messageId
   actionErrors.value[messageId] = ''
   try {
     const saved = await recordStore.addRecords(message.group.items, { batchId: message.group.id, source: 'chat' })
+    if (!isCurrentView()) return
     conversationStore.updateGroup(messageId, { ...message.group, status: 'saved', pending: null, recordIds: saved.map(record => record.id) })
     reply('本喵已记下' + saved.length + '笔，首页和明细已同步。之后直接改明细，查询也会读取最新账单。')
     conversationStore.setMascotMood('success'); resetMoodLater()
-  } catch (e) { actionErrors.value[messageId] = e.message; reply(e.message) }
-  finally { savingGroup.value = null; scrollToBottom() }
+  } catch (e) { if (isCurrentView()) { actionErrors.value[messageId] = e.message; reply(e.message) } }
+  finally { if (isCurrentView()) { savingGroup.value = null; scrollToBottom() } }
 }
 function cancelDraft(messageId) {
   const message = conversationStore.messages.find(m => m.id === messageId)
@@ -236,15 +241,16 @@ function handleUpdateRecord(messageId, updatedRecord) {
 }
 async function handleConfirmRecord(messageId, record) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message || retryingPersistence.value || savingGroup.value || legacySaved(message)) return
+  if (!isCurrentView() || !message || retryingPersistence.value || savingGroup.value || legacySaved(message)) return
   savingGroup.value = messageId
   try {
     const saved = await recordStore.addRecord(record, { batchId: 'legacy-' + messageId, source: 'chat' })
+    if (!isCurrentView()) return
     conversationStore.updateRecord(messageId, saved)
     conversationStore.markRecordConfirmed(messageId)
     reply('本喵已记下一笔，明细和查询使用同一份最新账单。')
   } catch (e) { reply(e.message) }
-  finally { savingGroup.value = null }
+  finally { if (isCurrentView()) savingGroup.value = null }
   scrollToBottom()
 }
 
