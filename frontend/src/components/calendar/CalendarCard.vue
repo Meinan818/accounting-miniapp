@@ -113,12 +113,14 @@ function getDayNumberClass(cell) {
     <div class="calendar-totals">
       <div class="calendar-summary-grid grid grid-cols-2 gap-2" :class="{ 'calendar-summary-grid-wide': wideAmounts }">
         <div class="calendar-summary calendar-summary-income">
+          <span class="calendar-note-mark" aria-hidden="true">✦</span>
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月收入</p>
             <p class="calendar-amount text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
           </div>
         </div>
         <div class="calendar-summary calendar-summary-expense">
+          <span class="calendar-note-mark" aria-hidden="true">♡</span>
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月支出</p>
             <p class="calendar-amount text-[var(--zz-home-pink)]">{{ `¥${expense.toFixed(2)}` }}</p>
@@ -185,8 +187,47 @@ function getDayNumberClass(cell) {
 .calendar-day-selected { border-color: var(--zz-home-line); background: var(--zz-home-pink-soft); }
 .calendar-today-label { font-size: 11px; color: var(--zz-home-ink-soft); }
 .calendar-record-dot { position: absolute; bottom: 3px; width: 4px; height: 4px; border-radius: 50%; background: var(--zz-home-ink-soft); }
-.calendar-totals { margin: 2px 0 15px; padding-bottom: 14px; border-bottom: 1px dashed var(--zz-home-line); }
-.calendar-summary { min-width: 0; padding: 10px 12px; border-radius: 14px 11px 15px 12px; }
+.calendar-totals { margin: 7px 0 15px; padding-bottom: 14px; border-bottom: 1px dashed var(--zz-home-line); }
+.calendar-summary {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  padding: 13px 12px 15px;
+  border: 1px solid var(--note-line);
+  border-radius: 3px 3px 7px 3px;
+  background-image: repeating-linear-gradient(transparent 0 22px, var(--note-rule) 22px 23px);
+  background-position: 0 9px;
+  box-shadow: 1px 3px 4px #79634f12;
+}
+.calendar-summary::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 15px;
+  width: 35px;
+  height: 13px;
+  border-inline: 1px solid #fff9e788;
+  background: #fff9dfb5;
+  transform: rotate(-5deg);
+  pointer-events: none;
+}
+.calendar-summary::after {
+  content: '';
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  background: linear-gradient(135deg, var(--note-fold) 49%, var(--zz-home-paper) 51%);
+  border-radius: 3px 0 0 0;
+  pointer-events: none;
+}
+.calendar-summary > div { position: relative; z-index: 1; }
+.calendar-note-mark { position: absolute; top: 8px; right: 9px; color: var(--note-line); font-size: 13px; line-height: 1; }
+.calendar-summary-grid { gap: 12px; padding-inline: 2px; }
+.calendar-summary-income { --note-line: #acbea0; --note-rule: #c6d5b666; --note-fold: #c6d5b6; transform: rotate(-1deg); }
+.calendar-summary-expense { --note-line: #d8aca8; --note-rule: #e5bcb766; --note-fold: #e8bfba; transform: rotate(1deg); }
+.calendar-summary-grid-wide .calendar-note-mark { display: none; }
 .calendar-summary-grid-wide { grid-template-columns: 1fr; }.calendar-summary-grid-wide .calendar-summary > div { display:flex; align-items:center; justify-content:space-between; gap:8px; }.calendar-summary-grid-wide .calendar-amount { margin-top:0; }
 .calendar-summary-income { background: var(--zz-home-income-panel); }
 .calendar-summary-expense { background: var(--zz-home-expense-panel); }
