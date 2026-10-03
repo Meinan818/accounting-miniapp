@@ -3,11 +3,14 @@
 import { computed } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { getCalendarCells, shiftCalendarMonth } from '@/utils/calendar'
+import { validDate } from '@/utils/ledger'
 
 // 2. Props
 const props = defineProps({
   month: { type: String, required: true },
   selectedDate: { type: String, required: true },
+  today: { type: String, default: () => dayjs().format('YYYY-MM-DD') },
   records: { type: Array, default: () => [] },
   income: { type: Number, default: 0 },
   expense: { type: Number, default: 0 },
@@ -20,39 +23,21 @@ const emit = defineEmits(['update:month', 'update:selected-date'])
 
 // 4. 计算属性
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
-const monthTitle = computed(() => dayjs(`${props.month}-01`).format('YYYY年M月'))
-const calendarCells = computed(() => {
-  const firstDate = dayjs(`${props.month}-01`)
-  const startDate = firstDate.subtract(firstDate.day(), 'day')
-  const today = dayjs().format('YYYY-MM-DD')
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = startDate.add(index, 'day')
-    const dateString = date.format('YYYY-MM-DD')
-
-    return {
-      date: dateString,
-      day: date.date(),
-      weekday: date.day(),
-      isCurrentMonth: date.format('YYYY-MM') === props.month,
-      isToday: dateString === today,
-      isSelected: dateString === props.selectedDate,
-      hasRecord: props.records.some((record) => record.date === dateString),
-    }
-  })
-})
+const monthTitle = computed(() => shiftCalendarMonth(props.month, 0) ? dayjs(`${props.month}-01`).format('YYYY年M月') : '请选择有效月份')
+const calendarCells = computed(() => getCalendarCells(props.month, props.selectedDate, props.today, props.records))
 
 // 5. 方法
 function changeMonth(offset) {
-  emit('update:month', dayjs(`${props.month}-01`).add(offset, 'month').format('YYYY-MM'))
+  const next = shiftCalendarMonth(props.month, offset)
+  if (next) emit('update:month', next)
 }
 
 function selectDate(cell) {
-  emit('update:selected-date', cell.date)
-
+  if (!cell || !validDate(cell.date) || cell.isDisabled) return
   if (!cell.isCurrentMonth) {
     emit('update:month', cell.date.slice(0, 7))
   }
+  emit('update:selected-date', cell.date)
 }
 
 function getDayClass(cell) {
@@ -91,6 +76,7 @@ function getDayNumberClass(cell) {
         type="button"
         class="calendar-month-button active:scale-95"
         aria-label="上个月"
+        :disabled="!shiftCalendarMonth(month, -1)"
         @click="changeMonth(-1)"
       >
         <ChevronLeft :size="22" :stroke-width="1.5" />
@@ -104,6 +90,7 @@ function getDayNumberClass(cell) {
         type="button"
         class="calendar-month-button active:scale-95"
         aria-label="下个月"
+        :disabled="!shiftCalendarMonth(month, 1)"
         @click="changeMonth(1)"
       >
         <ChevronRight :size="22" :stroke-width="1.5" />
@@ -142,7 +129,8 @@ function getDayNumberClass(cell) {
         type="button"
         class="calendar-day relative flex items-center justify-center active:scale-95"
         :class="getDayClass(cell)"
-        :aria-label="cell.date"
+        :aria-label="cell.isDisabled ? '超出可查看日期范围' : cell.date"
+        :disabled="cell.isDisabled"
         :aria-pressed="cell.isSelected"
         :aria-current="cell.isToday ? 'date' : undefined"
         @click="selectDate(cell)"
@@ -174,6 +162,7 @@ function getDayNumberClass(cell) {
 .calendar-heading { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 12px; }
 .calendar-month-button { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px 11px 15px 12px; color: var(--zz-home-ink); }
 .calendar-month-button:hover { background: var(--zz-home-title-brush); }
+.calendar-month-button:disabled, .calendar-day:disabled { opacity: .45; cursor: default; }
 .calendar-month-title { padding: 5px 12px; min-width: 0; font-size: 18px; font-weight: 400; border-radius: 14px 11px 15px 12px; background: var(--zz-home-title-brush); color: var(--zz-home-ink); }
 .calendar-weekdays { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); text-align: center; gap: 2px; margin-bottom: 8px; font-size: 12px; color: var(--zz-home-ink-soft); }
 .calendar-weekend { color: var(--zz-home-pink); }

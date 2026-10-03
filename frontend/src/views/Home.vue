@@ -22,7 +22,7 @@ const recordStore = useRecordStore()
 const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore)
 
 // 3. 响应式数据
-const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange } = useHomeCalendar()
+const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange, handleDateChange } = useHomeCalendar()
 
 // 4. 计算属性
 const visibleMonthRecords = computed(() => recordStore.records.filter((record) => (
@@ -77,12 +77,13 @@ function getRecordSign(record) {
 
       <CalendarCard v-if="!recordStore.storageError"
         :month="calendarMonth"
+        :today="today"
         :selected-date="selectedDate"
         :records="recordStore.records"
         :income="monthIncome"
         :expense="monthExpense"
         @update:month="handleMonthChange"
-        @update:selected-date="selectedDate = $event"
+        @update:selected-date="handleDateChange"
       />
 
       <section v-if="!recordStore.storageError" class="home-ledger" aria-label="当天账单">

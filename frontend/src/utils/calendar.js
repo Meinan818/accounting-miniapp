@@ -3,6 +3,25 @@ import dayjs from 'dayjs'
 import { validDate } from './ledger.js'
 import { isValidMonth } from './statistics.js'
 
+export function shiftCalendarMonth(month, offset) {
+  if (!isValidMonth(month) || !Number.isSafeInteger(offset)) return null
+  const next = dayjs(`${month}-01`).add(offset, 'month').format('YYYY-MM')
+  return isValidMonth(next) ? next : null
+}
+
+export function getCalendarCells(month, selectedDate, today, records = []) {
+  if (!isValidMonth(month)) return []
+  const first = dayjs(`${month}-01`), start = first.subtract(first.day(), 'day')
+  const dates = new Set((Array.isArray(records) ? records : []).filter(record => record && !record.deletedAt).map(record => record.date))
+  return Array.from({ length: 42 }, (_, index) => {
+    const date = start.add(index, 'day'), value = date.format('YYYY-MM-DD')
+    const isDisabled = !validDate(value)
+    return { date: value, day: date.date(), weekday: date.day(), isCurrentMonth: value.slice(0, 7) === month,
+      isToday: !isDisabled && value === today, isSelected: !isDisabled && value === selectedDate,
+      hasRecord: !isDisabled && dates.has(value), isDisabled }
+  })
+}
+
 export function useHomeCalendar({ now = () => dayjs().format('YYYY-MM-DD'), eventTarget = globalThis.window,
   documentTarget = globalThis.document, timers = globalThis } = {}) {
   const initial = now()
@@ -31,6 +50,10 @@ export function useHomeCalendar({ now = () => dayjs().format('YYYY-MM-DD'), even
     refreshToday(); calendarMonth.value = month
     selectedDate.value = month === todayMonth.value ? today.value : `${month}-01`
   }
+  function handleDateChange(date) {
+    if (!active || !validDate(date)) return
+    calendarMonth.value = date.slice(0, 7); selectedDate.value = date
+  }
   const visible = () => { if (documentTarget?.visibilityState !== 'hidden') refreshToday() }
   let interval = null
   if (eventTarget?.addEventListener) {
@@ -44,5 +67,5 @@ export function useHomeCalendar({ now = () => dayjs().format('YYYY-MM-DD'), even
     eventTarget?.removeEventListener('focus', refreshToday)
     documentTarget?.removeEventListener('visibilitychange', visible)
   })
-  return { today, todayMonth, calendarMonth, selectedDate, weekdayLabel, refreshToday, returnToday, handleMonthChange }
+  return { today, todayMonth, calendarMonth, selectedDate, weekdayLabel, refreshToday, returnToday, handleMonthChange, handleDateChange }
 }
