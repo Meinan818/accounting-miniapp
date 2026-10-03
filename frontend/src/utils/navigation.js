@@ -1,6 +1,28 @@
-import { computed, onScopeDispose, ref } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { isValidMonth } from './statistics.js'
+
+export function useBillQuery(route, currentMonth = () => dayjs().format('YYYY-MM')) {
+  const selectedMonth = ref(isValidMonth(route.query.month) ? route.query.month : currentMonth())
+  const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0, 120) : '')
+  const selectedType = ref(['income', 'expense'].includes(route.query.type) ? route.query.type : 'all')
+  const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category.slice(0, 120) : '')
+  watch([() => route.query.month, () => route.query.q, () => route.query.type, () => route.query.category], () => {
+    selectedMonth.value = isValidMonth(route.query.month) ? route.query.month : currentMonth()
+    searchText.value = typeof route.query.q === 'string' ? route.query.q.slice(0, 120) : ''
+    selectedType.value = ['income', 'expense'].includes(route.query.type) ? route.query.type : 'all'
+    selectedCategory.value = typeof route.query.category === 'string' ? route.query.category.slice(0, 120) : ''
+  }, { flush: 'sync' })
+  function changeMonth(offset) {
+    if (!Number.isInteger(offset)) return false
+    const next = dayjs(selectedMonth.value + '-01').add(offset, 'month').format('YYYY-MM')
+    if (!isValidMonth(next)) return false
+    selectedMonth.value = next
+    selectedCategory.value = ''
+    return true
+  }
+  return { selectedMonth, searchText, selectedType, selectedCategory, changeMonth }
+}
 
 export function useManualRecordSave(store, router, batchId) {
   const saving = ref(false), error = ref(''), savedRecord = ref(null)

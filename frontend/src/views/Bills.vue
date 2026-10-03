@@ -18,24 +18,21 @@ import { filterRecords, windowRecordGroups } from '@/utils/journal'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { getCategoryArtwork } from '@/utils/categoryArtwork'
 import { SERVER_MODE } from '@/api/mode'
+import { useBillQuery } from '@/utils/navigation'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
 
 // 3. 响应式数据
 const route = useRoute()
-const initialMonth = typeof route.query.month === 'string' && /^\d{4}-(?:0[1-9]|1[0-2])$/.test(route.query.month) ? route.query.month : dayjs().format('YYYY-MM')
-const selectedMonth = ref(initialMonth)
+const { selectedMonth, searchText, selectedType, selectedCategory, changeMonth: changeQueryMonth } = useBillQuery(route)
 const editingRecord = ref(null)
 const saving = ref(false)
 const saveError = ref('')
 const editConflict = ref(null)
 const notice = ref('')
 const noticeElement = ref(null)
-const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0,120) : '')
 const searchInput = ref(null)
-const selectedType = ref(['income', 'expense'].includes(route.query.type) ? route.query.type : 'all')
-const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category.slice(0,120) : '')
 const displayBatchSize = 60
 const visibleLimit = ref(displayBatchSize)
 watch([selectedMonth, searchText, selectedType, selectedCategory], () => { visibleLimit.value = displayBatchSize })
@@ -154,9 +151,7 @@ async function clearSearch() {
 }
 
 function changeMonth(offset) {
-  notice.value = ''
-  selectedCategory.value = ''
-  selectedMonth.value = dayjs(`${selectedMonth.value}-01`).add(offset, 'month').format('YYYY-MM')
+  if (changeQueryMonth(offset)) notice.value = ''
 }
 
 function getDateLabel(date) {
@@ -201,6 +196,7 @@ function getSign(record) {
             type="button"
             class="bills-month-button active:scale-95"
             aria-label="上个月"
+            :disabled="selectedMonth === '1000-01'"
             @click="changeMonth(-1)"
           >
             <ChevronLeft :size="22" :stroke-width="1.5" />
@@ -210,6 +206,7 @@ function getSign(record) {
             type="button"
             class="bills-month-button active:scale-95"
             aria-label="下个月"
+            :disabled="selectedMonth === '9999-12'"
             @click="changeMonth(1)"
           >
             <ChevronRight :size="22" :stroke-width="1.5" />
@@ -389,6 +386,7 @@ function getSign(record) {
 .bills-empty { margin-top: 27px; padding: 27px 16px; border: 1px dashed var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); text-align: center; font-size: 15px; }
 .bills-empty img { display: block; width: 112px; height: 112px; object-fit: contain; margin: 0 auto 13px; }
 .bills-back:focus-visible, .bills-month-button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 3px; }
+.bills-month-button:disabled { opacity: .4; cursor: not-allowed; }
 @media (max-width: 359px) {
   .journal-bills { padding-inline: 12px; }
   .bills-header { gap: 7px; }

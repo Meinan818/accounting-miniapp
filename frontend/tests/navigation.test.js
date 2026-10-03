@@ -3,8 +3,56 @@ import assert from 'node:assert/strict'
 import { getScrollPosition } from '../src/utils/navigation.js'
 import { useStatsMonthNavigation } from '../src/utils/navigation.js'
 import { useManualRecordSave } from '../src/utils/navigation.js'
-import { effectScope } from 'vue'
+import { useBillQuery } from '../src/utils/navigation.js'
+import { effectScope, reactive } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
+
+test('同一明细页收到新查询链接同步月/收支/分类/搜索，清除链接条件恢复默认', () => {
+  const scope = effectScope(), route = reactive({ query: { month: '2026-10', q: '旧备注', type: 'expense', category: '餐饮' } })
+  const query = scope.run(() => useBillQuery(route, () => '2026-10'))
+  try {
+    route.query = { month: '2026-09', q: '合成工资', type: 'income', category: '工资' }
+    assert.equal(query.selectedMonth.value, '2026-09')
+    assert.equal(query.searchText.value, '合成工资')
+    assert.equal(query.selectedType.value, 'income')
+    assert.equal(query.selectedCategory.value, '工资')
+    route.query = {}
+    assert.equal(query.selectedMonth.value, '2026-10')
+    assert.equal(query.searchText.value, '')
+    assert.equal(query.selectedType.value, 'all')
+    assert.equal(query.selectedCategory.value, '')
+  } finally { scope.stop() }
+})
+
+test('非法或数组明细查询安全回退，拒绝1000年以前的月份', () => {
+  const scope = effectScope()
+  const query = scope.run(() => useBillQuery(reactive({ query: { month: '0001-01', q: ['a'], type: ['income'], category: ['工资'] } }), () => '2026-10'))
+  try { assert.equal(query.selectedMonth.value, '2026-10'); assert.equal(query.searchText.value, ''); assert.equal(query.selectedType.value, 'all'); assert.equal(query.selectedCategory.value, '') }
+  finally { scope.stop() }
+})
+
+test('明细月份不越过上下界，拒绝切月不清现有分类', () => {
+  for (const [month, offset] of [['1000-01', -1], ['9999-12', 1]]) {
+    const scope = effectScope()
+    const query = scope.run(() => useBillQuery(reactive({ query: { month, category: '餐饮' } })))
+    try { query.changeMonth(offset); assert.equal(query.selectedMonth.value, month); assert.equal(query.selectedCategory.value, '餐饮') }
+    finally { scope.stop() }
+  }
+})
+
+test('明细新增定位等无关路由参数变化不清用户本页筛选', () => {
+  const scope = effectScope(), route = reactive({ query: { month: '2026-10' } })
+  const query = scope.run(() => useBillQuery(route))
+  try {
+    query.searchText.value = '本页输入'
+    query.selectedType.value = 'expense'
+    query.selectedCategory.value = '餐饮'
+    route.query = { ...route.query, added: 'synthetic' }
+    assert.equal(query.searchText.value, '本页输入')
+    assert.equal(query.selectedType.value, 'expense')
+    assert.equal(query.selectedCategory.value, '餐饮')
+  } finally { scope.stop() }
+})
 
 test('手动账单保存后跳转失败可恢复，重试不重复写入', async () => {
   let writes = 0, fail = true
