@@ -1,6 +1,6 @@
 <script setup>
 // 1. 导入
-import { ReceiptText, CalendarDays, BarChart3, UserRound, Plus } from 'lucide-vue-next'
+import CatNavIcon from '@/components/common/CatNavIcon.vue'
 
 // 2. Props
 defineProps({
@@ -11,10 +11,10 @@ defineProps({
 })
 
 const navItems = [
-  { key: 'detail', label: '明细', icon: ReceiptText, to: '/bills' },
-  { key: 'bill', label: '账单', icon: CalendarDays, to: '/' },
-  { key: 'saving', label: '统计', icon: BarChart3, to: '/stats' },
-  { key: 'profile', label: '我的', icon: UserRound, to: '/profile' },
+  { key: 'detail', label: '明细', icon: 'receipt', to: '/bills' },
+  { key: 'bill', label: '账单', icon: 'calendar', to: '/' },
+  { key: 'saving', label: '统计', icon: 'chart', to: '/stats' },
+  { key: 'profile', label: '我的', icon: 'profile', to: '/profile' },
 ]
 </script>
 
@@ -31,7 +31,7 @@ const navItems = [
           :class="{ 'home-nav-active': active === item.key }"
           :aria-current="active === item.key ? 'page' : undefined"
         >
-          <component :is="item.icon" :size="20" :stroke-width="1.5" aria-hidden="true" />
+          <CatNavIcon :kind="item.icon" />
           <span>{{ item.label }}</span>
         </router-link>
         <router-link
@@ -40,7 +40,7 @@ const navItems = [
           class="home-compose active:scale-95"
           aria-label="打开 AI 记账"
         >
-          <span class="home-plus" aria-hidden="true"><Plus :size="24" :stroke-width="1.5" /></span>
+          <span class="home-plus" aria-hidden="true"><CatNavIcon kind="chat" /></span>
           <span>聊着记</span>
         </router-link>
       </template>

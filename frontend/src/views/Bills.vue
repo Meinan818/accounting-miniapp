@@ -1,4 +1,5 @@
 <script setup>
+import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, nextTick, ref, watch } from 'vue'
@@ -6,7 +7,7 @@ import { useRoute } from 'vue-router'
 import RecordEditor from '@/components/record/RecordEditor.vue'
 import { sumAmounts, legacyCents } from '@/utils/money'
 import dayjs from 'dayjs'
-import { ArrowLeft, ChevronLeft, ChevronRight, ReceiptText } from 'lucide-vue-next'
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import BottomNav from '@/components/layout/BottomNav.vue'
@@ -219,7 +220,7 @@ function getSign(record) {
               @keydown.space.prevent="edit(record)"
             >
               <div class="bills-record-main">
-                <span class="bills-record-stamp" aria-hidden="true"><ReceiptText :size="20" :stroke-width="1.5" /></span>
+                <span class="bills-record-stamp" aria-hidden="true"><CatNavIcon kind="receipt" /></span>
                 <div class="bills-record-text">
                   <p>{{ record.category }} <span v-if="record.id === highlightedId" class="bills-added-tag">刚刚记下</span></p>
                   <p class="bills-subtitle">{{ record.time || '--:--' }} · {{ record.remark || '无备注' }}</p>

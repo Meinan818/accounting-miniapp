@@ -1,5 +1,6 @@
 @import './styles/home-visual-tokens.css';
 @import './styles/journal-evolution.css';
+@import './styles/cat-rich.css';
 
 @tailwind base;
 @tailwind components;
@@ -71,7 +72,7 @@
 .page-enter-active {
   position: relative;
   z-index: 1;
-  transition: opacity 180ms cubic-bezier(.22, 1, .36, 1);
+  transition: opacity 420ms cubic-bezier(.22, 1, .36, 1);
 }
 
 .page-leave-active {
@@ -81,7 +82,7 @@
   width: 100%;
   z-index: 0;
   pointer-events: none;
-  transition: opacity 180ms linear;
+  transition: opacity 420ms linear;
 }
 
 .page-leave-active * {
@@ -89,7 +90,7 @@
 }
 
 .page-enter-from {
-  opacity: .86;
+  opacity: 1;
 }
 
 /* 旧页保持可见，直到新页盖好；没有双重淡出形成的空档。 */

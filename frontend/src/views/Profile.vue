@@ -1,7 +1,8 @@
 <script setup>
 import { computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
-import { ArrowLeft, ReceiptText, BarChart3, ChevronRight, Plus } from 'lucide-vue-next'
+import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
+import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
@@ -25,9 +26,9 @@ const wideAmounts = computed(() => statistics.value && [statistics.value.incomeC
 const recentDays = computed(() => getRecentDays(store.records, dayjs().format('YYYY-MM-DD')))
 const recordedDays = computed(() => recentDays.value.filter(day => day.count > 0).length)
 const entries = [
-  { title: '账单明细', note: '查看和修改已经记下的小账单', icon: ReceiptText, to: '/bills' },
-  { title: '收支统计', note: '按月份看看钱花在哪里', icon: BarChart3, to: '/stats' },
-  { title: '和本喵聊聊', note: '说说开销，核对后再记账', icon: Plus, to: '/chat' },
+  { title: '账单明细', note: '查看和修改已经记下的小账单', icon: 'receipt', to: '/bills' },
+  { title: '收支统计', note: '按月份看看钱花在哪里', icon: 'chart', to: '/stats' },
+  { title: '和本喵聊聊', note: '说说开销，核对后再记账', icon: 'chat', to: '/chat' },
 ]
 onMounted(() => store.refresh())
 </script>
@@ -43,7 +44,7 @@ onMounted(() => store.refresh())
       <p class="edition-ribbon profile-edition-label">本喵的手账护照</p>
       <section class="profile-identity" aria-label="本地账本说明">
         <img :src="miaoAvatar" alt="手绘猫猫陪你记账" class="profile-avatar" />
-        <JournalSticker kind="flower" tone="lilac" class="profile-flower" /><div><h2>每一笔，都好好记下</h2><p>这里是当前浏览器里的小账本。<br />本喵陪你整理，你来确认。</p><span class="profile-local-badge">不需要登录即可体验</span></div>
+        <JournalSticker kind="flower" tone="lilac" class="profile-flower" /><div><h2>每一笔，都好好记下</h2><p>这里是当前浏览器里的小账本。<br />本喵陪你整理，你来确认。</p><span class="profile-local-badge">当前是本地演示 · 正式版须账号密码登录</span></div>
       </section>
 
       <section class="profile-ledger-card" aria-labelledby="profile-ledger-title">
@@ -55,19 +56,19 @@ onMounted(() => store.refresh())
         <template v-else-if="statistics">
           <p class="profile-record-count">当前有效账单 <strong>{{ store.records.length }}</strong> 笔<span>本月 {{ statistics.recordCount }} 笔</span></p>
           <dl class="profile-summary" :class="{ 'profile-summary-wide': wideAmounts }">
-            <div class="profile-income"><dt>本月收入</dt><dd>¥{{ centsText(statistics.incomeCents) }}</dd></div>
-            <div class="profile-expense"><dt>本月支出</dt><dd>¥{{ centsText(statistics.expenseCents) }}</dd></div>
+            <div class="profile-income cat-money-note cat-money-note-income"><dt>本月收入</dt><dd>¥{{ centsText(statistics.incomeCents) }}</dd></div>
+            <div class="profile-expense cat-money-note cat-money-note-expense"><dt>本月支出</dt><dd>¥{{ centsText(statistics.expenseCents) }}</dd></div>
           </dl>
           <p v-if="!store.records.length" class="profile-empty">还没有账单，去和本喵聊一句“午饭25元”吧～</p>
           <p class="profile-summary-note">未确认草稿和已删除账单不计入。</p>
         </template>
       </section>
 
-      <section v-if="!error" class="profile-footprints" aria-labelledby="profile-footprints-title"><div class="profile-section-heading"><h2 id="profile-footprints-title">最近7天的小足迹</h2><span>{{ recordedDays }}个日期有记录</span></div><div class="profile-footprint-row"><div v-for="day in recentDays" :key="day.date" class="profile-footprint-item" :class="{ recorded: day.count > 0 }" role="group" :aria-label="day.date + '，' + day.count + '笔有效账单'"><JournalSticker v-if="day.count" tone="sage" /><span v-else class="profile-footprint-dot" aria-hidden="true"></span><span>{{ day.day }}</span></div></div><p>按账单业务日期整理，不是连续打卡；未确认和已删除的不计入。</p></section>
+      <section v-if="!error" class="profile-footprints" aria-labelledby="profile-footprints-title"><div class="profile-section-heading"><h2 id="profile-footprints-title">最近7天的小足迹</h2><span>{{ recordedDays }}个日期有记录</span></div><div class="profile-footprint-row"><div v-for="day in recentDays" :key="day.date" class="profile-footprint-item" :class="{ recorded: day.count > 0 }" role="group" :aria-label="day.date + '，' + day.count + '笔有效账单'"><JournalSticker :tone="day.count ? 'pink' : 'sage'" :class="{ 'profile-footprint-muted': !day.count }" /><span>{{ day.day }}</span></div></div><p>按账单业务日期整理，不是连续打卡；未确认和已删除的不计入。</p></section>
       <section class="profile-entry-card" aria-labelledby="profile-entry-title">
         <h2 id="profile-entry-title">常用入口</h2>
         <router-link v-for="entry in entries" :key="entry.to" :to="entry.to" class="profile-entry">
-          <span class="profile-entry-icon" aria-hidden="true"><component :is="entry.icon" :size="21" :stroke-width="1.5" /></span>
+          <span class="profile-entry-icon" aria-hidden="true"><CatNavIcon :kind="entry.icon" /></span>
           <span class="profile-entry-copy"><span class="profile-entry-title">{{ entry.title }}</span><span class="profile-entry-note">{{ entry.note }}</span></span>
           <ChevronRight :size="18" :stroke-width="1.5" aria-hidden="true" />
         </router-link>

@@ -1,4 +1,5 @@
 <script setup>
+import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
@@ -76,7 +77,7 @@ function getRecordSign(record) {
         <div class="home-note-copy"><p class="edition-kicker">每天一页 · 慢慢记下</p><h2>把小开销，写成小日子</h2><p v-if="!recordStore.storageError" class="home-today-line">今天 {{ todayRecords.length }} 笔 · 支出 {{ formatCurrency(todayExpense) }}</p><p v-else class="home-today-line">先保留账本，再慢慢整理</p><router-link to="/chat" class="journal-action home-chat-action">和本喵聊着记 <span aria-hidden="true">↗</span></router-link></div>
         <JournalSticker kind="spark" tone="honey" class="home-hero-sticker" />
       </section>
-      <div class="home-tools"><ManualEntry class="home-manual-link" /><button type="button" class="home-return-today" @click="returnToday">回到今天</button></div>
+      <div class="home-tools"><ManualEntry class="home-manual-link" /><button type="button" class="home-return-today" @click="returnToday"><CatNavIcon kind="calendar" /><span>回到今天</span></button></div>
       <div v-if="recordStore.storageError" class="home-storage-error" role="alert"><p>{{ recordStore.storageError }}</p><button type="button" class="home-return-today" @click="recordStore.refresh()">重新读取账单</button></div>
 
       <CalendarCard v-if="!recordStore.storageError"

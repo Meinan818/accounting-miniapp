@@ -112,14 +112,14 @@ function getDayNumberClass(cell) {
 
     <div class="calendar-totals">
       <div class="calendar-summary-grid grid grid-cols-2 gap-2" :class="{ 'calendar-summary-grid-wide': wideAmounts }">
-        <div class="calendar-summary calendar-summary-income">
+        <div class="calendar-summary calendar-summary-income cat-money-note cat-money-note-income">
           <span class="calendar-note-mark" aria-hidden="true">✦</span>
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月收入</p>
             <p class="calendar-amount text-[var(--zz-home-green)]">{{ `¥${income.toFixed(2)}` }}</p>
           </div>
         </div>
-        <div class="calendar-summary calendar-summary-expense">
+        <div class="calendar-summary calendar-summary-expense cat-money-note cat-money-note-expense">
           <span class="calendar-note-mark" aria-hidden="true">♡</span>
           <div class="min-w-0">
             <p class="text-xs text-[var(--zz-home-ink-soft)]">本月支出</p>

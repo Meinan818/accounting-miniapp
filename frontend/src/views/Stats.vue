@@ -3,13 +3,15 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { ArrowLeft, ChevronLeft, ChevronRight, ReceiptText } from 'lucide-vue-next'
+import CategoryWheel from '@/components/common/CategoryWheel.vue'
+import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import { useRecordStore } from '@/stores/recordStore'
 import { centsText } from '@/utils/money'
 import JournalSticker from '@/components/common/JournalSticker.vue'
-import { getCategoryWheel, JOURNAL_COLORS } from '@/utils/journal'
+import { JOURNAL_COLORS } from '@/utils/journal'
 import { isValidMonth } from '@/utils/statistics'
 import { getMonthReview } from '@/utils/monthReview'
 const route = useRoute()
@@ -32,9 +34,11 @@ const maximumDayExpense = computed(() => review.value?.peak?.expenseCents || 0)
 const error = computed(() => store.storageError || calculated.value.error)
 const needsWideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents, statistics.value.balanceCents].some(value => centsText(value).length > 7))
 const categoryRows = computed(() => statistics.value?.categories[selectedType.value] || [])
-const wheel = computed(() => getCategoryWheel(categoryRows.value))
 const leadingCategory = computed(() => categoryRows.value[0] || null)
 const typeLabel = computed(() => selectedType.value === 'income' ? '收入' : '支出')
+function slideDays(direction) {
+  dayChart.value?.scrollBy({ left: direction * 7 * 49, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+}
 function changeMonth(offset) {
   const next = dayjs(selectedMonth.value + '-01').add(offset, 'month').format('YYYY-MM')
   if (!isValidMonth(next)) return
@@ -78,6 +82,7 @@ onMounted(() => store.refresh())
       <template v-else-if="statistics">
         <section class="review-trend" aria-labelledby="review-trend-title">
           <div class="review-section-title"><div><p class="edition-kicker">花费足迹 · 每天一小格 · 左右滑动</p><h2 id="review-trend-title">这一月，钱是怎么花的？</h2></div><span>{{ review.activeDays }} 个记录日</span></div>
+          <div class="review-cat-guide"><CatNavIcon kind="chart" /><span>本喵的爪爪花费轨迹</span><div class="review-scroll-actions"><button type="button" aria-label="查看前7天" @click="slideDays(-1)">‹</button><button type="button" aria-label="查看后7天" @click="slideDays(1)">›</button></div></div>
           <p class="review-pointed-day" role="status">{{ pointedDay ? pointedDay.date + ' · 支出 ¥' + centsText(pointedDay.expenseCents) : '还没有支出足迹，记下第一笔后再来看看。' }}</p>
           <div ref="dayChart" class="review-day-chart" :style="{ '--day-count': review.days.length }" aria-label="每日支出，点击日期查看数额">
             <button v-for="day in review.days" :key="day.date" type="button" class="review-day" :class="{ selected: pointedDay?.date === day.date, recorded: day.count }" :aria-pressed="pointedDay?.date === day.date" :aria-label="day.date + '，支出' + centsText(day.expenseCents) + '元'" @click="selectedDay = day.date"><span class="review-day-track" aria-hidden="true"><i :style="{ height: day.expenseCents ? Math.max(5, day.expenseCents / maximumDayExpense * 100) + '%' : '0%' }"></i></span><span>{{ day.day }}</span></button>
@@ -97,7 +102,7 @@ onMounted(() => store.refresh())
         </section>
         <section class="stats-category-card" aria-labelledby="stats-category-title">
           <div class="stats-category-heading"><h2 id="stats-category-title">{{ typeLabel }}分类</h2><div class="stats-type-switch" aria-label="选择分类统计类型"><button v-for="type in ['expense', 'income']" :key="type" type="button" :aria-pressed="selectedType === type" :class="{ selected: selectedType === type }" @click="selectedType = type">{{ type === 'income' ? '收入' : '支出' }}</button></div></div>
-          <div v-if="categoryRows.length" class="stats-wheel-scene"><span class="stats-wheel-label edition-ribbon">本月账本色谱</span><div class="stats-wheel" role="img" :aria-label="typeLabel + '分类分布，共' + categoryRows.length + '类'" :style="{ background: wheel.background }"><div class="stats-wheel-center"><span>{{ selectedType === 'income' ? '收入来源' : '支出去向' }}</span><strong>{{ categoryRows.length }}<small>类</small></strong><span>{{ statistics[selectedType + 'Count'] }}笔有效账单</span></div></div><JournalSticker kind="spark" tone="honey" class="stats-wheel-spark" /><JournalSticker kind="flower" tone="lilac" class="stats-wheel-flower" /></div>
+          <div v-if="categoryRows.length" class="stats-wheel-scene"><span class="stats-wheel-label edition-ribbon">本月账本色谱</span><CategoryWheel :categories="categoryRows" :type="selectedType" :label="typeLabel + '分类分布，共' + categoryRows.length + '类'"><div class="stats-wheel-center"><span>{{ selectedType === 'income' ? '收入来源' : '支出去向' }}</span><strong>{{ categoryRows.length }}<small>类</small></strong><span>{{ statistics[selectedType + 'Count'] }}笔有效账单</span></div></CategoryWheel><JournalSticker kind="spark" tone="honey" class="stats-wheel-spark" /><JournalSticker kind="flower" tone="lilac" class="stats-wheel-flower" /></div>
           <aside v-if="leadingCategory" class="stats-insight desk-note" aria-label="基于实际账单的小发现"><JournalSticker tone="sage" /><div><p class="edition-kicker">账本小发现 · 非AI预测</p><p>本月{{ typeLabel }}最多的是 <strong>{{ leadingCategory.category }}</strong></p><span>¥{{ centsText(leadingCategory.amountCents) }} · 占{{ leadingCategory.percent.toFixed(1) }}%</span></div></aside>
           <p class="stats-category-note">{{ statistics[selectedType + 'Count'] }} 笔{{ typeLabel }} · 金额从高到低</p>
           <ol v-if="categoryRows.length" class="stats-category-list">
