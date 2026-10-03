@@ -1,4 +1,8 @@
-## 2026-10-04 · 登录回执/验证码输入（当前入口）
+## 2026-10-04 · 对话Store释放后持久化（当前入口）
+
+339项/两构建、31项真实Pinia对话Store通过，释放后的迟到重试不持久化或回填旧实例，原存储保持。登录25d3933本地保存、Git443两次失败保留；官方API核私有/无部署/远端82bf834，本节点后复用既有同SHA/force:false官方接口同步，结果见memory。compact=0，原生automation保持。下一项同Pinia释放再建对话快照/错误状态取证，保护原对话/账号键，不发真实AI/邮件/业务请求，GUI/真机待验。
+
+## 2026-10-04 · 登录回执/验证码输入（历史）
 
 337项前端/两构建与5项Login实际setup+验证码helper通过，离页回执不跳转或覆盖密码/错误，正常登录注册与输入保护保持；82bf834完整远端一致。compact=0，automation原生每小时ACTIVE/failed_runs_only目标本聊天保持。下一项conversationStore.retryPersistence在nextTick期间Store释放的存储副作用离线取证，用合成localStorage与真实Pinia/源码，保护原对话，不发真实AI/邮件/业务写入；先证据再最小修复，不主动提问、不用子代理。GUI/真机/实际隔夜待验。
 

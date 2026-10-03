@@ -989,3 +989,9 @@
 - 82bf834e70a505a8213bad42d4f5b6636ffbbbf4普通Push与完整远端一致已核，服务19940/20820仍仅本机8080/5174，未重启。Chat/Stats模块200仅供给证据。原生automation落盘本聊天/每小时ACTIVE/failed_runs_only保持，完整定时成功仍未证实。
 - login-interactions-2026-10-04/before真实4项2通过2失败：登录迟到成功仍重定向/清密码，迟到错误回填。onScopeDispose释放页面与clock、submit入口及回执守卫；认证Store逻辑不改。5项实际Login setup+真实useRegistrationChallenge通过，含正常登录/注册、重复阻断及旧邮箱验证码回执不影响新输入。
 - 337项全量与demo/server两构建通过，无新依赖。最后仅移除测试harness无用cleanup数组，针对再核即可，业务源码不变。无真实AI/邮件/账号/账本/照片写入，GUI/真机/实际隔夜未验，compact=0。下项对话Store重试nextTick期间释放/身份边界取证，真实Pinia和合成localStorage，不修改原对话。普通保存Push及完整远端证据见本节点memory/push.log、remote.log。
+
+## 2026-10-04 · 对话Store释放后持久化
+
+- 登录25d3933066456dc8b34257ab52c8b2d4c78a3b53本地保存；普通Git Push两次443失败原文保留。官方只读API重新核远端82bf834e70a505a8213bad42d4f5b6636ffbbbf4、私有/无Pages/0 workflows/0 deployments，原HTTPS失败不当成功。
+- conversation-lifecycle-2026-10-04/before真实31项29通过2失败：释放后的retryPersistence仍写旧快照或回填旧实例。onScopeDispose active守卫protect persist/重试入口与两个await，迟到失败不改错误，原存储不覆盖。31项针对/339项全量及两构建通过，最终catch格式整理后全量339再次通过，未改语义。既有Pinia R1004 harness提示保留，不冒称浏览器错误或抑制日志。
+- 无真实账号/账本/对话/照片写入，无真实AI/邮件请求，无依赖变化；GUI/真机/实际隔夜未验，compact=0。核相关差异后本地保存，复用既有官方同SHA/force:false快进适配器上传，结果见api-sync/remote-final材料，不强推/改可见性。下一项同Pinia释放再建快照/错误状态与账号键恢复取证，保护原未保存对话。

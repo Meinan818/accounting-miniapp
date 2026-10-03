@@ -1,5 +1,7 @@
 # 集中待办与外部依赖
 
+最新339项前端/两构建通过，原业务/账号/邮件/AI写入0，compact=0。登录Push两次Git443失败已保留；官方只读API现核私有/无部署/远端82bf834，可复用已有同SHA/force:false官方Git适配器安全快进，实际结果见conversation-lifecycle-2026-10-04/api-sync.log与remote-final.log，不需用户决定。GUI/真机/原生焦点/实际隔夜暂缓工具条件，继续同Pinia对话Store重建取证，原生每小时续办目标保持。
+
 最新337项前端/两构建、Login5项实际setup通过；仍无真实模型/邮件/账号/账本/照片写入。GUI/原生焦点/窄屏/真机/实际隔夜受工具条件暂缓，普通离线开发继续。原生automation目标本聊天、每小时ACTIVE/failed_runs_only再次核落盘；下一项对话Store存储重试释放边界，compact=0。无需用户资料或审批；下方旧总数及当前源描述只历史。
 
 最新332项前端/两构建通过，Chat15项真实setup含AI适配器合成客户端；真实模型/邮件/业务/照片写入0。原生焦点、GUI/窄屏/真机/实际隔夜仍待工具条件，不要求用户代测全部场景。Git普通Push逐节点核完整SHA，原生automation目标/每小时ACTIVE/failed_runs_only保持，完整定时成功仍不冒称。下一项登录/验证码组件离线取证，compact=0，旧总数与源2仅历史。

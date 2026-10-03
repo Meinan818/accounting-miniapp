@@ -85,6 +85,8 @@ export const useConversationStore = defineStore('conversation', () => {
   const owner = SERVER_MODE ? useAuthStore().user?.id : null
   if (SERVER_MODE && !owner) throw new Error('请先登录再打开对话')
   const key = SERVER_MODE ? `miaoji_account_conversation_v1_${owner}` : STORAGE_KEY
+  let active = true
+  onScopeDispose(() => { active = false })
   const persistenceError = ref('')
   const restorationBlocked = ref(false)
   const storageConflict = ref(false)
@@ -119,6 +121,7 @@ export const useConversationStore = defineStore('conversation', () => {
       + (hasUnsavedChanges.value ? '本页未保存的消息或草稿仍在此页，请先备份两份内容，不要刷新或清除存储。' : '可点击重新读取最新对话，账单仍以明细为准。')
   }
   function persist(value) {
+    if (!active) return false
     if (storageConflict.value) { conflictMessage(); return false }
     try {
       // Check immediately before writing. This protects known stale snapshots, not an atomic cross-tab lock.
@@ -136,8 +139,10 @@ export const useConversationStore = defineStore('conversation', () => {
     }
   }
   async function retryPersistence() {
+    if (!active) return false
     // Drain queued edits before deciding whether re-reading can discard anything.
     await nextTick()
+    if (!active) return false
     if (!restorationBlocked.value && !storageConflict.value) return persist(messages.value)
     if (hasUnsavedChanges.value) {
       persistenceError.value = '原对话仍受保护，本页已有未保存消息或草稿；为避免覆盖任一份内容，暂不能重新读取。请先备份两份内容，不要刷新或清除存储。'
@@ -150,14 +155,18 @@ export const useConversationStore = defineStore('conversation', () => {
       expectedRaw = recovered.raw
       restorationBlocked.value = false; storageConflict.value = false
       await nextTick()
+      if (!active) return false
       // A storage event can arrive while the view updates: never acknowledge an already-stale reload.
       if (typeof window !== 'undefined' && window.localStorage.getItem(key) !== expectedRaw) {
         conflictMessage(); return false
       }
       persistenceError.value = ''; hasUnsavedChanges.value = false
       return true
-    } catch { restorationBlocked.value = true; blockedMessage(); return false }
-    finally { restoring = false }
+    } catch {
+      if (active) { restorationBlocked.value = true; blockedMessage() }
+      return false
+    }
+    finally { if (active) restoring = false }
   }
   watch(messages, value => {
     if (restoring) return

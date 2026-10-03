@@ -1,4 +1,12 @@
-## 当前入口：登录回执与验证码输入（2026-10-04）
+## 当前入口：对话Store释放后持久化（2026-10-04）
+
+339项前端及两构建通过，31项真实Pinia对话Store测试通过。conversation-lifecycle-2026-10-04/before实际31项29通过2失败：retryPersistence等待nextTick期间$dispose后仍persist旧快照或回填旧实例。onScopeDispose撤销Storeactive，persist/重试入口及两个await守卫，迟到失败不改错误，原存储不写不覆盖。页面正常重读与冲突/未保存草稿保护的既有回归保持。当前套件沿用现有Pinia harness，有既有R1004提示，非失败，不抑制或虚报GUI。真实账号/账本/照片/AI/邮件调用0，compact=0，GUI/真机/实际隔夜待验。
+
+登录节点25d3933066456dc8b34257ab52c8b2d4c78a3b53本地保存；Git Push两次443失败原文login-interactions-2026-10-04/push.log、push-retry.log保留。官方只读API重新核远端82bf834e70a505a8213bad42d4f5b6636ffbbbf4、私有/无Pages/0 workflows/0 deployments。本节点提交后复用已有frontend-categories-2026-10-03/github-sync.mjs同对象SHA/force:false快进适配器同步，不创建远端/改可见性/部署；实际上传/远端结果见conversation-lifecycle-2026-10-04/api-sync.log、remote-final.log。
+
+下一项同Pinia对话Store释放再建快照/错误状态取证：$dispose保留Pinia state，需核新实例是否按当前存储和账号键恢复，先复现再决定，不擅自删原未保存对话。继续合成localStorage与真实Pinia，无真实写入。原生automation本聊天每小时ACTIVE/failed_runs_only保持，用户无需操作；实际运行仍取决于电脑/连接/额度。
+
+## 前一节点：登录回执与验证码输入（2026-10-04）
 
 新窗口01a103ce-1650-7d50-bbe6-8c08120e0346实际compact=0，源2只历史；回执success/最终b690c5c与原生续办已核。最新337项前端/两构建通过；Login真实setup+useRegistrationChallenge5项通过：正常登录/注册/重复阻断、邮箱改填期间旧验证码保护、离页成功不重定向/清密码、迟到失败不回填。before4项2通过2失败保留，onScopeDispose释放页面与计时器、submit入口及await回执守卫；认证Store会话事实未修改。所有调用为合成客户端，不发真实验证码邮件、不改账号/密码/账本/照片，不调用真实AI，无依赖变化。GUI/真机/实际隔夜仍未验。
 

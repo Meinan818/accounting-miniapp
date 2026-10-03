@@ -269,3 +269,7 @@
 ## 2026-10-04 · 登录组件离页回执
 
 - Login submit仅saving守卫，await后离页仍window.location.replace/清密码，失败回填旧错误。真实setup4项2通过2失败保留；onScopeDispose active守卫和时钟释放修复，5项针对/337项全量/两构建通过。认证Store会话事实保持，验证使用合成回执，未发邮件或改账号。以后认证页跳转同时核当前页面生命周期与正常注册登录成功，不能为取消旧跳转回滚已确认会话事实。
+
+## 2026-10-04 · 对话Store释放后的重试
+
+- 页面守卫不能阻止Store内部retryPersistence等待nextTick后继续persist；真实Pinia31项29通过2失败，原文保留。Store scope释放active守卫persist与异步恢复，31项针对/339项全量/两构建通过，原合成存储保持。以后页面和Store资源生命周期分别验证，不能仅靠页面忽略回执推断持久化已停止。

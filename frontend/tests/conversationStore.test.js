@@ -62,6 +62,34 @@ test('对话存储失败提示可见但不抛出未捕获错误', async () => {
   const store=useConversationStore();fail=true;store.addMessage({content:'test'});await nextTick()
   assert.match(store.persistenceError,/未保存/);assert.equal(store.messages.at(-1).content,'test')
 })
+
+test('对话Store释放后迟到重试不再持久化旧快照，原存储保持', async () => {
+  const raw = JSON.stringify([{ id: 'prior', role: 'assistant', kind: 'text', content: '合成原存储' }])
+  data.set(key, raw)
+  const store = useConversationStore()
+  fail = true; store.addMessage({ content: '合成未保存消息' }); await nextTick()
+  fail = false
+  const before = writes, pending = store.retryPersistence()
+  store.$dispose()
+  assert.equal(await pending, false)
+  assert.equal(data.get(key), raw)
+  assert.equal(writes, before)
+  assert.equal(await store.retryPersistence(), false)
+  assert.equal(writes, before)
+})
+
+test('对话Store释放后迟到恢复不替换旧实例，当前存储不覆盖', async () => {
+  data.set(key, 'corrupted-synthetic')
+  const store = useConversationStore(), before = JSON.stringify(store.messages)
+  const latest = JSON.stringify([{ id: 'latest', role: 'assistant', kind: 'text', content: '合成修复存储' }])
+  data.set(key, latest)
+  const pending = store.retryPersistence()
+  store.$dispose()
+  assert.equal(await pending, false)
+  assert.equal(JSON.stringify(store.messages), before)
+  assert.equal(data.get(key), latest)
+  assert.equal(writes, 0)
+})
 test('损坏组结构保护原对话，不写入替换内容', async () => {
   const raw=JSON.stringify([{id:'bad',kind:'draft-group',group:{id:'bad',items:null}}]);data.set(key,raw)
   const store=useConversationStore();store.addMessage({content:'new'});await nextTick()
