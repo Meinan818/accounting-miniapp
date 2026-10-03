@@ -20,9 +20,9 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   const monthExpenseCents = computed(() => monthTotals.value.expenseCents)
   function categories(type) {
     if (summaryError.value) return {}
-    const values = {}
-    for (const record of monthRecords.value.filter(record => record.type === type)) values[record.category] = (values[record.category] || 0) + legacyCents(record.amount)
-    return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value / 100]))
+    const values = new Map()
+    for (const record of monthRecords.value.filter(record => record.type === type)) values.set(record.category, (values.get(record.category) || 0) + legacyCents(record.amount))
+    return Object.fromEntries([...values].map(([key, value]) => [key, value / 100]))
   }
   const categoryExpenses = computed(() => categories('expense'))
   const categoryIncome = computed(() => categories('income'))

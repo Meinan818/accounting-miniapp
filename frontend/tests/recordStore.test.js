@@ -137,3 +137,24 @@ test('热更新注册升级旧Store动作/过滤器，同时保留已保存账�
 test('非开发环境没有hot对象时不注册回调或修改账单', () => {
   assert.equal(createRecordStoreHMRHandler(undefined), undefined); assert.equal(writes, 0); assert.equal(data.get(RECORD_STORAGE_KEY), '[]')
 })
+
+test('演示旧分类与对象原型同名时保留准确汇总，不污染原型或写入账单', () => {
+  window.removeEventListener = () => {}
+  const now = new Date()
+  const date = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-01'
+  const old = [record({ id: 'proto', category: '__proto__', amount: 0.29, date }),
+    record({ id: 'constructor', category: 'constructor', amount: 0.31, date }),
+    record({ id: 'other', category: '旧分类', amount: 0.07, date })]
+  data.set(RECORD_STORAGE_KEY, JSON.stringify(old))
+  const store = useRecordStore()
+  const categories = store.categoryExpenses
+  assert(Object.hasOwn(categories, '__proto__'))
+  assert.equal(categories.__proto__, 0.29)
+  assert.equal(categories.constructor, 0.31)
+  assert.equal(categories['旧分类'], 0.07)
+  assert.equal(store.monthExpense, 0.67)
+  assert.equal(Object.getPrototypeOf(categories), Object.prototype)
+  assert.equal(writes, 0)
+  assert.deepEqual(store.records, old)
+  store.$dispose()
+})

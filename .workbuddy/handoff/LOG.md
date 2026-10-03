@@ -897,3 +897,10 @@
 - 8项金额/正式Store/实际Calendar模板离线渲染、293项全量及demo/server两构建通过。首次渲染harness漏导出shiftCalendarMonth导致2失败，修正后通过；不是GUI/真机/浏览器交互验收。未安装依赖/发真实账单、模型或邮件请求。
 - bb208a4普通Push成功，远端完整bb208a416f16d65692db235152d750668d6a74f6与本地一致，历史网络失败保留。compact仍1，automation沿用当前目标和每小时ACTIVE，完整定时成功仍未证实。
 - 下一项核演示旧分类名在Store分类getter中的原型同名边界，保持旧账单及分类读取口径；统计Map已有保护，Store旧对象累加尚需离线取证，不因网页最终观感未反馈而停工。
+## 2026-10-04 · 旧分类原型同名汇总
+
+- category-prototype-2026-10-04/before.log实际15项14通过1失败：演示旧分类__proto__不是返回对象的自有分类，普通对象累加受原型属性影响；constructor也不能正确累加。两Store改Map累加及Object.fromEntries输出，旧名称/金额/记录不迁移不写入。
+- 新回归验证__proto__=0.29、constructor=0.31、旧分类=0.07、月合计0.67，Object.prototype保持且存储0写入。294项前端及demo/server两构建通过；GUI/真机未验，无真实账单/AI/邮件调用。
+- 首轮修复后的失败来自测试window缺removeEventListener且新增dispose触发，原日志保留，补完整测试替身后294通过；未修改浏览器业务来迁就替身。
+- c07f229普通Push及远端完整c07f229e29246ea78c2f17c1513db0a554b70530一致已核；服务仍19940/20820且仅127.0.0.1:8080/5174，无部署。compact仍1，同聊天恢复保留；既有automation不重复创建。
+- 下一项核本机Vite修改模块供给与交接记录，再继续资料编辑保存/读取与取消的组件状态时序；不能用源模块200覆盖GUI/真机验收。

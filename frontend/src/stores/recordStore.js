@@ -69,9 +69,9 @@ export const useRecordStore = defineScopedStore('record', () => {
   const monthExpenseCents = computed(() => monthTotals.value.expenseCents)
   function categories(type) {
     if (summaryError.value) return {}
-    const cents = {}
-    for (const r of monthRecords.value.filter(r => r.type === type)) cents[r.category] = (cents[r.category] || 0) + legacyCents(r.amount)
-    return Object.fromEntries(Object.entries(cents).map(([k, v]) => [k, v / 100]))
+    const cents = new Map()
+    for (const r of monthRecords.value.filter(r => r.type === type)) cents.set(r.category, (cents.get(r.category) || 0) + legacyCents(r.amount))
+    return Object.fromEntries([...cents].map(([k, v]) => [k, v / 100]))
   }
   const categoryExpenses = computed(() => categories('expense'))
   const categoryIncome = computed(() => categories('income'))

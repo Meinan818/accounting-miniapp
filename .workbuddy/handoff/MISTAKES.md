@@ -218,3 +218,7 @@
 - 90,073笔合法金额累计实际多1分，原因整数分累计未校验安全范围；新严格累加与安全展示保留原账单，8项针对/293全量及两构建通过，before原失败保留。
 - 首次合法大额测试手算常量多100元，已有BigInt独立断言证明实现正确；修正测试常量，不把错误预期称业务故障。首次Calendar离线渲染漏shiftCalendarMonth的返回绑定，2失败保留，补真实模板依赖后通过；不抑制Vue警告。
 - 查询时再次附不存在utils/conversationStore.js与Windows未展开*.js路径，只读失败无修改；rg --files确认实际stores路径后继续。今后查路径先列真实文件，不重复命名假设。
+
+## 2026-10-04 · 旧分类原型同名
+- Store普通对象累加会遗漏__proto__并把constructor算为NaN，before15项14通过1失败。使用Map保留旧名称并验证自有属性、金额和原型无变化，294全量与两构建通过，不改旧账单。
+- 补dispose的测试window只提供localStorage，缺removeEventListener导致业务断言通过后收尾失败；原失败保留，完善测试替身。不把缺失的测试浏览器能力当实际Chrome故障。
