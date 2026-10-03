@@ -3,7 +3,9 @@ import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
-import { ArrowLeft } from 'lucide-vue-next'
+import NotebookBack from '@/components/common/NotebookBack.vue'
+import JournalSticker from '@/components/common/JournalSticker.vue'
+import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import ChatBubble from '@/components/common/ChatBubble.vue'
 import ChatInput from '@/components/common/ChatInput.vue'
 import ConfirmCard from '@/components/common/ConfirmCard.vue'
@@ -207,24 +209,19 @@ onBeforeUnmount(() => {
     <header class="miao-header">
       <div class="miao-header-content">
         <div class="miao-brand">
-          <router-link
-            to="/"
-            class="miao-back active:scale-95"
-            aria-label="返回日历主页"
-          >
-            <ArrowLeft :size="20" />
-          </router-link>
+          <NotebookBack />
           <img :src="miaoAvatar" alt="手绘猫猫" class="miao-header-cat" />
           <div class="min-w-0">
             <h1 class="miao-chat-heading">
               <span class="miao-title">和{{ catDisplayName }}聊聊</span>
-              <span class="miao-subtitle">今天的开销</span>
+              <span class="miao-subtitle">今天的开销 · 本喵在听</span>
             </h1>
           </div>
+          <JournalSticker kind="flower" tone="lilac" class="chat-header-flower" />
         </div>
       </div>
       <div class="miao-summary">
-        <p>本月支出 <span>{{ monthExpenseText }}</span></p>
+        <p class="chat-month-note"><CatNavIcon kind="receipt" />本月支出 <span>{{ monthExpenseText }}</span></p>
         <span class="miao-demo-label">规则演示 · 每组最多5笔</span>
         <ManualEntry class="miao-manual-link" />
       </div>
@@ -233,6 +230,12 @@ onBeforeUnmount(() => {
 
     <main ref="messagesContainer" class="miao-messages">
       <div class="miao-thread" aria-live="polite">
+        <section v-if="conversationStore.messages.every(message => message.id === 'welcome-message')" class="chat-welcome" aria-label="聊天记账引导">
+          <div class="chat-welcome-art"><img :src="miaoThinking" alt="猫猫陪你慢慢记账" /><JournalSticker kind="flower" tone="lilac" /><JournalSticker tone="pink" /></div>
+          <p class="chat-welcome-label">本喵的聊天小客厅</p><h2>小开销，也值得好好记下</h2><p>说说今天买了什么，<br />整理好、核对过，再放进小账本。</p>
+          <div class="chat-welcome-steps"><span><b>1</b> 说开销</span><span><b>2</b> 核对草稿</span><span><b>3</b> 确认记下</span></div>
+        </section>
+        <p v-else class="chat-thread-marker"><JournalSticker tone="sage" /> 每一笔小日子 · 确认后才记下 <JournalSticker kind="flower" tone="lilac" /></p>
         <p v-if="recordStore.storageError" class="miao-storage-error" role="alert">{{ recordStore.storageError }}</p>
         <div v-if="conversationStore.persistenceError" class="miao-storage-error" role="alert">
           <p>{{ conversationStore.persistenceError }}</p>
@@ -278,109 +281,21 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.chat-query-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 16px 8px; max-width: 480px; margin: auto; color: var(--miao-soft); font-size: 11px; }
-.chat-query-chip { min-height: 44px; padding: 5px 11px; border: 1px solid #d5b9a6; border-radius: 13px 9px 14px 10px; background: #f3dfd3; color: #805e51; font-size: 12px; }.chat-query-chip.income { background: #e6ecd9; color: #5e7052; }.chat-query-chip:disabled { opacity:.5; }.chat-query-chip:focus-visible { outline:2px solid #785746; outline-offset:3px; }
 
-.miao-chat {
-  --miao-paper: #fdfaf3;
-  --miao-white: #fffdf8;
-  --miao-ink: #3c261a;
-  --miao-soft: #79634f;
-  --miao-line: #d9cbb6;
-  --miao-pink: #f8dfda;
-  --miao-yellow: #fceed4;
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-  overflow: hidden;
-  background: var(--miao-paper);
-  color: var(--miao-ink);
-  font-family: "Microsoft YaHei UI Light", "Microsoft YaHei UI", "微软雅黑", sans-serif;
-  font-weight: 400;
-}
-.miao-header { flex-shrink: 0; border-bottom: 1px dashed var(--miao-line); }
-.miao-header-content, .miao-summary, .miao-thread { width: 100%; max-width: 480px; margin-inline: auto; }
-.miao-header-content { padding: 18px 16px 15px; }
-.miao-brand { display: flex; align-items: center; gap: 9px; }
-.miao-back { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border: 1px solid var(--miao-line); border-radius: 16px 13px 17px 14px; background: var(--miao-white); }
-.miao-header-cat { width: 66px; height: 62px; object-fit: contain; flex-shrink: 0; transform: rotate(-5deg); }
-.miao-chat-heading { font-weight: 400; }
-.miao-title { display: block; position: relative; isolation: isolate; width: fit-content; font-size: 24px; font-weight: 400; letter-spacing: 1px; white-space: nowrap; }
-.miao-title::before { content: ''; position: absolute; inset: 9px -5px 1px; z-index: -1; border-radius: 62% 45% 58% 42%; background: var(--miao-yellow); transform: rotate(-2deg); }
-.miao-subtitle { display: block; margin-top: 5px; font-size: 12px; color: var(--miao-soft); }
-.miao-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 5px 12px; padding: 9px 16px; font-size: 12px; background: var(--miao-yellow); }
-.miao-summary p { display: flex; align-items: center; gap: 8px; }
-.miao-summary p span { font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
-.miao-manual-link { justify-self: start; }
-.legacy-deleted-note { padding: 16px; border: 1px dashed #d9c5a9; border-radius: 16px; font-size: 13px; line-height: 1.8; color: #9c806c; background: #fffaf2; }
-.miao-history-controls { text-align: center; }
-.miao-history-controls p, .miao-history-note { color: var(--miao-soft); font-size: 12px; line-height: 1.8; }
-.miao-history-note { margin-bottom: 8px; }
-.miao-history-button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--miao-line); border-radius: 12px; background: var(--miao-white); color: var(--miao-soft); font-size: 13px; }
-.miao-history-button:disabled { opacity: .55; }
-.miao-storage-error { font-size: 12px; color: #aa594d; line-height: 1.8; }
-.miao-demo-label { color: var(--miao-soft); }
-.miao-messages { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
-.miao-thread { display: flex; flex-direction: column; gap: 18px; padding: 22px 16px 25px; }
-.miao-thinking { display: flex; align-items: flex-end; gap: 8px; font-size: 14px; color: var(--miao-soft); }
-.miao-thinking img { width: 64px; height: 68px; object-fit: contain; flex-shrink: 0; }
-.miao-thinking p { padding: 11px 13px; border: 1px solid var(--miao-line); border-radius: 21px 19px 22px 8px; background: var(--miao-white); }
-.miao-back:focus-visible,
-.miao-chat :deep(button:focus-visible),
-.miao-chat :deep(input:focus-visible),
-.miao-chat :deep(select:focus-visible) { outline: 2px solid var(--miao-ink); outline-offset: 3px; }
-.miao-chat :deep(.miao-bubble) { align-items: flex-end; min-width: 0; }
-.miao-chat :deep(.miao-bubble .chat-assistant-avatar) { width: 44px; height: 44px; padding: 3px; border: 1px dashed var(--miao-line); background: var(--miao-yellow); border-radius: 48% 52% 46% 54%; }
-.miao-chat :deep(.miao-bubble .chat-bubble-body) { position: relative; max-width: calc(100% - 52px); padding: 14px 16px 25px; border: 1.5px solid var(--miao-line); border-radius: 22px 25px 24px 13px; background: var(--miao-white); color: var(--miao-ink); font-size: 15px; line-height: 1.85; box-shadow: 1px 2px 0 var(--miao-yellow); }
-.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::before),
-.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::after) { content: ''; position: absolute; top: -5px; width: 11px; height: 11px; border-top: 1.5px solid var(--miao-line); border-left: 1.5px solid var(--miao-line); border-radius: 4px 1px 2px 1px; background: var(--miao-white); transform: rotate(45deg); pointer-events: none; }
-.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::before) { left: 14px; }
-.miao-chat :deep(.miao-bubble:not(.miao-bubble-user) .chat-bubble-body::after) { right: 14px; }
-.miao-chat :deep(.chat-bubble-tail) { position: absolute; left: -5px; bottom: 13px; width: 9px; height: 9px; border-left: 1.5px solid var(--miao-line); border-bottom: 1.5px solid var(--miao-line); border-radius: 0 0 0 3px; background: var(--miao-white); transform: rotate(45deg); pointer-events: none; }
-.miao-chat :deep(.miao-bubble-user .chat-bubble-body) { max-width: 88%; background: var(--miao-pink); border-radius: 25px 22px 13px 24px; box-shadow: 1px 2px 0 var(--miao-yellow); }
-.miao-chat :deep(.miao-bubble-user .chat-bubble-tail) { left: auto; right: -5px; border: 0; border-top: 1.5px solid var(--miao-line); border-right: 1.5px solid var(--miao-line); border-radius: 0 3px 0 0; background: var(--miao-pink); }
-.miao-chat :deep(.bubble-paw) { position: absolute; bottom: 7px; right: 11px; width: 18px; height: 13px; opacity: .3; transform: rotate(-13deg); pointer-events: none; }
-.miao-chat :deep(.paw-pad), .miao-chat :deep(.paw-toe) { position: absolute; background: var(--miao-soft); }
-.miao-chat :deep(.paw-pad) { bottom: 0; left: 5px; width: 9px; height: 6px; border-radius: 55% 55% 45% 45%; }
-.miao-chat :deep(.paw-toe) { width: 3px; height: 4px; border-radius: 50%; }
-.miao-chat :deep(.toe-one) { left: 1px; top: 5px; transform: rotate(-30deg); }
-.miao-chat :deep(.toe-two) { left: 5px; top: 1px; }
-.miao-chat :deep(.toe-three) { left: 10px; top: 1px; }
-.miao-chat :deep(.toe-four) { left: 15px; top: 5px; transform: rotate(30deg); }
-.miao-chat :deep(.miao-record) { position: relative; max-width: none; margin-top: 10px; padding: 24px 14px 14px; border: 1.5px solid var(--miao-line); border-radius: 16px 19px 20px 15px; background: var(--miao-white); color: var(--miao-ink); font-size: 15px; box-shadow: 3px 4px 0 var(--miao-yellow); }
-.miao-chat :deep(.miao-record::before) { content: ''; position: absolute; width: 76px; height: 20px; top: -9px; left: calc(50% - 38px); background: var(--miao-pink); border: 1px dashed var(--miao-line); border-radius: 2px 4px 3px 2px; transform: rotate(-4deg); pointer-events: none; }
-.miao-chat :deep(.miao-record .record-heading) { font-size: 17px; letter-spacing: .4px; }
-.miao-chat :deep(.miao-record .record-pending) { font-size: 12px; padding: 3px 7px; background: var(--miao-yellow); border-radius: 9px 6px 8px 5px; transform: rotate(3deg); white-space: nowrap; }
-.miao-chat :deep(.miao-record .space-y-2 > div) { padding-block: 7px; border-bottom: 1px dashed var(--miao-line); }
-.miao-chat :deep(.miao-record .space-y-2 > div > span:first-child) { flex-shrink: 0; }
-.miao-chat :deep(.miao-record .space-y-2 > div > span:last-child) { overflow-wrap: anywhere; }
-.miao-chat :deep(.miao-record .text-gray-900) { color: var(--miao-ink); }
-.miao-chat :deep(.miao-record .text-gray-600),
-.miao-chat :deep(.miao-record .text-gray-700) { color: var(--miao-soft); }
-.miao-chat :deep(.miao-record .font-bold),
-.miao-chat :deep(.miao-record .font-semibold),
-.miao-chat :deep(.miao-record .font-medium) { font-weight: 400; }
-.miao-chat :deep(.miao-record .font-mono) { font-family: inherit; font-size: 17px; font-variant-numeric: tabular-nums; }
-.miao-chat :deep(.miao-record button) { min-height: 44px; border: 1px solid var(--miao-line); border-radius: 16px 13px 17px 14px; background: var(--miao-white); color: var(--miao-ink); }
-.miao-chat :deep(.miao-record button.bg-primary-400) { background: var(--miao-pink); box-shadow: 0 2px 0 var(--miao-line); }
-.miao-chat :deep(.miao-record button.border-primary-400) { background: var(--miao-pink); border-color: var(--miao-ink); }
-.miao-chat :deep(.miao-record input),
-.miao-chat :deep(.miao-record select) { min-width: 0; min-height: 44px; border: 1px solid var(--miao-line); border-radius: 12px 10px 13px 11px; background: var(--miao-white); color: var(--miao-ink); font-size: 16px; }
-.miao-chat :deep(.miao-input) { flex-shrink: 0; border-top: 1px dashed var(--miao-line); padding: 13px 16px calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--miao-paper); }
-.miao-chat :deep(.miao-input .chat-compose) { max-width: 448px; padding: 5px 5px 5px 13px; border: 1.5px solid var(--miao-line); border-radius: 22px 18px 21px 17px; background: var(--miao-white); box-shadow: none; }
-.miao-chat :deep(.miao-input .chat-compose:focus-within) { outline: 2px solid var(--miao-ink); outline-offset: 2px; }
-.miao-chat :deep(.miao-input input) { padding-block: 8px; font-size: 16px; color: var(--miao-ink); }
-.miao-chat :deep(.miao-input input:focus-visible) { outline: none; }
-.miao-chat :deep(.miao-input input::placeholder) { color: var(--miao-soft); }
-.miao-chat :deep(.miao-input .chat-send) { width: auto; min-width: 58px; height: 44px; padding-inline: 12px; border: 1px solid var(--miao-line); border-radius: 16px 13px 17px 14px; background: var(--miao-yellow); color: var(--miao-ink); font-size: 14px; box-shadow: none; }
-.miao-chat :deep(.miao-input .chat-send:disabled) { opacity: .6; }
-.miao-chat :deep(.miao-input .chat-input-hint) { max-width: 448px; margin: 10px auto 0; text-align: center; color: var(--miao-soft); font-size: 12px; }
-@media (max-width: 359px) {
-  .miao-header-content { padding-inline: 12px; }
-  .miao-brand { gap: 7px; }
-  .miao-header-cat { width: 51px; height: 53px; }
-  .miao-title { font-size: 23px; }
-  .miao-subtitle { font-size: 11px; }
-  .miao-thread { padding-inline: 12px; }
-}
+.miao-chat { --miao-paper:var(--zz-home-bg); --miao-white:var(--zz-home-paper); --miao-ink:var(--zz-home-ink); --miao-soft:var(--zz-home-ink-soft); --miao-line:#dbb0a1; --miao-pink:#f7cfdf; --miao-yellow:#fae4bf; display:flex; flex-direction:column; height:100dvh; overflow:hidden; color:var(--miao-ink); font-family:var(--zz-home-font); }
+.miao-header { flex-shrink:0; background:linear-gradient(115deg,#fce3ea,#fff3e5 65%,#e5eeda); border-bottom:1.5px solid #e2beb0; box-shadow:0 5px 15px #ab7b6810; }
+.miao-header-content,.miao-summary,.miao-thread,.chat-query-tools { width:100%; max-width:520px; margin-inline:auto; }
+.miao-header-content { padding:13px 16px 7px; }.miao-brand { display:flex; align-items:center; gap:10px; position:relative; }.miao-header-cat { width:66px; height:69px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 4px 2px #b88b7520); transform:rotate(-5deg); }.miao-chat-heading { font-weight:500; }.miao-title { display:block; position:relative; width:fit-content; font-size:23px; letter-spacing:.5px; white-space:nowrap; }.miao-title::before { content:''; position:absolute; bottom:0; left:-3px; right:-3px; height:10px; background:#e5d4ec88; z-index:-1; border-radius:8px; }.miao-subtitle { display:block; margin-top:5px; font-size:11px; color:#996675; }.chat-header-flower { width:31px; height:31px; margin-left:auto; align-self:flex-start; }
+.miao-summary { display:flex; flex-wrap:wrap; align-items:center; gap:9px; padding:4px 16px 8px; font-size:11px; }.chat-month-note { display:flex; align-items:center; gap:5px; padding:6px 10px; border:1px solid #e2afb9; border-radius:13px; background:#f9dbe3; color:#914b63; }.chat-month-note .cat-nav-icon { width:25px; height:25px; }.chat-month-note span { font-size:15px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }.miao-demo-label { color:#856553; font-size:10px; }.miao-manual-link { margin-left:auto; }.miao-chat :deep(.miao-manual-link) { min-height:44px; padding:5px 9px; font-size:11px; }
+.chat-query-tools { display:flex; align-items:center; gap:7px; padding:2px 16px 12px; color:#8b665a; font-size:10px; }.chat-query-tools > span { display:none; }.chat-query-chip { flex:1; min-width:0; min-height:44px; padding:6px 7px; border:1.5px solid #dbaabb; border-radius:14px 14px 17px 12px; background:#f9d6e2; box-shadow:0 3px 0 #e8b7c8; color:#865167; font-size:11px; }.chat-query-chip.income { background:#e0ecd7; border-color:#bdcfaf; box-shadow:0 3px 0 #cddaC1; color:#536f4e; }.chat-query-chip.review { background:#eaddf3; border-color:#c7b0d9; box-shadow:0 3px 0 #d4c2e2; color:#785d8c; }.chat-query-chip:disabled { opacity:.5; }.chat-query-chip:active { translate:0 2px; }
+.miao-messages { flex:1; min-height:0; overflow-y:auto; overscroll-behavior-y:contain; scrollbar-width:none; }.miao-messages::-webkit-scrollbar { display:none; }.miao-thread { display:flex; flex-direction:column; gap:22px; padding:22px 16px 25px; }.chat-thread-marker { display:flex; align-items:center; justify-content:center; gap:8px; font-size:10px; color:#9c7d74; }.chat-thread-marker .journal-sticker { width:19px; height:19px; }
+.chat-welcome { position:relative; text-align:center; padding:20px 16px 24px; border:1.5px solid #e0b6a6; border-radius:28px 23px 30px 24px; background:radial-gradient(ellipse at 90% 0,#eee0f4,transparent 55%),linear-gradient(135deg,#fff5e8,#ffe6ed); box-shadow:0 5px 0 #edcbbb; }.chat-welcome::before { content:''; position:absolute; top:-9px; left:calc(50% - 32px); width:64px; height:19px; background:#dce8ce; border-radius:4px; transform:rotate(-4deg); }.chat-welcome-art { position:relative; width:140px; height:106px; margin:auto; }.chat-welcome-art img { height:103px; width:105px; object-fit:contain; }.chat-welcome-art .journal-sticker { position:absolute; width:30px; height:30px; right:0; top:2px; }.chat-welcome-art .journal-sticker:last-child { left:-3px; top:57px; }.chat-welcome-label { font-size:10px; letter-spacing:1px; color:#a57083; margin-top:6px; }.chat-welcome h2 { font-size:17px; margin:9px 0; }.chat-welcome > p:last-of-type { font-size:12px; line-height:1.9; color:#8d6b5d; }.chat-welcome-steps { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; font-size:10px; margin-top:17px; color:#8d6b5d; }.chat-welcome-steps b { display:inline-grid; place-items:center; width:20px; height:20px; border-radius:7px; background:#ecd5e8; margin-right:3px; font-weight:500; }.chat-welcome-steps span:nth-child(2) b { background:#dce7cc; }.chat-welcome-steps span:nth-child(3) b { background:#f6d2d9; }
+.miao-history-controls { text-align:center; }.miao-history-controls p,.miao-history-note { font-size:11px; color:var(--miao-soft); line-height:1.8; }.miao-history-note { margin-bottom:8px; }.miao-history-button { min-height:44px; padding:8px 12px; border:1.5px solid #c6afd5; border-radius:15px; background:#eee2f3; color:#745a81; font-size:12px; }.miao-storage-error,.legacy-deleted-note { border:1px solid #dab7a3; border-radius:16px; padding:12px; background:#fff6e4; color:#945c50; font-size:12px; line-height:1.8; }
+.miao-chat :deep(.miao-bubble) { align-items:flex-end; min-width:0; }.miao-chat :deep(.chat-assistant-avatar) { width:42px; height:42px; padding:3px; border:1.5px solid #dbb9c7; background:#f5dcea; border-radius:16px; box-shadow:0 3px 0 #e9bdca; }.miao-chat :deep(.chat-bubble-body) { position:relative; max-width:calc(100% - 50px); padding:13px 15px 23px; border:1.5px solid #dcb7a5; border-radius:21px 23px 23px 9px; background:#fffaf0; color:var(--miao-ink); font-size:14px; line-height:1.9; box-shadow:0 4px 0 #ebcfb9; }.miao-chat :deep(.miao-bubble-user .chat-bubble-body) { max-width:88%; border-color:#d8a4b5; background:#f9dce8; border-radius:22px 22px 9px 22px; box-shadow:0 4px 0 #e9bacb; }.miao-chat :deep(.chat-bubble-tail) { display:none; }.miao-chat :deep(.bubble-paw) { position:absolute; bottom:8px; right:10px; width:18px; height:13px; opacity:.32; transform:rotate(-13deg); pointer-events:none; }.miao-chat :deep(.paw-pad),.miao-chat :deep(.paw-toe) { position:absolute; background:#a06b7e; }.miao-chat :deep(.paw-pad) { bottom:0; left:5px; width:9px; height:6px; border-radius:50%; }.miao-chat :deep(.paw-toe) { width:3px; height:4px; border-radius:50%; }.miao-chat :deep(.toe-one) { left:1px; top:5px; }.miao-chat :deep(.toe-two) { left:5px; top:1px; }.miao-chat :deep(.toe-three) { left:10px; top:1px; }.miao-chat :deep(.toe-four) { left:15px; top:5px; }
+.miao-chat :deep(.miao-record) { position:relative; margin-top:9px; padding:25px 15px 16px; border:1.5px solid #d7aac0; border-radius:24px 21px 26px 20px; background:linear-gradient(135deg,#fffaf0,#fff5f9); color:var(--miao-ink); box-shadow:0 5px 0 #e7bbcc; }.miao-chat :deep(.miao-record::before) { content:''; position:absolute; width:68px; height:18px; top:-9px; left:calc(50% - 34px); background:#dce6cd; border-radius:3px; transform:rotate(-4deg); }.miao-chat :deep(.record-heading) { font-size:16px; }.miao-chat :deep(.record-pending) { font-size:11px; padding:4px 7px; background:#eeddf1; border-radius:8px; white-space:nowrap; }.miao-chat :deep(.draft-items li) { border-bottom:1px solid #ebd6ca; }.miao-chat :deep(.draft-item-copy .category-icon) { width:39px; height:39px; }.miao-chat :deep(.draft-totals) { background:#fbe2e9; border-radius:13px; padding:9px 11px; color:#8e5465; }.miao-chat :deep(.miao-record button) { min-height:40px; border:1.5px solid #d7b9a5; border-radius:13px; background:#fffcf4; color:var(--miao-ink); }.miao-chat :deep(.miao-record button.bg-primary-400) { background:#f4c5d7; border-color:#cd9bb0; box-shadow:0 3px 0 #dfacc0; }.miao-chat :deep(.draft-items p) { color:#8b6b5d; }.miao-chat :deep(.draft-item-top strong) { font-size:16px; }
+.miao-thinking { display:flex; gap:8px; align-items:flex-end; font-size:13px; color:#8d6780; }.miao-thinking img { width:62px; height:68px; object-fit:contain; }.miao-thinking p { padding:12px; background:#eaddf1; border:1px solid #cbb6d8; border-radius:18px; }
+.miao-chat :deep(.miao-input) { flex-shrink:0; padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px)); border-top:1.5px solid #e3c1af; background:linear-gradient(110deg,#fff0e4,#fce5ed); }.miao-chat :deep(.chat-compose) { max-width:488px; padding:5px 5px 5px 13px; border:1.5px solid #d0a4b1; border-radius:22px; background:#fffcf7; box-shadow:0 4px 0 #e8bac7; }.miao-chat :deep(.chat-compose:focus-within) { outline:2px solid #a26b8a; outline-offset:3px; }.miao-chat :deep(.miao-input input) { padding-block:9px; font-size:16px; color:var(--miao-ink); }.miao-chat :deep(.miao-input input:focus-visible) { outline:none; }.miao-chat :deep(.miao-input input::placeholder) { color:#9f867c; }.miao-chat :deep(.chat-send) { width:auto; min-width:61px; height:44px; padding-inline:12px; border:1.5px solid #c898ad; border-radius:16px; background:#f3c4d5; color:#7c4a60; box-shadow:0 3px 0 #dfacc0; font-size:13px; }.miao-chat :deep(.chat-send:disabled) { opacity:.55; }.miao-chat :deep(.chat-input-hint) { margin:9px auto 0; text-align:center; font-size:10px; color:#9e7c79; }
+.miao-chat :deep(button:focus-visible) { outline:2px solid #9b4c61; outline-offset:3px; }
+@media(max-width:359px) { .miao-header-content { padding-inline:12px; }.miao-brand { gap:7px; }.miao-header-cat { width:49px; height:57px; }.miao-title { font-size:21px; }.chat-header-flower { width:23px; height:23px; }.miao-summary { gap:6px; padding-inline:12px; }.miao-demo-label { font-size:9px; }.miao-manual-link { margin-left:0; }.miao-thread { padding-inline:12px; }.chat-query-tools { padding-inline:12px; } }
+@media(max-height:600px) { .miao-header-cat { width:42px; height:44px; }.miao-header-content { padding-block:6px; }.miao-summary { padding-block:3px; }.chat-query-tools { padding-bottom:7px; }.chat-welcome-art { height:65px; }.chat-welcome-art img { height:65px; }.chat-welcome { padding-block:12px; } }
 </style>

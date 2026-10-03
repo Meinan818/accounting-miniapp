@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowLeft } from 'lucide-vue-next'
+import NotebookBack from '@/components/common/NotebookBack.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import RecordForm from '@/components/record/RecordForm.vue'
 import { useRecordStore } from '@/stores/recordStore'
@@ -21,7 +21,7 @@ function save(record) {
 <template>
   <main class="manual-page notebook-evolution">
     <section class="manual-content">
-      <header><router-link to="/bills" class="back" aria-label="返回账单明细"><ArrowLeft :size="20" /></router-link><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
+      <header><NotebookBack to="/bills" label="返回账单明细" /><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
       <router-link to="/chat" class="chat-link">更想说一说？和小宝聊着记 →</router-link>
       <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
       <article class="manual-card"><p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p><p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p><RecordForm :saving="saving" :error="error" @save="save" @cancel="router.push('/bills')" /></article>

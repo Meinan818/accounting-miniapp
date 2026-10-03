@@ -7,7 +7,8 @@ import { useRoute } from 'vue-router'
 import RecordEditor from '@/components/record/RecordEditor.vue'
 import { sumAmounts, legacyCents } from '@/utils/money'
 import dayjs from 'dayjs'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import NotebookBack from '@/components/common/NotebookBack.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import BottomNav from '@/components/layout/BottomNav.vue'
@@ -156,13 +157,7 @@ function getSign(record) {
   <div class="journal-bills notebook-evolution">
     <main class="bills-content">
       <header class="bills-header">
-        <router-link
-          to="/"
-          class="bills-back active:scale-95"
-          aria-label="返回日历主页"
-        >
-          <ArrowLeft :size="20" :stroke-width="1.5" />
-        </router-link>
+        <NotebookBack />
         <img :src="miaoWriting" alt="猫猫抱着账本陪你看明细" class="bills-header-cat" />
         <div class="bills-heading-text">
           <h1 class="bills-title">账单明细</h1>

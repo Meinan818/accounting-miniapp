@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import dayjs from 'dayjs'
-import { ArrowLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronRight } from 'lucide-vue-next'
+import NotebookBack from '@/components/common/NotebookBack.vue'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
@@ -11,6 +12,7 @@ import { getMonthStatistics } from '@/utils/statistics'
 import { getRecentDays } from '@/utils/journal'
 import { centsText } from '@/utils/money'
 import packageInfo from '../../package.json'
+import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile } from '@/utils/localProfile'
 
 const store = useRecordStore()
 const month = dayjs().format('YYYY-MM')
@@ -25,27 +27,58 @@ const error = computed(() => store.storageError || calculated.value.error)
 const wideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents].some(value => centsText(value).length > 9))
 const recentDays = computed(() => getRecentDays(store.records, dayjs().format('YYYY-MM-DD')))
 const recordedDays = computed(() => recentDays.value.filter(day => day.count > 0).length)
+const profile = ref({ ...DEFAULT_PROFILE })
+const profileError = ref('')
+const profileNotice = ref('')
+const profileDialog = ref(null)
+const profileForm = ref({ ...DEFAULT_PROFILE })
+const editError = ref('')
+let profileSnapshot = null
+const avatars = [{ key: 'cat', label: '猫猫' }, { key: 'paw', label: '爪印' }, { key: 'flower', label: '小花' }]
+function loadProfile() {
+  try {
+    const result = readLocalProfile(window.localStorage)
+    profile.value = result.profile; profileSnapshot = result.snapshot; profileError.value = result.error
+  } catch (error) { profileError.value = '本地资料暂时无法读取。' + error.message }
+}
+function openProfile() {
+  loadProfile()
+  if (profileError.value) return
+  profileForm.value = { ...profile.value }; editError.value = ''; profileNotice.value = ''
+  profileDialog.value.showModal()
+}
+function saveProfile() {
+  try {
+    const result = saveLocalProfile(window.localStorage, profileForm.value, profileSnapshot)
+    profile.value = result.profile; profileSnapshot = result.snapshot
+    profileDialog.value.close(); profileNotice.value = '本地资料已保存，只保存在当前浏览器。'
+  } catch (error) { editError.value = '没有保存：' + error.message }
+}
 const entries = [
   { title: '账单明细', note: '查看和修改已经记下的小账单', icon: 'receipt', to: '/bills' },
   { title: '收支统计', note: '按月份看看钱花在哪里', icon: 'chart', to: '/stats' },
   { title: '和本喵聊聊', note: '说说开销，核对后再记账', icon: 'chat', to: '/chat' },
 ]
-onMounted(() => store.refresh())
+onMounted(() => { store.refresh(); loadProfile() })
 </script>
 
 <template>
   <div class="journal-profile notebook-evolution">
     <main class="profile-content">
       <header class="profile-header">
-        <router-link to="/" class="profile-back" aria-label="返回日历主页"><ArrowLeft :size="20" :stroke-width="1.5" /></router-link>
+        <NotebookBack />
         <div><h1 class="profile-title">我的小账本</h1><p class="profile-subtitle">喵叽智账 · 本地演示</p></div>
       </header>
 
-      <p class="edition-ribbon profile-edition-label">本喵的手账护照</p>
+      <p class="edition-ribbon profile-edition-label">给认真生活的你 · 一张手账名片</p>
       <section class="profile-identity" aria-label="本地账本说明">
-        <img :src="miaoAvatar" alt="手绘猫猫陪你记账" class="profile-avatar" />
-        <JournalSticker kind="flower" tone="lilac" class="profile-flower" /><div><h2>每一笔，都好好记下</h2><p>这里是当前浏览器里的小账本。<br />本喵陪你整理，你来确认。</p><span class="profile-local-badge">当前是本地演示 · 正式版须账号密码登录</span></div>
+        <div class="profile-person-avatar"><CatNavIcon v-if="profile.avatar === 'cat'" kind="profile" /><JournalSticker v-else :kind="profile.avatar" :tone="profile.avatar === 'flower' ? 'lilac' : 'pink'" /></div>
+        <JournalSticker kind="flower" tone="lilac" class="profile-flower" />
+        <div class="profile-person-copy"><span class="profile-id-eyebrow">MY LITTLE JOURNAL</span><h2>{{ profile.nickname }}</h2><p>{{ profile.signature || '给生活留一点小空白。' }}</p><span class="profile-local-badge">本地资料 · 尚未登录</span><button class="profile-edit-button" type="button" :disabled="Boolean(profileError)" @click="openProfile">编辑本地资料 <ChevronRight :size="14" /></button></div>
       </section>
+      <p v-if="profileNotice" class="profile-notice" role="status">{{ profileNotice }}</p>
+      <div v-if="profileError" class="profile-error" role="alert"><p>{{ profileError }}</p><button type="button" @click="loadProfile">重新读取资料</button></div>
+      <section class="profile-account-note" aria-label="账号状态"><CatNavIcon kind="home" /><div><h2>小账本，先住在这里</h2><p>当前账单留在这个浏览器。正式账号登录与个人资料同步正在规划，尚未接通。</p></div><img :src="miaoAvatar" alt="" /></section>
 
       <section class="profile-ledger-card" aria-labelledby="profile-ledger-title">
         <div class="profile-section-heading"><h2 id="profile-ledger-title">账本小概况</h2><span>{{ monthTitle }}</span></div>
@@ -86,11 +119,39 @@ onMounted(() => store.refresh())
       </section>
       <footer class="profile-about">喵叽智账 · 前端演示 v{{ appVersion }}<br /><span>好好记账，也好好生活</span></footer>
     </main>
+    <dialog ref="profileDialog" class="profile-editor" aria-labelledby="profile-editor-title">
+      <header><div><p>属于你的手账名片</p><h2 id="profile-editor-title">编辑本地资料</h2></div><button type="button" aria-label="关闭资料编辑" @click="profileDialog.close()">×</button></header>
+      <form @submit.prevent="saveProfile">
+        <fieldset><legend>选一个头像贴纸</legend><div class="profile-avatar-options"><button v-for="avatar in avatars" :key="avatar.key" type="button" :aria-label="'头像：' + avatar.label" :aria-pressed="profileForm.avatar === avatar.key" @click="profileForm.avatar = avatar.key"><CatNavIcon v-if="avatar.key === 'cat'" kind="profile" /><JournalSticker v-else :kind="avatar.key" :tone="avatar.key === 'flower' ? 'lilac' : 'pink'" /><span>{{ avatar.label }}</span></button></div></fieldset>
+        <label>昵称 <span>最多20个字</span><input v-model="profileForm.nickname" aria-label="昵称" autocomplete="off" required /></label>
+        <label>一句签名 <span>最多60个字，可留空</span><textarea v-model="profileForm.signature" aria-label="一句签名" rows="3" /></label>
+        <p class="profile-editor-note">仅保存在当前浏览器，不代表注册或登录；不会改变账单和对话。</p>
+        <p v-if="editError" class="profile-error" role="alert">{{ editError }}</p>
+        <div class="profile-editor-actions"><button type="button" @click="profileDialog.close()">取消</button><button type="submit">保存本地资料</button></div>
+      </form>
+    </dialog>
     <BottomNav active="profile" />
   </div>
 </template>
 
 <style scoped>
+.profile-id-eyebrow { font-size:10px; color:#9b697b; letter-spacing:1.5px; }
+.profile-person-avatar { display:grid; place-items:center; width:86px; height:96px; flex-shrink:0; border-radius:29px 24px 31px 23px; background:#fff9eb; border:1.5px solid #dabca5; box-shadow:0 4px 0 #e8c5b6; transform:rotate(-4deg); }
+.profile-person-avatar .cat-nav-icon { width:70px; height:70px; }.profile-person-avatar .journal-sticker { width:60px; height:60px; }
+.profile-person-copy { min-width:0; flex:1; }.profile-person-copy h2,.profile-person-copy p { overflow-wrap:anywhere; }
+.journal-profile .profile-identity { padding:24px 17px; border:1.5px solid #d9a7b2; border-radius:28px 23px 30px 25px; background:radial-gradient(ellipse at 0 0,#e9dff4,transparent 65%),linear-gradient(115deg,#fbe0e7,#fff0dc); box-shadow:0 5px 0 #e7bec7,0 10px 18px #bb809315; }
+.journal-profile .profile-identity::after { content:'留一点可爱给自己'; background:#e4edd9; border-color:#b7c6a5; border-radius:8px; letter-spacing:.5px; bottom:-12px; }
+.profile-edit-button { display:flex; align-items:center; gap:3px; min-height:44px; margin-top:12px; padding:6px 11px; border:1.5px solid #cca6b2; border-radius:13px; background:#fff9f1; box-shadow:0 3px 0 #e3bbc4; font-size:12px; color:#81525f; }
+.profile-edit-button:disabled { opacity:.5; }
+.profile-account-note { display:flex; align-items:center; gap:10px; padding:14px 13px; background:#e6efde; border:1.5px solid #c2d0b7; border-radius:20px; margin:23px 0; box-shadow:0 4px 0 #d6e2ca; }
+.profile-account-note > .cat-nav-icon { width:37px; height:37px; flex-shrink:0; }.profile-account-note div { flex:1; min-width:0; }.profile-account-note h2 { font-size:13px; }.profile-account-note p { font-size:11px; line-height:1.8; margin-top:4px; color:#61715b; }.profile-account-note img { width:41px; height:49px; object-fit:contain; flex-shrink:0; }
+.profile-notice { margin:15px 0; font-size:12px; line-height:1.8; color:#416e52; }
+.profile-editor { width:min(440px,calc(100% - 24px)); max-height:calc(100dvh - 32px); margin:auto; padding:23px 20px; color:var(--zz-home-ink); background:#fff9ef; border:1.5px solid #d1a292; border-radius:27px; box-shadow:0 7px 0 #e5c5b2,0 20px 60px #65433333; overflow:auto; }
+.profile-editor::backdrop { background:#65433366; backdrop-filter:blur(3px); }.profile-editor header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:20px; }.profile-editor header p { font-size:11px; color:#9b697b; margin-bottom:4px; }.profile-editor h2 { font-size:20px; }.profile-editor header button { width:44px; height:44px; font-size:25px; border:1px solid #e3c2b5; border-radius:14px; background:#f9dce4; }
+.profile-editor fieldset { min-width:0; border:0; padding:0; }.profile-editor legend { font-size:13px; margin-bottom:10px; }.profile-avatar-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }.profile-avatar-options button { display:flex; align-items:center; flex-direction:column; gap:6px; min-height:86px; padding:10px 4px; background:#fffcf5; border:1.5px solid #e1cbb9; border-radius:19px; box-shadow:0 3px 0 #e9d5c4; font-size:12px; }.profile-avatar-options button[aria-pressed=true] { border-color:#b47991; background:#f8dce7; }.profile-avatar-options .cat-nav-icon,.profile-avatar-options .journal-sticker { width:44px; height:44px; }
+.profile-editor label { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:7px; margin-top:19px; font-size:13px; }.profile-editor label span { font-size:10px; color:#8c7466; }.profile-editor input,.profile-editor textarea { width:100%; min-width:0; padding:12px; font-size:16px; color:inherit; border:1.5px solid #dac0ac; border-radius:14px; background:#fffdf8; }.profile-editor textarea { resize:vertical; }.profile-editor-note { font-size:11px; line-height:1.9; color:#8c7466; margin-top:14px; }
+.profile-editor-actions { display:flex; gap:10px; margin-top:19px; }.profile-editor-actions button { flex:1; min-height:46px; border:1.5px solid #cfac9b; border-radius:15px; background:#fff9ec; box-shadow:0 3px 0 #e7c9b9; font-size:13px; }.profile-editor-actions button[type=submit] { background:#f4c8d6; border-color:#ce9bae; box-shadow:0 3px 0 #e1a9bc; }.profile-editor :is(button,input,textarea):focus-visible,.profile-edit-button:focus-visible { outline:2px solid #9b4c61; outline-offset:3px; }
+@media(max-width:359px) { .profile-person-avatar { width:65px; height:77px; }.profile-person-avatar .cat-nav-icon { width:56px; height:56px; }.profile-person-avatar .journal-sticker { width:45px; height:45px; }.journal-profile .profile-identity { gap:11px; padding:20px 12px; }.profile-editor { padding:19px 15px; } }
 .profile-footprint-item { min-height:58px; text-decoration:none; }
 .profile-footprint-item:focus-visible { outline:2px solid #88624d; outline-offset:2px; }
 .profile-footprints { position:relative; margin-top:22px; padding:17px 13px 13px; border:1px dashed #bfba9c; border-radius:4px 18px 5px 16px; background:#f3f3e7; }.profile-footprint-row { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; margin-top:13px; }.profile-footprint-item { min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px 0; color:#a39a84; font-size:10px; }.profile-footprint-item.recorded { color:#667457; }.profile-footprint-item .journal-sticker { width:27px; height:27px; }.profile-footprint-dot { width:27px; height:27px; border:1px dashed #c7c4aa; border-radius:50%; background:#fbfaf1; }.profile-footprints > p { margin-top:9px; font-size:10px; line-height:1.8; color:#817c63; }

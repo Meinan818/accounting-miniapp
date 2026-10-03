@@ -2,7 +2,8 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
-import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
+import NotebookBack from '@/components/common/NotebookBack.vue'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import CategoryWheel from '@/components/common/CategoryWheel.vue'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
@@ -59,7 +60,7 @@ onMounted(() => store.refresh())
   <div class="journal-stats notebook-evolution">
     <main class="stats-content">
       <header class="stats-header">
-        <router-link to="/" class="stats-back" aria-label="返回日历主页"><ArrowLeft :size="20" :stroke-width="1.5" /></router-link>
+        <NotebookBack />
         <img :src="miaoWriting" alt="猫猫陪你整理收支" class="stats-header-cat" />
         <div><h1 class="stats-title">月度复盘</h1><p class="stats-subtitle">翻开这一月 · 看见钱去了哪里</p></div>
       </header>
