@@ -97,3 +97,7 @@
 - 未先核Windows执行策略，用powershell -File运行已有run.ps1被UnauthorizedAccess拒绝，Java未启动，5174页面提示服务暂不可用。原失败日志在fullstack-reliability本轮backend-error.log保留。未修改或绕过执行策略；改用已有Java执行已打包jar，并继续核实际监听和HTTP。以后后台启动先核运行方式，不把进程创建当服务启动成功。
 
 - 本轮窄屏验证断言错误：误要求scrollWidth等于innerWidth，垂直滚动条使305小于320；改为不超过视口，页面无需修改，实际截图/JSON保存。另README patch使用局部句子匹配整行失败，无改动，后按完整文本精确替换；修改前核原文，失败不认为已写入。
+
+## 2026-10-03 · 限流测试手工改ServletPath导致路由不匹配
+
+- 首轮新MockMvc测试手工setServletPath，登录请求实际返回404而不是预期401，2项失败；limit-test-1.log完整保留。未把该失败冒充真实服务器故障或修改预期接受404。恢复项目已有请求形状，过滤器按requestURI和contextPath匹配，重新验证。以后只设置测试所需远端地址，不拼造未核的Servlet映射结构；真实HTTP另验。

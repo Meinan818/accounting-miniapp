@@ -60,7 +60,7 @@ cd E:\XiangMu\未定项目\backend
 
 ## 尚未完成
 
-当前不是完整B/C验收：自定义分类、登录限流、服务端草稿、大账本分页适配、真实AI均未实现。正式前端已开发版联通，生产实际交互、真机及用户正式功能验收未完成；聊天历史暂按账号隔离存在浏览器。整组接口直接接收用户已确认内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署或收费调用。
+当前不是完整B/C验收：自定义分类、服务端草稿、大账本分页适配、真实AI均未实现。正式前端已开发版联通，生产实际交互、真机及用户正式功能验收未完成；聊天历史暂按账号隔离存在浏览器。整组接口直接接收用户已确认内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署或收费调用。
 
 兼容性依据：[Spring Boot 3.5 环境要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)、[Spring Security 会话](https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html)、[CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)。实际验证见项目交接 LOG。
 
@@ -77,3 +77,9 @@ GET同路径只向当前登录身份返回其照片，响应JPEG及`Cache-Contro
 ## 账单操作审计（V5）
 
 账单创建、修改、逻辑删除的操作与前后版本在ledger_audit中与业务同事务保存，失败一起回退；入账防重重放不追加事件。只记录账号、账单ID、操作、版本、创建请求键和时间，不复制金额、备注、照片或认证信息。旧账单不补造历史事件；当前没有审计查询界面或管理端，记录仅供后续可靠性核查，未实现完整合规审计。
+
+## 登录和注册频率保护
+
+同一连接地址在60秒窗口内合计最多20次登录/注册尝试，超过返回429 AUTH_RATE_LIMITED和Retry-After秒数。CSRF先验证，之后在密码计算前限流；CSRF读取、退出、普通业务不计入。窗口到期恢复，不永久锁账号，不因换Cookie/用户名或伪造X-Forwarded-For重置。成功尝试也计数。
+
+可配置miaoji.auth.attempt-limit、window-seconds和address-capacity（默认10000个地址）。单调时钟和原子内存计数，不记录密码或用户名；容量满时拒绝新地址而不驱逐活跃限制，过期桶按需清理。目前仅单进程，重启会重置；经Vite代理的请求共享本机地址，不宣称已有分布式限流或生产可信代理配置。

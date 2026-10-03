@@ -1,5 +1,7 @@
 # 喵叽智账 · 接手入口
 
+用户最新补充：以后每个由Codex创建的项目新对话使用GPT-6.1-sol、high推理强度；create_thread显式传model="gpt-6.1-sol"、thinking="high"。本轮已是全新会话，compact基准0，旧计数2不继承；最新成果/任务以STATE及LOG末条为准。
+
 工作目录 E:/XiangMu/未定项目。先读根目录 HANDOFF.md、AGENTS.md、PROJECT_PLAN.md、STATE.json、MISTAKES.md 和 LOG.md 最新条目，再核 Git/源码/服务/工具权限；保护全部原账本、对话、照片、材料和改动，不 reset/clean。
 
 本会话第2次可识别compact已触发，已停止业务代码。交接文档和相关源码须本地commit后创建全新项目聊天，新聊天计数归零。不要创建codex.md，不用token/长度猜次数，不把旧STATE的2算作新会话事件。提交/新建以实际工具结果为准，不自动Push。

@@ -9,6 +9,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
+import java.time.Duration;
 
 @Configuration
 public class SecurityConfig {
@@ -16,9 +19,18 @@ public class SecurityConfig {
     PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(12); }
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    AuthAttemptLimiter authAttemptLimiter(@Value("${miaoji.auth.attempt-limit:20}") int limit,
+            @Value("${miaoji.auth.window-seconds:60}") long seconds,
+            @Value("${miaoji.auth.address-capacity:10000}") int capacity) {
+        return new AuthAttemptLimiter(limit, capacity, Duration.ofSeconds(seconds), System::nanoTime);
+    }
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http, AuthAttemptLimiter limiter) throws Exception {
         return http
                 .addFilterBefore(new AccountContextFilter(), CsrfFilter.class)
+                // CSRF已验证后、密码计算前限流；filter不注册为容器Bean，避免执行两次。
+                .addFilterBefore(new AuthAttemptFilter(limiter), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/csrf", "/api/auth/register", "/api/auth/login").permitAll()
                         .anyRequest().authenticated())

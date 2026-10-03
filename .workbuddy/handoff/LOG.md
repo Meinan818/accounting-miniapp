@@ -572,3 +572,12 @@
 - 较大修改前source-before.zip、V5迁移前database-before-v5.sql保存在fullstack-reliability-2026-10-03/run-edc7df2757444e4e81c5afc245c3e57d；不入Git、不展示备份内容。V5仅增审计表，不补造旧历史、不动资料/照片。创建每笔、更新、逻辑删除记录操作与版本，审计和业务同事务；不复制金额/备注/照片/密码。回放/失败/他人/旧版本不新增事件。
 - 52项H2集成测试通过，包含第二笔审计注入失败整组/请求键回退、更新和删除回退；audit-test-1.log；随后audit-package.log只打包成功不冒称重跑测试。真实MySQL9项HTTP通过：audit-http-1791035058804-852e0653/result.json，V5、每笔事件、重放不重复、版本冲突/跨账号拒绝、删除事实及重启保留。HTTP脚本只启停自身Java，最终8080无监听；Vite本轮31548仍运行，后续自行核实。
 - 未实现草稿/限流/大账本分页/真实AI。下一步Codex继续登录限流再服务端版本草稿确认；无需外部操作。不Push/部署/收费/权限变更。
+
+## 2026-10-03 · 登录注册限流与后续新会话模型
+
+- 用户补充以后每个新对话GPT-6.1-sol/high，已写AGENTS 0.4、NEXT和HANDOFF；create_thread必须显式传model/thinking，不改全局，不冒称已切当前模型。本会话可识别compact计数仍0。
+- 已读Spring Security官方架构页，实际确认addFilterBefore顺序及Filter Bean双重注册风险，原文在本轮spring-security-architecture.html；限流Filter只加SecurityFilterChain，CSRF后/密码认证前执行。URL：https://docs.spring.io/spring-security/reference/servlet/architecture.html。
+- 单连接地址登录/注册合计默认20次/60秒；429、Retry-After/no-store及中文明确提示；不信任转发头，不持久化地址/用户名/密码；内存容量10000、过期按需清理，容量满拒绝新键，不驱逐活跃键放行攻击。单进程/重启重置、代理地址共享限制明确，非生产分布式方案。
+- 首轮57项中2个新MockMvc断言失败，手工ServletPath不匹配导致404，失败保留并记MISTAKES；恢复已有请求结构/按URI和context匹配后5项针对测试通过；最终57项全量和package通过，limit-package-final.log。含30并发最多放行5、窗口到期、容量边界、CSRF先行、换用户名/转发头与地址隔离。
+- 真实Java/MySQL HTTP6项通过，limit-http-1791035628251-7bf47f63/result.json；测试显式2次/3秒配置，403不耗额度、2次401、第三次429和Retry-After、另Cookie注册共享额度、CSRF可读、窗口结束恢复401。不是正式默认20/60的压力指标，无付费/部署/真实账号操作。脚本最后停止自己的服务，原数据与Vite保留。
+- 保存这个独立节点后继续服务端草稿版本及确认事务，并衔接前端；无需用户外部操作，不Push/部署。
