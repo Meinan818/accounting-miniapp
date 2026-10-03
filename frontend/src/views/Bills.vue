@@ -14,7 +14,7 @@ import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
-import { filterRecords } from '@/utils/journal'
+import { filterRecords, windowRecordGroups } from '@/utils/journal'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { getCategoryArtwork } from '@/utils/categoryArtwork'
 import { SERVER_MODE } from '@/api/mode'
@@ -35,6 +35,9 @@ const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0
 const searchInput = ref(null)
 const selectedType = ref(['income', 'expense'].includes(route.query.type) ? route.query.type : 'all')
 const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category.slice(0,120) : '')
+const displayBatchSize = 60
+const visibleLimit = ref(displayBatchSize)
+watch([selectedMonth, searchText, selectedType, selectedCategory], () => { visibleLimit.value = displayBatchSize })
 
 // 4. 计算属性
 const monthTitle = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY年M月'))
@@ -91,9 +94,21 @@ const groupedRecords = computed(() => {
 })
 
 const highlightedId = computed(() => typeof route.query.added === 'string' ? route.query.added : '')
+const visibleGroups = computed(() => windowRecordGroups(groupedRecords.value, { limit: visibleLimit.value, revealId: highlightedId.value }))
+const displayedCount = computed(() => visibleGroups.value.reduce((count, group) => count + group.records.length, 0))
+const hiddenCount = computed(() => listedRecords.value.length - displayedCount.value)
 const recordElements = new Map()
 function setRecordElement(id, element) { if (element) recordElements.set(id, element); else recordElements.delete(id) }
-watch([highlightedId, selectedMonth], async ([id]) => {
+async function loadMoreRecords() {
+  const nextRecord = listedRecords.value.slice(visibleLimit.value, visibleLimit.value + displayBatchSize)
+    .find(record => record.id !== highlightedId.value)
+  visibleLimit.value += displayBatchSize
+  await nextTick()
+  const element = recordElements.get(nextRecord?.id)
+  element?.focus({ preventScroll: true })
+  element?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+}
+watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => record.id === highlightedId.value)], async ([id]) => {
   if (!id || !monthRecords.value.some(record => record.id === id)) return
   notice.value = '新账单已保存，已定位到刚刚记下的这一笔。'
   resetFilters()
@@ -217,7 +232,7 @@ function getSign(record) {
       <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
 
       <section v-if="groupedRecords.length" class="bills-groups" aria-label="按日账单">
-        <div v-for="group in groupedRecords" :key="group.date" class="bills-day-group">
+        <div v-for="group in visibleGroups" :key="group.date" class="bills-day-group">
           <div class="bills-day-heading">
             <h3>{{ group.label }}</h3>
             <div class="bills-day-totals">
@@ -230,6 +245,7 @@ function getSign(record) {
             </div>
           </div>
 
+          <p v-if="group.records.length < group.totalCount" class="bills-window-note">本日共 {{ group.totalCount }} 笔，已展示 {{ group.records.length }} 笔 · 合计包含全部{{ filtering ? '匹配' : '' }}账单</p>
           <div class="space-y-2">
             <article
               v-for="record in group.records"
@@ -263,6 +279,10 @@ function getSign(record) {
               </div>
             </article>
           </div>
+        </div>
+        <div v-if="hiddenCount > 0" class="bills-load-more">
+          <p class="bills-window-note" role="status">已展示 {{ displayedCount }} / {{ listedRecords.length }} 笔{{ filtering ? '匹配账单' : '账单' }}</p>
+          <button type="button" :disabled="Boolean(recordStore.storageError)" @click="loadMoreRecords">继续翻小票</button>
         </div>
       </section>
 
@@ -343,6 +363,11 @@ function getSign(record) {
 .bills-expense { color: var(--zz-home-pink); }
 .bills-storage-note { margin: 17px 0 0; color: var(--zz-home-ink-soft); font-size: 12px; text-align: center; }
 .bills-groups { display: grid; gap: 22px; margin-top: 22px; }
+.bills-window-note { margin: 5px 0 10px; font-size: 11px; line-height: 1.8; color: #815b46; }
+.bills-load-more { text-align: center; padding: 8px 0 14px; }
+.bills-load-more button { min-height: 44px; padding: 9px 22px; border: 1px solid #b79076; border-radius: 12px; background: #f5e7ca; color: #785640; box-shadow: 0 3px 0 #d7bea0; font-size: 13px; }
+.bills-load-more button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 3px; }
+.bills-load-more button:disabled { opacity: .6; }
 .bills-day-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 12px; margin: 0 2px 10px; }
 .bills-day-heading h3 { font-weight: 400; font-size: 16px; }
 .bills-day-totals { display: flex; flex-wrap: wrap; gap: 5px 10px; font-size: 12px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

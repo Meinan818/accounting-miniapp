@@ -26,6 +26,20 @@ export function filterRecords(records, { query = '', type = 'all', category = ''
   ))
 }
 
+// 只限制展示条目，分组金额仍来自完整筛选结果；新增目标可在窗口外单独露出。
+export function windowRecordGroups(groups, { limit = 60, revealId = '' } = {}) {
+  if (!Array.isArray(groups) || !Number.isSafeInteger(limit) || limit < 1) throw new Error('账单显示范围无效')
+  let offset = 0
+  return groups.flatMap(group => {
+    const count = Math.max(0, limit - offset)
+    const records = group.records.slice(0, count)
+    const target = revealId ? group.records.find(record => record.id === revealId) : null
+    if (target && !records.includes(target)) records.push(target)
+    offset += group.records.length
+    return records.length ? [{ ...group, records, totalCount: group.records.length }] : []
+  })
+}
+
 // Geometry from actual cents. All labels/amounts remain normal accessible page text.
 export function getCategoryWheel(categories) {
   if (!Array.isArray(categories)) throw new Error('分类数据无法读取')

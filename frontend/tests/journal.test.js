@@ -1,11 +1,46 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { searchRecords, filterRecords, getCategoryWheel, JOURNAL_COLORS } from '../src/utils/journal.js'
+import { searchRecords, filterRecords, windowRecordGroups, getCategoryWheel, JOURNAL_COLORS } from '../src/utils/journal.js'
 const rows = [
   { id:'a',type:'expense',amount:12.5,category:'餐饮',remark:'Coffee 咖啡',date:'2026-10-03',time:'12:00' },
   { id:'b',type:'income',amount:100,category:'工资',remark:'九月工资',date:'2026-10-02',time:'09:00' },
   { id:'gone',type:'expense',amount:20,category:'餐饮',remark:'咖啡',date:'2026-10-03',deletedAt:'2026-10-03T00:00:00Z' },
 ]
+
+test('长列表窗口跨日截断但保留每日完整金额，展开不重复或漏条目', () => {
+  const records = Array.from({ length: 125 }, (_, i) => ({ id: String(i), amount: 1 }))
+  const groups = [{ date: '2026-10-04', income: 0, expense: 70, records: records.slice(0, 70) },
+    { date: '2026-10-03', income: 0, expense: 55, records: records.slice(70) }]
+  const before = JSON.stringify(groups)
+  const first = windowRecordGroups(groups)
+  assert.equal(first.length, 1); assert.equal(first[0].records.length, 60)
+  assert.equal(first[0].expense, 70); assert.equal(first[0].totalCount, 70)
+  const second = windowRecordGroups(groups, { limit: 120 })
+  assert.deepEqual(second.map(group => group.records.length), [70, 50]); assert.equal(second[1].expense, 55)
+  assert.deepEqual(windowRecordGroups(groups, { limit: 180 }).flatMap(group => group.records), records)
+  assert.equal(JSON.stringify(groups), before)
+})
+
+test('窗口外新增目标保持可见，逐批展开后不重复，顺序与对象身份保留', () => {
+  const records = Array.from({ length: 125 }, (_, i) => ({ id: String(i), amount: 1 }))
+  const groups = [{ date: '2026-10-04', expense: 125, records }]
+  const first = windowRecordGroups(groups, { revealId: '124' })[0]
+  assert.equal(first.records.length, 61); assert.equal(first.records.at(-1), records[124])
+  const all = windowRecordGroups(groups, { limit: 180, revealId: '124' })[0]
+  assert.equal(all.records.length, 125); assert.equal(new Set(all.records.map(record => record.id)).size, 125)
+  assert.deepEqual(all.records, records)
+})
+
+test('先在完整列表筛选再分页，窗口外匹配可见且不恢复删除或虚构目标', () => {
+  const records = [...Array.from({ length: 65 }, (_, i) => ({ ...rows[0], id: String(i), remark: '午饭' })),
+    { ...rows[0], id: 'coffee' }, rows[2]]
+  const matched = filterRecords(records, { query: '咖啡', type: 'expense', category: '餐饮' })
+  const result = windowRecordGroups([{ date: rows[0].date, expense: 12.5, records: matched }], { revealId: 'gone' })
+  assert.deepEqual(result[0].records.map(record => record.id), ['coffee'])
+  assert.equal(result[0].totalCount, 1)
+  assert.deepEqual(windowRecordGroups([]), [])
+  for (const limit of [0, -1, 1.5, Infinity]) assert.throws(() => windowRecordGroups([], { limit }), /范围/)
+})
 test('只读搜索支持分类/备注/金额/日期/收支且不恢复删除项', () => {
   for(const [query,ids]of [['餐饮',['a']],['COFFEE',['a']],['12.50',['a']],['2026-10-02',['b']],['收入',['b']],['咖啡',['a']]])assert.deepEqual(searchRecords(rows,query).map(r=>r.id),ids)
 })
