@@ -1,4 +1,10 @@
-## 当前入口：新窗口编辑窗口时序验证（2026-10-04）
+## 当前入口：明细跨日标签（2026-10-04）
+
+Bills实际setup已复现缓存标签跨日仍“今天”，day-before/day-primed-before保留；getDateLabel依赖useLocalDay响应日，跨月/定时/focus更新“昨日”与固定日期。历史月份、搜索及编辑快照不变，0写入，时钟/监听卸载释放。8项针对、311项前端及demo/server两构建通过，材料editor-interactions-2026-10-04；GUI/真机/实际隔夜未验。13aff6f20b9a80b59189599571932410746f3172普通Push与ls-remote完整一致，交接两提交已一并上传。compact=0，automation原生目标保持，19940/20820仅本机监听且未重启。
+
+下一项明细异步定位/翻页焦点旧意图取证：watch highlightedId与loadMoreRecords在nextTick后用原目标，核快速改变定位/筛选/月份或离页时不抢焦点；尚无复现证据，先核真实setup再最小修复。不需要用户操作，无真实业务/AI/邮件写入。
+
+## 前一节点：新窗口编辑窗口时序验证（2026-10-04）
 
 新聊天01a103ce-1650-7d50-bbe6-8c08120e0346核success、目标与b690c5c完整finalCommit在历史，原生automation落盘每小时/ACTIVE/failed_runs_only保持，源不再共享写入；compact基准0，旧2只历史。Git开工干净/main，服务19940/20820仍仅127.0.0.1:8080/5174，未重启。官方只读API现核私有/无Pages/0 workflows/0 deployments，交接两提交尚待本节点统一普通Push。
 

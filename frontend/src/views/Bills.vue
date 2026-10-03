@@ -19,10 +19,12 @@ import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { getCategoryArtwork } from '@/utils/categoryArtwork'
 import { SERVER_MODE } from '@/api/mode'
 import { useBillQuery, useLedgerReload } from '@/utils/navigation'
+import { useLocalDay } from '@/utils/calendar'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
 const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore)
+const { today } = useLocalDay()
 
 // 3. 响应式数据
 const route = useRoute()
@@ -165,13 +167,13 @@ function changeMonth(offset) {
 
 function getDateLabel(date) {
   const target = dayjs(date)
-  const today = dayjs().startOf('day')
+  const currentDay = dayjs(today.value).startOf('day')
 
-  if (target.isSame(today, 'day')) {
+  if (target.isSame(currentDay, 'day')) {
     return '今天'
   }
 
-  if (target.isSame(today.subtract(1, 'day'), 'day')) {
+  if (target.isSame(currentDay.subtract(1, 'day'), 'day')) {
     return '昨天'
   }
 

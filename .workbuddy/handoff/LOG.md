@@ -946,3 +946,9 @@
 - editor-interactions-2026-10-04/before.log真实5项2通过3失败：Editor删除确认返回输入/焦点调用通过，Bills保存迟到改变旧月份、删除迟到更新提示、冲突迟到更新旧错误。onScopeDispose撤销页面回调，Store事实仍正常处理；补页面存活保存/删除重试/版本恢复与旧入口拒绝，7项通过。
 - npm test 310项通过，npm run build/build:server均通过，无lint/typecheck脚本，无依赖/锁文件变化。native dialog/focus是离线方法调用，GUI/窄屏/真机未验。官方只读API核私有/无Pages/0 workflows/0 deployments，远端e28b727；交接两提交及本节点普通Push前核差异和秘密，不强推。
 - 下一项明细日期标签跨日取证，保留当前月份/筛选/编辑输入，不改业务日期或自动刷新账本。独立节点保存后直接继续，用户无需操作。
+
+## 2026-10-04 · 明细跨日标签
+
+- 13aff6f20b9a80b59189599571932410746f3172普通Push及ls-remote与HEAD完整一致，源两交接提交同时上传；Bills本机模块HTTP200仅证明供给，服务19940/20820仍仅127.0.0.1，未重启。
+- day-before实际8项7通过1失败：首次跨日因搜索改变触发重算而正确，第二次无变化仍昨天；补读取缓存day-primed-before后第一次跨月仍今天。Bills分组computed未依赖响应时间是根因。getDateLabel接已有useLocalDay，跨月focus/定时更新日期标签，所选月/搜索/编辑快照保持，写请求0，时钟/监听释放。
+- 8项针对/311项全量及两构建通过，材料editor-interactions-2026-10-04。无新依赖/真实账本/AI/邮件写入，GUI/真机/实际隔夜未验，compact=0。下一项定位/翻页nextTick旧目标焦点取证，先验证快速新意图，不凭猜测。

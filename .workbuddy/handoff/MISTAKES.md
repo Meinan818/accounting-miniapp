@@ -239,3 +239,7 @@
 
 - 实际Bills setup离页后迟到保存改旧月份、删除写提示、冲突回填旧错误，before5项2通过3失败保留；增加onScopeDispose守卫，7项针对/310项全量/两构建通过。Editor原表单往返与焦点调用本来通过，不误称原生GUI缺陷。以后异步业务需同时核Store事实与页面生命周期，并验证页面存活的正常重试。
 - 初次接手STATE patch基于success前读到的旧automation字段，原子拒绝无写入；重读源最终STATE后只改实际匹配的任务与计数。以后交接回执完成后重新读共享文件再patch，不沿用pending时的字段。
+
+## 2026-10-04 · 明细分组今日标签缓存
+
+- Bills直接dayjs取日无法让computed失效，跨日无账单/筛选变化时标签过期；day-before及读取缓存后的day-primed-before均保留。复用useLocalDay响应日期，8项针对/311项全量/两构建通过。防范：日期测试先实际读取computed缓存，避免用户输入触发重算掩盖缺少时钟依赖；不将模拟时间通过称实际隔夜验收。

@@ -11,6 +11,7 @@ import { validateRecord } from '../src/utils/ledger.js'
 import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { filterRecords, windowRecordGroups } from '../src/utils/journal.js'
 import { getRecordTotals } from '../src/utils/money.js'
+import { useLocalDay } from '../src/utils/calendar.js'
 
 function source(file) {
   const { descriptor } = parse(readFileSync(new URL('../src/' + file, import.meta.url), 'utf8'))
@@ -111,17 +112,18 @@ test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚�
   } finally { if (state.view) state.dispose() }
 })
 
-function mountBills() {
+function mountBills({ records = [{ ...original }], dateClock = {} } = {}) {
   const bills = source('views/Bills.vue'), calls = []
   let finish, fail, values
-  const store = Vue.reactive({ records: [{ ...original }], storageError: '', refresh: async () => true,
+  const store = Vue.reactive({ records, storageError: '', refresh: async () => true,
     updateRecord: (...args) => { calls.push(['update', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) },
     deleteRecord: (...args) => { calls.push(['delete', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) } })
   const focusTarget = node('notice')
   const app = renderer.createApp({ setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => Vue.reactive({ query: { month: '2026-10' } }),
+      useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
       useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth')
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords')
     values.noticeElement.value = focusTarget
     return () => Vue.h('main')
   } })
@@ -189,4 +191,37 @@ test('仍在明细页删除错误保留编辑且可重试，成功聚焦提示�
     await state.values.deleteEdit(); await state.values.saveEdit({ amount: 12.34 })
     assert.equal(state.calls.length, 2)
   } finally { state.dispose() }
+})
+
+test('明细跨日月只更新今日/昨日标签，保留历史月份/搜索/编辑，不写账单并释放时钟', async () => {
+  const OriginalDate = globalThis.Date
+  let time = new OriginalDate('2026-10-31T12:00:00'), day = '2026-10-31', cleared = false, state, tick
+  globalThis.Date = class extends OriginalDate {
+    constructor(...args) { super(...(args.length ? args : [time.getTime()])) }
+    static now() { return time.getTime() }
+  }
+  const events = new Map(), records = [{ ...original, date: '2026-10-31' }, { ...original, id: 'other', date: '2026-10-30' }]
+  try {
+    state = mountBills({ records, dateClock: { now: () => day, documentTarget: null,
+      eventTarget: { addEventListener: (name, listener) => events.set(name, listener), removeEventListener: name => events.delete(name) },
+      timers: { setInterval: callback => { tick = callback; return 7 }, clearInterval: id => { assert.equal(id, 7); cleared = true } } } })
+    assert.deepEqual(state.values.groupedRecords.value.map(group => group.label), ['今天', '昨天'])
+    state.values.searchText.value = '合成账单'
+    state.values.editingRecord.value.remark = '未保存编辑快照'
+    assert.deepEqual(state.values.groupedRecords.value.map(group => group.label), ['今天', '昨天'])
+    time = new OriginalDate('2026-11-01T12:00:00'); day = '2026-11-01'; events.get('focus')?.()
+    await Vue.nextTick()
+    assert.equal(state.values.groupedRecords.value[0].label, '昨天')
+    assert.match(state.values.groupedRecords.value[1].label, /^10月30日/)
+    time = new OriginalDate('2026-11-02T12:00:00'); day = '2026-11-02'; tick?.()
+    await Vue.nextTick()
+    assert.match(state.values.groupedRecords.value[0].label, /^10月31日/)
+    assert.equal(state.values.selectedMonth.value, '2026-10')
+    assert.equal(state.values.searchText.value, '合成账单')
+    assert.equal(state.values.editingRecord.value.remark, '未保存编辑快照')
+    assert.equal(state.calls.length, 0)
+    state.dispose()
+    assert.equal(events.size, 0)
+    assert.equal(cleared, true)
+  } finally { state?.dispose(); globalThis.Date = OriginalDate }
 })
