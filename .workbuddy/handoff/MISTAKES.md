@@ -277,3 +277,6 @@
 ## 2026-10-04 · 对话重建hydrate与未保存基准
 - Pinia $dispose保留state，而新setup读当前存储后hydrate旧refs；原消息/错误回填，expectedRaw却来自新存储，可能覆盖其他页历史或把A内容写入B键。rebuild-before38项32通过6失败保留，38项针对/346全量/两构建修复后通过。只跳过hydrate会丢未保存草稿，必须同时保留按Pinia/账号隔离的未保存快照及原写入基准；同tick释放须比较消息快照，不仅依赖异步watch标记。
 - 本轮只读依赖查询假定pinia.mjs及根node_modules，Node print+ESM错误；按frontend工作目录、import.meta.resolve确定pinia.js后已核实际源码。今后先核包入口再读取版本和实现，不安装依赖解决路径猜错。
+
+## 2026-10-04 · 对话身份watch清空与恢复回执
+- 原身份watch仅清空messages/设restorationBlocked，清空前未保存草稿丢失；恢复await中身份变化仍认成功/覆盖错误，旧动作继续修改空实例。identity-before41项38通过3失败保留。先按账号保留草稿，再永久撤销旧实例、统一isCurrent覆盖动作/await/监听，41项针对/349全量/两构建通过。身份变回同id不等于原实例会话可复活，需新实例；清屏与保留隔离快照分别验证。

@@ -85,12 +85,15 @@ function readHistory(key = STORAGE_KEY) {
 }
 
 export const useConversationStore = defineStore('conversation', () => {
-  const owner = SERVER_MODE ? useAuthStore().user?.id : null
+  const auth = SERVER_MODE ? useAuthStore() : null
+  const owner = auth?.user?.id ?? null
   if (SERVER_MODE && !owner) throw new Error('请先登录再打开对话')
   const key = SERVER_MODE ? `miaoji_account_conversation_v1_${owner}` : STORAGE_KEY
   const pinia = getActivePinia()
   const retained = unsavedSnapshots.get(pinia)?.get(key)
   let active = true
+  let identityChanged = false
+  const isCurrent = () => active && !identityChanged && (!auth || auth.user?.id === owner)
   const persistenceError = skipHydrate(ref(''))
   const restorationBlocked = skipHydrate(ref(false))
   const storageConflict = skipHydrate(ref(false))
@@ -118,8 +121,7 @@ export const useConversationStore = defineStore('conversation', () => {
   const isThinking = skipHydrate(ref(false))
   const mascotMood = skipHydrate(ref('happy'))
   if (storageConflict.value) conflictMessage()
-  onScopeDispose(() => {
-    active = false
+  function retainUnsavedSnapshot() {
     const currentRaw = JSON.stringify(messages.value)
     if (currentRaw !== cleanMessagesRaw) {
       let snapshots = unsavedSnapshots.get(pinia)
@@ -128,27 +130,32 @@ export const useConversationStore = defineStore('conversation', () => {
         restorationBlocked: restorationBlocked.value, storageConflict: storageConflict.value,
         persistenceError: persistenceError.value })
     } else unsavedSnapshots.get(pinia)?.delete(key)
+  }
+  onScopeDispose(() => {
+    if (!identityChanged) retainUnsavedSnapshot()
+    active = false
   })
   function addMessage(message) {
+    if (!isCurrent()) return
     const entry = { id: message.id || createId('message'), role: message.role || 'assistant', kind: message.kind || 'text',
       content: message.content || '', record: message.record || null, confirmed: Boolean(message.confirmed),
       group: message.group || null, createdAt: message.createdAt || new Date().toISOString() }
     messages.value.push(entry)
     return entry
   }
-  function updateRecord(id, record) { const m = messages.value.find(m => m.id === id); if (m) m.record = { ...record } }
-  function markRecordConfirmed(id) { const m = messages.value.find(m => m.id === id); if (m) m.confirmed = true }
-  function updateGroup(id, group) { const m = messages.value.find(m => m.id === id); if (m) m.group = group }
-  function setThinking(v) { isThinking.value = Boolean(v) }
-  function setMascotMood(v) { mascotMood.value = v }
-  function clearConversation() { messages.value = [welcome()]; mascotMood.value = 'happy' }
+  function updateRecord(id, record) { if (!isCurrent()) return; const m = messages.value.find(m => m.id === id); if (m) m.record = { ...record } }
+  function markRecordConfirmed(id) { if (!isCurrent()) return; const m = messages.value.find(m => m.id === id); if (m) m.confirmed = true }
+  function updateGroup(id, group) { if (!isCurrent()) return; const m = messages.value.find(m => m.id === id); if (m) m.group = group }
+  function setThinking(v) { if (isCurrent()) isThinking.value = Boolean(v) }
+  function setMascotMood(v) { if (isCurrent()) mascotMood.value = v }
+  function clearConversation() { if (!isCurrent()) return; messages.value = [welcome()]; mascotMood.value = 'happy' }
   function conflictMessage() {
     storageConflict.value = true
     persistenceError.value = '另一页面已更新对话，本页已暂停写入，不会用旧历史覆盖。'
       + (hasUnsavedChanges.value ? '本页未保存的消息或草稿仍在此页，请先备份两份内容，不要刷新或清除存储。' : '可点击重新读取最新对话，账单仍以明细为准。')
   }
   function persist(value) {
-    if (!active) return false
+    if (!isCurrent()) return false
     if (storageConflict.value) { conflictMessage(); return false }
     try {
       // Check immediately before writing. This protects known stale snapshots, not an atomic cross-tab lock.
@@ -168,10 +175,10 @@ export const useConversationStore = defineStore('conversation', () => {
     }
   }
   async function retryPersistence() {
-    if (!active) return false
+    if (!isCurrent()) return false
     // Drain queued edits before deciding whether re-reading can discard anything.
     await nextTick()
-    if (!active) return false
+    if (!isCurrent()) return false
     if (!restorationBlocked.value && !storageConflict.value) return persist(messages.value)
     if (hasUnsavedChanges.value) {
       persistenceError.value = '原对话仍受保护，本页已有未保存消息或草稿；为避免覆盖任一份内容，暂不能重新读取。请先备份两份内容，不要刷新或清除存储。'
@@ -185,7 +192,7 @@ export const useConversationStore = defineStore('conversation', () => {
       cleanMessagesRaw = JSON.stringify(recovered.messages)
       restorationBlocked.value = false; storageConflict.value = false
       await nextTick()
-      if (!active) return false
+      if (!isCurrent()) return false
       // A storage event can arrive while the view updates: never acknowledge an already-stale reload.
       if (typeof window !== 'undefined' && window.localStorage.getItem(key) !== expectedRaw) {
         conflictMessage(); return false
@@ -193,19 +200,20 @@ export const useConversationStore = defineStore('conversation', () => {
       persistenceError.value = ''; hasUnsavedChanges.value = false
       return true
     } catch {
-      if (active) { restorationBlocked.value = true; blockedMessage() }
+      if (isCurrent()) { restorationBlocked.value = true; blockedMessage() }
       return false
     }
-    finally { if (active) restoring = false }
+    finally { if (isCurrent()) restoring = false }
   }
   watch(messages, value => {
-    if (restoring) return
+    if (!isCurrent() || restoring) return
     hasUnsavedChanges.value = true
     if (!restorationBlocked.value) persist(value)
   }, { deep: true })
   if (typeof window !== 'undefined' && window.addEventListener) {
     const target = window
     const listener = event => {
+      if (!isCurrent()) return
       if (event.key !== key && event.key != null) return
       if (restorationBlocked.value) return
       try {
@@ -218,11 +226,13 @@ export const useConversationStore = defineStore('conversation', () => {
     onScopeDispose(() => target.removeEventListener?.('storage', listener))
   }
   if (SERVER_MODE) {
-    const auth = useAuthStore()
     watch(() => auth.user?.id, value => {
-      if (value === owner) return
+      if (value === owner || identityChanged) return
+      // Retire before hiding the old identity; returning to the same id needs a new instance.
+      retainUnsavedSnapshot()
+      identityChanged = true
       restorationBlocked.value = true
-      messages.value = []; isThinking.value = false
+      messages.value = []; isThinking.value = false; mascotMood.value = 'happy'
       persistenceError.value = '账号已变化，旧对话已保留，当前页面暂停写入。'
     }, { flush: 'sync' })
   }

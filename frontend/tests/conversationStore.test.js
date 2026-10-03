@@ -284,15 +284,20 @@ test('重建保留坏历史期间新增草稿，多次释放仍保护两份内�
   assert.equal(await rebuilt.retryPersistence(), false)
   assert.equal(data.get(key), latest); assert.equal(writes, 0)
 })
-test('正式同Pinia重建按账号键隔离，A未保存草稿不回填或写入B历史', async () => {
-  const auth = reactive({ user: { id: 'synthetic-A' } })
+let serverModuleNumber = 0
+async function loadServerConversation(auth) {
   const sourceUrl = new URL('../src/stores/conversationStore.js', import.meta.url)
   let source = await readFile(sourceUrl, 'utf8')
   globalThis.__conversationAuth = auth
   source = source.replace("import { SERVER_MODE } from '../api/mode.js'", 'const SERVER_MODE = true')
     .replace("import { useAuthStore } from './authStore.js'", 'const useAuthStore = () => globalThis.__conversationAuth')
     .replace(/from '([^']+)'/g, (_, path) => `from '${path.startsWith('.') ? new URL(path, sourceUrl).href : import.meta.resolve(path)}'`)
-  const { useConversationStore: useServerConversation } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)
+  const { useConversationStore: useServerConversation } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}#${serverModuleNumber++}`)
+  return useServerConversation
+}
+test('正式同Pinia重建按账号键隔离，A未保存草稿不回填或写入B历史', async () => {
+  const auth = reactive({ user: { id: 'synthetic-A' } })
+  const useServerConversation = await loadServerConversation(auth)
   const aKey = 'miaoji_account_conversation_v1_synthetic-A', bKey = 'miaoji_account_conversation_v1_synthetic-B'
   const aRaw = textHistory('A历史'), bRaw = textHistory('B历史'); data.set(aKey, aRaw); data.set(bKey, bRaw)
   try {
@@ -307,6 +312,49 @@ test('正式同Pinia重建按账号键隔离，A未保存草稿不回填或写�
     assert.equal(restoredA.messages.at(-1).content, 'A未保存草稿')
     assert.equal(await restoredA.retryPersistence(), true)
     assert.equal(JSON.parse(data.get(aKey)).at(-1).content, 'A未保存草稿'); restoredA.$dispose()
+  } finally { delete globalThis.__conversationAuth }
+})
+test('身份先变化再释放，A未保存草稿保留到回到A的新实例，B不能读取', async () => {
+  const auth = reactive({ user: { id: 'synthetic-A' } }), useServerConversation = await loadServerConversation(auth)
+  const aKey = 'miaoji_account_conversation_v1_synthetic-A', bKey = 'miaoji_account_conversation_v1_synthetic-B'
+  const aRaw = textHistory('A原历史'), bRaw = textHistory('B原历史'); data.set(aKey, aRaw); data.set(bKey, bRaw)
+  try {
+    const a = useServerConversation(); fail = true; a.addMessage({ content: 'A身份变化前未保存' }); await nextTick(); fail = false
+    auth.user = { id: 'synthetic-B' }
+    assert.deepEqual(a.messages, []); assert.equal(await a.retryPersistence(), false)
+    a.$dispose(); const b = useServerConversation()
+    assert.equal(JSON.stringify(b.messages), bRaw); assert.equal(writes, 0); b.$dispose()
+    auth.user = { id: 'synthetic-A' }; const newA = useServerConversation()
+    assert.equal(newA.messages.at(-1).content, 'A身份变化前未保存')
+    assert.equal(newA.hasUnsavedChanges, true); assert.equal(await newA.retryPersistence(), true)
+    assert.equal(JSON.parse(data.get(aKey)).at(-1).content, 'A身份变化前未保存')
+    assert.equal(data.get(bKey), bRaw); newA.$dispose()
+  } finally { delete globalThis.__conversationAuth }
+})
+test('身份改变期间旧恢复回执不认成功，切回同账号也不能复活旧实例', async () => {
+  const auth = reactive({ user: { id: 'synthetic-A' } }), useServerConversation = await loadServerConversation(auth)
+  const aKey = 'miaoji_account_conversation_v1_synthetic-A'
+  try {
+    data.set(aKey, '{bad-A'); const a = useServerConversation(), latest = textHistory('恢复A原文')
+    data.set(aKey, latest); const pending = a.retryPersistence(); await nextTick()
+    assert.equal(JSON.stringify(a.messages), latest)
+    auth.user = null
+    assert.equal(await pending, false); assert.deepEqual(a.messages, [])
+    assert.match(a.persistenceError, /账号已变化/)
+    auth.user = { id: 'synthetic-A' }
+    assert.equal(await a.retryPersistence(), false); assert.deepEqual(a.messages, [])
+    assert.equal(data.get(aKey), latest); assert.equal(writes, 0); a.$dispose()
+  } finally { delete globalThis.__conversationAuth }
+})
+test('同tick身份改变前草稿可保留，旧实例迟到消息不回填新身份', async () => {
+  const auth = reactive({ user: { id: 'synthetic-A' } }), useServerConversation = await loadServerConversation(auth)
+  try {
+    const a = useServerConversation(); a.addMessage({ content: '同tick A草稿' }); auth.user = { id: 'synthetic-B' }
+    a.addMessage({ content: '旧实例迟到消息' }); a.setThinking(true); a.setMascotMood('thinking'); await nextTick()
+    assert.deepEqual(a.messages, []); assert.equal(a.isThinking, false); assert.equal(writes, 0)
+    a.$dispose(); auth.user = { id: 'synthetic-A' }; const newA = useServerConversation()
+    assert.equal(newA.messages.at(-1).content, '同tick A草稿'); assert.equal(newA.hasUnsavedChanges, true)
+    newA.$dispose()
   } finally { delete globalThis.__conversationAuth }
 })
 test('存储事件只提示冲突，不自动重读或覆盖，显式重读不产生写入', async () => {

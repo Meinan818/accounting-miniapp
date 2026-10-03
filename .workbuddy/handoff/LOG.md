@@ -1004,3 +1004,9 @@
 - 真实Pinia4.0.3与合成存储rebuild-before38项32通过6失败：setup当前读取被遗留state覆盖，损坏/已修复历史保护状态错误，未保存草稿新expectedRaw允许覆盖外部历史，同tick标记丢失，A旧历史回填B。Pinia本地pinia.js的dispose/hydrate源码已核；跳过hydrate同时按Pinia/账号保留未保存快照与原基准，JSON脱离旧实例引用，仅已保存历史重读当前存储。
 - 38项针对、346项全量、demo/server两构建通过（rebuild-after/frontend/demo/server日志），GUI/真机/实际隔夜仍未验。无真实业务/账号/照片/AI/邮件调用，无新依赖。官方只读API核私有/无Pages/0 workflows/0 deployments、远端6cd15ee完整一致；本节点保存上传实际结果见rebuild-sync。
 - 读依赖最初假定pinia.mjs及根目录node_modules路径失败，实际4.0.3入口为frontend/node_modules/pinia/dist/pinia.js，已按import.meta.resolve核实；只读错误未影响测试，不默认重装。下一项身份变化先于释放的retry/清空前未保存草稿取证；继续无需用户操作，compact=1保持。
+
+## 2026-10-04 · 身份变化先于Store释放
+
+- 重建节点本地118f381保存，Git443失败rebuild-push原文保留；既有官方同SHA/force:false适配器实际同步1提交/9blob，完整118f381891f569f25c36599935bc621e3c1fa9da一致（rebuild-sync）。不改权限/可见性/部署。
+- identity-before41项38通过3失败：身份watch先清空丢未保存草稿，恢复第二个nextTick后仍成功并清账号变化错误，旧动作可回填已清空对话。先retained snapshot再清空、identityChanged永久撤销旧实例，isCurrent统一覆盖动作/重试/await/监听；返回原账号的新实例可恢复，B不读A。
+- 41项Store/349全量/demo及server两构建通过（identity-after/frontend/demo/server），真实账号/账本/照片/AI/邮件调用0，无依赖变化；GUI/真机/实际隔夜待验。compact=1保持，自动续办沿用，不要求用户操作。下一项恢复nextTick间隙新编辑和重复重试，不能忽略用户编辑并误报已保存；本节点保存上传实际结果见identity-sync。

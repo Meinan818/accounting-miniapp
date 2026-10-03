@@ -1,4 +1,10 @@
-## 当前入口：对话Store同Pinia重建（2026-10-04）
+## 当前入口：对话Store身份变化（2026-10-04）
+
+41项Store/349全量与两构建通过。identity-before41项38通过3失败：身份先变化时清空丢未保存草稿，恢复迟到仍成功/清账号变化错误，旧动作回填已清空实例。清空前隔离保留快照、identityChanged永久撤销旧实例，统一isCurrent覆盖动作/持久化/恢复await/监听；原账号新实例恢复草稿，新账号只读取自己的键，同tick未保存也保留。合成auth/storage，无真实业务/AI/邮件调用。compact=1保持，GUI/真机/实际隔夜待验。
+
+重建118f381891f569f25c36599935bc621e3c1fa9da同SHA/force:false官方接口上传成功，Git443原失败rebuild-push.log保留，rebuild-sync核远端完整一致。身份节点保存/上传实际结果见identity-sync，不改可见性/权限/部署；服务19940/20820未动。下一项retryPersistence恢复nextTick间隙新消息与重复重试，先取证，不能把restoring忽略用户编辑当作已保存。本机预览http://127.0.0.1:5174，无需用户操作。
+
+## 前一节点：对话Store同Pinia重建（2026-10-04）
 
 本聊天实际第1次上下文压缩已告知并补STATE=1，同聊天恢复不归零。rebuild-before38项32通过6失败，Pinia4.0.3的dispose保留state、setup后hydrate旧refs，导致旧历史/错误覆盖新读取，旧账号对话回填新账号，未保存标记/基准不一致。消息和生命周期refs skipHydrate，WeakMap按Pinia和账号仅保存未保存快照/原expectedRaw，释放捕获同tick更改并JSON脱离旧引用；已保存内容重读当前存储，不写入初始化。
 
