@@ -398,4 +398,122 @@ class AccountLedgerIntegrationTest {
                 .andExpect(status().isBadRequest());
         noWrites(owner(browser));
     }
+
+    @Test void categoryCatalogRequiresLoginAndSeparatesIncomeOtherFromExpenseOther() throws Exception {
+        mvc.perform(get("/api/categories")).andExpect(status().isUnauthorized());
+        var browser = account();
+        mvc.perform(get("/api/categories").session(browser.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.expense.length()").value(8)).andExpect(jsonPath("$.income.length()").value(6))
+                .andExpect(jsonPath("$.expense[7]").value("其他")).andExpect(jsonPath("$.income[5]").value("其他"));
+    }
+
+    @Test void combinedFiltersUseSameAccountAndFilteredPageTotalWithoutChangingMonthStatistics() throws Exception {
+        var browser = account();
+        write(browser, UUID.randomUUID(), input("10.10").replace("餐饮", "其他").replace("测试午饭", "note 10%_ABC!"), false)
+                .andExpect(status().isCreated());
+        write(browser, UUID.randomUUID(), input("20.20").replace("expense", "income").replace("餐饮", "其他"), false)
+                .andExpect(status().isCreated());
+        create(browser, "0.10");
+        create(account(), "99.00");
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("category", "其他"))
+                .andExpect(jsonPath("$.total").value(2)).andExpect(jsonPath("$.records.length()").value(2));
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10")
+                .param("category", "其他").param("type", "expense").param("date", "2026-10-03").param("q", "abc"))
+                .andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.records[0].amount").value("10.10"));
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10")
+                .param("q", "其他 abc 10.10 支出 2026-10"))
+                .andExpect(jsonPath("$.total").value(1)).andExpect(jsonPath("$.records[0].amount").value("10.10"));
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("size", "1").param("page", "2"))
+                .andExpect(jsonPath("$.total").value(3)).andExpect(jsonPath("$.records.length()").value(1));
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("size", "1").param("page", "3"))
+                .andExpect(jsonPath("$.total").value(3)).andExpect(jsonPath("$.records").isEmpty());
+        mvc.perform(get("/api/statistics/month").session(browser.session()).param("month", "2026-10"))
+                .andExpect(jsonPath("$.count").value(3)).andExpect(jsonPath("$.expense").value("10.20"))
+                .andExpect(jsonPath("$.income").value("20.20"));
+    }
+
+    @Test void searchTreatsWildcardsAndSqlTextAsLiteralAndRejectsInvalidFilterCombination() throws Exception {
+        var browser = account();
+        write(browser, UUID.randomUUID(), input("10.00").replace("测试午饭", "10%_SALE!"), false).andExpect(status().isCreated());
+        create(browser, "20.00");
+        for (var query : List.of("%", "_", "!", "sale", "10.00")) {
+            mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("q", query))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.total").value(1));
+        }
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("q", "' OR 1=1 --"))
+                .andExpect(jsonPath("$.total").value(0));
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("type", "expense").param("category", "工资"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("type", "unknown"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("date", "2026-11-01"))
+                .andExpect(status().isBadRequest());
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("q", "x".repeat(121)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test void detailedStatisticsMatchLedgerAndExcludeOtherAccountsOtherMonthsAndDeletedRecords() throws Exception {
+        var browser = account();
+        create(browser, "0.10");
+        write(browser, UUID.randomUUID(), input("0.20").replace("餐饮", "其他"), false).andExpect(status().isCreated());
+        write(browser, UUID.randomUUID(), input("0.50").replace("expense", "income").replace("餐饮", "其他"), false)
+                .andExpect(status().isCreated());
+        write(browser, UUID.randomUUID(), input("100.00").replace("2026-10-03", "2026-11-01"), false).andExpect(status().isCreated());
+        var deletedId = create(browser, "10.00").path("id").asText();
+        mvc.perform(delete("/api/records/" + deletedId).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+                .param("version", "0")).andExpect(status().isNoContent());
+        create(account(), "99.00");
+        mvc.perform(get("/api/statistics/month/detail").session(browser.session()).param("month", "2026-10"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.income").value("0.50"))
+                .andExpect(jsonPath("$.expense").value("0.30")).andExpect(jsonPath("$.balance").value("0.20"))
+                .andExpect(jsonPath("$.count").value(3)).andExpect(jsonPath("$.incomeCount").value(1))
+                .andExpect(jsonPath("$.expenseCount").value(2)).andExpect(jsonPath("$.categories.expense[0].category").value("其他"))
+                .andExpect(jsonPath("$.categories.expense[0].percent").value("66.7"))
+                .andExpect(jsonPath("$.categories.expense[1].percent").value("33.3"))
+                .andExpect(jsonPath("$.categories.income[0].category").value("其他"));
+        mvc.perform(get("/api/statistics/month/detail").session(browser.session()).param("month", "2026-12"))
+                .andExpect(jsonPath("$.income").value("0.00")).andExpect(jsonPath("$.count").value(0))
+                .andExpect(jsonPath("$.categories.expense").isEmpty()).andExpect(jsonPath("$.categories.income").isEmpty());
+    }
+
+    @Test void businessTimeIsValidatedPersistedSearchableAndPartOfRequestIdentity() throws Exception {
+        var browser = account();
+        var key = UUID.randomUUID();
+        var body = input("1.00").replace("}", ",\"time\":\"21:15\"}");
+        var original = write(browser, key, body, false).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.time").value("21:15")).andReturn();
+        var id = json.readTree(original.getResponse().getContentAsString()).path("id").asText();
+        write(browser, key, body, false).andExpect(status().isOk()).andExpect(jsonPath("$.time").value("21:15"));
+        write(browser, key, body.replace("21:15", "21:16"), false).andExpect(status().isConflict());
+        for (var invalid : List.of("24:00", "9:30", "12:60", "")) {
+            write(browser, UUID.randomUUID(), body.replace("21:15", invalid), false).andExpect(status().isBadRequest());
+        }
+        mvc.perform(get("/api/records").session(browser.session()).param("month", "2026-10").param("q", "21:15"))
+                .andExpect(jsonPath("$.total").value(1));
+        mvc.perform(put("/api/records/" + id).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"record\":" + body.replace("21:15", "22:05") + "}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.time").value("22:05"));
+    }
+
+    private record LegacyInput(String type, String amount, java.time.LocalDate date, String category, String note) {}
+    private record LegacyView(String id, String type, String amount, java.time.LocalDate date, String category, String note, long version) {}
+
+    @Test void storedV2RequestWithoutTimeStillReplaysAfterAddingOptionalTime() throws Exception {
+        var browser = account();
+        var owner = owner(browser);
+        var key = UUID.randomUUID();
+        var id = UUID.randomUUID().toString();
+        var oldInput = new LegacyInput("expense", "1.20", java.time.LocalDate.of(2026, 10, 3), "餐饮", "测试午饭");
+        var oldPayload = "single-v1\n" + json.writeValueAsString(List.of(oldInput));
+        var hash = java.util.HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256")
+                .digest(oldPayload.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        records.insert(owner, id, new RecordInput(oldInput.type(), oldInput.amount(), oldInput.date(), oldInput.category(), oldInput.note()));
+        requests.claim(owner, key.toString(), hash);
+        requests.complete(owner, key.toString(), json.writeValueAsString(List.of(new LegacyView(id, "expense", "1.20",
+                oldInput.date(), "餐饮", "测试午饭", 0))));
+        write(browser, key, input("1.20"), false).andExpect(status().isOk())
+                .andExpect(header().string("Idempotency-Replayed", "true")).andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.time").doesNotExist());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id = ?", Long.class, owner)).isEqualTo(1);
+    }
 }

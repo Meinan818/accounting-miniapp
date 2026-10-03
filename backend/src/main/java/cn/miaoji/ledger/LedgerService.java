@@ -4,18 +4,18 @@ import cn.miaoji.common.ApiException;
 import jakarta.validation.Validator;
 import java.time.DateTimeException;
 import java.time.YearMonth;
+import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class LedgerService {
-    private static final Map<String, Set<String>> CATEGORIES = Map.of(
-            "expense", Set.of("餐饮", "交通", "购物", "娱乐", "住房", "医疗", "学习", "其他"),
-            "income", Set.of("工资", "红包", "兼职", "理财", "退款", "其他"));
     private final LedgerRepository repository;
     private final Validator validator;
     public LedgerService(LedgerRepository repository, Validator validator) {
@@ -23,12 +23,24 @@ public class LedgerService {
         this.validator = validator;
     }
     public record MonthSummary(String income, String expense, String balance, long count) {}
-    public record RecordPage(List<RecordView> records, int page, int size) {}
+    public record RecordPage(List<RecordView> records, int page, int size, long total) {}
+    public record CategorySummary(String category, String amount, long count, String percent) {}
+    public record MonthDetail(String month, String income, String expense, String balance, long count,
+            long incomeCount, long expenseCount, Map<String, List<CategorySummary>> categories) {}
 
-    public RecordPage list(long owner, String month, int page, int size) {
+    @Transactional(readOnly = true)
+    public RecordPage list(long owner, String month, int page, int size, String type, String category, LocalDate date, String query) {
         var range = month(month);
         if (page < 0 || page > 10000 || size < 1 || size > 100) throw invalid();
-        return new RecordPage(repository.list(owner, range.atDay(1), range.plusMonths(1).atDay(1), page * size, size), page, size);
+        if (type != null && !CategoryCatalog.OPTIONS.containsKey(type)) throw invalid();
+        if (category != null && (type == null
+                ? CategoryCatalog.OPTIONS.values().stream().noneMatch(options -> options.contains(category))
+                : !CategoryCatalog.contains(type, category))) throw invalid();
+        if (date != null && !YearMonth.from(date).equals(range)) throw invalid();
+        if (query != null && query.length() > 120) throw invalid();
+        var search = query == null || query.isBlank() ? null : query.trim();
+        var filters = new RecordFilters(range.atDay(1), range.plusMonths(1).atDay(1), type, category, date, search);
+        return new RecordPage(repository.list(owner, filters, page * size, size), page, size, repository.count(owner, filters));
     }
 
     public RecordView get(long owner, String id) {
@@ -57,6 +69,32 @@ public class LedgerService {
         return repository.summarize(owner, range.atDay(1), range.plusMonths(1).atDay(1));
     }
 
+    public MonthDetail detail(long owner, String month) {
+        var range = month(month);
+        var rows = repository.categoryTotals(owner, range.atDay(1), range.plusMonths(1).atDay(1));
+        var income = total(rows, "income");
+        var expense = total(rows, "expense");
+        var incomeCount = rows.stream().filter(row -> row.type().equals("income")).mapToLong(LedgerRepository.CategoryTotal::count).sum();
+        var expenseCount = rows.stream().filter(row -> row.type().equals("expense")).mapToLong(LedgerRepository.CategoryTotal::count).sum();
+        return new MonthDetail(month, income.toPlainString(), expense.toPlainString(), income.subtract(expense).toPlainString(),
+                incomeCount + expenseCount, incomeCount, expenseCount,
+                Map.of("income", categories(rows, "income", income), "expense", categories(rows, "expense", expense)));
+    }
+
+    private BigDecimal total(List<LedgerRepository.CategoryTotal> rows, String type) {
+        return rows.stream().filter(row -> row.type().equals(type)).map(LedgerRepository.CategoryTotal::amount)
+                .reduce(new BigDecimal("0.00"), BigDecimal::add);
+    }
+
+    private List<CategorySummary> categories(List<LedgerRepository.CategoryTotal> rows, String type, BigDecimal total) {
+        return rows.stream().filter(row -> row.type().equals(type))
+                .sorted(Comparator.comparing(LedgerRepository.CategoryTotal::amount).reversed()
+                        .thenComparing(LedgerRepository.CategoryTotal::category))
+                .map(row -> new CategorySummary(row.category(), row.amount().toPlainString(), row.count(),
+                        total.signum() == 0 ? "0.0" : row.amount().multiply(new BigDecimal("100"))
+                                .divide(total, 1, RoundingMode.HALF_UP).toPlainString())).toList();
+    }
+
     private YearMonth month(String text) {
         try {
             if (!text.matches("[0-9]{4}-(0[1-9]|1[0-2])")) throw invalid();
@@ -69,7 +107,7 @@ public class LedgerService {
     void validate(RecordInput input) {
         if (input == null || !validator.validate(input).isEmpty()) throw invalid();
         if (input.money().signum() <= 0 || input.date().getYear() < 1000 || input.date().getYear() > 9998
-                || !CATEGORIES.getOrDefault(input.type(), Set.of()).contains(input.category())) throw invalid();
+                || !CategoryCatalog.contains(input.type(), input.category())) throw invalid();
     }
     private ApiException invalid() { return new ApiException(HttpStatus.BAD_REQUEST, "INVALID_INPUT", "金额、日期或分页参数不合法"); }
     private ApiException conflict() { return new ApiException(HttpStatus.CONFLICT, "STALE_VERSION", "账单已变化，请重新读取后操作"); }

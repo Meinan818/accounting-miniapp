@@ -1,6 +1,8 @@
 package cn.miaoji.ledger;
 
 import java.time.LocalDate;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,7 +13,8 @@ import org.springframework.stereotype.Repository;
 public class LedgerRepository {
     private static final RowMapper<RecordView> MAPPER = (rs, row) -> new RecordView(
             rs.getString("id"), rs.getString("type"), rs.getBigDecimal("amount").toPlainString(),
-            rs.getDate("business_date").toLocalDate(), rs.getString("category"), rs.getString("note"), rs.getLong("version"));
+            rs.getDate("business_date").toLocalDate(), rs.getString("category"), rs.getString("note"), rs.getLong("version"),
+            rs.getString("business_time"));
     private final JdbcTemplate jdbc;
     public LedgerRepository(JdbcTemplate jdbc) { this.jdbc = jdbc; }
 
@@ -20,27 +23,57 @@ public class LedgerRepository {
                 MAPPER, owner, id).stream().findFirst();
     }
 
-    public List<RecordView> list(long owner, LocalDate start, LocalDate end, int offset, int limit) {
-        return jdbc.query("""
-                SELECT * FROM ledger_record WHERE user_id = ? AND deleted_at IS NULL
-                AND business_date >= ? AND business_date < ?
-                ORDER BY business_date DESC, created_at DESC, id LIMIT ? OFFSET ?
-                """, MAPPER, owner, start, end, limit, offset);
+    public List<RecordView> list(long owner, RecordFilters filters, int offset, int limit) {
+        var query = where(owner, filters);
+        var arguments = new ArrayList<>(query.arguments());
+        arguments.add(limit);
+        arguments.add(offset);
+        return jdbc.query("SELECT * FROM ledger_record" + query.sql()
+                + " ORDER BY business_date DESC, created_at DESC, id LIMIT ? OFFSET ?", MAPPER, arguments.toArray());
+    }
+
+    public long count(long owner, RecordFilters filters) {
+        var query = where(owner, filters);
+        return jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record" + query.sql(), Long.class, query.arguments().toArray());
+    }
+
+    private record Query(String sql, List<Object> arguments) {}
+
+    private Query where(long owner, RecordFilters filters) {
+        var sql = new StringBuilder(" WHERE user_id = ? AND deleted_at IS NULL AND business_date >= ? AND business_date < ?");
+        var arguments = new ArrayList<Object>(List.of(owner, filters.start(), filters.end()));
+        if (filters.type() != null) { sql.append(" AND type = ?"); arguments.add(filters.type()); }
+        if (filters.category() != null) { sql.append(" AND category = ?"); arguments.add(filters.category()); }
+        if (filters.date() != null) { sql.append(" AND business_date = ?"); arguments.add(filters.date()); }
+        if (filters.query() != null) {
+            // 用户输入始终作为参数；LIKE通配符按文字匹配，不能扩大检索范围。
+            for (var term : filters.query().toLowerCase(java.util.Locale.ROOT).split("\\s+")) {
+                var pattern = "%" + term.replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
+                sql.append("""
+                     AND (LOWER(note) LIKE ? ESCAPE '!' OR LOWER(category) LIKE ? ESCAPE '!'
+                     OR CAST(amount AS CHAR(32)) LIKE ? ESCAPE '!' OR CAST(business_date AS CHAR(10)) LIKE ? ESCAPE '!'
+                     OR (CASE WHEN type = 'income' THEN '收入' ELSE '支出' END) LIKE ? ESCAPE '!'
+                     OR business_time LIKE ? ESCAPE '!')
+                    """);
+                for (int i = 0; i < 6; i++) arguments.add(pattern);
+            }
+        }
+        return new Query(sql.toString(), arguments);
     }
 
     public void insert(long owner, String id, RecordInput input) {
         jdbc.update("""
-                INSERT INTO ledger_record (id, user_id, type, amount, business_date, category, note)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, id, owner, input.type(), input.money(), input.date(), input.category(), input.note());
+                INSERT INTO ledger_record (id, user_id, type, amount, business_date, category, note, business_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """, id, owner, input.type(), input.money(), input.date(), input.category(), input.note(), input.time());
     }
 
     public boolean update(long owner, String id, long version, RecordInput input) {
         return jdbc.update("""
-                UPDATE ledger_record SET type = ?, amount = ?, business_date = ?, category = ?, note = ?,
+                UPDATE ledger_record SET type = ?, amount = ?, business_date = ?, category = ?, note = ?, business_time = ?,
                 version = version + 1, updated_at = CURRENT_TIMESTAMP(6)
                 WHERE user_id = ? AND id = ? AND version = ? AND deleted_at IS NULL
-                """, input.type(), input.money(), input.date(), input.category(), input.note(), owner, id, version) == 1;
+                """, input.type(), input.money(), input.date(), input.category(), input.note(), input.time(), owner, id, version) == 1;
     }
 
     public boolean delete(long owner, String id, long version) {
@@ -62,5 +95,16 @@ public class LedgerRepository {
                     return new LedgerService.MonthSummary(income.toPlainString(), expense.toPlainString(),
                             income.subtract(expense).toPlainString(), rs.getLong("record_count"));
                 }, owner, start, end);
+    }
+
+    public record CategoryTotal(String type, String category, BigDecimal amount, long count) {}
+
+    public List<CategoryTotal> categoryTotals(long owner, LocalDate start, LocalDate end) {
+        return jdbc.query("""
+                SELECT type, category, SUM(amount) AS total, COUNT(*) AS record_count
+                FROM ledger_record WHERE user_id = ? AND deleted_at IS NULL
+                AND business_date >= ? AND business_date < ? GROUP BY type, category
+                """, (rs, row) -> new CategoryTotal(rs.getString("type"), rs.getString("category"),
+                rs.getBigDecimal("total").setScale(2), rs.getLong("record_count")), owner, start, end);
     }
 }

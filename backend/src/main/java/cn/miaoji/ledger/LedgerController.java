@@ -5,9 +5,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import java.util.Map;
+import java.time.LocalDate;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +30,16 @@ public class LedgerController {
     @GetMapping("/records")
     public LedgerService.RecordPage list(@AuthenticationPrincipal AccountPrincipal user,
             @RequestParam String month, @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size) {
-        return ledger.list(user.id(), month, page, size);
+            @RequestParam(defaultValue = "50") int size, @RequestParam(required = false) String type,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(name = "q", required = false) String query) {
+        return ledger.list(user.id(), month, page, size, type, category, date, query);
+    }
+
+    @GetMapping("/categories")
+    public Map<String, List<String>> categories() {
+        return CategoryCatalog.OPTIONS;
     }
 
     @PostMapping("/records")
@@ -67,5 +78,10 @@ public class LedgerController {
     @GetMapping("/statistics/month")
     public LedgerService.MonthSummary summary(@AuthenticationPrincipal AccountPrincipal user, @RequestParam String month) {
         return ledger.summary(user.id(), month);
+    }
+
+    @GetMapping("/statistics/month/detail")
+    public LedgerService.MonthDetail detail(@AuthenticationPrincipal AccountPrincipal user, @RequestParam String month) {
+        return ledger.detail(user.id(), month);
     }
 }

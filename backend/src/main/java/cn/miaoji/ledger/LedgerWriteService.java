@@ -50,7 +50,7 @@ public class LedgerWriteService {
         // 写任何一笔前完成整组校验；金额规范化，使1和1.00代表同一请求内容。
         inputs.forEach(ledger::validate);
         var canonical = inputs.stream().map(input -> new RecordInput(input.type(), input.money().toPlainString(),
-                input.date(), input.category(), input.note())).toList();
+                input.date(), input.category(), input.note(), input.time())).toList();
         var id = requestId.toString();
         var hash = fingerprint(operation, canonical);
         try {

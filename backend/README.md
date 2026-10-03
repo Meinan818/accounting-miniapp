@@ -35,15 +35,21 @@ java -jar .\target\miaoji-backend-0.1.0.jar
 | POST `/api/auth/logout` | 204，失效会话并删除会话 Cookie |
 | POST `/api/records` | JSON `type, amount, date, category, note`，必须带UUID格式`Idempotency-Key`；首次201、原请求重放200 |
 | POST `/api/records/batch` | JSON `{records: [...]}`，1–5笔整组确认，同样必须带`Idempotency-Key` |
-| GET `/api/records?month=2026-10&page=0&size=50` | 当前账号当月账单，page 从 0 开始，size 1–100 |
+| GET `/api/records?month=2026-10&page=0&size=50` | 当前账号当月账单，page 从 0 开始，size 1–100；返回records/page/size/total |
+| GET `/api/categories` | 当前8支出/6收入预设分类标签，需要登录 |
 | GET `/api/records/{id}` | 当前账号的有效账单 |
 | PUT `/api/records/{id}` | JSON `{version, record: {...}}`，200 返回新版本 |
 | DELETE `/api/records/{id}?version=0` | 204，逻辑删除，不彻底擦除历史 |
 | GET `/api/statistics/month?month=2026-10` | `income, expense, balance, count`，排除已删除记录 |
+| GET `/api/statistics/month/detail?month=2026-10` | 同月收支/笔数及按收入、支出分别聚合的分类金额/笔数/占比 |
 
 所有写请求带 CSRF 响应指定的请求头，并保留会话 Cookie。登录/退出后旧 CSRF token 失效，必须重新 GET `/api/auth/csrf`。用户名为 3–32 位 ASCII 字母/数字/下划线并按小写唯一；密码为 12–64 位可见 ASCII，BCrypt 散列，不静默截断。
 
 创建账单时客户端为一次确认生成UUID请求键，网络超时、重复点击与重新登录后的同次重试必须复用它。相同账号/键/内容返回原入账回执，响应头`Idempotency-Replayed`标明`true/false`；金额`1`和`1.00`视为同一内容。不同内容、条目顺序或单笔/整组接口混用同键返回409 `REQUEST_KEY_REUSED`，不会覆盖旧内容；不同账号的同键彼此独立。
+
+账单列表可叠加`type=income|expense`、精确`category`、`date=YYYY-MM-DD`及`q`（最多120字符）；日期必须属于所选月，错误类型/分类组合拒绝。未指定收支的“其他”匹配两个类型，指定类型则区分。文字按空白分词，各词可跨备注、分类、金额、日期、业务时间、收支中文标签匹配且必须全部满足；大小写不敏感，`%/_/!`按普通文字处理，不接受SQL片段扩大查询。total是筛选后有效笔数，超过末页仍返回正确total；筛选不会改变月统计。
+
+可选`time`为严格`HH:mm`业务时间，提供时会存储/校验，并参与防重内容判断。未提供的旧账单保留未知且不补当前时间，响应不显示该字段；省略时间的旧V2请求指纹和回执保持兼容。前端remark对应API note、金额需转十进制字符串，图标/说明由前端分类与备注推导；当前尚未实际切换前端数据源。
 
 请求键、所有账单和回执在同一数据库事务中保存；整组先完整校验，任何写入/回执保存失败全部回退，失败后同键可重试。数据库主键约束负责并发防重，不依赖单进程锁。回执是当时入账的固定快照，重放不修改或恢复之后已编辑/删除的账单；当前金额/删除事实必须重新读取账单或统计。防重请求目前永久保留，不自动清理或让旧键再次入账；服务端草稿的过期版本校验尚未实现。
 
@@ -51,6 +57,6 @@ java -jar .\target\miaoji-backend-0.1.0.jar
 
 ## 尚未完成
 
-当前不是完整 B/C 验收：分类筛选/自定义分类/分类汇总、资料与照片接口、登录限流、服务端草稿/审计、前端联通和真实 AI 均未实现。整组接口直接接收用户已确认的内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署，也没有收费服务调用。
+当前不是完整 B/C 验收：自定义分类、资料与照片接口、登录限流、服务端草稿/审计、前端联通和真实 AI 均未实现。整组接口直接接收用户已确认的内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署，也没有收费服务调用。
 
 兼容性依据：[Spring Boot 3.5 环境要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)、[Spring Security 会话](https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html)、[CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)。实际验证见项目交接 LOG。
