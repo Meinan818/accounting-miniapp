@@ -8,6 +8,72 @@ import { linkGroupRecords } from '../src/utils/groupRecords.js'
 const id = '9abf606b-a0d5-4053-98fb-194505f3d10c'
 const value = { id, type: 'expense', amount: '0.29', date: '2026-10-03', time: '09:15', category: '餐饮', note: '合成午饭', version: 0 }
 const input = { id: 'item1', type: value.type, amount: value.amount, date: value.date, time: value.time, category: value.category, remark: value.note }
+
+test('明细版本冲突读取最新账单供对照，旧编辑版本和输入仍由调用者保持', async () => {
+  let amount = '0.29', version = 0
+  const scene = setup({ request: async (method, path, options) => {
+    if (method === 'PUT') throw Object.assign(Error('账单已变化'), { code: 'STALE_VERSION', status: 409 })
+    return { revision: String(version), nextAfter: null, records: [{ record: { ...value, amount, version } }] }
+  } })
+  try {
+    await scene.store.refresh()
+    const original = { ...scene.store.records.value[0] }
+    amount = '0.31'; version = 1
+    let failure
+    try { await scene.store.updateRecord(id, { ...input, amount: '0.35' }, { version: original.version }) } catch (error) { failure = error }
+    assert.equal(failure.recoveryLoaded, true)
+    assert.equal(failure.currentRecord.amount, 0.31)
+    assert.equal(scene.store.records.value[0].version, 1)
+    assert.equal(original.version, 0)
+    assert.equal(original.amount, 0.29)
+  } finally { scene.dispose() }
+})
+
+test('明细删除冲突发现服务器已删除，恢复回执不把旧账单重新加入', async () => {
+  let deleted = false
+  const scene = setup({ request: async (method) => {
+    if (method === 'DELETE') throw Object.assign(Error('账单已变化'), { code: 'STALE_VERSION', status: 409 })
+    return { revision: deleted ? '1' : '0', nextAfter: null, records: [{ record: value, deletedAt: deleted ? '2026-10-04T00:00:00Z' : null }] }
+  } })
+  try {
+    await scene.store.refresh(); deleted = true
+    await assert.rejects(scene.store.deleteRecord(id), failure => failure.recoveryLoaded === true && failure.currentRecord === null)
+    assert.equal(scene.store.records.value.length, 0)
+  } finally { scene.dispose() }
+})
+
+test('冲突后读取失败仍抛原版本错误，保留原账单不冒称已读最新', async () => {
+  let reads = 0
+  const scene = setup({ request: async method => {
+    if (method === 'PUT') throw Object.assign(Error('账单已变化'), { code: 'STALE_VERSION' })
+    if (++reads > 1) throw Error('合成读取中断')
+    return { revision: '0', nextAfter: null, records: [{ record: value }] }
+  } })
+  try {
+    await scene.store.refresh()
+    await assert.rejects(scene.store.updateRecord(id, input), failure => failure.code === 'STALE_VERSION' && !failure.recoveryLoaded)
+    assert.equal(scene.store.records.value[0].version, 0)
+    assert.match(scene.store.storageError.value, /读取中断/)
+  } finally { scene.dispose() }
+})
+
+test('冲突恢复期间账号改变不把新账号账单附给旧编辑错误', async () => {
+  let reads = 0, resolve
+  const scene = setup({ request: async method => {
+    if (method === 'PUT') throw Object.assign(Error('账单已变化'), { code: 'STALE_VERSION' })
+    if (++reads > 1) return new Promise(done => { resolve = done })
+    return { revision: '0', nextAfter: null, records: [{ record: value }] }
+  } })
+  try {
+    await scene.store.refresh()
+    const pending = scene.store.updateRecord(id, input)
+    while (!resolve) await new Promise(done => setImmediate(done))
+    scene.owner.value = '2'
+    resolve({ revision: '1', nextAfter: null, records: [{ record: { ...value, version: 1 } }] })
+    await assert.rejects(pending, failure => !failure.recoveryLoaded && !failure.currentRecord)
+    assert.equal(scene.store.records.value.length, 0)
+  } finally { scene.dispose() }
+})
 function setup(client) {
   const owner = ref('1'), scope = effectScope(), values = new Map()
   const store = scope.run(() => createRemoteLedger(client, owner, { storage: { getItem: k => values.get(k) ?? null, setItem: (k, v) => values.set(k, v) } }))

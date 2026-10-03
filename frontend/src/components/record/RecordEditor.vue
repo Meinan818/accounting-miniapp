@@ -2,8 +2,8 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import RecordForm from './RecordForm.vue'
 import { formatCurrency } from '@/utils/format'
-const props = defineProps({ record: { type: Object, required: true }, saving: Boolean, error: String, allowDelete: Boolean })
-const emit = defineEmits(['save', 'close', 'delete'])
+const props = defineProps({ record: { type: Object, required: true }, saving: Boolean, error: String, allowDelete: Boolean, conflict: Object })
+const emit = defineEmits(['save', 'close', 'delete', 'recover'])
 const dialog = ref(null)
 const confirmingDelete = ref(false)
 const deleteTrigger = ref(null)
@@ -20,13 +20,14 @@ function close() { if (props.saving) return; if (confirmingDelete.value) cancelD
     <div class="editor-handle" aria-hidden="true"></div>
     <div class="editor-heading"><h2 id="bill-editor-title">{{ confirmingDelete ? '删除这笔账单？' : '编辑这笔账单' }}</h2><button type="button" :aria-label="confirmingDelete ? '取消删除返回编辑' : '关闭修改窗口'" :disabled="saving" @click="close">×</button></div>
     <p v-if="!confirmingDelete" class="editor-note">保存后，明细、首页和聊天查询都会使用最新数据。</p>
-    <RecordForm v-show="!confirmingDelete" :record="record" :saving="saving" :error="error" submit-label="保存修改" @save="emit('save', $event)" @cancel="close" />
-    <button v-if="allowDelete && !confirmingDelete" ref="deleteTrigger" class="delete-entry" type="button" :disabled="saving" @click="startDelete">删除这笔账单</button>
+    <aside v-if="conflict" class="delete-summary" role="alert"><template v-if="conflict.current"><p>这笔账单有新修改，请先对照当前内容：</p><strong>{{ conflict.current.type === 'income' ? '+' : '-' }}{{ formatCurrency(conflict.current.amount) }}</strong><p>{{ conflict.current.category }} · {{ conflict.current.remark || '无备注' }}</p><span>{{ conflict.current.date }} {{ conflict.current.time }}</span><p>你刚才填写的内容已保留，核对后可以继续编辑。</p><button class="conflict-recover" type="button" :disabled="saving" @click="emit('recover'); confirmingDelete = false">保留输入，按最新账单继续编辑</button></template><p v-else>这笔账单已不在当前账本中，不能再保存或删除。你填写的内容仍保留在窗口中，可先查看后关闭。</p></aside>
+    <RecordForm v-show="!confirmingDelete" :record="record" :saving="saving || Boolean(conflict)" :error="error" submit-label="保存修改" @save="emit('save', $event)" @cancel="close" />
+    <button v-if="allowDelete && !confirmingDelete" ref="deleteTrigger" class="delete-entry" type="button" :disabled="saving || Boolean(conflict)" @click="startDelete">删除这笔账单</button>
     <section v-if="confirmingDelete" class="delete-confirmation">
       <p class="delete-summary">{{ record.category }} · {{ record.remark || '无备注' }}<strong>{{ record.type === 'income' ? '+' : '-' }}{{ formatCurrency(record.amount) }}</strong><span>{{ record.date }} {{ record.time }}</span></p>
       <p class="delete-note">删除后，这笔已保存的账单不再计入首页、明细和聊天查询。尚未保存的编辑不会写入；此版本暂不提供恢复入口。</p>
       <p v-if="error" class="delete-error" role="alert">{{ error }}</p>
-      <div class="delete-actions"><button ref="cancelDeleteButton" type="button" :disabled="saving" @click="cancelDelete">返回编辑</button><button class="delete-confirm-button" type="button" :disabled="saving" @click="emit('delete')">{{ saving ? '正在删除…' : '确认删除' }}</button></div>
+      <div class="delete-actions"><button ref="cancelDeleteButton" type="button" :disabled="saving" @click="cancelDelete">返回编辑</button><button class="delete-confirm-button" type="button" :disabled="saving || Boolean(conflict)" @click="emit('delete')">{{ saving ? '正在删除…' : '确认删除' }}</button></div>
     </section>
   </dialog>
 </template>
@@ -54,6 +55,7 @@ h2 { font-size: 19px; font-weight: 400; }
 .delete-summary { padding: 14px; border: 1px solid #e5ccba; border-radius: 14px 11px 15px 12px; background: #fff5e7; overflow-wrap: anywhere; font-size: 14px; line-height: 1.8; }
 .delete-summary strong { display: block; color: #aa665b; font-size: 22px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .delete-summary span { display: block; color: #9d806c; font-size: 12px; }
+.conflict-recover { min-height: 44px; margin-top: 10px; padding: 8px 12px; border: 1px solid #dcc2a9; border-radius: 12px; background: #fffdf8; font-size: 13px; }.conflict-recover:focus-visible { outline: 2px solid #785746; outline-offset: 3px; }
 .delete-note { margin: 16px 0; line-height: 1.9; font-size: 13px; }
 .delete-error { margin-bottom: 14px; color: #aa594d; font-size: 13px; line-height: 1.8; }
 .delete-actions { display: flex; gap: 10px; }

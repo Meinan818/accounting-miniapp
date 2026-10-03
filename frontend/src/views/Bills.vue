@@ -29,6 +29,7 @@ const selectedMonth = ref(initialMonth)
 const editingRecord = ref(null)
 const saving = ref(false)
 const saveError = ref('')
+const editConflict = ref(null)
 const notice = ref('')
 const noticeElement = ref(null)
 const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0,120) : '')
@@ -118,21 +119,30 @@ watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => rec
   element?.focus({ preventScroll: true })
 }, { immediate: true })
 
-function edit(record) { editingRecord.value = { ...record }; saveError.value = ''; notice.value = '' }
+function edit(record) { editingRecord.value = { ...record }; saveError.value = ''; editConflict.value = null; notice.value = '' }
+function handleEditFailure(failure) {
+  saveError.value = failure.message
+  if (failure.recoveryLoaded) editConflict.value = { current: failure.currentRecord }
+}
+function adoptLatestVersion() {
+  if (saving.value || !editingRecord.value || !editConflict.value?.current) return
+  editingRecord.value = { ...editingRecord.value, version: editConflict.value.current.version }
+  editConflict.value = null; saveError.value = ''
+}
 async function saveEdit(input) {
-  if (saving.value || !editingRecord.value) return
-  saving.value = true
+  if (saving.value || editConflict.value || !editingRecord.value) return
+  saving.value = true; saveError.value = ''
   try { const updated = await recordStore.updateRecord(editingRecord.value.id, input, { version: editingRecord.value.version }); selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。' }
-  catch (e) { saveError.value = e.message }
+  catch (e) { handleEditFailure(e) }
   finally { saving.value = false }
 }
 
 async function deleteEdit() {
-  if (saving.value || !editingRecord.value) return
+  if (saving.value || editConflict.value || !editingRecord.value) return
   if (typeof recordStore.deleteRecord !== 'function') { saveError.value = '当前页面仍使用旧版本数据模块。请先退出编辑并刷新页面，原账单尚未删除。'; return }
   saving.value = true; saveError.value = ''
   try { await recordStore.deleteRecord(editingRecord.value.id, { version: editingRecord.value.version }); editingRecord.value = null; notice.value = '这笔账单已删除：首页、明细和聊天查询已同步。'; await nextTick(); noticeElement.value?.focus() }
-  catch (e) { saveError.value = e.message }
+  catch (e) { handleEditFailure(e) }
   finally { saving.value = false }
 }
 
@@ -293,7 +303,7 @@ function getSign(record) {
       </section>
     </main>
 
-    <RecordEditor v-if="editingRecord" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" allow-delete @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
+    <RecordEditor v-if="editingRecord" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" :conflict="editConflict" allow-delete @recover="adoptLatestVersion" @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
     <BottomNav active="detail" />
   </div>
 </template>

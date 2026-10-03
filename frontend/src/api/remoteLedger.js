@@ -100,11 +100,23 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     return saved
   }
   async function addRecord(input, options = {}) { return (await addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options }))[0] }
+  async function recoverConflict(failure, id, current) {
+    if (current === generation && ['STALE_VERSION', 'RECORD_NOT_FOUND'].includes(failure.code)) {
+      const loaded = await refresh(true)
+      if (loaded && current === generation) {
+        failure.recoveryLoaded = true
+        failure.currentRecord = records.value.find(record => record.id === id) || null
+      }
+    }
+    throw failure
+  }
   async function updateRecord(id, input, { version } = {}) {
     const current = generation; ensure(current)
     const record = allRecords.value.find(record => record.id === id && !record.deletedAt)
     if (!record) throw new Error('账单不存在，请重新读取明细。')
-    const updated = await ledger.update({ ...record, version: version ?? record.version }, input); ensure(current)
+    let updated
+    try { updated = await ledger.update({ ...record, version: version ?? record.version }, input); ensure(current) }
+    catch (failure) { return recoverConflict(failure, id, current) }
     localChanges++; snapshotRevision = null
     allRecords.value = allRecords.value.map(record => record.id === id ? updated : record)
     storageError.value = ''; return updated
@@ -113,7 +125,8 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     const current = generation; ensure(current)
     const record = allRecords.value.find(record => record.id === id && !record.deletedAt)
     if (!record) throw new Error('账单不存在，请重新读取明细。')
-    await ledger.remove({ ...record, version: version ?? record.version }); ensure(current)
+    try { await ledger.remove({ ...record, version: version ?? record.version }); ensure(current) }
+    catch (failure) { return recoverConflict(failure, id, current) }
     localChanges++; snapshotRevision = null
     const removed = { ...record, deletedAt: new Date().toISOString(), version: record.version + 1 }
     allRecords.value = allRecords.value.map(record => record.id === id ? removed : record)
