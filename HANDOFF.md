@@ -51,3 +51,7 @@ Java D:/JavaDev/jdk-21，Maven .workbuddy/memory/backend-foundation/apache-maven
 ## 本轮踩坑
 
 证据目录工作目录错配导致Maven未执行；测试辅助Runnable类型错误；合成用户名超32限制；测试profile继承真实AI开关意外外发合成文字；HTTP分页汇总读错包装层。失败原文与修正证据见MISTAKES/LOG，不能用后续成功抹掉首次失败。秘密均保留本机忽略配置，普通保存前用git-workflow检查差异/遗漏/敏感值。
+
+## 收尾后的用户验收反馈（2026-10-04，覆盖上方待验收摘要）
+
+用户实际5174聊天反馈等待、随后AI_TIMEOUT及AI_PROVIDER_BUSY，正式GUI未通过。当前4.7-Flash真实HTTP成功仅证明若干请求成功，不能证明稳定性；未取得完整网页注册成功的明确单独反馈。用户改问免费模型推荐，尚未改代码/切模型/新增模型调用。官方已核glm-4-flash-250414输入输出免费、支持JSON/128K，可沿用现密钥但同平台限额未必改善；OpenRouter公开模型当前qwen/qwen3.8-27b:free输入输出0/结构化输出，但需新密钥、免费每日限制和网络实测。下一步选定模型后实测接入，并补等待计时/中止反馈。本会话实际compact仍0，交接/改名规则继续保留。
