@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
+import { useRegistrationChallenge, validRegistrationEmail as validEmail } from '@/utils/registration'
 const auth = useAuthStore()
 const registering = ref(false)
 const username = ref('')
@@ -11,34 +12,14 @@ const password = ref('')
 const confirmation = ref('')
 const saving = ref(false)
 const error = ref('')
-const code = ref('')
-const challenge = ref(null)
-const sendingCode = ref(false)
-const resendUntil = ref(0)
 const now = ref(Date.now())
-const codeNote = ref('')
-const resendSeconds = computed(() => Math.max(0, Math.ceil((resendUntil.value - now.value) / 1000)))
+const { code, challenge, challengeExpired, sendingCode, codeNote, resendSeconds, requestCode } = useRegistrationChallenge(auth, username, registering, now, saving, error)
 const clock = setInterval(() => { now.value = Date.now() }, 1000)
 onUnmounted(() => clearInterval(clock))
-watch([username, registering], () => { challenge.value = null; code.value = ''; codeNote.value = ''; error.value = '' })
-const validEmail = value => /^[A-Za-z0-9][A-Za-z0-9._%+-]{0,63}@[A-Za-z0-9.-]+\.[A-Za-z0-9-]+$/.test(value) && value.length <= 254
-async function requestCode() {
-  if (sendingCode.value || saving.value || resendSeconds.value) return
-  const email = username.value.trim().toLowerCase()
-  if (!validEmail(email)) { error.value = '请先填写有效邮箱地址。'; return }
-  sendingCode.value = true; error.value = ''; codeNote.value = ''
-  try {
-    const receipt = await auth.requestRegistrationCode(email)
-    if (!registering.value || username.value.trim().toLowerCase() !== email) return
-    challenge.value = { ...receipt, email }
-    resendUntil.value = Date.now() + receipt.resendAfter * 1000
-    codeNote.value = '验证码邮件已提交发送，5分钟内有效；没找到可检查垃圾邮件。'
-  } catch (failure) { error.value = failure.message }
-  finally { sendingCode.value = false }
-}
 async function submit() {
   if (saving.value || !SERVER_MODE) return
   error.value = ''
+  if (registering.value && sendingCode.value) { error.value = '请等待验证码申请完成后再注册。'; return }
   const identifier = username.value.trim().toLowerCase()
   if (registering.value ? !validEmail(identifier) : !(validEmail(identifier) || /^[A-Za-z0-9_]{3,32}$/.test(identifier))) {
     error.value = registering.value ? '请输入有效邮箱地址。' : '请输入邮箱或已有的旧账号。'; return
@@ -48,6 +29,7 @@ async function submit() {
   if (registering.value && (!challenge.value || challenge.value.email !== identifier || !/^\d{6}$/.test(code.value))) {
     error.value = '请先申请邮件验证码并输入6位验证码。'; return
   }
+  if (registering.value && Date.now() >= challenge.value.expiresAt) { error.value = '验证码已过期，请重新申请后再注册。'; return }
   saving.value = true
   try {
     const success = await (registering.value ? auth.register(identifier, password.value, challenge.value.challengeId, code.value) : auth.login(identifier, password.value))
@@ -69,7 +51,8 @@ async function submit() {
             <template v-if="registering">
               <button class="login-code" type="button" :disabled="sendingCode || resendSeconds > 0" @click="requestCode">{{ sendingCode ? '正在申请验证码…' : resendSeconds ? `${resendSeconds}秒后可重发` : '发送邮箱验证码' }}</button>
               <label>验证码<input v-model="code" aria-label="验证码" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required /></label>
-              <p v-if="codeNote" class="login-hint" role="status">{{ codeNote }}</p>
+              <p v-if="challengeExpired" class="login-hint" role="status">验证码已过期，请重新申请。</p>
+              <p v-else-if="codeNote" class="login-hint" role="status">{{ codeNote }}</p>
             </template>
             <label>密码<input v-model="password" aria-label="密码" type="password" :autocomplete="registering ? 'new-password' : 'current-password'" maxlength="64" required /></label>
             <label v-if="registering">确认密码<input v-model="confirmation" aria-label="确认密码" type="password" autocomplete="new-password" maxlength="64" required /></label>
@@ -79,7 +62,7 @@ async function submit() {
             <button class="login-switch" type="button" @click="registering = !registering; error = ''; auth.error = ''; password = ''; confirmation = ''">{{ registering ? '已经有账号，去登录' : '第一次来，注册账号' }}</button>
           </fieldset>
         </form>
-        <p class="login-data-note"><CatNavIcon kind="profile" />原浏览器演示账本和照片保留，不会自动导入这个账号。聊天整理暂用规则演示。</p>
+        <p class="login-data-note"><CatNavIcon kind="profile" />原浏览器演示账本和照片保留，不会自动导入这个账号。聊天由AI整理草稿，确认后才会记入账本。</p>
       </template>
       <template v-else><p>当前打开的是本地演示版。</p><router-link to="/" class="login-submit">打开本地小账本</router-link></template>
     </section>

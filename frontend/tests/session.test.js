@@ -2,6 +2,93 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createSession } from '../src/api/session.js'
 import { ApiError } from '../src/api/client.js'
+import { effectScope, ref, nextTick } from 'vue'
+import { useRegistrationChallenge } from '../src/utils/registration.js'
+
+function codeScene(requestRegistrationCode) {
+  const scope = effectScope(), username = ref('synthetic@example.test'), registering = ref(true), now = ref(1000), error = ref('')
+  const challenge = scope.run(() => useRegistrationChallenge({ requestRegistrationCode }, username, registering, now, ref(false), error, () => now.value))
+  return { ...challenge, username, registering, now, error, dispose: () => scope.stop() }
+}
+const codeReceipt = { challengeId: '7ebf606b-a0d5-4053-98fb-194505f3d10c', expiresIn: 90, resendAfter: 60 }
+
+test('切换邮箱后旧验证码失败不显示在新邮箱表单', async () => {
+  let reject
+  const scene = codeScene(() => new Promise((_, fail) => { reject = fail }))
+  try {
+    const pending = scene.requestCode()
+    scene.username.value = 'other@example.test'
+    await nextTick()
+    reject(Error('旧邮箱发送失败'))
+    await pending
+    assert.equal(scene.error.value, '')
+    assert.equal(scene.challenge.value, null)
+  } finally { scene.dispose() }
+})
+
+test('验证码申请期间注册模式来回切换不接纳旧回执', async () => {
+  let resolve
+  const scene = codeScene(() => new Promise(done => { resolve = done }))
+  try {
+    const pending = scene.requestCode()
+    scene.registering.value = false
+    await nextTick()
+    scene.registering.value = true
+    await nextTick()
+    resolve(codeReceipt)
+    await pending
+    assert.equal(scene.challenge.value, null)
+    assert.equal(scene.codeNote.value, '')
+  } finally { scene.dispose() }
+})
+
+test('离页后验证码回执不修改原表单', async () => {
+  let resolve
+  const scene = codeScene(() => new Promise(done => { resolve = done }))
+  const pending = scene.requestCode()
+  scene.dispose()
+  resolve(codeReceipt)
+  await pending
+  assert.equal(scene.challenge.value, null)
+})
+
+test('验证码有效期使用服务回执并标识过期，重发等待不受邮箱变化绕过', async () => {
+  const scene = codeScene(async () => codeReceipt)
+  try {
+    assert.equal(await scene.requestCode(), true)
+    assert.equal(scene.challenge.value.expiresAt, 91000)
+    assert.match(scene.codeNote.value, /90秒/)
+    assert.equal(scene.challengeExpired.value, false)
+    scene.now.value = 91000
+    assert.equal(scene.challengeExpired.value, true)
+    scene.now.value = 1000
+    scene.username.value = 'other@example.test'
+    await nextTick()
+    assert.equal(scene.resendSeconds.value, 60)
+    assert.equal(await scene.requestCode(), false)
+  } finally { scene.dispose() }
+})
+
+test('验证码请求共享等待，重发前清除旧挑战及旧验证码', async () => {
+  let resolve, calls = 0
+  const scene = codeScene(() => { calls++; return new Promise(done => { resolve = done }) })
+  try {
+    const first = scene.requestCode()
+    assert.equal(await scene.requestCode(), false)
+    assert.equal(calls, 1)
+    resolve(codeReceipt)
+    await first
+    scene.code.value = '123456'
+    scene.now.value = 62000
+    const resend = scene.requestCode()
+    assert.equal(scene.challenge.value, null)
+    assert.equal(scene.code.value, '')
+    resolve({ ...codeReceipt, challengeId: '7ebf606b-a0d5-4053-98fb-194505f3d10d' })
+    await resend
+    assert.equal(scene.challenge.value.challengeId.endsWith('10d'), true)
+    assert.equal(calls, 2)
+  } finally { scene.dispose() }
+})
 
 const alice = { id: '1', username: 'synthetic_alice' }
 const bob = { id: '2', username: 'synthetic_bob' }
