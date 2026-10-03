@@ -725,3 +725,8 @@
 - ProfileApi使用isCurrent及beforeSend/返回守卫；上传成功但文字保存异常携带partialProfile、code/status/cause，明确文字保存“尚未确认”，不把网络失败说成服务端一定未保存。Profile先保留已上传照片版本，将表单data URL换成已上传URL，保留昵称/签名；GET最新失败也不丢已知回执。资料冲突展示服务器当前昵称/签名/头像，输入保留，用户再次保存前可核对；编辑窗提供最新资料重读。离页/身份变化不应用旧错误或资料。
 - 补真实ApiClient等待CSRF期间身份变化阻断的离线用例，3项新增、最终215项前端及demo/server两构建通过；Profile模块200，材料profile-recovery-2026-10-04。没有写真实账号照片/资料、无新增模型/邮件调用；GUI/真机仍未验证。原服务和原数据保持，compact仍0。
 - Git fetch本轮已成功，origin/main现场计算ahead28。匿名REST404不能确定可见性；使用已有Git credential非交互仅内存认证只读核仓库private/main/push=true，hooks/workflows/deployments/environments/当前main检查与状态均0，无可见部署入口。本次无原始凭据输出/写盘。全部待上传28提交同一作者，快进成立，历史补丁秘密模式扫描0，每一提交禁止文件扫描0；配置只有环境变量/示例，忽略的本机properties/storage/memory未混入。资料保存后自主推送，成功结果另记，不预写成功。
+
+## 2026-10-04 · 本聊天第一次实际压缩后连续接续
+
+- 本聊天实际第1次compact已告知，STATE保留1；源聊天2次和用户粘贴规则中的次数仅历史，不重置、不重复计数。用户进一步强调节点保存后直接继续、新对话继承，既有全局/NEXT及原生续办提示已保存，不重复创建自动化。
+- 恢复现场main/5a9cd41工作区干净，29项待上传，Java19940/Vite20820仍仅127.0.0.1监听8080/5174。先核增量及历史秘密后正常Push、核远端，再继续统计任务；不预写推送成功。

@@ -11,8 +11,8 @@
   "pendingUserDecision": "集中记录.workbuddy/handoff/PENDING.md；目前不主动提问，继续独立任务",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-04",
-  "observedCompactionCount": 0,
-  "compactionCountBasis": "2026-10-04全新聊天01a10312-42ac-7953-909e-b7f982a78353基准0，尚未识别实际compact；源聊天2次仅历史，摘要与自动唤醒不计。",
+  "observedCompactionCount": 1,
+  "compactionCountBasis": "本聊天01a10312-42ac-7953-909e-b7f982a78353已实际识别第1次compact并已告知；同聊天恢复保留1。源聊天2次仅历史，用户粘贴规则与自动唤醒不计。",
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
