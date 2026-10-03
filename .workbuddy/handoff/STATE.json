@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "用户已通过本轮聊天外观、可编辑个人资料、自定义照片头像与五页猫耳返回键；当前仅准备新对话交接并核查保存上传，后端继续暂停",
-  "stage": "frontend_chat_profile_photo_accepted_handoff",
+  "currentTask": "用户已恢复后端并批准独立开发库；Java认证与用户隔离账单基础已完成验证，前端和全部本地资料保持",
+  "stage": "backend_foundation_verified",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "Codex在新对话先读NEXT及规则/计划/状态/LOG，必须读取浏览器失败与恢复记录，再核Git/源码/服务/权限；完成接手后按用户新的具体任务推进，不重做已认可功能，后端继续暂停",
-  "nextStepReason": "用户已验收通过并要求准备新对话交接，应保留当前成果和真实边界，不以交接继续扩功能或恢复后端",
-  "pendingUserDecision": "无需外部操作或重复观感验收；生产版实际操作、真机、跨设备、无历史聊天首次引导分支仍未验证。后端需用户明确恢复，正式登录/头像后端同步/真实AI未接通。此前权限拒绝根因未知，失败原文保留；原账本不清空/自动上传/归属首次账号",
+  "nextStep": "完善后端请求幂等与整组事务入账，再逐条联通前端登录、账单和统计",
+  "nextStepReason": "基础认证和持久化已有真实验证，先堵住重复重试与部分入账风险，再切换已验收前端的数据来源",
+  "pendingUserDecision": "本项目开发无需外部操作；建议另行更换本机数据库密码并规划专用账号，本轮不改权限。未自动导入演示账本或照片，正式资料/照片接口、真实AI与部署未完成",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }

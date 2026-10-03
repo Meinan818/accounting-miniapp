@@ -1,6 +1,6 @@
 # 喵叽智账 — 当前开发指南
 
-> 当前主线：聊天记账前端闭环（多笔草稿、追问补充、对话纠正、确认保存）。目标为Java + MySQL及真实AI，后端尚未建立；首页视觉为配套。
+> 当前主线：Java + MySQL后端基础和可靠入账；前端保留已验收成果与本地演示。后端独立运行和API见 [backend/README.md](../backend/README.md)，未接前端或真实AI。下文旧开工清单供历史对照，以当前入口与LOG为准。
 > 项目规则见AGENTS.md，目标/验收见PROJECT_PLAN.md，当前任务见STATE.json，历史证据见LOG.md；实现以代码和本轮验证为准。旧Supabase指南在docs/archive/supabase-route/，不能作为当前操作入口。
 
 ## 一、运行前端

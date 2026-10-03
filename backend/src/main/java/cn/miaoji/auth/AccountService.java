@@ -1,0 +1,43 @@
+package cn.miaoji.auth;
+
+import cn.miaoji.common.ApiException;
+import java.util.Locale;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.http.HttpStatus;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+@Service
+public class AccountService implements UserDetailsService {
+    private final JdbcTemplate jdbc;
+    private final PasswordEncoder passwords;
+
+    public AccountService(JdbcTemplate jdbc, PasswordEncoder passwords) {
+        this.jdbc = jdbc;
+        this.passwords = passwords;
+    }
+
+    public void register(String username, String password) {
+        try {
+            jdbc.update("INSERT INTO app_user (username, password_hash) VALUES (?, ?)",
+                    normalize(username), passwords.encode(password));
+        } catch (DuplicateKeyException error) {
+            throw new ApiException(HttpStatus.CONFLICT, "USERNAME_UNAVAILABLE", "此用户名不可用");
+        }
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) {
+        var accounts = jdbc.query("SELECT id, username, password_hash FROM app_user WHERE username = ?",
+                (rs, row) -> new AccountPrincipal(rs.getLong("id"), rs.getString("username"), rs.getString("password_hash")),
+                normalize(username));
+        if (accounts.isEmpty()) throw new UsernameNotFoundException("账号或密码错误");
+        return accounts.getFirst();
+    }
+
+    private String normalize(String username) { return username.toLowerCase(Locale.ROOT); }
+}
