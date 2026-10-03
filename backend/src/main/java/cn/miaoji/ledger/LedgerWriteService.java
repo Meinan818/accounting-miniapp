@@ -73,6 +73,8 @@ public class LedgerWriteService {
             }
         }
 
+        // 同账号写入取得版本行锁；回放在此之前返回，不增加读取版本。
+        records.advanceRevision(owner);
         var created = new ArrayList<RecordView>();
         for (var input : canonical) {
             var recordId = UUID.randomUUID().toString();

@@ -37,11 +37,31 @@ export function createRemoteLedger(client, owner, { storage } = {}) {
     const current = generation
     const pending = (async () => {
       try {
-        const snapshot = await client.request('GET', '/api/records/snapshot')
-        ensure(current)
-        if (!Array.isArray(snapshot?.records)) throw new Error('账本回执不完整，暂不替换当前账本。')
+        const entries = []
+        const seen = new Set()
+        let after = null
+        let revision = null
+        do {
+          const query = new URLSearchParams({ size: '500', ...(after ? { after, revision } : {}) })
+          const page = await client.request('GET', `/api/records/snapshot/page?${query}`)
+          ensure(current)
+          if (!Array.isArray(page?.records) || page.records.length > 500 || typeof page.revision !== 'string'
+            || !/^\d+$/.test(page.revision) || (revision !== null && page.revision !== revision)
+            || !(page.nextAfter === null || typeof page.nextAfter === 'string')) {
+            throw new Error('账本分页回执不完整或版本已变化，原账本已保留。')
+          }
+          revision = page.revision
+          for (const entry of page.records) {
+            const id = entry.record?.id
+            if (seen.has(id)) throw new Error('账本分页编号重复，原账本已保留。')
+            seen.add(id); entries.push(entry)
+          }
+          if (page.nextAfter !== null && (page.records.length === 0 || page.nextAfter !== page.records.at(-1).record?.id
+            || (after !== null && page.nextAfter <= after))) throw new Error('账本分页位置不合法，原账本已保留。')
+          after = page.nextAfter
+        } while (after !== null)
         const previous = new Map(allRecords.value.map(record => [record.id, record]))
-        const next = snapshot.records.map(value => {
+        const next = entries.map(value => {
           if (value.deletedAt != null && (typeof value.deletedAt !== 'string' || !Number.isFinite(Date.parse(value.deletedAt)))) throw new Error('删除状态不合法')
           return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
         })

@@ -591,3 +591,13 @@
 - 原5174内置浏览器本轮新增3项操作，完整browser-result.json累计8项：确认前2笔43.00待确认/总额0.30、确认后43.30、刷新账本/卡片保持；draft-chat.png截图已存。前轮23项仍不补造，生产交互/真机/用户最终验收未完成。所有新旧合成数据、草稿、照片保留，服务脚本最后停止自身Java；Vite保留。源码source-before-drafts.zip、数据库database-before-v6.sql先备份，均E盘不入Git。
 - 用户新增每次交接前set_thread_title简要概括本次实际任务，已写项目AGENTS/NEXT/HANDOFF；后续新对话显式gpt-6.1-sol/high继续。当前可识别compact计数0，未触发不提前创建聊天。
 - 本地保存后继续大账本分段读取与服务端查询汇总适配/真实AI边界。没有聊天AI配置/费用授权，不调用Kitool或收费AI；无需外部操作、不Push/部署。
+
+## 2026-10-03 · 分段账本读取与用户最新方向
+
+- V7增加账号ledger_revision，旧值0不补造；每个成功创建事务/修改/删除同时增加，重放/失败回退不变。同账号写入通过版本行锁串行化。新snapshot/page稳定UUID键续页，每段最多500+1判断末尾，repeatable-read同时读版本与账单；续页须原revision，变化409拒绝混合。前端完整读完才替换，重复/畸形游标/版本变化/身份/网络失败保护旧完整账本。逻辑删除仍保留，旧snapshot上限保留兼容。
+- 64项H2通过page-test-1.log，含5002完整分页、版本变化与隔离、失败版本不增长；178Node通过page-frontend-test-1.log，5001条/11段、删除事实、畸形/版本保护。page-package.log只打包成功（之前全测试），正式构建3.96s通过page-build-server.log。未重跑无变化演示构建，前草稿轮两构建通过仅历史证据。
+- 真实MySQL8项通过page-http-1791037127910-656e83f0/result.json，5002合成记录11段、旧snapshot413、编辑旧页409、他人空、版本3与重启5001有效/50.01。脚本首条标签仍V5，不把它当V7检查，V7以Flyway实际日志为准。首次批500条SQL客户端失败，仅通用失败文本保留，具体错误码未取得；缩30条复验成功，命令长度为推测，不虚报根因。验证脚本Set.add返回值断言发现无效，后用has检查重复修正；全数5002对账及正式H2/Node断言有效，不夸大首次HTTP重复断言。
+- 本轮原5174大账本实际首页5001笔/50.01，与真实SQL/HTTP一致；browser-result.json累计9项/large-ledger-home.png保存。仍全量内存/列表，性能与虚拟列表未做，不宣称生产无限账本。source-before-pagination.zip及database-before-v7.sql先存档，数据不清。
+- 用户明确模型GLM-4.7-Flash、只本人及几个朋友用、零付费部署、先本机后决定访问方式；注册邮箱验证码，登录邮箱+密码。发信选163，已授权新增Spring Boot官方starter-mail，缓存/材料E盘。项目当前只有DB配置，无GLM/SMTP凭据，未发邮件/模型请求。
+- 智谱官方模型页和API定价.md已实际读取，本轮材料glm-4.7-flash-official.html/glm-pricing-official.md；定价GLM-4.7-Flash输入输出免费，endpoint open.bigmodel.cn/api/paas/v4/chat/completions/model glm-4.7-flash；不换FlashX、不用Kitool。未核账号额度/并发和真实调用，后续缺凭据只做合成。Spring Boot3.5邮件官方页已读，明确starter-mail/JavaMailSender及设置网络超时；不自行实现SMTP。
+- 下一步完善邮箱验证注册/163邮件接入并保护旧账号，再GLM草稿边界；零付费/不Push部署，不提前设置外网权限。新对话gpt-6.1-sol/high及交接前改名保持；本会话可识别compact计数0。

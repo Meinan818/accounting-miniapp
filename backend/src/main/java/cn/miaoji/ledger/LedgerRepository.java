@@ -18,6 +18,23 @@ public class LedgerRepository {
     private final JdbcTemplate jdbc;
     public LedgerRepository(JdbcTemplate jdbc) { this.jdbc = jdbc; }
 
+    public void advanceRevision(long owner) {
+        if (jdbc.update("UPDATE app_user SET ledger_revision=ledger_revision+1 WHERE id=?",owner)!=1) {
+            throw new org.springframework.dao.DataRetrievalFailureException("账本身份不可用");
+        }
+    }
+
+    public long revision(long owner) {
+        return jdbc.queryForObject("SELECT ledger_revision FROM app_user WHERE id=?",Long.class,owner);
+    }
+
+    public List<LedgerService.SnapshotRecord> snapshotPage(long owner,String after,int limit) {
+        var sql="SELECT * FROM ledger_record WHERE user_id=?"+(after==null?"":" AND id>?")+" ORDER BY id LIMIT ?";
+        var arguments=after==null?new Object[]{owner,limit}:new Object[]{owner,after,limit};
+        return jdbc.query(sql,(rs,row) -> new LedgerService.SnapshotRecord(MAPPER.mapRow(rs,row),
+                rs.getTimestamp("deleted_at")==null?null:rs.getTimestamp("deleted_at").toInstant().toString()),arguments);
+    }
+
     public Optional<RecordView> find(long owner, String id) {
         return jdbc.query("SELECT * FROM ledger_record WHERE user_id = ? AND id = ? AND deleted_at IS NULL",
                 MAPPER, owner, id).stream().findFirst();

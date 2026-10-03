@@ -60,7 +60,7 @@ cd E:\XiangMu\未定项目\backend
 
 ## 尚未完成
 
-当前不是完整B/C验收：自定义分类、大账本分页适配、真实AI均未实现。正式前端已开发版联通，生产实际交互、真机及用户正式功能验收未完成；聊天历史暂按账号隔离存在浏览器。旧整组接口接收已确认内容；正式前端已使用下方服务端草稿确认，聊天整理仍规则模拟。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署或收费调用。
+当前不是完整B/C验收：自定义分类、服务端对话同步、真实AI均未实现。正式前端已开发版联通，生产实际交互、真机及用户正式功能验收未完成；聊天历史暂按账号隔离存在浏览器。旧整组接口接收已确认内容；正式前端已使用下方服务端草稿确认，聊天整理仍规则模拟。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署或收费调用。
 
 兼容性依据：[Spring Boot 3.5 环境要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)、[Spring Security 会话](https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html)、[CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)。实际验证见项目交接 LOG。
 
@@ -91,3 +91,9 @@ GET /api/drafts/{UUID}读取本人草稿；PUT同路径{records:[...]}首次建�
 POST /{id}/confirm带{version}及Idempotency-Key（须等于草稿UUID）：行锁校验归属、版本、OPEN与有效期；草稿CONFIRMED/固定回执、原防重请求、账单、操作审计在同一事务提交，任一失败全回退。旧版本409，已取消409，过期未确认410；已确认同版本重试200原回执，首次201，重放不恢复后续改删。其他账号404。V6不导入旧草稿、不补造历史，24小时后不自动清理记录。
 
 正式客户端在用户点击保存/确认后先持久化UUID意图，保存服务端草稿，验证内容和版本并在本机持久化版本，再发送确认；网络/存储失败保留原操作，版本变化阻断。旧已成功batch意图可同键回放兼容，演示模式不调用这些接口。尚无服务端对话同步或草稿恢复列表。
+
+## 大账本分段读取（V7）
+
+GET /api/records/snapshot/page?size=500每段最多500条，按稳定账单UUID递增，包含逻辑删除事实。返回{records,revision,nextAfter}；续页必须携带after与第一段revision，末段nextAfter=null。同账号成功创建整组/修改/删除事务中增加ledger_revision；重放和失败不增加。每段repeatable-read读取版本和记录，中途写入版本变化409 LEDGER_CHANGED，客户端保护旧完整账本，不混合新旧页。旧snapshot仍保留5000上限兼容，正式前端改用分页并只在完整读取后替换。
+
+当前是分段传输，客户端仍保留完整账号账本作既有计算和列表展示；未宣称无限容量/虚拟列表或生产性能指标。单页SQL使用(user_id,id)键范围，不依赖OFFSET。

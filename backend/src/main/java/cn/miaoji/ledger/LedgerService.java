@@ -13,6 +13,7 @@ import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 @Service
 public class LedgerService {
@@ -28,6 +29,21 @@ public class LedgerService {
     public record RecordPage(List<RecordView> records, int page, int size, long total) {}
     public record SnapshotRecord(RecordView record, String deletedAt) {}
     public record LedgerSnapshot(List<SnapshotRecord> records) {}
+    public record SnapshotPage(List<SnapshotRecord> records,String revision,String nextAfter) {}
+
+    @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
+    public SnapshotPage snapshotPage(long owner,String after,Long expectedRevision,int size) {
+        if(size<1 || size>500 || (expectedRevision!=null && expectedRevision<0)
+                || (after!=null && expectedRevision==null)) throw invalid();
+        var revision=repository.revision(owner);
+        if(expectedRevision!=null && revision!=expectedRevision) {
+            throw new ApiException(HttpStatus.CONFLICT,"LEDGER_CHANGED","读取期间账本已变化，请重新读取；原账本已保留");
+        }
+        var values=repository.snapshotPage(owner,after,size+1);
+        var more=values.size()>size;
+        var page=more?List.copyOf(values.subList(0,size)):values;
+        return new SnapshotPage(page,Long.toString(revision),more?page.getLast().record().id():null);
+    }
 
     @Transactional(readOnly = true)
     public LedgerSnapshot snapshot(long owner) {
@@ -62,6 +78,7 @@ public class LedgerService {
     @Transactional
     public RecordView update(long owner, String id, long version, RecordInput input) {
         validate(input);
+        repository.advanceRevision(owner);
         get(owner, id); // 他人/不存在账单统一404，不泄漏所属者。
         if (version < 0) throw invalid();
         if (!repository.update(owner, id, version, input)) throw conflict();
@@ -71,6 +88,7 @@ public class LedgerService {
 
     @Transactional
     public void delete(long owner, String id, long version) {
+        repository.advanceRevision(owner);
         get(owner, id);
         if (version < 0) throw invalid();
         if (!repository.delete(owner, id, version)) throw conflict();

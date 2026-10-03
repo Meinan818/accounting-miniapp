@@ -92,6 +92,53 @@ class AccountLedgerIntegrationTest {
         return json.readTree(result.getResponse().getContentAsString());
     }
 
+    @Test void pagedSnapshotRejectsMixedVersionsAndPreservesDeletionFacts() throws Exception {
+        var alice=account();var bob=account();var one=create(alice,"1.00");create(alice,"2.00");create(bob,"99.00");
+        mvc.perform(get("/api/records/snapshot/page")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/records/snapshot/page").session(alice.session()).param("size","501")).andExpect(status().isBadRequest());
+        var first=mvc.perform(get("/api/records/snapshot/page").session(alice.session()).param("size","1"))
+                .andExpect(status().isOk()).andReturn();
+        var page=json.readTree(first.getResponse().getContentAsString());var revision=page.path("revision").asText();
+        var after=page.path("nextAfter").asText();
+        mvc.perform(get("/api/records/snapshot/page").session(alice.session()).param("after",after))
+                .andExpect(status().isBadRequest());
+        var last=mvc.perform(get("/api/records/snapshot/page").session(alice.session()).param("size","1")
+                .param("after",after).param("revision",revision)).andExpect(status().isOk()).andReturn();
+        var lastPage=json.readTree(last.getResponse().getContentAsString());
+        assertThat(lastPage.path("records").size()).isEqualTo(1);assertThat(lastPage.path("nextAfter").isNull()).isTrue();
+        assertThat(lastPage.path("records").get(0).path("record").path("id").asText())
+                .isNotEqualTo(page.path("records").get(0).path("record").path("id").asText());
+        mvc.perform(delete("/api/records/"+one.path("id").asText()).session(alice.session())
+                .header("X-CSRF-TOKEN",alice.token()).param("version","0")).andExpect(status().isNoContent());
+        mvc.perform(get("/api/records/snapshot/page").session(alice.session()).param("after",after).param("revision",revision))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("LEDGER_CHANGED"));
+        var refreshed=mvc.perform(get("/api/records/snapshot/page").session(alice.session())).andReturn();
+        var rows=json.readTree(refreshed.getResponse().getContentAsString()).path("records");
+        assertThat(rows.size()).isEqualTo(2);assertThat(rows.findValues("deletedAt").stream().filter(JsonNode::isTextual)).hasSize(1);
+    }
+
+    @Test void pagedSnapshotReadsLargeLedgerWithoutTruncatingAndRollbackDoesNotAdvanceRevision() throws Exception {
+        var alice=account();var record=create(alice,"1.00");
+        var owner=jdbc.queryForObject("SELECT user_id FROM ledger_record WHERE id=?",Long.class,record.path("id").asText());
+        var entries=new java.util.ArrayList<Object[]>();
+        for(int i=0;i<5001;i++) entries.add(new Object[]{UUID.randomUUID().toString(),owner});
+        jdbc.batchUpdate("INSERT INTO ledger_record (id,user_id,type,amount,business_date,category,note) VALUES (?,?,'expense',1.00,'2026-10-03','餐饮','synthetic page')",entries);
+        String after=null,revision=null;var ids=new java.util.HashSet<String>();
+        do {
+            var request=get("/api/records/snapshot/page").session(alice.session()).param("size","500");
+            if(after!=null) request.param("after",after).param("revision",revision);
+            var result=mvc.perform(request).andExpect(status().isOk()).andReturn();
+            var page=json.readTree(result.getResponse().getContentAsString());revision=page.path("revision").asText();
+            for(var row:page.path("records")) assertThat(ids.add(row.path("record").path("id").asText())).isTrue();
+            after=page.path("nextAfter").isNull()?null:page.path("nextAfter").asText();
+        } while(after!=null);
+        assertThat(ids).hasSize(5002);
+        mvc.perform(put("/api/records/"+record.path("id").asText()).session(alice.session()).header("X-CSRF-TOKEN",alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":1,\"record\":"+input("2.00")+"}"))
+                .andExpect(status().isConflict());
+        assertThat(jdbc.queryForObject("SELECT ledger_revision FROM app_user WHERE id=?",Long.class,owner).toString()).isEqualTo(revision);
+    }
+
     @Test void draftsRequireOwnershipAndLatestVersionAndDoNotWriteBeforeConfirmation() throws Exception {
         var alice=account();var bob=account();var id=UUID.randomUUID();
         mvc.perform(get("/api/drafts/"+id)).andExpect(status().isUnauthorized());

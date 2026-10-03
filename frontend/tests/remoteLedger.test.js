@@ -14,7 +14,7 @@ function setup(client) {
   return { store, owner, values, dispose: () => scope.stop() }
 }
 test('正式账本不读取演示数据，删除事实排除汇总但保留卡片定位', async () => {
-  const test = setup({ request: async () => ({ records: [{ record: value, deletedAt: '2026-10-03T01:00:00Z' }] }) })
+  const test = setup({ request: async () => ({ revision: '0', nextAfter: null, records: [{ record: value, deletedAt: '2026-10-03T01:00:00Z' }] }) })
   try { assert.equal(await test.store.refresh(), true); assert.equal(test.store.records.value.length, 0); assert.equal(test.store.recordsByIds([id])[0].deletedAt, '2026-10-03T01:00:00Z'); assert.throws(() => test.store.clearRecords(), /不提供/) }
   finally { test.dispose() }
 })
@@ -29,7 +29,7 @@ test('重放回执及读取失败不恢复已删除账单或覆盖当前编辑',
   const test = setup({ request: async (method, path, options) => {
     if (method === 'PUT') return { id: path.split('/').at(-1), version: 0, status: 'OPEN', records: options.body.records }
     if (path.endsWith('/confirm')) return { records: [value] }
-    return offline ? Promise.reject(Error('offline')) : { records: [{ record: { ...value, amount: '0.30', version: 2 }, deletedAt: '2026-10-03T01:00:00Z' }] }
+    return offline ? Promise.reject(Error('offline')) : { revision: '0', nextAfter: null, records: [{ record: { ...value, amount: '0.30', version: 2 }, deletedAt: '2026-10-03T01:00:00Z' }] }
   } })
   try {
     await test.store.refresh(); offline = true
@@ -40,7 +40,7 @@ test('重放回执及读取失败不恢复已删除账单或覆盖当前编辑',
 test('账号改变立即清内存，旧账号迟到响应不进入新账本', async () => {
   let resolve
   const test = setup({ request: () => new Promise(done => { resolve = done }) })
-  try { const pending = test.store.refresh(); test.owner.value = '2'; resolve({ records: [{ record: value }] }); assert.equal(await pending, false); assert.equal(test.store.records.value.length, 0) }
+  try { const pending = test.store.refresh(); test.owner.value = '2'; resolve({ revision: '0', nextAfter: null, records: [{ record: value }] }); assert.equal(await pending, false); assert.equal(test.store.records.value.length, 0) }
   finally { test.dispose() }
 })
 test('写入必须等待新快照，不能用先前正在读取的旧账本报告同步', async () => {
@@ -49,18 +49,18 @@ test('写入必须等待新快照，不能用先前正在读取的旧账本报�
     if (method === 'PUT') return { id: path.split('/').at(-1), version: 0, status: 'OPEN', records: options.body.records }
     if (path.endsWith('/confirm')) return { records: [value] }
     reads++; if (reads === 1) return new Promise(done => { resolve = done })
-    return { records: [{ record: value, deletedAt: null }] }
+    return { revision: '0', nextAfter: null, records: [{ record: value, deletedAt: null }] }
   } })
   try {
     const previous = test.store.refresh(); const save = test.store.addRecords([input], { batchId: 'g' })
-    await Promise.resolve(); resolve({ records: [] }); await previous; await save
+    await Promise.resolve(); resolve({ revision: '0', nextAfter: null, records: [] }); await previous; await save
     assert.equal(reads, 2); assert.equal(test.store.records.value.length, 1); assert.equal(test.store.batchRecords('g').length, 1)
   } finally { test.dispose() }
 })
 test('旧编辑版本用于改删，不借用刷新后的新版本覆盖其他修改', async () => {
   const writes = []
   const test = setup({ request: async (...args) => {
-    if (args[0] === 'GET') return { records: [{ record: { ...value, version: 3 } }] }
+    if (args[0] === 'GET') return { revision: '0', nextAfter: null, records: [{ record: { ...value, version: 3 } }] }
     writes.push(args); throw Error('stale')
   } })
   try {
@@ -70,11 +70,46 @@ test('旧编辑版本用于改删，不借用刷新后的新版本覆盖其他�
   } finally { test.dispose() }
 })
 test('畸形快照及网络失败保护最后已确认账本，不写浏览器演示键', async () => {
-  let snapshot = { records: [{ record: value }] }
+  let snapshot = { revision: '0', nextAfter: null, records: [{ record: value }] }
   const test = setup({ request: async () => snapshot })
   try {
-    await test.store.refresh(); snapshot = { records: [{ record: value }, { record: value }] }
+    await test.store.refresh(); snapshot = { revision: '0', nextAfter: null, records: [{ record: value }, { record: value }] }
     assert.equal(await test.store.refresh(), false); assert.equal(test.store.records.value.length, 1); assert.equal(test.values.size, 0)
+  } finally { test.dispose() }
+})
+test('分页读取超过5000条也完整替换且保留删除事实', async () => {
+  const entries = Array.from({ length: 5001 }, (_, index) => ({ record: { ...value,
+    id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}` }, deletedAt: index === 0 ? '2026-10-03T01:00:00Z' : null }))
+  const calls = []
+  const test = setup({ request: async (method, path) => {
+    calls.push(path); const params = new URL(path, 'http://synthetic').searchParams
+    const after = params.get('after'); const start = after ? entries.findIndex(entry => entry.record.id === after) + 1 : 0
+    if (after) assert.equal(params.get('revision'), '15')
+    const records = entries.slice(start, start + 500)
+    return { revision: '15', records, nextAfter: start + 500 < entries.length ? records.at(-1).record.id : null }
+  } })
+  try {
+    assert.equal(await test.store.refresh(), true); assert.equal(calls.length, 11)
+    assert.equal(test.store.records.value.length, 5000)
+    assert.equal(test.store.recordsByIds([entries[0].record.id])[0].deletedAt, entries[0].deletedAt)
+  } finally { test.dispose() }
+})
+test('分页中途版本变化或重复游标保留上次完整账本', async () => {
+  let mode = 'initial'; let calls = 0
+  const secondId = 'aabf606b-a0d5-4053-98fb-194505f3d10c'
+  const test = setup({ request: async () => {
+    calls++
+    if (mode === 'initial') return { revision: '0', nextAfter: null, records: [{ record: value }] }
+    if (calls === 1) return { revision: '1', nextAfter: id, records: [{ record: value }] }
+    if (mode === 'changed') return { revision: '2', nextAfter: null, records: [{ record: { ...value, id: secondId } }] }
+    return { revision: '1', nextAfter: id, records: [{ record: value }] }
+  } })
+  try {
+    assert.equal(await test.store.refresh(), true)
+    mode = 'changed'; calls = 0; assert.equal(await test.store.refresh(), false)
+    assert.equal(test.store.records.value.length, 1); assert.match(test.store.storageError.value, /版本已变化/)
+    mode = 'duplicate'; calls = 0; assert.equal(await test.store.refresh(), false)
+    assert.equal(test.store.records.value[0].id, id); assert.match(test.store.storageError.value, /重复/)
   } finally { test.dispose() }
 })
 test('CSRF等待期间账号变化，真正发送写请求之前阻断', async () => {

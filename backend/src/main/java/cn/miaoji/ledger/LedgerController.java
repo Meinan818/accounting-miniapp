@@ -32,6 +32,13 @@ public class LedgerController {
         return ledger.snapshot(user.id());
     }
 
+    @GetMapping("/records/snapshot/page")
+    public LedgerService.SnapshotPage snapshotPage(@AuthenticationPrincipal AccountPrincipal user,
+            @RequestParam(required=false) UUID after,@RequestParam(required=false) Long revision,
+            @RequestParam(defaultValue="500") int size) {
+        return ledger.snapshotPage(user.id(),after==null?null:after.toString(),revision,size);
+    }
+
     @GetMapping("/records")
     public LedgerService.RecordPage list(@AuthenticationPrincipal AccountPrincipal user,
             @RequestParam String month, @RequestParam(defaultValue = "0") int page,
