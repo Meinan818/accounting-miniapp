@@ -247,7 +247,9 @@ function getSign(record) {
 <style scoped>
 .bills-search-card { position: relative; margin-top: 21px; padding: 13px 13px 11px; background: #ede6f0; border: 1px solid #c8b8d0; border-radius: 9px 16px 10px 15px; }
 .bills-search-card::before { content: ''; position:absolute; width:44px; height:14px; background:#f3e3bc; opacity:.8; top:-7px; left:17px; transform:rotate(-5deg); }
-.bills-search-row { display: flex; align-items: center; gap: 9px; margin-top: 4px; min-height:44px; color:#8a7591; }.bills-search-row input { min-width:0; width:100%; font-size:14px; background:transparent; color:#624f6b; outline:none; }.bills-search-row input:focus-visible { outline:1px dashed #80648d; outline-offset:4px; }.bills-search-row input::placeholder { color:#7c6684; opacity:1; }
+.bills-search-row { display: flex; align-items: center; gap: 9px; margin-top: 4px; min-height:44px; color:#8a7591; }.bills-search-row input { min-width:0; width:100%; font-size:14px; background:transparent; color:#624f6b; outline:none; }.bills-search-row input:focus-visible { outline: none; }
+.bills-search-card:focus-within { border-color: #ab91b7; box-shadow: 0 0 0 3px #e5d9ec80; }
+.bills-search-row button:focus-visible { outline: 2px solid #92749f; outline-offset: 2px; border-radius: 8px; }.bills-search-row input::placeholder { color:#7c6684; opacity:1; }
 .bills-search-row button { min-height:44px; min-width:44px; font-size:12px; flex-shrink:0; }.bills-search-feedback { margin-top:5px; font-size:11px; line-height:1.8; color:#7b6984; }
 
 .bills-manual-link { margin-bottom: 18px; }

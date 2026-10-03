@@ -61,19 +61,40 @@
   animation: message-slide-up 0.28s ease both;
 }
 
-.page-enter-active,
+/* 保持整页纸色连续；不 transform 页面根节点，避免固定导航跟随内容漂移。 */
+.app-shell {
+  position: relative;
+  isolation: isolate;
+  background-color: var(--zz-home-bg);
+}
+
+.page-enter-active {
+  position: relative;
+  z-index: 1;
+  transition: opacity 180ms cubic-bezier(.22, 1, .36, 1);
+}
+
 .page-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 180ms linear;
+}
+
+.page-leave-active * {
+  pointer-events: none !important;
 }
 
 .page-enter-from {
-  opacity: 0;
-  transform: translateY(6px);
+  opacity: .86;
 }
 
+/* 旧页保持可见，直到新页盖好；没有双重淡出形成的空档。 */
 .page-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
+  opacity: 1;
 }
 
 .mascot-bob {
