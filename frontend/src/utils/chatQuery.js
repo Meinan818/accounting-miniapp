@@ -1,10 +1,12 @@
 import dayjs from 'dayjs'
+import { getMonthReview, formatMonthReviewReply, isMonthReviewQuery } from './monthReview.js'
 import { findCategoryMatch } from './categories.js'
 import { getMonthStatistics } from './statistics.js'
 import { centsText } from './money.js'
 
 // Query presentation only: the same pure aggregation as Stats, never a second ledger.
 export function getMonthQueryReply(text, records, month = dayjs().format('YYYY-MM')) {
+  if (isMonthReviewQuery(text)) return formatMonthReviewReply(getMonthReview(records, month))
   text = String(text || '').replace(/\s+/g, '')
   const explicitMonth = /本月|这个月|当月/.test(text)
   if (!explicitMonth && /全部|所有|历史|累计|至今|一直以来/.test(text)) {

@@ -228,7 +228,7 @@ onBeforeUnmount(() => {
         <span class="miao-demo-label">规则演示 · 每组最多5笔</span>
         <ManualEntry class="miao-manual-link" />
       </div>
-      <div class="chat-query-tools" aria-label="安全查询快捷入口"><span>想先看看？</span><button type="button" class="chat-query-chip" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月总支出')">本月支出</button><button type="button" class="chat-query-chip income" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月总收入')">本月收入</button></div>
+      <div class="chat-query-tools" aria-label="安全查询快捷入口"><span>想先看看？</span><button type="button" class="chat-query-chip" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月总支出')">本月支出</button><button type="button" class="chat-query-chip income" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月总收入')">本月收入</button><button type="button" class="chat-query-chip review" :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" @click="handleSend('本月复盘')">本月复盘</button></div>
     </header>
 
     <main ref="messagesContainer" class="miao-messages">
@@ -278,7 +278,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.chat-query-tools { display: flex; gap: 8px; align-items: center; padding: 6px 16px 8px; max-width: 480px; margin: auto; color: var(--miao-soft); font-size: 11px; }
+.chat-query-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 6px 16px 8px; max-width: 480px; margin: auto; color: var(--miao-soft); font-size: 11px; }
 .chat-query-chip { min-height: 44px; padding: 5px 11px; border: 1px solid #d5b9a6; border-radius: 13px 9px 14px 10px; background: #f3dfd3; color: #805e51; font-size: 12px; }.chat-query-chip.income { background: #e6ecd9; color: #5e7052; }.chat-query-chip:disabled { opacity:.5; }.chat-query-chip:focus-visible { outline:2px solid #785746; outline-offset:3px; }
 
 .miao-chat {

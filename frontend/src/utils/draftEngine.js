@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { isMonthReviewQuery } from './monthReview.js'
 import { CATEGORY_OPTIONS, findCategoryMatch } from './categories.js'
 import { centsText, parseCents } from './money.js'
 import { createId, validDate } from './ledger.js'
@@ -7,6 +8,7 @@ const nouns = ['饭', '面', '咖啡', '奶茶', '牛奶', '面包', '蛋糕', '
 const categoryLabels = Object.values(CATEGORY_OPTIONS).flat().map(c => c.label)
 export function isQuery(input) {
   const text = String(input || '').trim()
+  if (isMonthReviewQuery(text)) return true
   // Summary shorthand must never become a bill. Anchor the whole phrase so product names still work.
   let summary = text.replace(/\s+/g, '').replace(/[？?。！!]+$/, '')
     .replace(/^(?:(?:请|帮我|我想知道|想知道|我想|看看|看下|查一下|查询|查看|统计|汇总|算一下|算算))+/, '')

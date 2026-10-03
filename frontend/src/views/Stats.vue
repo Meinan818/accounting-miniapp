@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { ArrowLeft, ChevronLeft, ChevronRight, ReceiptText } from 'lucide-vue-next'
@@ -10,7 +10,8 @@ import { useRecordStore } from '@/stores/recordStore'
 import { centsText } from '@/utils/money'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import { getCategoryWheel, JOURNAL_COLORS } from '@/utils/journal'
-import { getMonthStatistics, isValidMonth } from '@/utils/statistics'
+import { isValidMonth } from '@/utils/statistics'
+import { getMonthReview } from '@/utils/monthReview'
 const route = useRoute()
 const router = useRouter()
 const store = useRecordStore()
@@ -19,10 +20,15 @@ const selectedMonth = ref(isValidMonth(route.query.month) ? route.query.month : 
 const selectedType = ref('expense')
 const monthTitle = computed(() => dayjs(selectedMonth.value + '-01').format('YYYY年M月'))
 const calculated = computed(() => {
-  try { return { data: getMonthStatistics(store.records, selectedMonth.value), error: '' } }
-  catch (error) { return { data: null, error: error.message } }
+  try { return { review: getMonthReview(store.records, selectedMonth.value), error: '' } }
+  catch (error) { return { review: null, error: error.message } }
 })
-const statistics = computed(() => calculated.value.data)
+const review = computed(() => calculated.value.review)
+const statistics = computed(() => review.value?.current)
+const selectedDay = ref('')
+const dayChart = ref(null)
+const pointedDay = computed(() => review.value?.days.find(day => day.date === selectedDay.value) || review.value?.peak || null)
+const maximumDayExpense = computed(() => review.value?.peak?.expenseCents || 0)
 const error = computed(() => store.storageError || calculated.value.error)
 const needsWideAmounts = computed(() => statistics.value && [statistics.value.incomeCents, statistics.value.expenseCents, statistics.value.balanceCents].some(value => centsText(value).length > 7))
 const categoryRows = computed(() => statistics.value?.categories[selectedType.value] || [])
@@ -35,7 +41,12 @@ function changeMonth(offset) {
   selectedMonth.value = next
   router.replace({ query: { ...route.query, month: next } })
 }
-watch(() => route.query.month, month => { selectedMonth.value = isValidMonth(month) ? month : currentMonth() })
+watch(() => route.query.month, month => { selectedDay.value = ''; selectedMonth.value = isValidMonth(month) ? month : currentMonth() })
+watch([review, selectedMonth], async () => {
+  await nextTick()
+  if (!dayChart.value || selectedDay.value || !review.value?.peak) return
+  dayChart.value.scrollLeft = Math.max(0, (review.value.peak.day - 1) * 49 - (dayChart.value.clientWidth - 44) / 2)
+})
 onMounted(() => store.refresh())
 </script>
 
@@ -45,7 +56,7 @@ onMounted(() => store.refresh())
       <header class="stats-header">
         <router-link to="/" class="stats-back" aria-label="返回日历主页"><ArrowLeft :size="20" :stroke-width="1.5" /></router-link>
         <img :src="miaoWriting" alt="猫猫陪你整理收支" class="stats-header-cat" />
-        <div><h1 class="stats-title">收支统计</h1><p class="stats-subtitle">喵叽智账 · 本地演示</p></div>
+        <div><h1 class="stats-title">月度复盘</h1><p class="stats-subtitle">翻开这一月 · 看见钱去了哪里</p></div>
       </header>
       <section class="stats-month-card" aria-label="统计月份">
         <div class="stats-month-nav">
@@ -54,6 +65,7 @@ onMounted(() => store.refresh())
           <button type="button" aria-label="下个月" :disabled="selectedMonth === '9999-12'" @click="changeMonth(1)"><ChevronRight :size="22" :stroke-width="1.5" /></button>
         </div>
         <template v-if="!error && statistics">
+          <p class="review-kicker">MONTHLY JOURNAL · 本月收支小结</p>
           <dl class="stats-overview" :class="{ 'stats-overview-wide': needsWideAmounts }" aria-label="月度收支统计">
             <div class="stats-total-income"><dt>收入</dt><dd>¥{{ centsText(statistics.incomeCents) }}</dd></div>
             <div class="stats-total-expense"><dt>支出</dt><dd>¥{{ centsText(statistics.expenseCents) }}</dd></div>
@@ -64,6 +76,25 @@ onMounted(() => store.refresh())
       </section>
       <section v-if="error" class="stats-error" role="alert"><h2>统计暂时无法显示</h2><p>{{ error }}</p><button type="button" @click="store.refresh()">重新读取账单</button></section>
       <template v-else-if="statistics">
+        <section class="review-trend" aria-labelledby="review-trend-title">
+          <div class="review-section-title"><div><p class="edition-kicker">花费足迹 · 每天一小格 · 左右滑动</p><h2 id="review-trend-title">这一月，钱是怎么花的？</h2></div><span>{{ review.activeDays }} 个记录日</span></div>
+          <p class="review-pointed-day" role="status">{{ pointedDay ? pointedDay.date + ' · 支出 ¥' + centsText(pointedDay.expenseCents) : '还没有支出足迹，记下第一笔后再来看看。' }}</p>
+          <div ref="dayChart" class="review-day-chart" :style="{ '--day-count': review.days.length }" aria-label="每日支出，点击日期查看数额">
+            <button v-for="day in review.days" :key="day.date" type="button" class="review-day" :class="{ selected: pointedDay?.date === day.date, recorded: day.count }" :aria-pressed="pointedDay?.date === day.date" :aria-label="day.date + '，支出' + centsText(day.expenseCents) + '元'" @click="selectedDay = day.date"><span class="review-day-track" aria-hidden="true"><i :style="{ height: day.expenseCents ? Math.max(5, day.expenseCents / maximumDayExpense * 100) + '%' : '0%' }"></i></span><span>{{ day.day }}</span></button>
+          </div>
+          <router-link v-if="pointedDay?.count" class="review-day-link" :to="{ path: '/bills', query: { month: selectedMonth, q: pointedDay.date } }">翻开这一天的 {{ pointedDay.count }} 张小票 →</router-link>
+          <p class="review-scope-note">按完整业务月份统计，未来日期按所属月计入；记录日包含收入与支出，不是连续打卡。</p>
+        </section>
+        <section class="review-comparison" aria-label="与上月账本对照">
+          <p class="edition-kicker">两页账本的对照 · 非同期比较</p>
+          <h2>和上月比一比</h2>
+          <p v-if="review.comparisonError" class="review-scope-note">{{ review.comparisonError }}</p>
+          <template v-else-if="review.previous?.recordCount">
+            <div class="review-compare-pages"><div><span>{{ review.previousMonth }} 支出</span><strong>¥{{ centsText(review.previous.expenseCents) }}</strong></div><div><span>{{ selectedMonth }} 支出</span><strong>¥{{ centsText(statistics.expenseCents) }}</strong></div></div>
+            <p class="review-delta">{{ review.expenseDeltaCents === 0 ? '两个账本月份的支出相同。' : '本月比上月' + (review.expenseDeltaCents > 0 ? '多' : '少') + ' ¥' + centsText(Math.abs(review.expenseDeltaCents)) }}</p>
+          </template>
+          <p v-else class="review-scope-note">上月没有有效账单，先留一页空白；不虚构环比百分比。</p>
+        </section>
         <section class="stats-category-card" aria-labelledby="stats-category-title">
           <div class="stats-category-heading"><h2 id="stats-category-title">{{ typeLabel }}分类</h2><div class="stats-type-switch" aria-label="选择分类统计类型"><button v-for="type in ['expense', 'income']" :key="type" type="button" :aria-pressed="selectedType === type" :class="{ selected: selectedType === type }" @click="selectedType = type">{{ type === 'income' ? '收入' : '支出' }}</button></div></div>
           <div v-if="categoryRows.length" class="stats-wheel-scene"><span class="stats-wheel-label edition-ribbon">本月账本色谱</span><div class="stats-wheel" role="img" :aria-label="typeLabel + '分类分布，共' + categoryRows.length + '类'" :style="{ background: wheel.background }"><div class="stats-wheel-center"><span>{{ selectedType === 'income' ? '收入来源' : '支出去向' }}</span><strong>{{ categoryRows.length }}<small>类</small></strong><span>{{ statistics[selectedType + 'Count'] }}笔有效账单</span></div></div><JournalSticker kind="spark" tone="honey" class="stats-wheel-spark" /><JournalSticker kind="flower" tone="lilac" class="stats-wheel-flower" /></div>
@@ -86,6 +117,16 @@ onMounted(() => store.refresh())
 </template>
 
 <style scoped>
+.review-kicker { font-size: 10px; letter-spacing: 1.5px; color: #8b725e; margin-bottom: 12px; }
+.review-trend { margin: 22px 0; padding: 22px 16px 17px; border-top: 2px solid #cfbaa0; border-bottom: 1px solid #dac8b0; background: repeating-linear-gradient(transparent 0 31px,#f0e5d5 31px 32px),#fffaf0; }
+.review-section-title { display: flex; justify-content: space-between; align-items: start; gap: 10px; }.review-section-title h2 { font-size: 18px; margin-top: 5px; }.review-section-title > span { flex-shrink: 0; font-size: 11px; color: #79634f; padding-top: 5px; }
+.review-pointed-day { min-height: 42px; padding: 12px 0; font-size: 12px; color: #795b48; }
+.review-day-chart { display: grid; grid-template-columns: repeat(var(--day-count),44px); gap: 5px; overflow-x:auto; padding:3px 2px 10px; scrollbar-width:thin; }.review-day { display:flex; align-items:center; flex-direction:column; gap:5px; min-width:0; min-height:72px; font-size:10px; color:#79634f; border-radius:5px; padding:4px 1px; }.review-day-track { display:flex; align-items:end; width:100%; max-width:14px; height:42px; background:#efe7d7; border-radius:3px; overflow:hidden; }.review-day-track i { width:100%; background:#bf877a; border-radius:3px 3px 0 0; }.review-day.selected { background:#eedbc8; color:#573d2d; }.review-day.recorded .review-day-track { background:#e8ddc6; }.review-day:focus-visible { outline:2px solid #785746; outline-offset:1px; }
+.review-day-link { display:inline-flex; align-items:center; min-height:44px; margin-top:8px; font-size:12px; color:#715844; text-decoration:underline; text-underline-offset:4px; }.review-scope-note { font-size:11px; color:#79634f; line-height:1.9; margin-top:8px; }
+.review-comparison { position:relative; margin:22px 0; padding:20px 16px; background:#eaf0df; border:1px solid #bdc8aa; border-radius:3px 3px 18px 3px; }.review-comparison h2 { font-size:18px; margin:6px 0 14px; }.review-compare-pages { display:grid; grid-template-columns:1fr 1fr; gap:12px; }.review-compare-pages > div { min-width:0; padding:10px 0; border-bottom:1px solid #b9c6a9; }.review-compare-pages span { display:block; font-size:11px; color:#617052; }.review-compare-pages strong { display:block; font-weight:400; font-size:clamp(13px,4vw,18px); margin-top:6px; overflow-wrap:anywhere; }.review-delta { font-size:13px; margin-top:14px; color:#566747; overflow-wrap:anywhere; }
+.journal-stats .stats-month-card { border-radius:3px 3px 16px 3px; background:linear-gradient(90deg,transparent 13px,#eedccc 13px 14px,transparent 14px),#fffdf8; box-shadow:2px 4px 0 #e7d6bf; }.journal-stats .stats-overview { grid-template-columns:1fr 1fr; }.journal-stats .stats-overview-wide { grid-template-columns:1fr; }.journal-stats .stats-total-expense { grid-column:1 / -1; grid-row:1; text-align:left; padding:14px 10px; border-bottom:1px solid #ddc5b4; background:transparent; border-radius:0; }.journal-stats .stats-total-expense dd { font-size:clamp(24px,7vw,34px); }.journal-stats .stats-total-income,.journal-stats .stats-total-balance { background:transparent; text-align:left; padding:10px; border-radius:0; }
+@media(max-width:359px) { .review-section-title h2 { font-size:16px; }.review-section-title > span { font-size:10px; }.review-day-chart { gap:5px; } }
+
 .stats-wheel-scene { position:relative; display:flex; align-items:center; justify-content:center; padding:32px 0 23px; margin:7px 0 3px; background:radial-gradient(ellipse at center,#f9eedc 0 45%,transparent 66%); }
 .stats-wheel-label { position:absolute; top:6px; left:0; }.stats-wheel { width:188px; height:188px; border-radius:50%; display:grid; place-items:center; box-shadow:4px 5px 0 #e0d3c2; outline:1px solid #c5b19a; outline-offset:4px; transform:rotate(-3deg); }
 .stats-wheel-center { width:130px; height:130px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; border-radius:50%; border:1px dashed #c5b19a; background:#fffaf0; color:var(--zz-home-ink-soft); transform:rotate(3deg); }.stats-wheel-center span { font-size:11px; }.stats-wheel-center strong { font-size:31px; font-weight:400; line-height:1.2; color:var(--zz-home-ink); }.stats-wheel-center small { font-size:12px; margin-left:5px; }
