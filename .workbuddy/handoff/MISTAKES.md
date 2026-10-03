@@ -286,3 +286,7 @@
 
 ## 2026-10-04 · 备份入口patch核查
 - 首patch把合并CSS的一部分当独立上下文行，随后测试patch重复对同文件Update，工具均拒绝；实际git status/rg核无部分落盘。改用实际style标签位置及每文件单Update后67项针对/360全量/两构建通过。今后多文件patch先核精确源行，拒绝后现场核是否落盘，不能假定修改成功或把工具失败混作业务测试失败。
+
+## 2026-10-04 · authStore dispose未失效会话
+- 认证Store普通setup hydrate旧user/status，未在scope结束撤销session/API后续链；旧401甚至触发window重定向。auth-before-fixed-harness4项4失败保留，6项authLifecycle/366全量/两构建修复后通过。以后Store身份状态不能复用释放实例快照，session代次、CSRF、fetch后续链和页面跳转分别核，不把新客户端自动当旧身份可信。
+- 初harness只排10次microtask不足以等真实Response body，第三项undefined并在恢复global fetch后出现异步拒绝。改setImmediate且在失败断言前排空原实现追加请求后，无异步遗留，4项业务失败独立确证；今后合成网络替身卸载前排空已启动任务，不能把调度错误算作业务证据。

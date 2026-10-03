@@ -1,4 +1,10 @@
-## 当前入口：受保护对话本机备份（2026-10-04）
+## 当前入口：认证Store生命周期（2026-10-04）
+
+366项前端及两构建、6项authLifecycle真实authStore+createSession+createApiClient合成fetch通过。auth-before-fixed-harness4项4失败：Pinia重建旧身份hydrate，释放迟到restore回填，旧login追加安全校验/身份读取，旧401触发window重定向。session.dispose撤销代次/入口，auth scope释放resetCsrf/阻断旧fetch与回调，user/status/error skipHydrate，新实例unknown重新核当前Cookie；旧注册回执不自动登录、旧验证码入口不发请求。真实账号/邮箱/业务/AI调用0，GUI/真机仍待验。
+
+备份45856e95aed1729f1f6a834543c1a176daf206d4已官方同SHA/force:false同步并核远端完整一致（backup-sync）。本节点保存上传见auth-sync。compact=1保持；初轮Response body未等完harness误读undefined并有异步拒绝，修setImmediate/排空原多余请求后4个业务失败确证，原日志不抹除。下一项正式router guard恢复等待期间并发导航：当前仅unknown/unavailable等待restore，loading直接按空user判断；先合成复现，再区分restore加载与login加载，不直接扩大为无条件认证请求。
+
+## 前一节点：受保护对话本机备份（2026-10-04）
 
 聊天存储异常区提供“下载对话备份”，createBackup只读当前键原文及JSON脱离引用的本页消息，metadata区分未保存/原文不可读/原文不存在；不解析坏原文、不清理/导入/远传。downloadJson生成application/json Blob，用临时a下载并延后释放URL，启动失败亦释放；页面提示仅发起下载，需确认文件保存，存储不可读明确部分备份。离页/旧账号入口拒绝，正常重试及聊天保留。
 

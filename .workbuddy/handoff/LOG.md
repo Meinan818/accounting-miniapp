@@ -1023,3 +1023,10 @@
 - Chat存储异常区新增显式下载按钮；Store createBackup只读本页快照与当前对话键原文，JSON脱离引用，标未保存/读取不可用，损坏原文照存字符串。下载工具用真实Blob及临时a/objectURL，成功延后释放、失败立即释放；不清除/导入/远传。页面回执只说已发起，原文不可读明确部分备份。
 - 50项Store+17项Chat共67项针对、360全量与demo/server构建通过（backup-*），Chat本机模块200，服务19940/20820仍仅本机8080/5174无重启。所有数据/下载/请求为合成替身，无真实账号/账本/照片/AI/邮件调用，无依赖变化；GUI/窄屏/实际下载落盘/真机/隔夜仍待验。
 - 初始patch上下文误将合并CSS当独立行，以及同patch重复文件操作，各失败且核无落盘改动，按实际源行/单文件操作修正后67/360通过，不改业务迁就测试。compact=1保持；下一项authStore同Pinia重建与createSession迟到回执，合成身份/CSRF隔离取证。本节点保存上传见backup-sync，不需用户操作。
+
+## 2026-10-04 · 认证Store释放与重建
+
+- 备份节点45856e95aed1729f1f6a834543c1a176daf206d4官方同SHA/force:false上传成功，1提交/13blob，完整远端一致（backup-sync），Git443原历史保持。
+- 真实authStore+session+API合成fetch初轮auth-before4失败中第三项Response body异步未等完导致undefined，并有异步拒绝；改setImmediate排空、排空原实现多余请求后auth-before-fixed-harness4项4业务失败，旧状态hydrate/迟到restore/旧login继续请求/旧401重定向已确证，原失败不删除。
+- createSession.dispose失效代次/入口，authStore scope释放旧fetch/Unauthorized/identity回调并resetCsrf，user/status/error skipHydrate。6项authLifecycle通过，涵盖CSRF等待不发POST、注册回执不自动登录及旧验证码动作不发请求；全量366及demo/server两构建通过（auth-after初53项、auth-frontend含新增6项/两构建）。无真实认证/账本/照片/邮件/AI请求，无依赖变化，GUI/真机/实际隔夜待验。
+- compact=1保持，独立保存上传结果见auth-sync。下一项正式路由restore等待期间的并发导航/身份变化合成取证；loading现不等待，不能未取证就让login加载期间也无条件发restore。无需用户操作，原生静音每小时续办保持。

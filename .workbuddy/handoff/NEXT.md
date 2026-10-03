@@ -1,4 +1,8 @@
-## 2026-10-04 · 对话本机备份（当前入口）
+## 2026-10-04 · 认证Store释放再建（当前入口）
+
+6项authLifecycle/366全量/两构建通过，重建unknown不回填旧身份，释放session代次/旧fetch/CSRF/回调，旧401不重定向、注册迟到不自动登录。45856e9完整远端一致，本节点上传见auth-sync。compact=1不归零；继续正式router恢复等待期间并发导航取证，当前loading跳过restore，须与login中的loading区分；真实guard/session+合成客户端，不发真实账号/邮件/业务/AI请求。GUI/真机待验。
+
+## 2026-10-04 · 对话本机备份（历史）
 
 360项全量/两构建、50项Store+17项Chat通过；异常提示新增显式备份本页快照/当前键原文，坏历史保持，不可读为部分备份，下载仅发起不认落盘，GUI/窄屏/实际落盘/真机待验。24023bc完整远端一致，本节点上传见backup-sync。compact=1不归零，下一项authStore同Pinia重建/createSession迟到回执及身份/CSRF隔离，只用合成客户端，不请求真实认证/业务/AI/邮件。
 

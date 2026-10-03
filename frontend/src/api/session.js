@@ -7,6 +7,8 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
   const error = ref('')
   let generation = 0
   let restoration = null
+  let active = true
+  function dispose() { active = false; generation++; restoration = null }
   function identity(value) {
     if (value !== null && (!/^\d+$/.test(value.id) || typeof value.username !== 'string')) {
       throw new ApiError('账号身份格式不正确，请重新登录。', { code: 'INVALID_RESPONSE' })
@@ -15,8 +17,9 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     user.value = value === null ? null : { id: value.id, username: value.username }
     if (previous !== (value?.id ?? null)) onIdentityChange(value?.id ?? null, previous)
   }
-  function expire() { generation++; restoration = null; identity(null); status.value = 'guest'; error.value = '登录已失效，请重新登录。' }
+  function expire() { if (!active) return; generation++; restoration = null; identity(null); status.value = 'guest'; error.value = '登录已失效，请重新登录。' }
   async function restore() {
+    if (!active) return false
     if (restoration) return restoration.promise
     const current = generation
     status.value = 'loading'; error.value = ''
@@ -37,6 +40,7 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     return attempt.promise
   }
   async function login(username, password) {
+    if (!active) return false
     const current = ++generation
     restoration = null
     identity(null); status.value = 'loading'; error.value = ''
@@ -51,7 +55,9 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     }
   }
   async function requestRegistrationCode(email) {
+    if (!active) throw new ApiError('当前认证页面已释放，请重新打开登录页。', { code: 'STALE_SESSION' })
     const value = await client.request('POST', '/api/auth/email/code', { body: { email } })
+    if (!active) throw new ApiError('当前认证页面已释放，请重新打开登录页。', { code: 'STALE_SESSION' })
     if (!value || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.challengeId)
       || !Number.isInteger(value.expiresIn) || value.expiresIn < 1 || !Number.isInteger(value.resendAfter) || value.resendAfter < 1) {
       throw new ApiError('验证码申请回执不完整，请保留邮箱后再试。', { code: 'INVALID_RESPONSE' })
@@ -59,6 +65,7 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     return value
   }
   async function register(email, password, challengeId, code) {
+    if (!active) return false
     const current = ++generation
     restoration = null
     try {
@@ -71,6 +78,7 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     return login(email, password)
   }
   async function logout() {
+    if (!active) return false
     const current = ++generation
     restoration = null
     try { await client.logout() }
@@ -81,5 +89,5 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     if (current !== generation) return false
     identity(null); status.value = 'guest'; error.value = ''
   }
-  return { user, status, error, restore, login, register, requestRegistrationCode, logout, expire }
+  return { user, status, error, restore, login, register, requestRegistrationCode, logout, expire, dispose }
 }
