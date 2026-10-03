@@ -116,7 +116,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
     for (const record of saved) links.set(record.id, { source, draftGroupId: batchId, draftItemId: record.draftItemId })
     if (!await refresh(true)) throw new Error('服务器已确认保存，但最新账本暂未读到。请保留此组并用原操作重试，不要另建一组。')
     ensure(current)
-    currentLedger.completeManual(batchId, saved); manualEpoch.value++
+    await currentLedger.completeManual(batchId, saved); ensure(current); manualEpoch.value++
     return saved
   }
   async function addRecord(input, options = {}) { return (await addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options }))[0] }

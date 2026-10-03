@@ -25,12 +25,24 @@ export function fromRecordView(value) {
 }
 
 // 先持久化确认意图再发请求；超时/重开页面仍复用同键，不使用演示账本键。
-export function createLedgerApi(client, { storage, owner, newUuid = () => globalThis.crypto.randomUUID(), isCurrent = () => true } = {}) {
+export function createLedgerApi(client, { storage, owner, newUuid = () => globalThis.crypto.randomUUID(), isCurrent = () => true,
+  locks = globalThis.navigator?.locks, requireLocks = typeof globalThis.window !== 'undefined' } = {}) {
   if (!/^\d+$/.test(String(owner))) throw new Error('缺少正式账号身份')
   const key = `miaoji_account_write_intents_v1_${owner}`
   const beforeSend = () => { if (!isCurrent()) throw new Error('登录身份已变化，本次操作没有发送。') }
   const activeIntents = new Map()
   const receiptIntents = new WeakMap()
+  async function withIntentLock(work) {
+    beforeSend()
+    if (locks?.request) return locks.request(`${key}:write`, { mode: 'exclusive', ifAvailable: true }, lock => {
+      if (!lock) throw new Error('另一页面正在处理当前账号的保存操作，请稍后用原操作重试。')
+      beforeSend()
+      return work()
+    })
+    if (requireLocks) throw new Error('当前浏览器暂不支持跨页面安全保存，请使用新版Chrome或Edge；原草稿已保留。')
+    // 非浏览器的离线测试可注入锁；浏览器写入不能静默降级为无互斥存储。
+    return work()
+  }
   function intents() {
     const raw = storage.getItem(key)
     if (raw === null) return {}
@@ -77,7 +89,7 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     }
     return values[batchId].draftVersion
   }
-  async function createBatch(inputs, batchId) {
+  async function createBatchUnlocked(inputs, batchId) {
     if (!Array.isArray(inputs) || inputs.length < 1 || inputs.length > 5) throw new Error('每次确认1–5笔账单')
     const ids = inputs.map((value, index) => String(value.id ?? index))
     if (new Set(ids).size !== ids.length) throw new Error('草稿编号重复')
@@ -126,7 +138,7 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
       })
     } catch { throw new Error('原手动保存操作无法读取，请保留浏览器数据并核对账单，暂不另建一笔。') }
   }
-  function completeManual(batchId, receipt, expected = receipt ? receiptIntents.get(receipt) : activeIntents.get(batchId)) {
+  function markManualComplete(batchId, expected) {
     if (!batchId.startsWith('manual-')) return
     assertIntent(batchId, expected)
     const values = intents()
@@ -135,7 +147,7 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     try { storage.setItem(key, JSON.stringify(values)) }
     catch { throw new Error('服务器已保存，恢复状态暂未保存，请用原操作重试，不要另建一笔。') }
   }
-  async function cancelManual(batchId) {
+  async function cancelManualUnlocked(batchId) {
     beforeSend()
     const operation = pendingManual().find(value => value.batchId === batchId)
     if (!operation) throw new Error('原手动操作已变化，请使用原操作恢复并核对账单。')
@@ -161,7 +173,14 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
       if (cancelled?.id !== saved.requestId || cancelled.status !== 'CANCELLED' || cancelled.version !== draft.version
         || !sameRecords(cancelled.records)) throw new Error('取消回执不完整，请保留原操作恢复，暂不另建一笔。')
     }
-    completeManual(batchId, undefined, expected)
+    markManualComplete(batchId, expected)
+  }
+  async function createBatch(inputs, batchId) { return withIntentLock(() => createBatchUnlocked(inputs, batchId)) }
+  async function cancelManual(batchId) { return withIntentLock(() => cancelManualUnlocked(batchId)) }
+  async function completeManual(batchId, receipt) {
+    if (!batchId.startsWith('manual-')) return
+    const expected = receipt ? receiptIntents.get(receipt) : activeIntents.get(batchId)
+    return withIntentLock(() => markManualComplete(batchId, expected))
   }
   return { createBatch, update, remove, pendingManual, completeManual, cancelManual }
 }

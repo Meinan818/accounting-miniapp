@@ -264,7 +264,7 @@ test('手动未知确认重开后恢复原内容与原键，完成后不再列�
   assert.deepEqual(createLedgerApi(client, { storage, owner: '2' }).pendingManual(), [])
   fail = false
   await reopened.createBatch([operation.record], operation.batchId)
-  reopened.completeManual(operation.batchId)
+  await reopened.completeManual(operation.batchId)
   assert.deepEqual(keys, [id, id])
   assert.deepEqual(reopened.pendingManual(), [])
   assert.equal(JSON.parse(storage.getItem('miaoji_account_write_intents_v1_1'))['manual-original'].requestId, id)
@@ -293,7 +293,7 @@ test('未收尾手动操作禁止另建标识，收尾存储失败仍保留恢�
   assert.equal(calls, 2)
   const original = storage.getItem('miaoji_account_write_intents_v1_1')
   storage.setItem = () => { throw Error('quota') }
-  assert.throws(() => api.completeManual('manual-original'), /恢复状态暂未保存/)
+  await assert.rejects(api.completeManual('manual-original'), /恢复状态暂未保存/)
   assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), original)
   assert.equal(api.pendingManual().length, 1)
 })
@@ -359,7 +359,7 @@ test('等待草稿或确认期间原意图被另一页改变，拒绝旧请求�
     } }, { storage, owner: '1', newUuid: () => id })
     if (stage === 'complete') {
       await api.createBatch([input], 'manual-original'); replace()
-      assert.throws(() => api.completeManual('manual-original'), /确认意图已变化/)
+      await assert.rejects(api.completeManual('manual-original'), /确认意图已变化/)
     } else await assert.rejects(api.createBatch([input], 'manual-original'), /确认意图已变化/)
     assert.equal(posts, stage === 'draft' ? 0 : 1)
     const original = JSON.parse(storage.getItem('miaoji_account_write_intents_v1_1'))['manual-original']
@@ -375,4 +375,43 @@ test('修改删除带服务器版本，回执保留组标识', async () => {
   const updated = await api.update(current, input); assert.equal(updated.draftGroupId, 'g')
   assert.equal(calls[0][2].body.version, 0); assert.equal(updated.version, 1)
   await api.remove(updated); assert.equal(calls[1][1], `/api/records/${id}?version=1`)
+})
+
+test('跨页账号锁占用时不生成第二个UUID或发请求，释放后复用原键', async () => {
+  let held = false, release, calls = 0, uuids = 0
+  const lockNames = []
+  const locks = { request: async (name, options, callback) => {
+    lockNames.push(name); assert.equal(options.mode, 'exclusive'); assert.equal(options.ifAvailable, true)
+    if (held) return callback(null)
+    held = true
+    try { return await callback({ name }) } finally { held = false }
+  } }
+  const storage = memory()
+  const first = createLedgerApi({ request: async (method, path, options) => {
+    calls++
+    if (method === 'PUT') return new Promise(done => { release = () => done({ id, version: 0, status: 'OPEN', records: options.body.records }) })
+    return { records: [view] }
+  } }, { storage, owner: '1', locks, newUuid: () => { uuids++; return id } })
+  const second = createLedgerApi({ request: async (method, path, options) => {
+    calls++
+    return method === 'PUT' ? { id, version: 0, status: 'CONFIRMED', records: options.body.records } : { records: [view] }
+  } }, { storage, owner: '1', locks, newUuid: () => { uuids++; return id } })
+  const pending = first.createBatch([input], 'manual-original')
+  await assert.rejects(second.createBatch([input], 'manual-original'), /另一页面正在处理/)
+  assert.equal(uuids, 1); assert.equal(calls, 1)
+  release(); await pending
+  await second.createBatch([input], 'manual-original')
+  assert.equal(uuids, 1)
+  assert.equal(new Set(lockNames).size, 1)
+})
+
+test('浏览器不支持跨页锁时拒绝写入，锁回调前身份变化也不留新意图', async () => {
+  const storage = memory(); let calls = 0
+  const client = { request: () => { calls++ } }
+  await assert.rejects(createLedgerApi(client, { storage, owner: '1', locks: null, requireLocks: true }).createBatch([input], 'manual-new'), /浏览器.*安全保存/)
+  let current = true
+  const locks = { request: async (name, options, callback) => { current = false; return callback({ name }) } }
+  await assert.rejects(createLedgerApi(client, { storage, owner: '1', locks, isCurrent: () => current }).createBatch([input], 'manual-new'), /登录身份已变化/)
+  assert.equal(storage.values.size, 0)
+  assert.equal(calls, 0)
 })

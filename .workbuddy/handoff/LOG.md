@@ -836,3 +836,9 @@
 - storage事件仅使当前账号恢复列表重读，不请求网络/自动入账，切账号与作用域释放解绑；隐藏的未提交表单保留实例，另一页出现恢复操作不丢当前输入。261项全量及demo/server两构建通过，材料manual-tabs-2026-10-04；GUI/真机未验。
 - 普通Push恢复成功，3c1b586..e34e4de已上传；ls-remote完整e34e4dec9bf8b71f098760404cb13c6611a05f8a与本地一致，旧低速/443失败保留，没有强推/改权限/部署。
 - 尚未解决两个标签页首次同时读空存储后各自创建确认UUID的竞争；下一项使用浏览器原生Web Locks按账号串行初始化，已实际读取MDN LockManager/request文档(200)，确认exclusive/ifAvailable/null回调及锁释放语义。不能把当前旧响应保护冒称所有多页竞争已解决。compact=0。
+
+## 2026-10-04 · 原生跨标签页确认意图锁
+
+- MDN https://developer.mozilla.org/en-US/docs/Web/API/LockManager/request 已实际读取200，核exclusive/ifAvailable/null回调/Promise释放语义。正式浏览器初始化/草稿确认/取消/本地收尾共用当前账号命名的Web Lock；占用时直接提示原操作稍后重试，不排队或自动重发，也不生成新UUID。不支持锁的浏览器拒绝这些写入并保留草稿，不静默放弃互斥。
+- before.log29项27通过2失败，复现第二实例不受锁保护及不支持时仍留意图。85项接口/账本/导航、263项全量及demo/server两构建通过；锁测试注入LockManager语义，不冒称真实浏览器多标签页GUI已验。仅前端及测试变更，无新依赖/真实外发/账本变更，compact=0。
+- 30dc626已本地保存多页旧响应保护，本节点核差异后保存并普通Push，再核完整远端SHA。下一项完善明细账本读取失败的原地重试与重复点击保护，现Bills仅显示错误而缺同页重新读取入口，首次账本仍全量内存。
