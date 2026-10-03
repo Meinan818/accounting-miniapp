@@ -4,15 +4,16 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { effectScope, onScopeDispose, reactive, ref } from 'vue'
 import { useRegistrationChallenge, validRegistrationEmail } from '../src/utils/registration.js'
+import { getLoginReturnPath } from '../src/utils/loginRedirect.js'
 
 const script = readFileSync(new URL('../src/views/Login.vue', import.meta.url), 'utf8')
   .split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
 const password = 'Synthetic-Only-123'
-function scene() {
+function scene(redirect) {
   const scope = effectScope(), calls = [], redirects = [], cleared = []
   const pending = kind => (...args) => new Promise((resolve, reject) => calls.push({ kind, args, resolve, reject }))
   const auth = reactive({ error: '', login: pending('login'), register: pending('register'), requestRegistrationCode: pending('code') })
-  const bindings = { ref, onScopeDispose, SERVER_MODE: true, useAuthStore: () => auth,
+  const bindings = { ref, onScopeDispose, SERVER_MODE: true, useAuthStore: () => auth, useRoute: () => ({ query: { redirect } }), getLoginReturnPath,
     useRegistrationChallenge, validEmail: validRegistrationEmail,
     setInterval: () => 4, clearInterval: id => cleared.push(id), window: { location: { replace: url => redirects.push(url) } } }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
@@ -20,6 +21,16 @@ function scene() {
   view.username.value = 'synthetic@example.invalid'; view.password.value = password
   return { view, calls, redirects, cleared, dispose: () => scope.stop() }
 }
+
+test('登录成功返回原明细筛选，外部或循环目的地只回首页', async () => {
+  for (const target of ['/bills?month=2026-09&q=coffee#receipt', 'https://example.test', '/login']) {
+    const env = scene(target)
+    try {
+      const pending = env.view.submit(); env.calls[0].resolve(true); await pending
+      assert.deepEqual(env.redirects, [target.startsWith('/bills') ? target : '/'])
+    } finally { env.dispose() }
+  }
+})
 
 test('当前登录成功清密码并导航，失败保留输入且重复点击只有一请求', async () => {
   const env = scene()

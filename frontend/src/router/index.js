@@ -3,6 +3,7 @@ import { getScrollPosition } from '@/utils/navigation'
 import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
 import { useRecordStore } from '@/stores/recordStore'
+import { getLoginReturnPath } from '@/utils/loginRedirect'
 
 const routes = [
   {
@@ -60,6 +61,10 @@ const router = createRouter({
 })
 
 let navigationGeneration = 0
+function loginTarget(to) {
+  const redirect = getLoginReturnPath(to.fullPath)
+  return redirect === '/' ? { name: 'Login' } : { name: 'Login', query: { redirect } }
+}
 if (SERVER_MODE) router.beforeEach(async to => {
   const current = ++navigationGeneration
   const auth = useAuthStore()
@@ -68,15 +73,15 @@ if (SERVER_MODE) router.beforeEach(async to => {
     else await auth.waitForRestoration()
   } catch {
     if (current !== navigationGeneration) return false
-    if (to.name !== 'Login') return { name: 'Login' }
+    if (to.name !== 'Login') return loginTarget(to)
   }
   if (current !== navigationGeneration) return false
-  if (to.meta.requiresAuth && !auth.user) return { name: 'Login' }
-  if (to.name === 'Login' && auth.user) return { name: 'Home' }
+  if (to.meta.requiresAuth && !auth.user) return loginTarget(to)
+  if (to.name === 'Login' && auth.user) return getLoginReturnPath(to.query.redirect)
   const owner = auth.user?.id
   if (to.meta.requiresAuth) await useRecordStore().refresh()
   if (current !== navigationGeneration) return false
-  if (to.meta.requiresAuth && auth.user?.id !== owner) return { name: 'Login' }
+  if (to.meta.requiresAuth && auth.user?.id !== owner) return loginTarget(to)
 })
 
 export default router

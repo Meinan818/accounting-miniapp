@@ -6,6 +6,7 @@ import { reactive } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createSession } from '../src/api/session.js'
 import { getScrollPosition } from '../src/utils/navigation.js'
+import { getLoginReturnPath } from '../src/utils/loginRedirect.js'
 
 const source = readFileSync(new URL('../src/router/index.js', import.meta.url), 'utf8')
   .replace(/^import .*$/gm, '')
@@ -18,8 +19,8 @@ function scene({ delayedLedger = false } = {}) {
   const session = createSession({ request: () => new Promise((resolve, reject) => reads.push({ resolve, reject })),
     login: () => new Promise(resolve => logins.push(resolve)) })
   const auth = reactive(session)
-  const router = new Function('createRouter', 'createMemoryHistory', 'getScrollPosition', 'SERVER_MODE', 'useAuthStore', 'useRecordStore', source)(
-    createRouter, createMemoryHistory, getScrollPosition, true, () => auth, () => ({ refresh: async () => {
+  const router = new Function('createRouter', 'createMemoryHistory', 'getScrollPosition', 'getLoginReturnPath', 'SERVER_MODE', 'useAuthStore', 'useRecordStore', source)(
+    createRouter, createMemoryHistory, getScrollPosition, getLoginReturnPath, true, () => auth, () => ({ refresh: async () => {
       ledgerReads++
       if (delayedLedger) await new Promise(resolve => ledger.push(resolve))
     } }))
@@ -60,4 +61,16 @@ test('账本等待期间身份失效，迟到读取不再放行受保护页面',
   env.reads[0].resolve(account); await env.flush(); assert.equal(env.ledgerReads, 1)
   env.session.expire(); env.ledger[0](); await pending
   assert.equal(env.router.currentRoute.value.name, 'Login'); assert.equal(env.auth.user, null)
+})
+test('访客跳登录保留明细完整目的地，已认证访问登录返回安全站内目标', async () => {
+  const env = scene(), target = '/bills?month=2026-09&q=coffee#receipt'
+  env.session.expire(); await env.router.push(target)
+  assert.equal(env.router.currentRoute.value.name, 'Login')
+  assert.equal(env.router.currentRoute.value.query.redirect, target)
+  const login = env.session.login('synthetic', 'synthetic-password'); env.logins[0](account); await login
+  // Visit a new login URL; pushing the current identical URL skips guards in Vue Router.
+  await env.router.push({ name: 'Login', query: { redirect: target, visit: 'synthetic' } })
+  assert.equal(env.router.currentRoute.value.fullPath, target)
+  await env.router.push({ name: 'Login', query: { redirect: '//example.test' } })
+  assert.equal(env.router.currentRoute.value.name, 'Home')
 })

@@ -6,6 +6,16 @@ import { useManualRecordSave } from '../src/utils/navigation.js'
 import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { effectScope, reactive } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
+import { getLoginReturnPath } from '../src/utils/loginRedirect.js'
+
+test('登录返回保留站内月份/搜索与锚点，拒绝外站/未知页/循环和控制字符', () => {
+  for (const value of ['/bills?month=2026-09&q=%E5%92%96%E5%95%A1#record', '/stats?month=2026-08', '/chat', '/profile', '/add', '/']) {
+    assert.equal(getLoginReturnPath(value), value)
+  }
+  for (const value of [null, undefined, ['/bills'], 'https://example.test', '//example.test/bills', '/\\example.test/bills', '/login?redirect=/bills', '/api/auth/me', '/unknown', '/%2f%2fexample.test', '/bills\n', ' /bills']) {
+    assert.equal(getLoginReturnPath(value), '/')
+  }
+})
 
 test('同一明细页收到新查询链接同步月/收支/分类/搜索，清除链接条件恢复默认', () => {
   const scope = effectScope(), route = reactive({ query: { month: '2026-10', q: '旧备注', type: 'expense', category: '餐饮' } })

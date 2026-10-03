@@ -1048,3 +1048,10 @@
 - 登录6b0ef3a35e181de1cdda81d8eb480be4d96bccb8官方同SHA/force:false上传成功，1提交/10blob，完整远端一致（login-chain-sync）。
 - logout-before9项8通过1失败：旧退出回执resetCsrf清新登录已绑定token，引发额外读取；session只在外层await后核不足。logout API入口/POST beforeSend/重置前核session传入isCurrent，保留新token，不冒称撤回已发送退出。
 - 9项authLifecycle/373全量/demo与server构建通过（logout-frontend/demo/server）；正常退出/失败/401既有回归保持，无真实认证/账本/照片/邮件/AI请求，无依赖/部署，GUI/真机等未验，compact=1保持。下一项受保护链接登录后返回目的地/原筛选体验，限制站内已知路由，先读现有Login/guard并合成验证。本节点保存上传见logout-sync，无需用户操作。
+
+## 2026-10-04 · 重新登录返回原站内目的地
+
+- 旧退出01b92eb4f5e0231039704f9e746e0314029d33a5官方同SHA/force:false上传成功，1提交/10blob，完整远端一致（logout-sync）。
+- login-return-before40项38通过2失败：旧Login成功固定首页、guard跳Login丢明细意图。新增安全getLoginReturnPath，六个已知站内页允许，query/hash保留，外部/未知/循环/数组/控制字符安全回首页。guard访客/恢复失败/身份变化带目标，Login及已认证Login访问返回，auth失效保留当前站内页面。全部真实源码配合合成账号/内存路由，无真实认证/业务请求。
+- 初复验同URLpush被Router判重复而不跑guard（login-return-after49/50），改新URL访问后实际对象path返回丢query/hash（login-return-frontend376/377）。research-docs核本地Vue Router4.6.4字符串与对象解析源码，返回完整字符串后50项相关/377全量及最后demo/server构建通过（*-after-string、*-final）。保留原失败，不改断言迎合代码。
+- 无依赖/部署/真实AI/邮件/账号/账本/照片调用，GUI/真机/下载落盘/隔夜待验，compact=1保持。本节点保存上传见login-return-sync；下一项Login初始auth.error恢复失败/会话失效提示与表单重试清理取证，不需用户操作。

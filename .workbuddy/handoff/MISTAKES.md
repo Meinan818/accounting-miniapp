@@ -299,3 +299,6 @@
 
 ## 2026-10-04 · logout回执重置新token
 - 退出与登录一样有API内部重置CSRF步骤，外层session代次虽保留新身份，旧退出回执仍清新token。logout-before9项8通过1失败保留，传isCurrent逐步保护后9项生命周期/373全量/两构建通过。修多步身份链需枚举login/logout两个方向，分别核已发送服务端事实与客户端后续缓存操作。
+
+## 2026-10-04 · 登录返回完整地址的Router形式
+- 新测试先在认证后push同一Login URL，Vue Router跳过重复导航guard，造成假失败；改新URL模拟真实访问后，业务对象式path重定向只保留pathname，丢query/hash，377全量1失败原文保留。核本地4.6.4 resolve源码，返回完整字符串后50项针对/377全量/两构建通过。以后重定向带查询须按库声明/实际实现用完整字符串或拆分query/hash；导航测试须确实触发新导航，不能依赖重复push重新执行guard。

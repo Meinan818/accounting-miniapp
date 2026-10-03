@@ -1,11 +1,14 @@
 <script setup>
 import { ref, onScopeDispose } from 'vue'
+import { useRoute } from 'vue-router'
+import { getLoginReturnPath } from '@/utils/loginRedirect'
 import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
 import { useRegistrationChallenge, validRegistrationEmail as validEmail } from '@/utils/registration'
 const auth = useAuthStore()
+const route = useRoute()
 const registering = ref(false)
 const username = ref('')
 const password = ref('')
@@ -35,7 +38,7 @@ async function submit() {
   try {
     const success = await (registering.value ? auth.register(identifier, password.value, challenge.value.challengeId, code.value) : auth.login(identifier, password.value))
     if (!active) return
-    if (success) { password.value = ''; confirmation.value = ''; window.location.replace('/') }
+    if (success) { password.value = ''; confirmation.value = ''; window.location.replace(getLoginReturnPath(route.query.redirect)) }
   } catch (failure) { if (active) error.value = failure.message }
   finally { if (active) saving.value = false }
 }

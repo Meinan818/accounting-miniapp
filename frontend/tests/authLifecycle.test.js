@@ -148,3 +148,15 @@ test('同实例旧退出回执不重置新登录已绑定的CSRF', async () => {
     assert.equal(env.store.user.id, '2'); assert.equal(env.redirects.length, redirects)
   } finally { env.dispose() }
 })
+test('正式身份失效时保留当前站内页面筛选，登录页本身不形成返回循环', async () => {
+  const env = await scene()
+  try {
+    const first = env.store.restore(); env.requests[0].finish(200, alice); await first
+    Object.assign(globalThis.window.location, { pathname: '/bills', search: '?month=2026-09&q=coffee', hash: '#receipt' })
+    env.store.expire()
+    assert.equal(env.redirects[0], '/login?redirect=' + encodeURIComponent('/bills?month=2026-09&q=coffee#receipt'))
+    const next = env.store.restore(); env.requests[1].finish(200, alice); await next
+    Object.assign(globalThis.window.location, { pathname: '/login', search: '?redirect=/bills', hash: '' })
+    env.store.expire(); assert.equal(env.redirects[1], '/login')
+  } finally { env.dispose() }
+})

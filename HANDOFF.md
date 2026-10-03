@@ -1,4 +1,12 @@
-## 当前入口：旧退出回执与新安全校验（2026-10-04）
+## 当前入口：登录返回原站内页面（2026-10-04）
+
+377全量及demo/server两构建、50项登录/路由/auth/导航相关通过。getLoginReturnPath只接六个站内已知页面，保留query/hash，外部/未知/循环/数组/反斜线/控制字符回首页；router guest/failure/await后身份变化跳Login带目标，已认证访问Login返回安全目标，Login成功window.replace同样使用安全目标，auth失效保留当前站内path/search/hash。原默认首页与离页回执保护保持。
+
+login-return-before40项38通过2失败确认旧固定首页丢目标；首复验同URLpush未执行guard（测试时序），改新URL后真实对象path重定向丢query/hash，login-return-frontend376/377失败保留。按research-docs核本地Vue Router4.6.4 resolve源码，guard返回完整字符串，50项相关及377全量、最后源码两构建通过（*-final）。旧退出01b92eb4f5e0231039704f9e746e0314029d33a5官方同SHA/force:false核远端一致（logout-sync），本节点保存上传见login-return-sync。
+
+无真实账号/业务/AI/邮件调用，无依赖/部署，compact=1保持。GUI/真机/下载落盘/隔夜未验；本机预览http://127.0.0.1:5174，认证前站内明细链接将保留月份/搜索。下一项Login初始认证异常提示：模板只显示本页error，核auth.error恢复失败/失效是否可见，与再次登录清理一致；继续合成页面/客户端取证，不让用户操作真实存储。
+
+## 前一节点：旧退出回执与新安全校验（2026-10-04）
 
 373全量及demo/server两构建、9项authLifecycle通过。logout-before9项8通过1失败：旧退出POST回执在新登录后resetCsrf，session外层虽然拒绝旧身份变化但新token已清。logout接口接isCurrent，入口/POST beforeSend/回执重置前检查，session.logout传当前代次；已发送服务端退出不冒称撤销，旧客户端回执不清新token或追加校验读取。
 

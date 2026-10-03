@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 当前377项前端/两构建、50项登录/导航相关通过：受保护链接及身份失效跳Login保留站内原页面/月/搜索/锚点，登录/注册成功返回，已认证访问Login亦保留目标；仅六个站内已知页面，外部/循环/数组/控制字符回首页。Vue Router4.6.4字符串重定向已核，首对象式丢query失败原文保留。01b92eb完整远端一致，compact=1；下一项Login初始auth.error可见性取证，无真实认证/邮件/业务/AI请求，GUI/真机待验。
+
 - 当前373项前端/两构建、9项authLifecycle通过：旧logout回执逐步按session代次拒绝reset新CSRF，正常退出/失败保持既有回归。logout-before9项8通过1失败保留，6b0ef3a完整遠端一致已核，compact=1；下一项受保护链接登录后返回目的地与筛选体验，限定站内已知路由，无真实认证/业务/AI/邮件请求，GUI/真机待验。
 
 - 当前372项前端/两构建、8项authLifecycle与57项认证/API相关通过：session.login传当前代次给API，旧POST回执不reset新CSRF或追加GET me，expire发生在CSRF等待期间不发旧POST。login-chain-before8项6通过2失败保留，3a9655d完整远端一致，compact=1。下一项旧logout回执/新会话校验隔离，合成fetch，无真实认证/邮件/业务/AI请求，GUI/真机待验。
