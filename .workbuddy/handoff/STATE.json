@@ -6,7 +6,7 @@
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "继续大账本分页中断恢复、手动写入未确认后的原操作恢复和页面交互可验证范围；自行重试剩余Push，无需用户操作",
+  "nextStep": "继续大账本分页中断恢复、手动写入未确认后的原操作恢复和页面交互可验证范围；无需用户操作",
   "nextStepReason": "可靠性节点连续验证并保存，下一轮继续关键读取/写入边界；GUI依工具条件自行补验，用户依赖集中记表",
   "pendingUserDecision": "集中记录.workbuddy/handoff/PENDING.md；目前不主动提问，继续独立任务",
   "onlineVersion": "无（尚未部署）",
