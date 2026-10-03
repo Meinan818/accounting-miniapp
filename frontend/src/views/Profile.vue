@@ -104,7 +104,6 @@ onMounted(() => { store.refresh(); loadProfile() })
         <div><h1 class="profile-title">我的小账本</h1><p class="profile-subtitle">喵叽智账 · {{ SERVER_MODE ? '当前账号' : '本地演示' }}</p></div>
       </header>
 
-      <p class="edition-ribbon profile-edition-label">给认真生活的你 · 一张手账名片</p>
       <section class="profile-identity" aria-label="本地账本说明">
         <div class="profile-person-avatar"><img v-if="profile.avatar === 'photo'" :src="profile.photo" alt="自定义照片头像" class="profile-custom-photo" /><CatNavIcon v-else-if="profile.avatar === 'cat'" kind="profile" /><JournalSticker v-else :kind="profile.avatar" :tone="profile.avatar === 'flower' ? 'lilac' : 'pink'" /></div>
         <JournalSticker kind="flower" tone="lilac" class="profile-flower" />
@@ -195,11 +194,11 @@ onMounted(() => { store.refresh(); loadProfile() })
 .profile-footprint-item:focus-visible { outline:2px solid #88624d; outline-offset:2px; }
 .profile-footprints { position:relative; margin-top:22px; padding:17px 13px 13px; border:1px dashed #bfba9c; border-radius:4px 18px 5px 16px; background:#f3f3e7; }.profile-footprint-row { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:3px; margin-top:13px; }.profile-footprint-item { min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px 0; color:#a39a84; font-size:10px; }.profile-footprint-item.recorded { color:#667457; }.profile-footprint-item .journal-sticker { width:27px; height:27px; }.profile-footprint-dot { width:27px; height:27px; border:1px dashed #c7c4aa; border-radius:50%; background:#fbfaf1; }.profile-footprints > p { margin-top:9px; font-size:10px; line-height:1.8; color:#817c63; }
 
-.profile-edition-label { margin-bottom: 14px; }.profile-flower { position:absolute; right:-5px; top:-15px; width:39px; height:39px; opacity:.8; }
+.profile-flower { position:absolute; right:-5px; top:-15px; width:39px; height:39px; opacity:.8; }
 
 .journal-profile { min-height: 100dvh; padding: 18px 16px calc(var(--zz-home-bottom-nav-height) + 26px + env(safe-area-inset-bottom, 0px)); background: var(--zz-home-bg); color: var(--zz-home-ink); font-family: var(--zz-home-font); font-weight: 400; }
 .profile-content { max-width: var(--zz-home-content-width); margin-inline: auto; }
-.profile-header { display: flex; gap: 12px; align-items: center; margin-bottom: 24px; }
+.profile-header { display: flex; gap: 12px; align-items: center; margin-bottom: 16px; }
 .profile-back { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border: 1px solid var(--zz-home-line); border-radius: 16px 13px 17px 14px; background: var(--zz-home-paper); }
 .profile-title { position: relative; isolation: isolate; width: fit-content; font-size: 24px; font-weight: 400; letter-spacing: 1px; }
 .profile-title::before { content: ''; position: absolute; inset: 10px -5px 1px; z-index: -1; background: var(--zz-home-title-brush); border-radius: 62% 45% 58% 42%; transform: rotate(-2deg); }

@@ -1,6 +1,6 @@
 # 喵叽智账 — 当前开发指南
 
-> 当前主线：Vue正式账号版已连接Java/MySQL及GLM-4-Flash-250414，用户已认可本轮模型切换与聊天流程。原演示数据独立保留、不自动导入。最新业务验证87项后端/package、192项Node及两构建通过；本机启动入口另有8项Node和7项真实Java/Vite HTTP启停检查。真机、跨设备、生产交互及停止按钮未获单独逐项反馈，按实际证据记录。
+> 当前主线：Vue正式账号版已连接Java/MySQL及GLM-4-Flash-250414，用户已认可本轮模型切换与聊天流程。原演示数据独立保留、不自动导入。最新业务验证87项后端/package、194项Node及两构建通过；本机启动入口另有8项Node和7项真实Java/Vite HTTP启停检查。真机、跨设备、生产交互及停止按钮未获单独逐项反馈，按实际证据记录。
 > 项目规则见AGENTS.md，目标/验收见PROJECT_PLAN.md，当前任务见STATE.json，历史证据见LOG.md；实现以代码和本轮验证为准。旧Supabase指南在docs/archive/supabase-route/，不能作为当前操作入口。
 
 ## 当前本机使用入口
@@ -24,7 +24,7 @@ node scripts/local-dev.mjs --check
 node .\node_modules\vite\bin\vite.js --mode server --host 127.0.0.1 --port 5174 --strictPort
 ```
 
-默认`npm run dev`和`npm run build`仍是演示，正式构建用`npm run build:server`。前端`npm test`运行192项现有业务测试；根目录`node --test scripts/local-dev.test.mjs`单独运行启动入口8项测试，不发真实模型/邮件。当前无lint/typecheck脚本，不虚报执行。
+默认`npm run dev`和`npm run build`仍是演示，正式构建用`npm run build:server`。前端`npm test`运行194项现有业务测试；根目录`node --test scripts/local-dev.test.mjs`单独运行启动入口8项测试，不发真实模型/邮件。当前无lint/typecheck脚本，不虚报执行。
 
 ## 以下为演示模式与早期实现说明
 
