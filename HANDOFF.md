@@ -1,73 +1,55 @@
-# 喵叽智账 · 第二次 compact 后的新会话交接
+# 喵叽智账 · 用户临时暂停交接
 
-> 当前会话续记（覆盖下方旧交接现场）：本会话只识别第一次compact，STATE计数1，尚未触发新建聊天。已保存V5审计/限流/V6服务端确认/V7分段读取；V8邮箱注册现已实现，72后端/180Node/两构建/9MySQL HTTP通过。邮件HTTP为明确合成fixture，没有真实163投递，完整注册GUI未验证；浏览器独立JSON累计12项。真实GLM尚未实现/配置；用户指定GLM-4.7-Flash、零付费部署、先本机。旧账号保留、旧注册默认403、不导入资料。2026-10-03收尾现场8080未监听、5174为PID31548，下次再次核查。当前材料在fullstack-reliability-2026-10-03，详见LOG。下一步GLM后端可验证草稿适配，真实邮件需本机配置；不Push/部署。
+2026-10-03：用户外出，明确要求暂停开发，本次由用户手动新开对话；Codex不得自动create_thread。当前对话已改名「喵叽智账：邮箱验证注册与GLM草稿适配交接」。完成本地commit后停止；不Push、不部署。
 
-用户补充：每次交接前通过set_thread_title把当前对话改名为本次实际任务的简要概括；未来交接继续传递此规则。
+## 压缩计数与授权
 
-新会话补充（2026-10-03）：已接手并按基准0计compact；账单审计已实施并独立验证/保存，登录限流正在验证，现场与最新任务见STATE/LOG。用户要求后续每个由Codex创建的项目新对话显式用model="gpt-6.1-sol"、thinking="high"；触发交接时必须传入，不依赖默认设置。以下旧会话第二次compact状态保留作历史，不能计入新会话。
+本会话实际可识别compact **1次**，已写STATE；旧会话2次不继承。本次暂停不是第二次compact。新聊天计数从0开始；以后第二次实际事件须立刻停代码/交接/commit/改名，再按授权新建gpt-6.1-sol、high聊天。此次由用户手动选择同样模型和强度。
 
-更新时间：2026-10-03。本会话实际可识别 compact 计数已达 **2**，已停止业务代码编写；本文件与相关工作必须先本地 commit，再创建全新项目聊天。新聊天计数从 0 开始，不能把旧 STATE 的 2 当作新会话事件。提交与新建结果以实际 Git/工具返回为准。
+用户新增明确要求：每次识别实际compact，立即当场向用户汇报“本会话第N次上下文压缩”并同步STATE。本轮第一次更新文件后未明确汇报，已承认并记录防错。新窗口接手先将STATE计数设0、注明全新会话基准；旧1只作历史，不能因摘要提及而计入新窗口。
 
-## 授权与接手顺序
+普通规划/实现/修复/验证/文档/本地commit持续授权仍保留，用户最终验收；本次暂停期间不继续开发。只维护本项目，不修改全局，不用子代理。保护全部原账本、照片、对话、资料、素材和内部材料，不reset/clean、不自动导入演示或绑定首次账号。
 
-用户全权委托本项目常规规划、开发、修复、验证、文档和本地保存，用户负责最终验收。保存后直接继续，不询问“继续吗”。仅重大费用、正式上线、真实数据/隐私/权限重要变化或确实缺少外部条件再询问；规则只维护本项目，不改全局。较大改动前先存档；不使用子代理。
+## 新对话读取与第一步
 
-1. 先读 `.workbuddy/handoff/NEXT.md`、本文件、`AGENTS.md`、`PROJECT_PLAN.md`、`STATE.json`、`MISTAKES.md`、`LOG.md` 最新条目。
-2. 必须读 LOG 的“用户要求必须保留：浏览器验证失败，未解决”与“新对话接手、完整权限截图与5174实际恢复验证”。原始拒绝及后续恢复都保留；拒绝根因仍未知。再拒绝立即停该动作，不用别名/端口/CDP/其他浏览器/脚本绕过。
-3. 核 Git、源码、进程、工具和浏览器库存。不要 reset/clean。全部原账本、对话、照片、素材和内部材料保留，不自动导入/上传或绑定首次账号。
-4. 更新新聊天 compact 计数为 0，继续已授权开发。新聊天第二次事件再次停代码、更新本文件/入口、commit 后新建聊天；不建 codex.md，不用 token 或长度推测事件。
+1. 读取本文件、AGENTS、PROJECT_PLAN、.workbuddy/handoff/NEXT/STATE/MISTAKES及LOG最新条目，核Git/代码/服务现场，不重复开发已完成项。
+2. 先核SMTP配置识别：用户已回复「SMTP已配置」，但实际读取backend/.env.local.properties后检查configured=false。只核变量名/是否非空/是否启用，不输出邮箱授权码、密码或整个文件；未定位原因。验证请求在检查处提前返回，**没有发送真实邮件**。不要假称SMTP配置有效或投递成功。
+3. 然后补GLM新增代码编译、针对合成测试、全量测试与必要HTTP边界。仅完成验证后继续前端真实草稿适配；不能以新增源码当作已经接通真实AI。
+4. 真实SMTP启用后，可向配置发信邮箱自身申请验证邮件，并明确区分SMTP接受与收件箱送达。真实用户注册GUI由用户自行输入验证码/密码；不要在聊天收集秘密。GLM真实外发需核凭据及数据边界，不从Kitool取聊天密钥。
 
 ## 架构与已完成功能
 
-- 前端 Vue3 Composition API、JavaScript、Vite5、Pinia、Vue Router、Tailwind；已验收猫猫手账外观、个人资料/本地照片、猫耳返回键保留。默认 dev/build 仍为独立演示，显式 `--mode server` 接正式账号。
-- 后端 Java21 / Spring Boot3.5.16 / Spring Security / JDBC / Flyway / MySQL8.4.11。仅独立开发库 `miaoji_dev`；不改原数据库/权限。本机复用数据库账号不能当作生产配置。
-- 注册、BCrypt 密码登录、Cookie 会话、CSRF、退出、当前用户；账单按真正会话身份隔离，金额 BigDecimal/DECIMAL 与字符串 API，业务日期/可选 HH:mm 时间独立。
-- 单笔/1–5笔整组防重：先持久化 UUID Idempotency-Key，再请求；回执/请求键/账单同事务，异内容409，重放不覆盖后续编辑或恢复删除。版本改删、逻辑删除、筛选/分页/分类/月统计、V1–V4迁移已有保存节点。
-- 正式资料 GET/PUT `/api/profile`，版本、Unicode昵称/签名校验；私有照片 POST/GET `/api/profile/avatar`，JPEG/PNG签名/解码/大小/像素校验，256px JPEG 重编码，失败只清本次新文件、旧照片保留。
-- 最新联通：真实登录/注册与路由守卫、账号账本数据源、等待实际保存、打开编辑时版本、统计联动、资料/照片明确保存才上传。正式聊天仍为规则模拟，账单为 MySQL 真实持久化。
-- GET `/api/records/snapshot` 返回本人历史及删除事实；最多5000条，超限413，不静默截断。当前前端月汇总/筛选读取完整账号快照并用既有纯函数计算，未实现大账本分页适配。
-- 跨标签 Cookie 切账号：`X-Expected-Account`只断言旧页面身份，不赋予权限；不一致409 `ACCOUNT_CHANGED` 在 CSRF 前阻断读写/退出。私有图片同样有 expectedAccount 断言。客户端撤销旧缓存/页面。
-- 演示键不改；正式对话 `miaoji_account_conversation_v1_<owner>`，防重意图 `miaoji_account_write_intents_v1_<owner>`。正式对话目前仅账号区分的本浏览器历史，尚未服务端同步。保存组 recordIds 按稳定回执ID恢复条目对应，不按金额/备注猜测。
+Vue3/JavaScript/Vite/Pinia + Java21/Spring Boot3.5.16/Security/JDBC/Flyway + MySQL8.4.11独立miaoji_dev。默认演示独立保留；显式server模式连接真实账号。认证Cookie/CSRF/账号归属、单笔与1–5笔整组幂等事务、版本改删/逻辑删除、分类查询/月统计、资料及256px私有照片已有实现。已验收猫猫手账外观保留。
 
-## 实际证据与限制
+本会话保存节点：
+- 9e0576d V5账单操作审计，与业务同事务，不复制金额备注照片，52H2/9MySQL检查。
+- 29ad5e8 登录注册限流及后续新对话模型规则，57后端/6真实HTTP检查。
+- 164cc36 V6服务端版本草稿与前端确认，62后端/176Node/两构建/11源模块HTTP/8草稿HTTP。
+- a3ba820 V7分段一致账本读取，64后端/178Node/8MySQL/5001笔GUI；仍全量内存列表，未虚拟化。
+- 3bea467 V8邮箱验证注册、邮箱密码登录与旧账号兼容。官方starter-mail已授权，163。新注册验证码SecureRandom六位/BCrypt，5分钟、60秒重发、5次错误、邮箱+UUID绑定、一次消费；错误次数提交，SMTP失败挑战回退。旧无验证注册默认403；旧账号不自动绑定邮箱。72后端/package、180Node、两构建、9MySQL HTTP通过。HTTP明确植入合成挑战，非真实投递。
 
-本轮材料根目录：`.workbuddy/memory/frontend-backend-bridge-2026-10-03/`，不入Git。
+最新产品决定：GLM-4.7-Flash（不换付费FlashX），不付费部署，先本机自己使用，朋友访问以后决定；邮箱验证码注册、平时邮箱+密码登录，163与官方mail依赖。未部署、没有真实GLM调用。
 
-- `run-f09803b801674fe1a7d64704f7b26320/tests-final-all.log`：174项前端 Node 测试通过。
-- 同目录 `context-avatar-package-final.log`：49项后端 H2 集成测试、package 成功。
-- 同目录 `build-final-all-server.log`、`build-final-all-demo.log`：server/默认两种构建成功。
-- `run-http-1791031035888-3e050012/result.json`：前端源模块实际连接 Java/MySQL 的11项HTTP检查通过，含丢回执后同键重试、改删与账号隔离。首次失败目录 `run-http-1791030992942-ed0f0ff5` 保留。
-- 第2次compact前，原5174内置浏览器已实际观察：注册登录、空账号账本、手动0.29→版本改0.30、两笔整组43.00确认保存/月总43.30、刷新查询、逻辑删咖啡后25.30与卡片删除事实、资料/预置头像/合成照片取消及明确上传、退出/错密码/B账号隔离、320px聊天无横向溢出、停机明确错误、重启登录后账本/照片保留、真实双标签旧A表单在B会话下42元保存被阻断且B无错写。
-- 上述约23个开发版浏览器观察来自前轮工具现场及压缩摘要，最终检查JSON尚未落盘。现有 `deleted-card-before.png/txt`、`profile-server.png` 是局部证据。不能宣称完整结果文件存在或补造原始证据。
-- 最后一条浏览器收尾调用中断，关闭第二标签/退出/320px登录/最终截图/markHandoff是否部分执行未知；320px登录不算通过。REPL已重置，旧 tab 变量无效，新聊天按库存重新绑定，不能猜标签状态。
-- 生产构建实际交互、真机、跨设备、用户对正式登录功能人工验收未完成。真实AI、审计、服务端草稿与完整B/C均未完成；无收费、Push或部署。
+## 本次待续代码（未编译/未测试）
 
-## 当前环境与运行
+新增backend/src/main/java/cn/miaoji/ledger/GlmDraftParser.java与GlmDraftController.java；application.yml/.env.example增加默认禁用的MIAOJI_AI_ENABLED与后端MIAOJI_GLM_API_KEY。源码仅是草稿实现，**未编译、未测试、未打包、未接前端、未真实调用**。
 
-交接现场只读核实：旧后端PID31156、Vite PID29800均不存在；8080、5174均无监听。摘要里“仍在运行”已过期。新聊天自行核实后合法启动，不冒称服务仍活，也不操作其他进程。
+拟定POST /api/ai/parse，已登录/CSRF/原身份断言保护，输入message/date/context（0–5条已完整候选记录），只返回ready或needs_input。固定免费模型/智谱官方endpoint，最多1000字输入、1200输出token、20秒请求/5秒连接超时、64KiB响应上限、拒绝重定向；每账号6次/分钟和全局2并发。模型输出严格JSON/字段/金额/分类/日期校验，无数据库写入，不读取整本账单。实际行为仍须测试，尤其JSON异常映射、响应体大小与超时、并发槽释放、限流、匿名/CSRF及错误提示。当前前端聊天仍规则模拟，服务端草稿于确认时建立，不是完整服务端会话同步。
 
-- Java：`D:/JavaDev/jdk-21`；Maven复用 `.workbuddy/memory/backend-foundation/apache-maven-3.9.11/bin/mvn.cmd`。
-- backend工作目录：`./maven.ps1 test` / `./maven.ps1 package`，运行 `./run.ps1`；Windows先停经核实属于本轮的Java，再package，避免jar被占用。
-- 前端正式开发：frontend工作目录 `node ./node_modules/vite/bin/vite.js --mode server --host 127.0.0.1 --port 5174 --strictPort`；同源 `/api` 代理8080。
-- 默认演示 `npm run dev` / `npm run build`；正式 `npm run dev:server` / `npm run build:server`。先核端口，不覆盖原演示站点。
-- 凭据在忽略的 `backend/.env.local.properties`，禁止回显。MySQL CLI调用显式 workdir 为 `.workbuddy/memory/backend-foundation`，用相对 `--defaults-extra-file=mysql-client.cnf`。
-- 缓存/材料/临时文件使用E盘，任务级设置，不改系统TEMP/TMP，不擅自全局安装。
-- `backend/storage/`与开发库全部保留；当前总数量没有最终核查，不填推测。
+## 实际证据与运行现场
 
-## 待办与推荐顺序
+材料根.workbuddy/memory/fullstack-reliability-2026-10-03，不入Git；current-run指向run-edc7df2757444e4e81c5afc245c3e57d。源码修改前source-before-glm.zip已在该run保存。新旧合成数据全保留，V8已实际迁移；没有新增GLM数据库迁移。
 
-1. 新聊天计数归零后，补尚缺的收尾证据与必要正式联通复验，区分重新验证与旧记录，保持已验收外观和原数据。
-2. 后端审计、服务端草稿版本/确认/事务与客户端确认衔接、登录限流；按独立范围实施、验证、保存后继续，不等用户“继续”。
-3. 大账本分页与查询/汇总服务接入、正式对话服务端归属/同步等按架构逐步完善。
-4. 真实AI先核当前官方接口、已有凭据和费用边界。没有已核实聊天配置，不把Kitool生图配置冒充聊天API，不发未批准收费请求。
-5. 自定义分类、生产最小权限账号、文件备份/容量与部署另按阶段处理。真实演示数据导入需明确预览归属与批准。
+email-package-final.log：72项后端测试通过、package成功；email-frontend-test-final.log：180Node通过；email-build-server/demo.log两构建成功。email-http-1791038379011-8252fc78/result.json在材料根（非run下面），9项通过，首条标签仍V5，V8以真实Flyway日志为准。
 
-## 规范、踩坑与关键路径
+本轮browser-result.json实际12项，含320px邮箱注册与未配置SMTP明确失败；email-registration-320.png/email-unconfigured-320.png保存。此前8/9累计数少算1，最新按文件12核实。完整邮箱成功注册GUI、真实163投递、生产交互/真机/用户正式功能验收未完成。前轮约23项最终JSON缺失不补造。
 
-代码规范沿用 `docs/CONVENTIONS.md`；Java按已有 Controller/Service/Repository 分层、参数化SQL、归属和版本条件、整组事务。前端JS/Composition API、金额整数分，不引入第二账本；秘密不进源码、日志、前端VITE变量或提交。提交 `<type>(<scope>): <中文说明>`，只保存相关文件，本次不Push。
+本次尝试SMTP前启动Java PID34764（仍为邮箱节点已验证jar，不含新GLM源码），启动V8校验正常；配置检查configured=false提前终止，没有HTTP发信、没有SMTP投递。暂停时经路径/命令核实后已停止自身PID34764，8080无监听。Vite5174 PID31548保留；下次重核。不操作其他进程。
 
-已确认错误完整见 MISTAKES：batch回执/201空正文契约猜错且模拟测试也错；刷新后卡片条目关联遗漏；旧模式说明/匿名提示；运行jar期间重打包失败；路径猜测/同patch重复路径；跨标签Cookie需要服务端身份断言；AGENTS标题被平台换行假设拆开。原失败材料保留，不用成功抹掉。早期本机数据库密码曾意外进入工具输出，未入Git；轮换尚未完成，不擅自改权限/其他程序配置。
+Java D:/JavaDev/jdk-21；Maven复用.workbuddy/memory/backend-foundation/apache-maven-3.9.11/bin/mvn.cmd，repo位于同目录maven-repository；缓存/TEMP/TMP只任务级E盘配置。Windows脚本曾被执行策略拒绝，不改系统策略，直接现有Java或mvn.cmd。MySQL CLI workdir须.workbuddy/memory/backend-foundation，相对--defaults-extra-file=mysql-client.cnf，不回显。backend/.env.local.properties和storage均忽略，不提交。
 
-关键入口：`frontend/src/api/{client,session,ledger,mode,remoteLedger,profile}.js`、`stores/{authStore,recordStore,conversationStore}.js`、`router/index.js`、`views/{Login,Chat,Bills,Profile}.vue`、`utils/groupRecords.js`、`frontend/tests/remoteLedger.test.js`；后端 `auth/AccountContextFilter.java`、`auth/SecurityConfig.java`、`ledger/{LedgerController,LedgerService,LedgerRepository}.java`、迁移 `backend/src/main/resources/db/migration/`、集成测试 `backend/src/test/java/cn/miaoji/`。
+## 规范与本会话踩坑
 
-较大联通改动前源码存档 `source-before.zip`、`source-before-integration.zip` 均在本轮run材料目录。不要删除原照片、失败记录、存档或忽略文件；Git提交并不保存忽略的数据文件。
+Java沿用显式归属/版本SQL、同事务及现有RecordInput/ledger验证，前端保留JS与同一RecordStore、整数分。只写相关可回退改动，不加不必要依赖。秘密/账本/照片/内部ZIP/SQL/日志不入Git。普通已验证节点本地commit后继续，未验证节点按wip如实保存。
+
+MISTAKES已保留：执行策略拒绝；scrollWidth误判；MockMvc ServletPath测试错误；草稿契约漏mock；大SQL失败具体根因未知；Set.add重复断言错误已纠正；Login局部patch上下文失败且原子未写。SMTP检查false根因未定位，不推断用户填错。原始浏览器拒绝与后续原5174恢复见LOG指定记录，再拒绝立刻停，不换地址/端口/CDP/工具绕过。

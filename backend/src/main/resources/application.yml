@@ -26,6 +26,9 @@ spring:
       "[mail.smtp.timeout]": 5000
       "[mail.smtp.writetimeout]": 5000
 miaoji:
+  ai:
+    enabled: ${MIAOJI_AI_ENABLED:false}
+    api-key: ${MIAOJI_GLM_API_KEY:}
   storage-root: ${MIAOJI_STORAGE_DIR:./storage}
   email:
     enabled: ${MIAOJI_EMAIL_ENABLED:false}
