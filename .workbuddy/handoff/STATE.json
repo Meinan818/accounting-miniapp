@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "已先存档再升级聊天手账风、个人资料与照片头像、五页实体猫耳返回键；142项Node/构建/49界面+11照片浏览器检查通过，已按用户授权commit/Push并实际读回一致，后端暂停",
-  "stage": "frontend_chat_profile_photo_visual_feedback_pending",
+  "currentTask": "用户已通过本轮聊天外观、可编辑个人资料、自定义照片头像与五页猫耳返回键；当前仅准备新对话交接并核查保存上传，后端继续暂停",
+  "stage": "frontend_chat_profile_photo_accepted_handoff",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "Codex继续按实际反馈完善聊天与个人页统一体验，较大改动前先存档；用户可刷新5173查看，无需替Codex确认普通commit/Push，后端继续暂停",
-  "nextStepReason": "本轮已按反馈完成界面和自定义照片；保留可回退保存点，技术验证不代替人工观感，也不自动恢复后端",
-  "pendingUserDecision": "当前不需要外部操作。页面人工观感、生产版操作/真机/跨设备未验收；后端需用户明确恢复，正式登录/头像后端同步/真实AI未接通。此前权限拒绝根因未知且失败原文保留，当前5174可用；原账本不清空/自动上传/归属首次账号",
+  "nextStep": "Codex在新对话先读NEXT及规则/计划/状态/LOG，必须读取浏览器失败与恢复记录，再核Git/源码/服务/权限；完成接手后按用户新的具体任务推进，不重做已认可功能，后端继续暂停",
+  "nextStepReason": "用户已验收通过并要求准备新对话交接，应保留当前成果和真实边界，不以交接继续扩功能或恢复后端",
+  "pendingUserDecision": "无需外部操作或重复观感验收；生产版实际操作、真机、跨设备、无历史聊天首次引导分支仍未验证。后端需用户明确恢复，正式登录/头像后端同步/真实AI未接通。此前权限拒绝根因未知，失败原文保留；原账本不清空/自动上传/归属首次账号",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
