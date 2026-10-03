@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "准备交接：分类贴纸/筛选/联动已保存并核验远端备份；当前预览可响应，浏览器权限拒绝未解除，后端保持暂停，未扩功能或重跑业务检查",
-  "stage": "handoff_category_saved_browser_check_pending",
+  "currentTask": "接手问题核查：完整权限截图后原内置浏览器5174访问成功，58项开发版浏览器断言及三宽度检查通过；仅更新交接，后端暂停，无业务源码修改",
+  "stage": "handoff_category_browser_verified_visual_feedback_pending",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "新对话先核NEXT/规则/计划/状态/最新LOG、Git/源码/端口和工具权限，再定位浏览器拒绝，恢复后完成5174独立交互验证",
-  "nextStepReason": "分类源码已保存且逻辑检查通过，但实际页面操作与窄屏效果不能由SSR或HTTP200代替；保持5173原账本安全",
-  "pendingUserDecision": "用户特别要求保留本次浏览器失败：站点浏览已始终允许而工具仍saved permission拒绝，根因未知且未解决；不要归咎未授权、代理或服务，尚待权限表格右箭头后的列截图。新对话先读专门失败记录；后端保持暂停，收费生图无新授权且无新主角成品，原账本不清空/自动上传/绑定首次账号",
+  "nextStep": "用户查看原5173页面观感并反馈，Codex按实际反馈有界纠错；交接说明按当前保存授权处理，后端继续暂停",
+  "nextStepReason": "分类操作与窄屏已在5174合成账本实际验证，技术检查仍不代替用户观感；不触碰5173原账本，不重做已有功能",
+  "pendingUserDecision": "本轮访问阻碍已解除但此前拒绝根因未知，失败原文必须保留；不再索要已提供的权限列截图。页面人工观感、生产版/真机/跨设备未验收；后端保持暂停，收费生图无新授权，新主角无成品；原账本不清空/自动上传/绑定首次账号",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-03"
 }
