@@ -1,4 +1,8 @@
-## 2026-10-04 · 旧登录后续链（当前入口）
+## 2026-10-04 · 旧退出回执（当前入口）
+
+373全量/两构建与9项authLifecycle通过，旧logout回执按session代次拒绝reset新CSRF；原正常退出回归保持。6b0ef3a完整远端一致，本节点上传见logout-sync。compact=1保持，下一项受保护链接登录后返回目的地/筛选，先核现有Login/guard，再限定站内已知页面，合成验证无真实账号/邮件/业务/AI请求。GUI/真机待验。
+
+## 2026-10-04 · 旧登录后续链（历史）
 
 372项前端/两构建、8项auth生命周期与57项认证相关通过；旧login代次保护贯穿POST前/回执resetCSRF前/GET me前，新token不被旧链替换，expire等待不发旧POST。3a9655d完整远端一致，本节点上传见login-chain-sync。compact=1不归零；继续旧logout迟到回执及CSRF等待的新认证隔离，用合成fetch，不发真实账号/邮件/业务/AI请求，GUI/真机待验。
 

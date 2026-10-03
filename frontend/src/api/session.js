@@ -82,7 +82,7 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
     if (!active) return false
     const current = ++generation
     restoration = null
-    try { await client.logout() }
+    try { await client.logout({ isCurrent: () => active && current === generation }) }
     catch (failure) {
       if (current !== generation) return false
       if (failure.status !== 401) { error.value = failure.message; throw failure }

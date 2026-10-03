@@ -98,6 +98,14 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
     await getCsrf()
     return request('GET', '/api/auth/me', { beforeSend })
   }
-  async function logout() { await request('POST', '/api/auth/logout'); resetCsrf() }
+  async function logout({ isCurrent = () => true } = {}) {
+    const beforeSend = () => {
+      if (!isCurrent()) throw new ApiError('本次退出已失效，请使用当前页面重试。', { code: 'STALE_AUTH' })
+    }
+    beforeSend()
+    await request('POST', '/api/auth/logout', { beforeSend })
+    beforeSend()
+    resetCsrf()
+  }
   return { request, login, logout, getCsrf, resetCsrf }
 }

@@ -1,4 +1,10 @@
-## 当前入口：旧登录后续请求链（2026-10-04）
+## 当前入口：旧退出回执与新安全校验（2026-10-04）
+
+373全量及demo/server两构建、9项authLifecycle通过。logout-before9项8通过1失败：旧退出POST回执在新登录后resetCsrf，session外层虽然拒绝旧身份变化但新token已清。logout接口接isCurrent，入口/POST beforeSend/回执重置前检查，session.logout传当前代次；已发送服务端退出不冒称撤销，旧客户端回执不清新token或追加校验读取。
+
+登录6b0ef3a35e181de1cdda81d8eb480be4d96bccb8官方同SHA/force:false上传并核完整远端一致（login-chain-sync）。本节点保存上传见logout-sync。无真实账号/账本/照片/邮件/AI调用，无依赖/部署，compact=1保持，GUI/真机/下载落盘/隔夜待验。下一项登录后的站内返回目标：guard回Login未带目的地，Login成功固定根目录，核原明细/统计月份搜索是否丢失，设计安全站内白名单后合成验证，不接受外部地址。
+
+## 前一节点：旧登录后续请求链（2026-10-04）
 
 372项全量/两构建、8项authLifecycle及57项认证/API相关通过。login-chain-before8项6通过2失败：session仅整client.login返回后核代次，旧POST回执继续resetCsrf/GET csrf/GET me且覆盖新token，expire在安全校验等待中仍发旧POST。session.login传isCurrent到client.login，入口/POST beforeSend/回执reset之前/GET me beforeSend逐步守卫，旧请求已发送的服务端事实不冒称撤销，后续链停止。
 

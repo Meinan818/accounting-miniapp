@@ -126,3 +126,25 @@ test('同实例expire发生在CSRF等待中，旧登录不能继续发送POST', 
     assert.equal(env.store.user, null); assert.equal(env.store.status, 'guest')
   } finally { env.dispose() }
 })
+test('同实例旧退出回执不重置新登录已绑定的CSRF', async () => {
+  const env = await scene()
+  try {
+    const restored = env.store.restore(); env.requests[0].finish(200, alice); await restored
+    const initialCsrf = env.store.api.getCsrf(); env.requests[1].finish(200, csrf); await initialCsrf
+    const oldLogout = env.store.logout(); await env.flush(); assert.equal(env.requests[2].path, '/api/auth/logout')
+    const fresh = env.store.login('synthetic-B', 'synthetic-password'); await env.flush()
+    env.requests[3].finish(200, csrf); await env.flush()
+    env.requests[4].finish(204); await env.flush()
+    env.requests[5].finish(200, csrf); await env.flush()
+    env.requests[6].finish(200, bob); await fresh
+    const bound = env.store.api.getCsrf(), freshToken = { ...csrf, token: 'synthetic-current-B' }
+    env.requests[7].finish(200, freshToken); await bound
+    const before = env.requests.length, redirects = env.redirects.length
+    env.requests[2].finish(204); assert.equal(await oldLogout, false)
+    const cached = env.store.api.getCsrf(); await env.flush()
+    if (env.requests[before]) env.requests[before].finish(200, { ...csrf, token: 'unexpected-reset' })
+    const currentToken = await cached
+    assert.equal(env.requests.length, before); assert.deepEqual(currentToken, freshToken)
+    assert.equal(env.store.user.id, '2'); assert.equal(env.redirects.length, redirects)
+  } finally { env.dispose() }
+})

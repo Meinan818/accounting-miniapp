@@ -1042,3 +1042,9 @@
 - 路由3a9655ddbbb993457d53bec8e1a2660551bc2ff1官方同SHA/force:false同步成功，1提交/11blob，远端完整一致（router-sync）。
 - login-chain-before8项6通过2失败：旧login POST回执重置新CSRF/追加读取，expire在CSRF等待中旧POST仍发。session代次作为isCurrent传API，POST beforeSend/回执重置之前/GET me beforeSend检查；旧请求已发不声称撤回，停止后续链并保留新token。
 - 8项authLifecycle、57项认证/API相关、372全量与demo/server两构建通过（login-chain-*）。无真实账号/业务/AI/邮件请求，无依赖/部署，GUI/真机/下载落盘/隔夜待验，compact=1保持。下一项旧logout回执与新认证CSRF隔离合成取证；本节点保存上传见login-chain-sync，不需用户操作。
+
+## 2026-10-04 · 旧退出回执不清新登录安全校验
+
+- 登录6b0ef3a35e181de1cdda81d8eb480be4d96bccb8官方同SHA/force:false上传成功，1提交/10blob，完整远端一致（login-chain-sync）。
+- logout-before9项8通过1失败：旧退出回执resetCsrf清新登录已绑定token，引发额外读取；session只在外层await后核不足。logout API入口/POST beforeSend/重置前核session传入isCurrent，保留新token，不冒称撤回已发送退出。
+- 9项authLifecycle/373全量/demo与server构建通过（logout-frontend/demo/server）；正常退出/失败/401既有回归保持，无真实认证/账本/照片/邮件/AI请求，无依赖/部署，GUI/真机等未验，compact=1保持。下一项受保护链接登录后返回目的地/原筛选体验，限制站内已知路由，先读现有Login/guard并合成验证。本节点保存上传见logout-sync，无需用户操作。

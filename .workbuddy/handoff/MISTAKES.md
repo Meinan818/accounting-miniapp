@@ -296,3 +296,6 @@
 
 ## 2026-10-04 · 外层登录代次不取消API后续步骤
 - session只在整client.login返回后检查代次，旧POST成功回执仍resetCsrf/getCsrf/GET me，替换新token；expire在CSRF等待中仍发POST。login-chain-before8项6通过2失败保留。传isCurrent给API并在每步请求前/重置前核，8项生命周期/57项相关/372全量/两构建通过。多步适配器须继承调用方意图，不把外层忽略结果等同于停止后续网络操作。
+
+## 2026-10-04 · logout回执重置新token
+- 退出与登录一样有API内部重置CSRF步骤，外层session代次虽保留新身份，旧退出回执仍清新token。logout-before9项8通过1失败保留，传isCurrent逐步保护后9项生命周期/373全量/两构建通过。修多步身份链需枚举login/logout两个方向，分别核已发送服务端事实与客户端后续缓存操作。
