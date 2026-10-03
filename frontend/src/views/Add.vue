@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import NotebookBack from '@/components/common/NotebookBack.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
@@ -7,17 +6,11 @@ import RecordForm from '@/components/record/RecordForm.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { createId } from '@/utils/ledger'
 import { SERVER_MODE } from '@/api/mode'
+import { useManualRecordSave } from '@/utils/navigation'
 const router = useRouter()
 const store = useRecordStore()
-const saving = ref(false)
-const error = ref('')
 const batchId = createId('manual')
-async function save(record) {
-  if (saving.value) return
-  saving.value = true
-  try { const saved = await store.addRecord(record, { batchId, source: 'manual' }); router.push({ path: '/bills', query: { month: saved.date.slice(0, 7), added: saved.id } }) }
-  catch (e) { error.value = e.message; saving.value = false }
-}
+const { saving, error, savedRecord, save } = useManualRecordSave(store, router, batchId)
 </script>
 <template>
   <main class="manual-page notebook-evolution">
@@ -25,7 +18,7 @@ async function save(record) {
       <header><NotebookBack to="/bills" label="返回账单明细" /><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
       <router-link to="/chat" class="chat-link">更想说一说？和小宝聊着记 →</router-link>
       <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
-      <article class="manual-card"><p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p><p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p><RecordForm :saving="saving" :error="error" @save="save" @cancel="router.push('/bills')" /></article>
+      <article class="manual-card"><p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p><p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p><RecordForm :saving="saving || Boolean(savedRecord)" :error="error" @save="save" @cancel="router.push('/bills')" /><div v-if="savedRecord" class="saved-recovery" role="status"><p>这笔账单已经保存，可以打开明细查看。</p><button type="button" :disabled="saving" @click="save()">{{ saving ? '正在打开明细…' : '打开已保存账单' }}</button></div></article>
       <p class="local-note">{{ SERVER_MODE ? '正式账单保存到当前账号，不调用AI。' : '本地演示：账单保存在当前浏览器，不调用AI。' }}</p>
     </section>
   </main>
@@ -42,4 +35,5 @@ h1 { font-size: 23px; font-weight: 400; } header p { font-size: 12px; margin-top
 .manual-card::before { content: ''; position: absolute; width: 70px; height: 16px; top: -8px; left: calc(50% - 35px); background: #f6ddd8; transform: rotate(-4deg); }
 .intro, .local-note { font-size: 12px; line-height: 1.8; margin-bottom: 17px; }
 .local-note { margin-top: 18px; text-align: center; }.warning { color: #aa594d; }
+.saved-recovery { margin-top: 16px; font-size: 13px; line-height: 1.8; }.saved-recovery button { min-height: 44px; padding: 8px 14px; margin-top: 8px; border: 1px solid #d9c5a9; border-radius: 12px; background: #f6ddd8; }.saved-recovery button:focus-visible { outline: 2px solid #785746; outline-offset: 3px; }.saved-recovery button:disabled { opacity: .5; }
 </style>

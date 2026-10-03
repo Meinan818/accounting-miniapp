@@ -2,6 +2,35 @@ import { computed, onScopeDispose, ref } from 'vue'
 import dayjs from 'dayjs'
 import { isValidMonth } from './statistics.js'
 
+export function useManualRecordSave(store, router, batchId) {
+  const saving = ref(false), error = ref(''), savedRecord = ref(null)
+  let active = true
+  onScopeDispose(() => { active = false })
+  async function navigateSaved() {
+    const saved = savedRecord.value
+    const failure = await router.push({ path: '/bills', query: { month: saved.date.slice(0, 7), added: saved.id } })
+    if (!active) return false
+    if (failure) throw new Error('账单已保存，暂时未能打开明细，请重试打开；无需再次入账。')
+    return true
+  }
+  async function save(record) {
+    if (!active || saving.value) return false
+    saving.value = true; error.value = ''
+    try {
+      if (!savedRecord.value) {
+        const saved = await store.addRecord(record, { batchId, source: 'manual' })
+        if (!active) return false
+        savedRecord.value = saved
+      }
+      return await navigateSaved()
+    } catch (failure) {
+      if (active) error.value = savedRecord.value ? '账单已保存，暂时未能打开明细，请重试打开；无需再次入账。' : failure.message
+      return false
+    } finally { if (active) saving.value = false }
+  }
+  return { saving, error, savedRecord, save }
+}
+
 export function useStatsMonthNavigation(route, router, currentMonth = () => dayjs().format('YYYY-MM')) {
   const selectedMonth = computed(() => isValidMonth(route.query.month) ? route.query.month : currentMonth())
   const pendingMonth = ref('')

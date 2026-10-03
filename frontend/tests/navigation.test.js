@@ -2,8 +2,78 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { getScrollPosition } from '../src/utils/navigation.js'
 import { useStatsMonthNavigation } from '../src/utils/navigation.js'
+import { useManualRecordSave } from '../src/utils/navigation.js'
 import { effectScope } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
+
+test('手动账单保存后跳转失败可恢复，重试不重复写入', async () => {
+  let writes = 0, fail = true
+  const router = { push: async () => fail ? { type: 4 } : undefined }
+  const scope = effectScope()
+  const saver = scope.run(() => useManualRecordSave({ addRecord: async () => { writes++; return { id: 'synthetic', date: '2026-10-04' } } }, router, 'manual-synthetic'))
+  try {
+    assert.equal(await saver.save({}), false)
+    assert.equal(saver.saving.value, false)
+    assert.equal(saver.savedRecord.value.id, 'synthetic')
+    assert.match(saver.error.value, /账单已保存/)
+    fail = false
+    assert.equal(await saver.save({ amount: '改后值' }), true)
+    assert.equal(writes, 1)
+  } finally { scope.stop() }
+})
+
+test('手动写入等待时重复点击不发第二次写入', async () => {
+  let finish, writes = 0
+  const keys = []
+  const scope = effectScope()
+  const saver = scope.run(() => useManualRecordSave({ addRecord: (_, options) => { writes++; keys.push(options.batchId); return new Promise(done => { finish = done }) } }, { push: async () => undefined }, 'manual-synthetic'))
+  try {
+    const pending = saver.save({})
+    assert.equal(await saver.save({}), false)
+    finish({ id: 'synthetic', date: '2026-10-04' })
+    assert.equal(await pending, true)
+    assert.equal(saver.saving.value, false)
+    assert.equal(writes, 1)
+    assert.deepEqual(keys, ['manual-synthetic'])
+  } finally { scope.stop() }
+})
+
+test('手动写入失败后同次请求键保持，导航异常只重试打开', async () => {
+  let failWrite = true, failNavigation = true, writes = 0
+  const keys = []
+  const scope = effectScope()
+  const saver = scope.run(() => useManualRecordSave({ addRecord: async (_, options) => {
+    writes++; keys.push(options.batchId)
+    if (failWrite) throw Error('合成写入失败')
+    return { id: 'synthetic', date: '2026-10-04' }
+  } }, { push: async () => { if (failNavigation) throw Error('合成导航失败') } }, 'manual-synthetic'))
+  try {
+    assert.equal(await saver.save({}), false)
+    assert.equal(saver.savedRecord.value, null)
+    assert.match(saver.error.value, /写入失败/)
+    assert.equal(saver.saving.value, false)
+    failWrite = false
+    assert.equal(await saver.save({}), false)
+    assert.equal(writes, 2)
+    assert.deepEqual(keys, ['manual-synthetic', 'manual-synthetic'])
+    assert.match(saver.error.value, /账单已保存/)
+    failNavigation = false
+    assert.equal(await saver.save(), true)
+    assert.equal(writes, 2)
+    assert.equal(saver.error.value, '')
+  } finally { scope.stop() }
+})
+
+test('离开手动页后保存迟到成功不把用户拉回明细', async () => {
+  let finish, navigations = 0
+  const scope = effectScope()
+  const saver = scope.run(() => useManualRecordSave({ addRecord: () => new Promise(done => { finish = done }) }, { push: async () => { navigations++ } }, 'manual-synthetic'))
+  const pending = saver.save({})
+  scope.stop()
+  finish({ id: 'synthetic', date: '2026-10-04' })
+  assert.equal(await pending, false)
+  assert.equal(navigations, 0)
+})
 
 async function setupMonth(month = '2026-10') {
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/stats', component: {} }] })
