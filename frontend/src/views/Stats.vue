@@ -15,13 +15,18 @@ import { useRecordStore } from '@/stores/recordStore'
 import { centsText } from '@/utils/money'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import { JOURNAL_COLORS } from '@/utils/journal'
-import { isValidMonth } from '@/utils/statistics'
+import { useStatsMonthNavigation } from '@/utils/navigation'
 import { getMonthReview } from '@/utils/monthReview'
 const route = useRoute()
 const router = useRouter()
 const store = useRecordStore()
-const currentMonth = () => dayjs().format('YYYY-MM')
-const selectedMonth = ref(isValidMonth(route.query.month) ? route.query.month : currentMonth())
+const { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth } = useStatsMonthNavigation(route, router)
+const reloading = ref(false)
+async function reloadRecords() {
+  if (reloading.value) return
+  reloading.value = true
+  try { await store.refresh() } finally { reloading.value = false }
+}
 const selectedType = ref('expense')
 const monthTitle = computed(() => dayjs(selectedMonth.value + '-01').format('YYYY年M月'))
 const calculated = computed(() => {
@@ -42,19 +47,13 @@ const typeLabel = computed(() => selectedType.value === 'income' ? '收入' : '�
 function slideDays(direction) {
   dayChart.value?.scrollBy({ left: direction * 7 * 49, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
 }
-function changeMonth(offset) {
-  const next = dayjs(selectedMonth.value + '-01').add(offset, 'month').format('YYYY-MM')
-  if (!isValidMonth(next)) return
-  selectedMonth.value = next
-  router.replace({ query: { ...route.query, month: next } })
-}
-watch(() => route.query.month, month => { selectedDay.value = ''; selectedMonth.value = isValidMonth(month) ? month : currentMonth() })
+watch(selectedMonth, () => { selectedDay.value = '' }, { flush: 'sync' })
 watch([review, selectedMonth], async () => {
   await nextTick()
   if (!dayChart.value || selectedDay.value || !review.value?.peak) return
   dayChart.value.scrollLeft = Math.max(0, (review.value.peak.day - 1) * 49 - (dayChart.value.clientWidth - 44) / 2)
 })
-onMounted(() => store.refresh())
+onMounted(reloadRecords)
 </script>
 
 <template>
@@ -67,10 +66,12 @@ onMounted(() => store.refresh())
       </header>
       <section class="stats-month-card" aria-label="统计月份">
         <div class="stats-month-nav">
-          <button type="button" aria-label="上个月" :disabled="selectedMonth === '1000-01'" @click="changeMonth(-1)"><ChevronLeft :size="22" :stroke-width="1.5" /></button>
+          <button type="button" aria-label="上个月" :disabled="navigationMonth === '1000-01'" @click="changeMonth(-1)"><ChevronLeft :size="22" :stroke-width="1.5" /></button>
           <h2>{{ monthTitle }}</h2>
-          <button type="button" aria-label="下个月" :disabled="selectedMonth === '9999-12'" @click="changeMonth(1)"><ChevronRight :size="22" :stroke-width="1.5" /></button>
+          <button type="button" aria-label="下个月" :disabled="navigationMonth === '9999-12'" @click="changeMonth(1)"><ChevronRight :size="22" :stroke-width="1.5" /></button>
         </div>
+        <p v-if="pendingMonth" class="review-scope-note" role="status">正在翻到 {{ pendingMonth }}，当前仍显示 {{ selectedMonth }}。</p>
+        <p v-else-if="navigationError" class="review-scope-note" role="alert">{{ navigationError }}</p>
         <template v-if="!error && statistics">
           <p class="review-kicker">MONTHLY JOURNAL · 本月收支小结</p>
           <dl class="stats-overview" :class="{ 'stats-overview-wide': needsWideAmounts }" aria-label="月度收支统计">
@@ -81,7 +82,7 @@ onMounted(() => store.refresh())
           <div class="stats-count-line"><p>有效账单 <strong>{{ statistics.recordCount }}</strong> 笔</p><router-link :to="{ path: '/bills', query: { month: selectedMonth } }" :aria-label="'查看' + monthTitle + '账单明细'">查看明细 →</router-link></div>
         </template>
       </section>
-      <section v-if="error" class="stats-error" role="alert"><h2>统计暂时无法显示</h2><p>{{ error }}</p><button type="button" @click="store.refresh()">重新读取账单</button></section>
+      <section v-if="error" class="stats-error" :aria-busy="reloading" role="alert"><h2>{{ reloading ? '正在读取账单' : '统计暂时无法显示' }}</h2><p>{{ error }}</p><button type="button" :disabled="reloading" @click="reloadRecords">{{ reloading ? '读取中…' : '重新读取账单' }}</button></section>
       <template v-else-if="statistics">
         <section class="review-trend" aria-labelledby="review-trend-title">
           <div class="review-section-title"><div><p class="edition-kicker">花费足迹 · 每天一小格 · 左右滑动</p><h2 id="review-trend-title">这一月，钱是怎么花的？</h2></div><span>{{ review.activeDays }} 个记录日</span></div>
