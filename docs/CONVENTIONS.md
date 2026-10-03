@@ -1,7 +1,7 @@
 # 喵叽智账 — 代码规范（docs/CONVENTIONS.md）
 
 > 本文件只讲**怎么写代码**。AI 协作规则、提交与发布节奏见根目录 `AGENTS.md`。
-> 视觉规范见 `docs/DESIGN_SYSTEM.md`。当前先开发Vue前端，Java/MySQL后端规范在后端阶段补充；原 `CLAUDE.md` 中仍适用的约定已搬到这里。
+> 视觉规范见 `docs/DESIGN_SYSTEM.md`。当前Vue与Java/MySQL已正式模式联通；Java沿已有Controller/Service/Repository分层、参数化SQL、真实会话归属及版本条件、整组事务。金额API为十进制字符串，Java BigDecimal/DECIMAL，前端整数分；可选未知业务时间不补写。原 `CLAUDE.md` 中仍适用的约定已搬到这里。
 
 ## 一、命名约定
 
@@ -21,9 +21,10 @@
 
 ```
 src/
-├── views/              # Home / Chat / Bills / Add / Stats / Profile已实现；Login仍占位
+├── views/              # Home / Chat / Bills / Add / Stats / Profile；Login真实账号开发版
 ├── components/         # calendar / common / layout / record / chart / mascot
-├── stores/             # recordStore.js / conversationStore.js
+├── stores/             # authStore.js / recordStore.js / conversationStore.js
+├── api/                # client / session / ledger / remoteLedger / profile / mode
 ├── router/index.js
 ├── utils/              # money / ledger / draftEngine / statistics / journal / navigation等；规则模拟不是真实AI
 ├── assets/design/      # 已接入的分类素材
@@ -32,7 +33,7 @@ src/
 └── main.js
 ```
 
-未来演示/Java数据和对话服务入口按批准任务逐步建立；当前api目录无实现，不把示例中的userStore当作已有认证。后续代码示例是写法示意，不证明对应文件或接口存在。
+演示与正式账号数据源按显式mode分开，正式失败不回退演示；防重键先按账号持久化再发送，网络不自动换键重试。下面userStore等代码示例仅示意写法，实际认证入口为authStore。
 
 ## 三、Vue 组件规范
 

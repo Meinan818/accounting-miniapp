@@ -8,7 +8,7 @@ export class ApiError extends Error {
 }
 
 // 浏览器只请求同源/api，凭据由HttpOnly会话Cookie持有。
-export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000, onUnauthorized = () => {} } = {}) {
+export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000, onUnauthorized = () => {}, getOwner = () => null } = {}) {
   let csrf = null
   let csrfLoading = null
   async function send(method, path, { body, headers = {}, signal } = {}) {
@@ -28,7 +28,7 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
         if (hasBody) { try { data = JSON.parse(text) } catch { /* HTML代理错误不能直接显示原文。 */ } }
       }
       if (!response.ok) {
-        if (response.status === 401) { csrf = null; onUnauthorized() }
+        if (response.status === 401 || data?.code === 'ACCOUNT_CHANGED') { csrf = null; onUnauthorized() }
         const message = response.status === 401 ? (path === '/api/auth/login' ? '账号或密码不正确。' : '登录已失效，请重新登录。')
           : response.status === 403 ? '安全校验未通过，请重新登录后再试。'
             : typeof data?.message === 'string' ? data.message : '服务暂不可用，请稍后重试。'
@@ -54,8 +54,10 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
     }
     return csrfLoading
   }
-  async function request(method, path, { body, form = false, multipart = false, headers = {}, signal } = {}) {
+  async function request(method, path, { body, form = false, multipart = false, headers = {}, signal, beforeSend = () => {} } = {}) {
     const outgoing = { ...headers }
+    const expectedOwner = getOwner()
+    if (expectedOwner != null) outgoing['X-Expected-Account'] = String(expectedOwner)
     if (!['GET', 'HEAD'].includes(method)) {
       const token = await getCsrf()
       outgoing[token.headerName] = token.token
@@ -66,6 +68,8 @@ export function createApiClient({ fetcher = globalThis.fetch, timeoutMs = 15000,
       content = form ? new URLSearchParams(body).toString() : JSON.stringify(body)
     }
     // 不自动重试写入；调用方保留同次确认的请求键与草稿。
+    beforeSend()
+    if (getOwner() !== expectedOwner) throw new Error('登录身份已变化，本次操作没有发送。')
     return send(method, path, { body: content, headers: outgoing, signal })
   }
   async function login(username, password) {

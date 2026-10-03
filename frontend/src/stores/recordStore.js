@@ -3,6 +3,9 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 import dayjs from 'dayjs'
 import { createId, prepareBatch, prepareUpdate, prepareDelete, validDate } from '../utils/ledger.js'
 import { legacyCents, sumAmounts, MAX_CENTS } from '../utils/money.js'
+import { SERVER_MODE } from '../api/mode.js'
+import { createRemoteLedger } from '../api/remoteLedger.js'
+import { useAuthStore } from './authStore.js'
 
 export const RECORD_STORAGE_KEY = 'zhizhang_mock_records'
 
@@ -26,6 +29,10 @@ function createSampleRecords() {
 
 
 export const useRecordStore = defineStore('record', () => {
+  if (SERVER_MODE) {
+    const auth = useAuthStore()
+    return createRemoteLedger(auth.api, computed(() => auth.user?.id), { storage: window.localStorage })
+  }
   const storageError = ref('')
   function readLatest(fallback = createSampleRecords()) {
     try {

@@ -17,6 +17,7 @@ import { formatCurrency } from '@/utils/format'
 import { filterRecords } from '@/utils/journal'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { getCategoryArtwork } from '@/utils/categoryArtwork'
+import { SERVER_MODE } from '@/api/mode'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
@@ -103,10 +104,10 @@ watch([highlightedId, selectedMonth], async ([id]) => {
 }, { immediate: true })
 
 function edit(record) { editingRecord.value = { ...record }; saveError.value = ''; notice.value = '' }
-function saveEdit(input) {
+async function saveEdit(input) {
   if (saving.value || !editingRecord.value) return
   saving.value = true
-  try { const updated = recordStore.updateRecord(editingRecord.value.id, input); selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。' }
+  try { const updated = await recordStore.updateRecord(editingRecord.value.id, input, { version: editingRecord.value.version }); selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。' }
   catch (e) { saveError.value = e.message }
   finally { saving.value = false }
 }
@@ -115,7 +116,7 @@ async function deleteEdit() {
   if (saving.value || !editingRecord.value) return
   if (typeof recordStore.deleteRecord !== 'function') { saveError.value = '当前页面仍使用旧版本数据模块。请先退出编辑并刷新页面，原账单尚未删除。'; return }
   saving.value = true; saveError.value = ''
-  try { recordStore.deleteRecord(editingRecord.value.id); editingRecord.value = null; notice.value = '这笔账单已删除：首页、明细和聊天查询已同步。'; await nextTick(); noticeElement.value?.focus() }
+  try { await recordStore.deleteRecord(editingRecord.value.id, { version: editingRecord.value.version }); editingRecord.value = null; notice.value = '这笔账单已删除：首页、明细和聊天查询已同步。'; await nextTick(); noticeElement.value?.focus() }
   catch (e) { saveError.value = e.message }
   finally { saving.value = false }
 }
@@ -161,7 +162,7 @@ function getSign(record) {
         <img :src="miaoWriting" alt="猫猫抱着账本陪你看明细" class="bills-header-cat" />
         <div class="bills-heading-text">
           <h1 class="bills-title">账单明细</h1>
-          <p class="bills-subtitle">喵叽智账 · 本地演示</p>
+          <p class="bills-subtitle">喵叽智账 · {{ SERVER_MODE ? '当前账号' : '本地演示' }}</p>
         </div>
       </header>
 
@@ -212,7 +213,7 @@ function getSign(record) {
         <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
       </section>
       <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" @click="resetFilters">查看全部</button></div>
-      <p class="bills-storage-note">账单保存在当前浏览器；这里的修改会同步到首页和聊天查询</p>
+      <p class="bills-storage-note">{{ SERVER_MODE ? '账单保存在当前账号；这里的修改会同步到首页和聊天查询' : '账单保存在当前浏览器；这里的修改会同步到首页和聊天查询' }}</p>
       <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
 
       <section v-if="groupedRecords.length" class="bills-groups" aria-label="按日账单">

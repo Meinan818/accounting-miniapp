@@ -4,17 +4,19 @@ import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { validateRecord } from '@/utils/ledger'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
+import { SERVER_MODE } from '@/api/mode'
 const props = defineProps({ record: { type: Object, default: () => ({}) }, saving: Boolean, error: { type: String, default: '' }, submitLabel: { type: String, default: '保存账单' } })
 const emit = defineEmits(['save', 'cancel'])
+const unknownTime = SERVER_MODE && Boolean(props.record.id) && !props.record.time
 const form = ref({ type: props.record.type || 'expense', amount: props.record.amount != null ? String(props.record.amount) : '',
   category: props.record.category || '餐饮', date: props.record.date || dayjs().format('YYYY-MM-DD'),
-  time: props.record.time || dayjs().format('HH:mm'), remark: props.record.remark || '' })
+  time: props.record.time || (unknownTime ? '' : dayjs().format('HH:mm')), remark: props.record.remark || '' })
 const localError = ref('')
 const categories = computed(() => CATEGORY_OPTIONS[form.value.type])
 function changeType(type) { form.value.type = type; if (!categories.value.some(c => c.label === form.value.category)) form.value.category = categories.value[0].label }
 function save() {
   if (props.saving) return
-  try { const record = validateRecord({ ...form.value, description: form.value.remark || form.value.category }); localError.value = ''; emit('save', record) }
+  try { const omitTime = unknownTime && !form.value.time; const record = validateRecord({ ...form.value, time: omitTime ? '00:00' : form.value.time, description: form.value.remark || form.value.category }); if (omitTime) delete record.time; localError.value = ''; emit('save', record) }
   catch (e) { localError.value = e.message }
 }
 </script>
@@ -26,7 +28,7 @@ function save() {
       <div class="field-grid">
         <label>金额<input v-model="form.amount" aria-label="金额" inputmode="decimal" type="text" placeholder="如25.50" autocomplete="off" required /></label>
         <label>日期<input v-model="form.date" aria-label="日期" type="date" required /></label>
-        <label>时间<input v-model="form.time" aria-label="时间" type="time" required /></label>
+        <label>时间<input v-model="form.time" aria-label="时间" type="time" :required="!unknownTime" /><span v-if="unknownTime">原时间未知，可留空</span></label>
       </div>
       <div class="category-picker" role="group" aria-label="选择账单分类">
         <p class="category-picker-heading">给这笔选一张贴纸 <span>已选 · {{ form.category }}</span></p>

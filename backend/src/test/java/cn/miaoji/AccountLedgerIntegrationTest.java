@@ -89,6 +89,48 @@ class AccountLedgerIntegrationTest {
         return json.readTree(result.getResponse().getContentAsString());
     }
 
+    @Test void snapshotIncludesOwnedHistoryAndDeletionFactsButNeverOtherAccount() throws Exception {
+        mvc.perform(get("/api/records/snapshot")).andExpect(status().isUnauthorized());
+        var alice = account(); var bob = account();
+        var removed = create(alice, "1.00");
+        create(bob, "99.00");
+        mvc.perform(delete("/api/records/" + removed.path("id").asText()).param("version", "0")
+                .session(alice.session()).header("X-CSRF-TOKEN", alice.token())).andExpect(status().isNoContent());
+        var result = mvc.perform(get("/api/records/snapshot").session(alice.session())).andExpect(status().isOk()).andReturn();
+        var entries = json.readTree(result.getResponse().getContentAsString()).path("records");
+        assertThat(entries.size()).isEqualTo(1);
+        assertThat(entries.get(0).path("record").path("id").asText()).isEqualTo(removed.path("id").asText());
+        assertThat(entries.get(0).path("deletedAt").isTextual()).isTrue();
+        mvc.perform(get("/api/records").session(alice.session()).param("month", "2026-10")).andExpect(jsonPath("$.total").value(0));
+    }
+
+    @Test void stalePageAccountAssertionCannotReadWriteOrLogoutAnotherSession() throws Exception {
+        var alice = account(); var bob = account();
+        var aliceRecord = create(alice, "1.00");
+        var owner = jdbc.queryForObject("SELECT user_id FROM ledger_record WHERE id = ?", Long.class, aliceRecord.path("id").asText());
+        mvc.perform(get("/api/records/snapshot").session(bob.session()).header("X-Expected-Account", owner.toString()))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.code").value("ACCOUNT_CHANGED"));
+        mvc.perform(get("/api/profile/avatar").session(bob.session()).param("expectedAccount", owner.toString()))
+                .andExpect(status().isConflict());
+        mvc.perform(post("/api/records").session(bob.session()).header("X-Expected-Account", owner.toString())
+                .header("Idempotency-Key", UUID.randomUUID().toString()).header("X-CSRF-TOKEN", alice.token())
+                .contentType(MediaType.APPLICATION_JSON).content(input("99.00"))).andExpect(status().isConflict());
+        mvc.perform(post("/api/auth/logout").session(bob.session()).header("X-Expected-Account", owner.toString()))
+                .andExpect(status().isConflict());
+        mvc.perform(get("/api/auth/me").session(bob.session())).andExpect(status().isOk());
+        mvc.perform(get("/api/records").session(bob.session()).param("month", "2026-10")).andExpect(jsonPath("$.total").value(0));
+    }
+
+    @Test void snapshotRefusesToSilentlyTruncateLargeLedger() throws Exception {
+        var alice = account(); var record = create(alice, "1.00");
+        var owner = jdbc.queryForObject("SELECT user_id FROM ledger_record WHERE id = ?", Long.class, record.path("id").asText());
+        var entries = new java.util.ArrayList<Object[]>();
+        for (int i = 0; i < 5000; i++) entries.add(new Object[]{UUID.randomUUID().toString(), owner});
+        jdbc.batchUpdate("INSERT INTO ledger_record (id,user_id,type,amount,business_date,category,note) VALUES (?,?,'expense',1.00,'2026-10-03','餐饮','synthetic limit')", entries);
+        mvc.perform(get("/api/records/snapshot").session(alice.session())).andExpect(status().isPayloadTooLarge())
+                .andExpect(jsonPath("$.code").value("LEDGER_TOO_LARGE"));
+    }
+
     @Test void anonymousCannotReadWriteOrSummarize() throws Exception {
         mvc.perform(get("/api/records").param("month", "2026-10")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/statistics/month").param("month", "2026-10")).andExpect(status().isUnauthorized());

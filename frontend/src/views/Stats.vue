@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { SERVER_MODE } from '@/api/mode'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
@@ -117,7 +118,7 @@ onMounted(() => store.refresh())
           <div v-else class="stats-empty"><img :src="receiptKitten" alt="奶油小猫拿着空白小票" /><p>{{ statistics.recordCount === 0 ? '这个月还没有账单' : '这个月还没有' + typeLabel + '账单' }}</p><span>{{ statistics.recordCount === 0 ? '记下第一笔后，这里会自动整理收支。' : '切换收支类型，可以查看已有账单。' }}</span></div>
           <p v-if="categoryRows.length" class="stats-rounding-note">占比按{{ typeLabel }}总额计算，显示到一位小数，四舍五入后可能略有差异。</p>
         </section>
-        <p class="stats-storage-note">只统计当前账本的有效账单，未确认草稿和已删除账单不计入。数据保存在当前浏览器。</p>
+        <p class="stats-storage-note">只统计当前账本的有效账单，未确认草稿和已删除账单不计入。{{ SERVER_MODE ? '数据保存在当前账号。' : '数据保存在当前浏览器。' }}</p>
       </template>
     </main>
     <BottomNav active="saving" />

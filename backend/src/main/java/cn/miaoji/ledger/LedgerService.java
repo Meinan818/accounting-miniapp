@@ -24,6 +24,15 @@ public class LedgerService {
     }
     public record MonthSummary(String income, String expense, String balance, long count) {}
     public record RecordPage(List<RecordView> records, int page, int size, long total) {}
+    public record SnapshotRecord(RecordView record, String deletedAt) {}
+    public record LedgerSnapshot(List<SnapshotRecord> records) {}
+
+    @Transactional(readOnly = true)
+    public LedgerSnapshot snapshot(long owner) {
+        var values = repository.snapshot(owner);
+        if (values.size() > 5000) throw new ApiException(HttpStatus.PAYLOAD_TOO_LARGE, "LEDGER_TOO_LARGE", "账本超过当前读取上限，请保留数据并联系开发者");
+        return new LedgerSnapshot(values);
+    }
     public record CategorySummary(String category, String amount, long count, String percent) {}
     public record MonthDetail(String month, String income, String expense, String balance, long count,
             long incomeCount, long expenseCount, Map<String, List<CategorySummary>> categories) {}

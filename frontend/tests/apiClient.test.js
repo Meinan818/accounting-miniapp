@@ -28,6 +28,15 @@ test('并发读取CSRF只产生一次请求', async () => {
   const api = createApiClient({ fetcher: async () => { calls++; await new Promise(resolve => setTimeout(resolve, 10)); return response(200, token) } })
   await Promise.all([api.getCsrf(), api.getCsrf()]); assert.equal(calls, 1)
 })
+test('请求断言当前账号，跨标签Cookie变化的409撤销旧页面身份', async () => {
+  let changed = 0, header
+  const api = createApiClient({ getOwner: () => '1', onUnauthorized: () => changed++, fetcher: async (path, options) => {
+    header = options.headers['X-Expected-Account']
+    return response(409, { code: 'ACCOUNT_CHANGED', message: '账号已变化' })
+  } })
+  await assert.rejects(api.request('GET', '/api/records/snapshot'), error => error.code === 'ACCOUNT_CHANGED')
+  assert.equal(header, '1'); assert.equal(changed, 1)
+})
 test('登录以表单提交并重新获取token；退出不保存密码', async () => {
   const calls = []
   const api = createApiClient({ fetcher: async (path, options) => {

@@ -13,6 +13,7 @@ import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
 import { sumAmounts } from '@/utils/money'
+import { SERVER_MODE } from '@/api/mode'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
@@ -67,7 +68,7 @@ function getRecordSign(record) {
         <img :src="miaoAvatar" alt="手绘猫猫" class="home-header-cat" />
         <div>
           <h1 class="home-title">喵叽智账</h1>
-          <p class="home-subtitle">日常开销 · 本地演示</p>
+          <p class="home-subtitle">日常开销 · {{ SERVER_MODE ? '当前账号' : '本地演示' }}</p>
         </div>
         <span class="home-header-note">每一笔，都好好记下</span>
       </header>

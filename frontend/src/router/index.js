@@ -1,5 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { getScrollPosition } from '@/utils/navigation'
+import { SERVER_MODE } from '@/api/mode'
+import { useAuthStore } from '@/stores/authStore'
+import { useRecordStore } from '@/stores/recordStore'
 
 const routes = [
   {
@@ -56,6 +59,14 @@ const router = createRouter({
   scrollBehavior: getScrollPosition,
 })
 
-// 当前为公开演示模式；requiresAuth预留给后续Java认证，未接入前不伪造登录。
+if (SERVER_MODE) router.beforeEach(async to => {
+  const auth = useAuthStore()
+  if (['unknown', 'unavailable'].includes(auth.status)) {
+    try { await auth.restore() } catch { if (to.name !== 'Login') return { name: 'Login' } }
+  }
+  if (to.meta.requiresAuth && !auth.user) return { name: 'Login' }
+  if (to.name === 'Login' && auth.user) return { name: 'Home' }
+  if (to.meta.requiresAuth) await useRecordStore().refresh()
+})
 
 export default router

@@ -42,3 +42,4 @@ Thumbs.db
 # 本机内部材料
 .workbuddy/memory/
 backend/storage/
+frontend/dist-server/

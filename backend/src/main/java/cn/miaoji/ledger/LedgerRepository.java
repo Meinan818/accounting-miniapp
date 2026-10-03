@@ -37,6 +37,12 @@ public class LedgerRepository {
         return jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record" + query.sql(), Long.class, query.arguments().toArray());
     }
 
+    public List<LedgerService.SnapshotRecord> snapshot(long owner) {
+        return jdbc.query("SELECT * FROM ledger_record WHERE user_id = ? ORDER BY business_date DESC, created_at DESC, id LIMIT 5001",
+                (rs, row) -> new LedgerService.SnapshotRecord(MAPPER.mapRow(rs, row),
+                        rs.getTimestamp("deleted_at") == null ? null : rs.getTimestamp("deleted_at").toInstant().toString()), owner);
+    }
+
     private record Query(String sql, List<Object> arguments) {}
 
     private Query where(long owner, RecordFilters filters) {

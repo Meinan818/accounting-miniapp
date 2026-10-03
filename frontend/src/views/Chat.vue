@@ -19,6 +19,7 @@ import { useConversationStore } from '@/stores/conversationStore'
 import { useRecordStore } from '@/stores/recordStore'
 import { formatCurrency } from '@/utils/format'
 import { getMonthQueryReply } from '@/utils/chatQuery'
+import { linkGroupRecords } from '@/utils/groupRecords'
 
 // 2. 组合式函数
 const conversationStore = useConversationStore()
@@ -102,19 +103,19 @@ async function retryConversation() {
   } finally { retryingPersistence.value = false }
 }
 function reply(content) { conversationStore.addMessage({ role: 'assistant', kind: 'text', content }) }
-function queryReply(text) {
-  if (!recordStore.refresh()) { reply(recordStore.storageError); return }
+async function queryReply(text) {
+  if (!await recordStore.refresh()) { reply(recordStore.storageError); return }
   try { reply(getMonthQueryReply(text, recordStore.records)) }
   catch (error) { reply('本月查询暂时无法显示：' + error.message + '。账单没有改变。') }
 }
-function saveDraft(messageId) {
+async function saveDraft(messageId) {
   const message = conversationStore.messages.find(m => m.id === messageId)
   if (!message?.group || message.group.status !== 'ready' || savingGroup.value || retryingPersistence.value) return
   savingGroup.value = messageId
   actionErrors.value[messageId] = ''
   try {
-    const saved = recordStore.addRecords(message.group.items, { batchId: message.group.id, source: 'chat' })
-    conversationStore.updateGroup(messageId, { ...message.group, status: 'saved', pending: null })
+    const saved = await recordStore.addRecords(message.group.items, { batchId: message.group.id, source: 'chat' })
+    conversationStore.updateGroup(messageId, { ...message.group, status: 'saved', pending: null, recordIds: saved.map(record => record.id) })
     reply('本喵已记下' + saved.length + '笔，首页和明细已同步。之后直接改明细，查询也会读取最新账单。')
     conversationStore.setMascotMood('success'); resetMoodLater()
   } catch (e) { actionErrors.value[messageId] = e.message; reply(e.message) }
@@ -146,14 +147,14 @@ async function handleSend(userInput) {
   conversationStore.setThinking(true); conversationStore.setMascotMood('thinking'); scrollToBottom()
   try {
     await wait(600)
-    recordStore.refresh()
+    await recordStore.refresh()
     const active = activeDraftMessage.value
     if (active) {
       const result = applyDraftInput(active.group, text)
-      if (result.action === 'query') queryReply(text)
-      else if (result.action === 'confirm') saveDraft(active.id)
+      if (result.action === 'query') await queryReply(text)
+      else if (result.action === 'confirm') await saveDraft(active.id)
       else { conversationStore.updateGroup(active.id, result.group); actionErrors.value[active.id] = ''; reply(result.reply) }
-    } else if (isQuery(text)) queryReply(text)
+    } else if (isQuery(text)) await queryReply(text)
     else {
       const result = createDraft(text)
       reply(result.reply)
@@ -163,7 +164,11 @@ async function handleSend(userInput) {
   finally { conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() }
 }
 function legacySaved(message) { return message.confirmed || recordStore.batchRecords('legacy-' + message.id).length > 0 }
-function legacyRecord(message) { return recordStore.batchRecords('legacy-' + message.id)[0] || message.record }
+function legacyRecord(message) { return recordStore.batchRecords('legacy-' + message.id)[0] || recordStore.recordsByIds?.([message.record?.id])[0] || message.record }
+function savedRecords(group) {
+  return recordStore.recordsByIds && Array.isArray(group.recordIds)
+    ? linkGroupRecords(group, recordStore.recordsByIds(group.recordIds)) : recordStore.batchRecords(group.id)
+}
 function handleUpdateRecord(messageId, updatedRecord) {
   const message = conversationStore.messages.find(m => m.id === messageId)
   if (retryingPersistence.value) return
@@ -171,14 +176,17 @@ function handleUpdateRecord(messageId, updatedRecord) {
   conversationStore.updateRecord(messageId, updatedRecord)
   reply('已经帮你改好啦，再核对一下就可以记账了。')
 }
-function handleConfirmRecord(messageId, record) {
+async function handleConfirmRecord(messageId, record) {
   const message = conversationStore.messages.find(m => m.id === messageId)
-  if (!message || retryingPersistence.value || legacySaved(message)) return
+  if (!message || retryingPersistence.value || savingGroup.value || legacySaved(message)) return
+  savingGroup.value = messageId
   try {
-    recordStore.addRecord(record, { batchId: 'legacy-' + messageId, source: 'chat' })
+    const saved = await recordStore.addRecord(record, { batchId: 'legacy-' + messageId, source: 'chat' })
+    conversationStore.updateRecord(messageId, saved)
     conversationStore.markRecordConfirmed(messageId)
     reply('本喵已记下一笔，明细和查询使用同一份最新账单。')
   } catch (e) { reply(e.message) }
+  finally { savingGroup.value = null }
   scrollToBottom()
 }
 
@@ -251,7 +259,7 @@ onBeforeUnmount(() => {
           <DraftGroupCard
             v-if="message.kind === 'draft-group' && message.group"
             :group="message.group"
-            :saved-records="recordStore.batchRecords(message.group.id)"
+            :saved-records="savedRecords(message.group)"
             :busy="savingGroup === message.id || conversationStore.isThinking || retryingPersistence"
             :error="actionErrors[message.id]"
             @confirm="saveDraft(message.id)"

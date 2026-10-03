@@ -1,0 +1,88 @@
+import { computed, ref, watch } from 'vue'
+import dayjs from 'dayjs'
+import { createId } from '../utils/ledger.js'
+import { legacyCents, sumAmounts } from '../utils/money.js'
+import { createLedgerApi, fromRecordView } from './ledger.js'
+
+export function createRemoteLedger(client, owner, { storage } = {}) {
+  const allRecords = ref([])
+  const storageError = ref('正在读取正式账本…')
+  const records = computed(() => allRecords.value.filter(record => !record.deletedAt))
+  const monthRecords = computed(() => records.value.filter(record => record.date.startsWith(dayjs().format('YYYY-MM'))))
+  const monthExpense = computed(() => sumAmounts(monthRecords.value, 'expense'))
+  const monthIncome = computed(() => sumAmounts(monthRecords.value, 'income'))
+  function categories(type) {
+    const values = {}
+    for (const record of monthRecords.value.filter(record => record.type === type)) values[record.category] = (values[record.category] || 0) + legacyCents(record.amount)
+    return Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value / 100]))
+  }
+  const categoryExpenses = computed(() => categories('expense'))
+  const categoryIncome = computed(() => categories('income'))
+  let generation = 0
+  let refreshing = null
+  let ledger = null
+  let links = new Map()
+  watch(owner, value => {
+    generation++; allRecords.value = []; refreshing = null; links = new Map()
+    storageError.value = value ? '正在读取正式账本…' : '请先登录正式账号。'
+    const current = generation
+    ledger = value ? createLedgerApi(client, { storage, owner: value, isCurrent: () => current === generation }) : null
+  }, { immediate: true, flush: 'sync' })
+  function ensure(current) {
+    if (!ledger || current !== generation) throw new Error('登录身份已变化，请重新登录并核对账单。')
+  }
+  async function refresh(force = false) {
+    if (!ledger) return false
+    if (refreshing) { const result = await refreshing; return force === true ? refresh() : result }
+    const current = generation
+    const pending = (async () => {
+      try {
+        const snapshot = await client.request('GET', '/api/records/snapshot')
+        ensure(current)
+        if (!Array.isArray(snapshot?.records)) throw new Error('账本回执不完整，暂不替换当前账本。')
+        const previous = new Map(allRecords.value.map(record => [record.id, record]))
+        const next = snapshot.records.map(value => {
+          if (value.deletedAt != null && (typeof value.deletedAt !== 'string' || !Number.isFinite(Date.parse(value.deletedAt)))) throw new Error('删除状态不合法')
+          return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
+        })
+        if (new Set(next.map(record => record.id)).size !== next.length) throw new Error('账本回执编号重复')
+        allRecords.value = next; storageError.value = ''; return true
+      } catch (failure) { if (current === generation) storageError.value = failure.message; return false }
+      finally { if (current === generation) refreshing = null }
+    })()
+    refreshing = pending
+    return pending
+  }
+  async function addRecords(inputs, { batchId = createId('batch'), source = 'chat' } = {}) {
+    const current = generation; ensure(current)
+    const saved = await ledger.createBatch(inputs, batchId); ensure(current)
+    // 原回执只建立关联，当前事实继续由snapshot读取，不能恢复删除或覆盖编辑。
+    for (const record of saved) links.set(record.id, { source, draftGroupId: batchId, draftItemId: record.draftItemId })
+    if (!await refresh(true)) throw new Error('服务器已确认保存，但最新账本暂未读到。请保留此组并用原操作重试，不要另建一组。')
+    ensure(current)
+    return saved
+  }
+  async function addRecord(input, options = {}) { return (await addRecords([{ ...input, id: input.id || 'single' }], { source: 'manual', ...options }))[0] }
+  async function updateRecord(id, input, { version } = {}) {
+    const current = generation; ensure(current)
+    const record = allRecords.value.find(record => record.id === id && !record.deletedAt)
+    if (!record) throw new Error('账单不存在，请重新读取明细。')
+    const updated = await ledger.update({ ...record, version: version ?? record.version }, input); ensure(current)
+    allRecords.value = allRecords.value.map(record => record.id === id ? updated : record)
+    storageError.value = ''; return updated
+  }
+  async function deleteRecord(id, { version } = {}) {
+    const current = generation; ensure(current)
+    const record = allRecords.value.find(record => record.id === id && !record.deletedAt)
+    if (!record) throw new Error('账单不存在，请重新读取明细。')
+    await ledger.remove({ ...record, version: version ?? record.version }); ensure(current)
+    const removed = { ...record, deletedAt: new Date().toISOString(), version: record.version + 1 }
+    allRecords.value = allRecords.value.map(record => record.id === id ? removed : record)
+    storageError.value = ''; return removed
+  }
+  function batchRecords(id) { return allRecords.value.filter(record => record.draftGroupId === id) }
+  function recordsByIds(ids = []) { return allRecords.value.filter(record => ids.includes(record.id)) }
+  function clearRecords() { throw new Error('正式账本不提供清空操作。') }
+  return { records, storageError, monthRecords, monthExpense, monthIncome, categoryExpenses, categoryIncome,
+    refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords }
+}

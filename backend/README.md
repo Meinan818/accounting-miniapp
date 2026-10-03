@@ -1,6 +1,6 @@
 # 喵叽智账后端
 
-Java 21、Spring Boot 3.5.16、Spring Security、Spring JDBC、Flyway、MySQL 8.4。复用已有草稿，先以直接 SQL 明确表达用户归属和版本条件，暂不引入 MyBatis。前端仍使用原本的本地演示账本，没有接入此服务。
+Java 21、Spring Boot 3.5.16、Spring Security、Spring JDBC、Flyway、MySQL 8.4。复用已有草稿，以直接SQL表达用户归属和版本条件，暂不引入MyBatis。前端server模式已接此服务；默认演示独立保留，不自动导入账本或照片。
 
 ## 本地运行
 
@@ -37,6 +37,7 @@ cd E:\XiangMu\未定项目\backend
 | POST `/api/records/batch` | JSON `{records: [...]}`，1–5笔整组确认，同样必须带`Idempotency-Key` |
 | GET `/api/records?month=2026-10&page=0&size=50` | 当前账号当月账单，page 从 0 开始，size 1–100；返回records/page/size/total |
 | GET `/api/categories` | 当前8支出/6收入预设分类标签，需要登录 |
+| GET `/api/records/snapshot` | 本人完整历史与逻辑删除事实，返回`{records:[{record,deletedAt}]}`；最多5000条，超限413 `LEDGER_TOO_LARGE`，不静默截断 |
 | GET `/api/records/{id}` | 当前账号的有效账单 |
 | PUT `/api/records/{id}` | JSON `{version, record: {...}}`，200 返回新版本 |
 | DELETE `/api/records/{id}?version=0` | 204，逻辑删除，不彻底擦除历史 |
@@ -49,7 +50,9 @@ cd E:\XiangMu\未定项目\backend
 
 账单列表可叠加`type=income|expense`、精确`category`、`date=YYYY-MM-DD`及`q`（最多120字符）；日期必须属于所选月，错误类型/分类组合拒绝。未指定收支的“其他”匹配两个类型，指定类型则区分。文字按空白分词，各词可跨备注、分类、金额、日期、业务时间、收支中文标签匹配且必须全部满足；大小写不敏感，`%/_/!`按普通文字处理，不接受SQL片段扩大查询。total是筛选后有效笔数，超过末页仍返回正确total；筛选不会改变月统计。
 
-可选`time`为严格`HH:mm`业务时间，提供时会存储/校验，并参与防重内容判断。未提供的旧账单保留未知且不补当前时间，响应不显示该字段；省略时间的旧V2请求指纹和回执保持兼容。前端remark对应API note、金额需转十进制字符串，图标/说明由前端分类与备注推导；当前尚未实际切换前端数据源。
+可选`time`为严格`HH:mm`业务时间，提供时会存储/校验，并参与防重内容判断。未提供的旧账单保留未知且不补当前时间，响应不显示该字段；省略时间的旧V2请求指纹和回执保持兼容。前端remark对应API note、金额转十进制字符串，图标/说明由前端分类与备注推导；server模式已切真实账号数据源。
+
+前端发送`X-Expected-Account`断言当前页面身份，与真正Cookie会话比较；不一致409 `ACCOUNT_CHANGED`，在CSRF前阻断旧页读写或退出另一账号。这不是指定权限的用户号，所有归属仍取真实会话。私有头像GET可带`expectedAccount`同样断言，避免跨标签换Cookie后显示错误账号图片。
 
 请求键、所有账单和回执在同一数据库事务中保存；整组先完整校验，任何写入/回执保存失败全部回退，失败后同键可重试。数据库主键约束负责并发防重，不依赖单进程锁。回执是当时入账的固定快照，重放不修改或恢复之后已编辑/删除的账单；当前金额/删除事实必须重新读取账单或统计。防重请求目前永久保留，不自动清理或让旧键再次入账；服务端草稿的过期版本校验尚未实现。
 
@@ -57,7 +60,7 @@ cd E:\XiangMu\未定项目\backend
 
 ## 尚未完成
 
-当前不是完整 B/C 验收：自定义分类、登录限流、服务端草稿/审计、前端联通和真实 AI 均未实现。整组接口直接接收用户已确认的内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署，也没有收费服务调用。
+当前不是完整B/C验收：自定义分类、登录限流、服务端草稿/审计、大账本分页适配、真实AI均未实现。正式前端已开发版联通，生产实际交互、真机及用户正式功能验收未完成；聊天历史暂按账号隔离存在浏览器。整组接口直接接收用户已确认内容，不冒充已有服务端草稿状态机。旧演示数据与照片不会自动绑定账号、导入或上传。没有部署或收费调用。
 
 兼容性依据：[Spring Boot 3.5 环境要求](https://docs.spring.io/spring-boot/3.5/system-requirements.html)、[Spring Security 会话](https://docs.spring.io/spring-security/reference/servlet/authentication/session-management.html)、[CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)。实际验证见项目交接 LOG。
 

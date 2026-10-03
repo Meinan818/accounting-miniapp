@@ -6,15 +6,16 @@ import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import RecordForm from '@/components/record/RecordForm.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { createId } from '@/utils/ledger'
+import { SERVER_MODE } from '@/api/mode'
 const router = useRouter()
 const store = useRecordStore()
 const saving = ref(false)
 const error = ref('')
 const batchId = createId('manual')
-function save(record) {
+async function save(record) {
   if (saving.value) return
   saving.value = true
-  try { const saved = store.addRecord(record, { batchId, source: 'manual' }); router.push({ path: '/bills', query: { month: saved.date.slice(0, 7), added: saved.id } }) }
+  try { const saved = await store.addRecord(record, { batchId, source: 'manual' }); router.push({ path: '/bills', query: { month: saved.date.slice(0, 7), added: saved.id } }) }
   catch (e) { error.value = e.message; saving.value = false }
 }
 </script>
@@ -25,7 +26,7 @@ function save(record) {
       <router-link to="/chat" class="chat-link">更想说一说？和小宝聊着记 →</router-link>
       <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
       <article class="manual-card"><p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p><p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p><RecordForm :saving="saving" :error="error" @save="save" @cancel="router.push('/bills')" /></article>
-      <p class="local-note">本地演示：账单保存在当前浏览器，不调用AI。</p>
+      <p class="local-note">{{ SERVER_MODE ? '正式账单保存到当前账号，不调用AI。' : '本地演示：账单保存在当前浏览器，不调用AI。' }}</p>
     </section>
   </main>
 </template>

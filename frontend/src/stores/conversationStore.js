@@ -2,6 +2,8 @@ import { nextTick, onScopeDispose, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { createId, validDate, validateRecord } from '../utils/ledger.js'
 import { MAX_CENTS } from '../utils/money.js'
+import { SERVER_MODE } from '../api/mode.js'
+import { useAuthStore } from './authStore.js'
 
 const STORAGE_KEY = 'zhizhang_conversation'
 function welcome() { return { id: 'welcome-message', role: 'assistant', kind: 'text', content: '本喵来啦～今天买了什么呀？整理好后，由你确认再记下。', createdAt: new Date().toISOString() } }
@@ -25,6 +27,8 @@ function checkGroup(group) {
     || !['needs_input', 'ready', 'saved', 'cancelled'].includes(group.status)) throw new Error('invalid group')
   if (group.createdDate !== undefined && (typeof group.createdDate !== 'string' || !validDate(group.createdDate))) throw new Error('invalid date')
   const ids = new Set()
+  if (group.recordIds !== undefined && (!Array.isArray(group.recordIds) || group.recordIds.length !== group.items.length
+      || new Set(group.recordIds).size !== group.recordIds.length || group.recordIds.some(id => !validId(id)))) throw new Error('invalid saved record ids')
   for (const item of group.items) {
     if (!isObject(item) || !validId(item.id) || ids.has(item.id)) throw new Error('invalid item id')
     ids.add(item.id)
@@ -49,8 +53,8 @@ function checkGroup(group) {
   }
 }
 // Validate without rewriting, filtering or migrating older messages.
-function readHistory() {
-  const raw = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
+function readHistory(key = STORAGE_KEY) {
+  const raw = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null
   if (raw == null) return { messages: [welcome()], raw }
   const parsed = JSON.parse(raw)
   if (!Array.isArray(parsed)) throw new Error('invalid history')
@@ -73,6 +77,9 @@ function readHistory() {
 }
 
 export const useConversationStore = defineStore('conversation', () => {
+  const owner = SERVER_MODE ? useAuthStore().user?.id : null
+  if (SERVER_MODE && !owner) throw new Error('请先登录再打开对话')
+  const key = SERVER_MODE ? `miaoji_account_conversation_v1_${owner}` : STORAGE_KEY
   const persistenceError = ref('')
   const restorationBlocked = ref(false)
   const storageConflict = ref(false)
@@ -83,7 +90,7 @@ export const useConversationStore = defineStore('conversation', () => {
   function blockedMessage() {
     persistenceError.value = '旧对话暂无法读取，已保护原内容。新对话仅留本次页面，刷新前请先备份。账单仍可在明细查看。'
   }
-  try { const history = readHistory(); initial = history.messages; expectedRaw = history.raw }
+  try { const history = readHistory(key); initial = history.messages; expectedRaw = history.raw }
   catch { restorationBlocked.value = true; blockedMessage() }
   const messages = ref(initial)
   const isThinking = ref(false)
@@ -112,8 +119,8 @@ export const useConversationStore = defineStore('conversation', () => {
       // Check immediately before writing. This protects known stale snapshots, not an atomic cross-tab lock.
       const nextRaw = JSON.stringify(value)
       if (typeof window !== 'undefined') {
-        if (window.localStorage.getItem(STORAGE_KEY) !== expectedRaw) { conflictMessage(); return false }
-        window.localStorage.setItem(STORAGE_KEY, nextRaw)
+        if (window.localStorage.getItem(key) !== expectedRaw) { conflictMessage(); return false }
+        window.localStorage.setItem(key, nextRaw)
       }
       expectedRaw = nextRaw
       hasUnsavedChanges.value = false
@@ -132,14 +139,14 @@ export const useConversationStore = defineStore('conversation', () => {
       return false
     }
     try {
-      const recovered = readHistory()
+      const recovered = readHistory(key)
       restoring = true
       messages.value = recovered.messages
       expectedRaw = recovered.raw
       restorationBlocked.value = false; storageConflict.value = false
       await nextTick()
       // A storage event can arrive while the view updates: never acknowledge an already-stale reload.
-      if (typeof window !== 'undefined' && window.localStorage.getItem(STORAGE_KEY) !== expectedRaw) {
+      if (typeof window !== 'undefined' && window.localStorage.getItem(key) !== expectedRaw) {
         conflictMessage(); return false
       }
       persistenceError.value = ''; hasUnsavedChanges.value = false
@@ -155,16 +162,25 @@ export const useConversationStore = defineStore('conversation', () => {
   if (typeof window !== 'undefined' && window.addEventListener) {
     const target = window
     const listener = event => {
-      if (event.key !== STORAGE_KEY && event.key != null) return
+      if (event.key !== key && event.key != null) return
       if (restorationBlocked.value) return
       try {
         if (event.storageArea && event.storageArea !== target.localStorage) return
         // Read the actual current snapshot, not a potentially delayed event.newValue.
-        if (target.localStorage.getItem(STORAGE_KEY) !== expectedRaw) conflictMessage()
+        if (target.localStorage.getItem(key) !== expectedRaw) conflictMessage()
       } catch { persistenceError.value = '对话存储暂无法读取，请先保留本页内容，稍后重试；不会自动覆盖旧历史。' }
     }
     target.addEventListener('storage', listener)
     onScopeDispose(() => target.removeEventListener?.('storage', listener))
+  }
+  if (SERVER_MODE) {
+    const auth = useAuthStore()
+    watch(() => auth.user?.id, value => {
+      if (value === owner) return
+      restorationBlocked.value = true
+      messages.value = []; isThinking.value = false
+      persistenceError.value = '账号已变化，旧对话已保留，当前页面暂停写入。'
+    }, { flush: 'sync' })
   }
   return { messages, isThinking, mascotMood, persistenceError, restorationBlocked, storageConflict, hasUnsavedChanges, retryPersistence,
     addMessage, updateRecord, markRecordConfirmed, updateGroup, setThinking, setMascotMood, clearConversation }

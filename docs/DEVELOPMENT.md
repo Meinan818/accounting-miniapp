@@ -1,6 +1,6 @@
 # 喵叽智账 — 当前开发指南
 
-> 当前主线：Java + MySQL后端基础和可靠入账；前端保留已验收成果与本地演示。后端独立运行和API见 [backend/README.md](../backend/README.md)，未接前端或真实AI。下文旧开工清单供历史对照，以当前入口与LOG为准。
+> 当前主线：Java/MySQL与正式前端已开发版联通，默认本地演示及已验收外观保留。正式模式运行`npm run dev:server`，构建`npm run build:server`；先按 [backend/README.md](../backend/README.md) 启动本机8080服务，Vite同源代理/api。174项Node、49项H2/package及两种前端构建通过；完整浏览器收尾证据、生产实际交互/真机/正式功能人工验收未完成，真实AI未接入。第2次compact后交接见 [HANDOFF.md](../HANDOFF.md)，下文旧清单供历史对照。
 > 项目规则见AGENTS.md，目标/验收见PROJECT_PLAN.md，当前任务见STATE.json，历史证据见LOG.md；实现以代码和本轮验证为准。旧Supabase指南在docs/archive/supabase-route/，不能作为当前操作入口。
 
 ## 一、运行前端

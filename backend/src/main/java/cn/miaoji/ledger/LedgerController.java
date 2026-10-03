@@ -27,6 +27,11 @@ public class LedgerController {
     public record BatchRequest(@NotNull @Size(min = 1, max = 5) List<@NotNull @Valid RecordInput> records) {}
     public record BatchResponse(List<RecordView> records) {}
 
+    @GetMapping("/records/snapshot")
+    public LedgerService.LedgerSnapshot snapshot(@AuthenticationPrincipal AccountPrincipal user) {
+        return ledger.snapshot(user.id());
+    }
+
     @GetMapping("/records")
     public LedgerService.RecordPage list(@AuthenticationPrincipal AccountPrincipal user,
             @RequestParam String month, @RequestParam(defaultValue = "0") int page,

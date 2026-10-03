@@ -5,10 +5,10 @@ import { CATEGORY_OPTIONS, getCategoryMeta } from '../utils/categories.js'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 export function toRecordInput(input) {
-  const value = validateRecord(input)
+  const value = validateRecord({ ...input, time: input.time ?? '00:00' })
   if (value.date.startsWith('9999-')) throw new Error('正式账单日期最多到9998年')
   return { type: value.type, amount: centsText(parseCents(value.amount)), date: value.date,
-    time: value.time, category: value.category, note: value.remark }
+    ...(input.time != null ? { time: value.time } : {}), category: value.category, note: value.remark }
 }
 
 export function fromRecordView(value) {
@@ -25,9 +25,10 @@ export function fromRecordView(value) {
 }
 
 // 先持久化确认意图再发请求；超时/重开页面仍复用同键，不使用演示账本键。
-export function createLedgerApi(client, { storage, owner, newUuid = () => globalThis.crypto.randomUUID() } = {}) {
+export function createLedgerApi(client, { storage, owner, newUuid = () => globalThis.crypto.randomUUID(), isCurrent = () => true } = {}) {
   if (!/^\d+$/.test(String(owner))) throw new Error('缺少正式账号身份')
   const key = `miaoji_account_write_intents_v1_${owner}`
+  const beforeSend = () => { if (!isCurrent()) throw new Error('登录身份已变化，本次操作没有发送。') }
   function intents() {
     const raw = storage.getItem(key)
     if (raw === null) return {}
@@ -58,17 +59,17 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     if (new Set(ids).size !== ids.length) throw new Error('草稿编号重复')
     const body = { records: inputs.map(toRecordInput) }
     const requestId = intent(batchId, JSON.stringify(body))
-    const response = await client.request('POST', '/api/records/batch', { body, headers: { 'Idempotency-Key': requestId } })
+    const response = await client.request('POST', '/api/records/batch', { body, headers: { 'Idempotency-Key': requestId }, beforeSend })
     const receipt = response?.records
     if (!Array.isArray(receipt) || receipt.length !== inputs.length) throw new Error('保存回执不完整，请用原操作重试。')
     return receipt.map((value, index) => ({ ...fromRecordView(value), draftGroupId: batchId, draftItemId: ids[index] }))
   }
   async function update(current, input) {
-    const response = await client.request('PUT', `/api/records/${current.id}`, { body: { version: current.version, record: toRecordInput(input) } })
+    const response = await client.request('PUT', `/api/records/${current.id}`, { body: { version: current.version, record: toRecordInput(input) }, beforeSend })
     return { ...current, ...fromRecordView(response) }
   }
   async function remove(current) {
-    return client.request('DELETE', `/api/records/${current.id}?version=${current.version}`)
+    return client.request('DELETE', `/api/records/${current.id}?version=${current.version}`, { beforeSend })
   }
   return { createBatch, update, remove }
 }
