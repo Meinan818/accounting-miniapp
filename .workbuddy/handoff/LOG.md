@@ -936,3 +936,6 @@
 - 本聊天01a10369-4fe9-7c82-9502-a6593e36b203第2次实际compact已告知并立即停业务代码，STATE=2，同聊天恢复保持2。此次heartbeat实际收到开工但完整成功未证实。已原生改名“账本可靠性与个人资料时序验证·第二次压缩交接”，创建与转移待实际回执。
 - Git干净/main/e28b727；该节点Push及官方只读API完整远端SHA一致已核，ls-remote失败原文保留。现核8080/5174仅127.0.0.1，PID19940/20820，未重启/写业务。303项前端、两构建、9项Profile是已有证据，本次文档交接不重跑业务测试；GUI/真机/隔夜仍未验。
 - 下项编辑窗口尚无已复现缺陷，先离线取输入/焦点与离页证据。更新HANDOFF/AGENTS/STATE/NEXT/PENDING/MISTAKES，核差异/秘密后只本地commit，原生创建gpt-6.1-sol/high并转移automation，success前新聊天只读等待。此交接不Push，新聊天核远端增量及部署影响后自主上传。
+
+- 实际结果：f2c9a52da1c24f9bc88dbfd7fd6f93cf4d0a0e01本地commit成功且工作区干净；原生create_thread显式gpt-6.1-sol/high返回01a103ce-1650-7d50-bbe6-8c08120e0346/local。automation原生update返回ACTIVE，toml逐字段核仅target_thread_id改变，name/prompt/kind/id/rrule/status/notification_policy/created_at保持，E盘before/after留存。
+- wait_threads一次即时快照核新聊天active且声明只读核交接，尚未修改共享文件。源只保存此次结果及本地commit，再写success/finalCommit回执后退出；新窗口自己设0。此次无Push、部署或真实业务/AI/邮件调用，不将创建/转移成功说成完整定时成功。

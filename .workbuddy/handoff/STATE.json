@@ -19,8 +19,8 @@
     "status": "ACTIVE",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
-    "targetThreadId": "01a10369-4fe9-7c82-9502-a6593e36b203",
-    "transferStatus": "本次交接待原生创建并转移；新聊天须核compaction-handoff-2026-10-04/transfer-result.json后接手，旧成功回执仅历史",
+    "targetThreadId": "01a103ce-1650-7d50-bbe6-8c08120e0346",
+    "transferStatus": "已原生创建gpt-6.1-sol/high并转移；toml逐字段核仅目标改变，其余提示/名称/每小时/ACTIVE/failed_runs_only保持。源保存最终结果后写success回执退出，新聊天核finalCommit后设0接续",
     "scheduledRunVerified": false
   }
 }
