@@ -983,3 +983,9 @@
 - demo-before12项10通过2失败：演示600ms离页thinking未释放、refresh迟到追加草稿。发送入口/await后核isCurrentView和代次，finally拒绝旧页面；sending记录本页流程，卸载释放本页thinking并撤销代次，停止同步释放。成功账单事实与当前页面正常流程保持。
 - 15项实际Chat setup+真实AI适配器合成客户端通过，含正常演示待确认、正式停止再整理及离页中止；332项全量通过。最后源码demo/server两构建通过，随后只追加合成测试不重复构建。真实模型/业务/邮件/照片调用0，无新依赖/账号变更；GUI/真机/实际隔夜未验，compact=0。
 - demo-after新正常测试用amount而实际草稿字段amountCents造成1失败，修正测试字段2500分后通过，不改业务迎合测试。下项Login/验证码组件状态/模式与离页取证，禁真实邮件和账号写入；现有原生续办读STATE继续，无需用户操作。本节点保存Push/远端实际证据见chat-interactions-2026-10-04/push-send.log、remote-send.log。
+
+## 2026-10-04 · 登录回执与验证码输入
+
+- 82bf834e70a505a8213bad42d4f5b6636ffbbbf4普通Push与完整远端一致已核，服务19940/20820仍仅本机8080/5174，未重启。Chat/Stats模块200仅供给证据。原生automation落盘本聊天/每小时ACTIVE/failed_runs_only保持，完整定时成功仍未证实。
+- login-interactions-2026-10-04/before真实4项2通过2失败：登录迟到成功仍重定向/清密码，迟到错误回填。onScopeDispose释放页面与clock、submit入口及回执守卫；认证Store逻辑不改。5项实际Login setup+真实useRegistrationChallenge通过，含正常登录/注册、重复阻断及旧邮箱验证码回执不影响新输入。
+- 337项全量与demo/server两构建通过，无新依赖。最后仅移除测试harness无用cleanup数组，针对再核即可，业务源码不变。无真实AI/邮件/账号/账本/照片写入，GUI/真机/实际隔夜未验，compact=0。下项对话Store重试nextTick期间释放/身份边界取证，真实Pinia和合成localStorage，不修改原对话。普通保存Push及完整远端证据见本节点memory/push.log、remote.log。

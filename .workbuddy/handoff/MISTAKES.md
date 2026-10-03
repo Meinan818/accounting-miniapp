@@ -265,3 +265,7 @@
 
 - 演示wait600/refresh后未核页面，离页后还追加草稿，旧finally也清共享thinking；demo-before10通过2失败保留。发送代次和页面守卫、卸载释放本页sending修复，15项Chat/332项全量/两构建通过，正式停止/离页用真实AI适配器合成客户端补验，无真实模型请求。
 - 新正常演示断言错误假设草稿item.amount，实际内部使用amountCents，demo-after12通过1失败保留；改独立预期2500分后通过。以后按现有draftEngine实际字段验内部草稿，与API/已存账单的amount字段区分，不更改业务字段迁就测试。
+
+## 2026-10-04 · 登录组件离页回执
+
+- Login submit仅saving守卫，await后离页仍window.location.replace/清密码，失败回填旧错误。真实setup4项2通过2失败保留；onScopeDispose active守卫和时钟释放修复，5项针对/337项全量/两构建通过。认证Store会话事实保持，验证使用合成回执，未发邮件或改账号。以后认证页跳转同时核当前页面生命周期与正常注册登录成功，不能为取消旧跳转回滚已确认会话事实。

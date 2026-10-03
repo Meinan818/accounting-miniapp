@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onUnmounted } from 'vue'
+import { ref, onScopeDispose } from 'vue'
 import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
@@ -15,9 +15,10 @@ const error = ref('')
 const now = ref(Date.now())
 const { code, challenge, challengeExpired, sendingCode, codeNote, resendSeconds, requestCode } = useRegistrationChallenge(auth, username, registering, now, saving, error)
 const clock = setInterval(() => { now.value = Date.now() }, 1000)
-onUnmounted(() => clearInterval(clock))
+let active = true
+onScopeDispose(() => { active = false; clearInterval(clock) })
 async function submit() {
-  if (saving.value || !SERVER_MODE) return
+  if (!active || saving.value || !SERVER_MODE) return
   error.value = ''
   if (registering.value && sendingCode.value) { error.value = '请等待验证码申请完成后再注册。'; return }
   const identifier = username.value.trim().toLowerCase()
@@ -33,9 +34,10 @@ async function submit() {
   saving.value = true
   try {
     const success = await (registering.value ? auth.register(identifier, password.value, challenge.value.challengeId, code.value) : auth.login(identifier, password.value))
+    if (!active) return
     if (success) { password.value = ''; confirmation.value = ''; window.location.replace('/') }
-  } catch (failure) { error.value = failure.message }
-  finally { saving.value = false }
+  } catch (failure) { if (active) error.value = failure.message }
+  finally { if (active) saving.value = false }
 }
 </script>
 <template>

@@ -1,4 +1,8 @@
-## 2026-10-04 · 聊天发送离页（当前入口）
+## 2026-10-04 · 登录回执/验证码输入（当前入口）
+
+337项前端/两构建与5项Login实际setup+验证码helper通过，离页回执不跳转或覆盖密码/错误，正常登录注册与输入保护保持；82bf834完整远端一致。compact=0，automation原生每小时ACTIVE/failed_runs_only目标本聊天保持。下一项conversationStore.retryPersistence在nextTick期间Store释放的存储副作用离线取证，用合成localStorage与真实Pinia/源码，保护原对话，不发真实AI/邮件/业务写入；先证据再最小修复，不主动提问、不用子代理。GUI/真机/实际隔夜待验。
+
+## 2026-10-04 · 聊天发送离页（历史）
 
 332项前端/两构建与15项Chat实际setup+真实AI适配器合成客户端通过，演示延时/读取离页退出、本页thinking释放与旧finally隔离已补；正式停止再整理/离页合成AI也通过，真实模型/邮件/业务写入0。compact=0，源计数2只历史，原生automation每小时ACTIVE/failed_runs_only保持。不重复创建、不等回复，下一项Login/验证码实际组件输入/模式切换/离页取证，保护原账号，禁真实邮件发送；GUI/真机待验。
 

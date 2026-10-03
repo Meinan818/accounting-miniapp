@@ -1,4 +1,12 @@
-## 当前入口：发送延时与离页等待状态（2026-10-04）
+## 当前入口：登录回执与验证码输入（2026-10-04）
+
+新窗口01a103ce-1650-7d50-bbe6-8c08120e0346实际compact=0，源2只历史；回执success/最终b690c5c与原生续办已核。最新337项前端/两构建通过；Login真实setup+useRegistrationChallenge5项通过：正常登录/注册/重复阻断、邮箱改填期间旧验证码保护、离页成功不重定向/清密码、迟到失败不回填。before4项2通过2失败保留，onScopeDispose释放页面与计时器、submit入口及await回执守卫；认证Store会话事实未修改。所有调用为合成客户端，不发真实验证码邮件、不改账号/密码/账本/照片，不调用真实AI，无依赖变化。GUI/真机/实际隔夜仍未验。
+
+82bf834e70a505a8213bad42d4f5b6636ffbbbf4普通Push及完整远端一致已核，开工服务19940/20820仍仅127.0.0.1:8080/5174，无重启或部署；Chat/Stats本机模块200仅证明供给。现有automation id=automation、target=本聊天、每小时/ACTIVE/failed_runs_only已再次核落盘，不重复创建，完整定时成功不冒称。本节点保存Push/远端见login-interactions-2026-10-04/push.log、remote.log。
+
+下一项conversationStore.retryPersistence在await nextTick期间Store释放/身份变化的存储副作用离线取证，先读现有conversationStore测试加载方式，使用合成localStorage与真实Pinia/源码，不改原对话、不发网络，不凭猜测修。用户无需操作，原生续办沿STATE继续。每次实际compact告知并写STATE，第2次立即停业务代码/本地交接commit/原生gpt-6.1-sol/high新建与转移，摘要和自动唤醒不计。
+
+## 前一节点：发送延时与离页等待状态（2026-10-04）
 
 新窗口01a103ce-1650-7d50-bbe6-8c08120e0346仍compact=0，source回执success与原生automation目标/每小时/ACTIVE/failed_runs_only已核。demo-before实际12项10通过2失败：延时离页thinking未释放、读取后仍追加草稿。handleSend入口/两个await后核当前页面及代次，finally核当前页面；卸载释放本页发送的thinking并撤销旧代次，stop同步释放sending。成功Store事实与已认可聊天流程保持。
 
