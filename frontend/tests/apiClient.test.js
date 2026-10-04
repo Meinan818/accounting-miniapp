@@ -233,6 +233,33 @@ test('整组确认回执编号必须唯一，畸形回执失败后原键重试�
   assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), savedIntent)
 })
 
+test('原始确认回执字段及顺序须匹配草稿，新实例重试仍复用原意图', async () => {
+  const storage = memory(), otherId = '7ebf606b-a0d5-4053-98fb-194505f3d10d'
+  const inputs = [input, { ...input, id: 'item2', amount: '0.30' }]
+  const first = { ...view }, second = { ...view, id: otherId, amount: '0.30' }
+  let receipt = [], generated = 0
+  const confirmations = [], puts = []
+  const client = { request: async (method, path, options) => {
+    if (method === 'PUT') { puts.push(options.body); return { id, version: 0, status: 'CONFIRMED', records: options.body.records } }
+    confirmations.push(options); return { records: receipt }
+  } }
+  const reopen = () => createLedgerApi(client, { storage, owner: '1', newUuid: () => { assert.equal(generated++, 0); return id } })
+  const malformed = [{ ...first, amount: '0.31' }, { ...first, version: 1 }, { ...first, date: '2026-10-04' },
+    { ...first, type: 'income', category: '其他' }, { ...first, note: '别的组' }, { ...first, time: null }]
+  for (const records of [...malformed.map(value => [value, second]), [second, first]]) {
+    receipt = records
+    await assert.rejects(reopen().createBatch(inputs, 'group-canonical'), /保存回执内容.*原操作重试/)
+  }
+  const savedIntent = storage.getItem('miaoji_account_write_intents_v1_1')
+  receipt = [first, second]
+  const saved = await reopen().createBatch(inputs, 'group-canonical')
+  assert.deepEqual(saved.map(record => record.id), [id, otherId])
+  assert.deepEqual(saved.map(record => record.draftItemId), ['item1', 'item2'])
+  assert.equal(generated, 1); assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), savedIntent)
+  assert(puts.every(body => JSON.stringify(body) === JSON.stringify(puts[0])))
+  assert(confirmations.every(options => options.headers['Idempotency-Key'] === id && options.body.version === 0))
+})
+
 test('同次确认内容变化拒绝发请求，防止超时后改稿重复入账', async () => {
   let requests = 0
   const api = createLedgerApi({ request: async (method, path, options) => {

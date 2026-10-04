@@ -182,6 +182,13 @@ test('重放回执及读取失败不恢复已删除账单或覆盖当前编辑',
     await test.store.refresh(); offline = true
     await assert.rejects(test.store.addRecords([input], { batchId: 'g' }), /服务器已确认/)
     assert.equal(test.store.records.value.length, 0); assert.equal(test.store.recordsByIds([id])[0].amount, 0.30)
+    offline = false
+    const replay = await test.store.addRecords([input], { batchId: 'g' })
+    assert.equal(replay[0].amount, 0.29); assert.equal(replay[0].version, 0)
+    const current = test.store.recordsByIds([id])[0]
+    assert.equal(current.amount, 0.30); assert.equal(current.version, 2); assert.ok(current.deletedAt)
+    assert.equal(current.draftGroupId, 'g'); assert.equal(current.draftItemId, 'item1')
+    assert.equal(test.store.records.value.length, 0)
   } finally { test.dispose() }
 })
 test('账号改变立即清内存，旧账号迟到响应不进入新账本', async () => {

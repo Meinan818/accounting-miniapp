@@ -1674,3 +1674,15 @@ Java DraftService.confirm重放原receipt_json，LedgerWriteService按候选顺�
 实际重复/缺项/多项首次200回执都在服务fixture已确认两笔后损坏，页面不误报saved/不替换候选或写关联；双击只一PUT/confirm、busy锁保持，明确错误解锁原组。显式重试仍同requestId/version0/内容，服务重放原回执且不追加笔数，保存2唯一recordIds，真实页面刷新/到明细总34元，午饭16未知time/咖啡18午夜正确。三场景9检查36API3截图抽检，全部API拦截、未知外部/真实认证AI邮件照片业务/意外错误0；合成AI仅固定fixture。
 
 96相关/485全量前端、demo/server两构建通过。原正常/确认503/确认后snapshot503整组链8浏览器35API3截图复跑通过，独立batch-receipt-confirm-regression前缀保原证据，回归不重复累计。原静音每小时automation及本机服务保持，新窗口compact=0，无新用户资料依赖；真机/系统剪贴板/实际隔夜/人工验收未验。
+
+## 原始确认回执内容与后续事实重放（2026-10-04）
+
+错序回执把第一笔午饭关联为咖啡、仍显示已记账已浏览器复现；createBatch在唯一编号校验后核原始version0及按候选顺序的type/amount/date/category/note/time，失败保原意图及草稿，中文提示用原操作重试。70before69通过1失败保留，97相关/486前端/demo与server两构建通过。错金额/错序/错版本三链9浏览器36合成API3截图与重放后三种最新编辑/删除事实9浏览器39API6截图通过；累计50组346浏览器1073API126截图7JSON，源窗口5CSV另计，回归不重复累计。
+
+API回归覆盖金额/版本/日期/收支分类/备注/时间/错序，新API实例仍复用同UUID/意图/版本/规范化内容；remoteLedger重放回归读取恢复后仍保最新金额0.30/版本2/删除事实与草稿关联，不被原0.29/版本0回执覆盖。Java原始receipt_json独立持久化合同已读核，未请求真实Java业务。
+
+浏览器重放fixture首次确认保存不可变originalReceipt(午饭16/咖啡18，version0)，第一次最新snapshot503后保待重试；外部编辑午饭19合计37、软删除午饭合计18、午饭19并软删咖啡合计19。原键重试PUT与confirm内容/身份/CSRF保持，确认只重放不可变原内容，最新snapshot反映version1/合法deletedAt；两筆不追加、recordIds顺序不变，刷新卡片和明细正确，删除项不计合计。9检查39API/3预期503，意外错误/未知及外部请求/真实业务认证AI邮件照片0。
+
+首轮三张卡片截图停在聊天底部未显示卡片，DOM断言通过但视觉证据不足；保原文件，补scrollIntoView后同9/39链全通过，*-card.png显示完整卡片，三张明细加三张卡片共6交付截图，原三张底部截图不累计。同源码无再改，既有97相关/486全量/两构建证据保持，不重复跑。mixed-card已抽检19元/删除咖啡/当前有效1笔。全部材料留既有E盘忽略目录。
+
+本聊天01a105cf第1次实际compact已告知并STATE=1，同聊天不归零；原automation原生view及每小时ACTIVE/failed_runs_only保持，两服务127.0.0.1/19940/20820未重启。前节点6bcf977ad49e9992f904bcfd1248a9a3433f70f9官方完整远端一致，私有/无Pages/0workflows/0deployments再核，当前Push以后续实际结果为准。真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。下一项确认后snapshot缺确认编号完整性合成取证，先复现再最小修复，不提问或委派。

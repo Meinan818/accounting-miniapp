@@ -118,6 +118,10 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     if (new Set(records.map(record => record.id.toLowerCase())).size !== records.length) {
       throw new Error('保存回执编号重复，请保留这组并用原操作重试。')
     }
+    if (receipt.some((record, index) => record.version !== 0 || ['type', 'amount', 'date', 'category', 'note', 'time']
+      .some(field => (record[field] ?? null) !== (body.records[index][field] ?? null)))) {
+      throw new Error('保存回执内容与原草稿不一致，请保留这组并用原操作重试。')
+    }
     receiptIntents.set(records, expected)
     return records
   }
