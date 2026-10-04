@@ -119,8 +119,14 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     return records
   }
   async function update(current, input) {
-    const response = await client.request('PUT', `/api/records/${current.id}`, { body: { version: current.version, record: toRecordInput(input) }, beforeSend })
-    return { ...current, ...fromRecordView(response) }
+    const record = toRecordInput(input)
+    const response = await client.request('PUT', `/api/records/${current.id}`, { body: { version: current.version, record }, beforeSend })
+    const updated = fromRecordView(response)
+    if (updated.id !== current.id || updated.version !== current.version + 1
+      || ['type', 'amount', 'date', 'category', 'note', 'time'].some(field => (response[field] ?? null) !== (record[field] ?? null))) {
+      throw new Error('修改回执与本次操作不一致，原账本已保留。请关闭编辑并刷新明细核对，暂勿重复保存。')
+    }
+    return { ...current, ...updated, time: updated.time }
   }
   async function remove(current) {
     return client.request('DELETE', `/api/records/${current.id}?version=${current.version}`, { beforeSend })

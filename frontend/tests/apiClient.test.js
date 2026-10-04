@@ -382,6 +382,18 @@ test('修改删除带服务器版本，回执保留组标识', async () => {
   await api.remove(updated); assert.equal(calls[1][1], `/api/records/${id}?version=1`)
 })
 
+test('修改回执未知时间覆盖旧时间，保留草稿关联且不改原对象', async () => {
+  const { time, ...unknownView } = view
+  const { time: inputTime, ...unknownInput } = input
+  const api = createLedgerApi({ request: async () => ({ ...unknownView, version: 1 }) }, { storage: memory(), owner: '1' })
+  const current = { ...fromRecordView(view), draftGroupId: 'g', draftItemId: 'item1', source: 'chat' }
+  const updated = await api.update(current, unknownInput)
+  assert.equal(updated.time, undefined)
+  assert.equal(updated.version, 1)
+  assert.equal(updated.draftGroupId, 'g'); assert.equal(updated.draftItemId, 'item1'); assert.equal(updated.source, 'chat')
+  assert.equal(current.time, '09:15'); assert.equal(current.version, 0)
+})
+
 test('跨页账号锁占用时不生成第二个UUID或发请求，释放后复用原键', async () => {
   let held = false, release, calls = 0, uuids = 0
   const lockNames = []

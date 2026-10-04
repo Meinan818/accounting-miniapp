@@ -477,6 +477,32 @@ test('强制刷新等待已有读取后仍完整分页，不能降为版本缓�
   } finally { test.dispose() }
 })
 
+test('修改回执须匹配目标编号下一版本及提交内容，异常保完整旧账本且不自动重试', async () => {
+  const record = { ...input, amount: '0.31' }
+  let reply = { ...value, amount: '0.31', version: 1 }, writes = 0, reads = 0
+  const scene = setup({ request: async method => {
+    if (method === 'PUT') { writes++; return reply }
+    reads++; return { revision: '0', records: [{ record: value }], nextAfter: null }
+  } })
+  try {
+    await scene.store.refresh()
+    const original = scene.store.allRecords.value
+    for (const patch of [{ id: 'aabf606b-a0d5-4053-98fb-194505f3d10c' }, { version: 0 }, { version: 2 },
+      { amount: '0.32' }, { date: '2026-10-04' }, { type: 'income', category: '其他' }, { note: '别的修改' }, { time: null }]) {
+      reply = { ...value, amount: '0.31', version: 1, ...patch }
+      await assert.rejects(scene.store.updateRecord(id, record), /修改回执.*原账本已保留/)
+      assert.equal(scene.store.allRecords.value, original)
+      assert.equal(scene.store.records.value[0].amount, 0.29)
+      assert.equal(scene.store.records.value[0].version, 0)
+    }
+    assert.equal(writes, 8); assert.equal(reads, 1)
+    reply = { ...value, amount: '0.31', version: 1 }
+    const updated = await scene.store.updateRecord(id, record)
+    assert.equal(updated.id, id); assert.equal(updated.amount, 0.31); assert.equal(updated.version, 1)
+    assert.equal(writes, 9); assert.equal(reads, 1)
+  } finally { scene.dispose() }
+})
+
 test('编辑成功后迟到的旧分页快照不能覆盖新金额或新版本', async () => {
   let release, reading = false, latest = value
   const test = setup({ request: async (method) => {
