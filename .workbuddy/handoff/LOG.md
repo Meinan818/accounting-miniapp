@@ -1144,3 +1144,18 @@
 
 - 草稿编辑窗口接入busy，忙碌时不提交或关闭且保留输入；已保存/取消后撤下旧窗口，旧更新回调不发事件。新增draft上下文，标题“编辑这笔草稿”、提示确认整组后才入账、按钮“更新草稿”；既有账单窗口同步说明保持。draft-editor-before31项28通过3失败保留，63项针对/445项前端/demo与server两构建通过。初修harness Boolean prop错误导致1项假失败原文另存，已修harness且无删除断言。61e826352eb0443a54779d2d86ecb18459dd4375完整远端一致已核（draft-time-sync），compact=1、原生每小时静音续办保持。无真实业务/账号/AI/照片/邮件请求；GUI/真机/实际剪贴板/下载/隔夜未验。下一项统计页面guard与mounted是否重复账本读取的离线链取证。
 - 卡片未把busy传入Editor，父update也无锁且可能发null itemId，结束组仍保留旧窗口。现在Editor/Form继承busy，父update核busy/有效item/组状态；状态结束只撤显示，未主动清原输入快照或修改账本。完整Editor/Card模板加真实Form脚本离线挂载，原正常更新、取消与Bills删除确认保持，不冒称浏览器GUI。
+
+## 2026-10-04 · 正式统计首次读取去重
+
+- 正式Stats挂载复用受保护router guard的账本读取，去掉同次进入的第二次refresh；guard失败保留错误和显式重读，演示mounted读取保持。实际内存router+session+Stats setup链stats-duplicate-before8项6通过2失败原文保留，28项针对/448项前端/demo与server两构建通过，无真实账号/账本/AI/照片/邮件请求。草稿窗口0db997d001b3bdc6fc2b3628cb3ba1599e8f80c6完整远端一致已核（draft-editor-sync）。compact=1、原生每小时静音续办保持，GUI/真机/实际剪贴板/下载/隔夜未验。下一项router账本await期间瞬时身份变化再切回的旧导航取证。
+- 源guard每个受保护导航await refresh，Stats又总是mounted重读；实际链成功与失败均计2次。现只演示注册mounted reload，正式版取本次guard结果、失败显式按钮重试，不修改全局Store缓存/服务端请求协议或自动后台重试。Java19940/Vite20820本机监听再次核，未重启；端口不是GUI/HTTP证据。
+
+## 第2次实际压缩交接（2026-10-04，当前有效入口）
+
+源聊天01a1043a-8b46-7423-b6dd-5c26009b5280第2次实际compact已识别并告知，STATE=2，停止业务代码。本轮明细CSV/筛选链接、手动/明细/四页重读/聊天永久身份保护、AI草稿未知时间与忙碌编辑已完成，最后已核远端0db997d001b3bdc6fc2b3628cb3ba1599e8f80c6；统计去重复读取现已验证待本地保存。最新28项针对、448项前端和demo/server两构建通过，失败原文stats-duplicate-before8项6通过2失败保留；交接不重跑业务测试、不Push。
+
+本次回执专用路径：.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a1043a.json。新聊天必须先核本次status=success、源停止共享写入、finalCommit存在、原生automation目标与字段保持；不要用旧compaction-transfer-result.json冒称本次成功。成功前只读等待，成功后真正新窗口compact从0开始，不等待用户回复；普通独立节点核验后自主commit/Push。
+
+下一项：真实内存router+session合成验证账本await期间身份首次变化再切回是否放行旧导航；当前仅比较id，属于待取证假设，尚未改业务/新增该任务测试。先写失败取证，再最小修复并核临时watch释放，保持并发导航与登录返回。不发真实账号/账本/照片/AI/邮件请求，继续免费模型与本机路线。
+
+Vue3/Pinia/Router前端与Java21/Spring/MySQL后端沿用；相关入口frontend/src/router/index.js、frontend/tests/routerAuth.test.js、frontend/src/views/Stats.vue。复用D:/nodejs和已有依赖，TEMP/TMP及npm cache用E:/CODEX/.cache。Java19940/Vite20820仍仅127.0.0.1:8080/5174，未重启。GUI/窄屏/真机/系统剪贴板/下载落盘/隔夜未验，既有PENDING暂缓范围保持。具体踩坑与防错见MISTAKES：真实Boolean prop、合成DOM接口、永久身份守卫和路由/挂载完整链须独立验证；原失败不得删除。

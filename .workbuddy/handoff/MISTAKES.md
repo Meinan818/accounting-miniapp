@@ -343,3 +343,6 @@
 ## 2026-10-04 · 草稿窗口未继承忙碌及保存语义
 - DraftGroupCard未传busy，父update无校验，等待中可发事件并关闭输入；保存/取消后旧窗口仍可更新。复用Editor提示误称草稿更新同步账本。draft-editor-before31项28通过3失败保留。busy/结束守卫与draft文案后63项针对/445全量/两构建通过。以后复用编辑组件明确草稿/已保存语义、busy和结束态，不能仅禁用外层按钮。
 - 首修harness的Editor props使用数组，模板空属性draft变成空字符串，未像实际Boolean prop转true，导致63项62通过1失败与全量445项444通过1失败。两份原文已另存draft-editor-after/all-boolean-harness-failure；补齐实际Boolean props后原断言通过。以后编译组件模拟保留props类型/默认值。GUI仍未验。
+
+## 2026-10-04 · 路由与统计挂载重复读账本
+- 正式guard已经await refresh，Stats仍mounted重读，成功/失败均多一次请求。stats-duplicate-before8项6通过2失败保留；只保留演示mounted读、正式显式失败重试后28项针对/448全量/两构建通过。以后入口测试连路由guard与组件生命周期，不把单个helper单次锁当完整链去重；GUI仍未验。

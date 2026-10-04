@@ -2,10 +2,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { reactive } from 'vue'
+import * as Vue from 'vue'
+import dayjs from 'dayjs'
 import { createRouter, createMemoryHistory } from 'vue-router'
 import { createSession } from '../src/api/session.js'
-import { getScrollPosition } from '../src/utils/navigation.js'
+import { getScrollPosition, useStatsMonthNavigation, useLedgerReload } from '../src/utils/navigation.js'
+import { centsText } from '../src/utils/money.js'
+import { getMonthReview } from '../src/utils/monthReview.js'
+import { useLocalDay } from '../src/utils/calendar.js'
 import { getLoginReturnPath } from '../src/utils/loginRedirect.js'
 
 const source = readFileSync(new URL('../src/router/index.js', import.meta.url), 'utf8')
@@ -13,18 +17,20 @@ const source = readFileSync(new URL('../src/router/index.js', import.meta.url), 
   .replace(/component: \(\) => import\('[^']+'\)/g, 'component: {}')
   .replace('createWebHistory(import.meta.env.BASE_URL)', 'createMemoryHistory()')
   .replace('export default router', 'return router')
-function scene({ delayedLedger = false } = {}) {
+function scene({ delayedLedger = false, ledgerLoaded = true } = {}) {
   const reads = [], logins = [], ledger = []
   let ledgerReads = 0
   const session = createSession({ request: () => new Promise((resolve, reject) => reads.push({ resolve, reject })),
     login: () => new Promise(resolve => logins.push(resolve)) })
-  const auth = reactive(session)
+  const auth = Vue.reactive(session)
+  const store = Vue.reactive({ records: [], storageError: ledgerLoaded ? '' : '合成读取失败', refresh: async () => {
+    ledgerReads++
+    if (delayedLedger) await new Promise(resolve => ledger.push(resolve))
+    return ledgerLoaded
+  } })
   const router = new Function('createRouter', 'createMemoryHistory', 'getScrollPosition', 'getLoginReturnPath', 'SERVER_MODE', 'useAuthStore', 'useRecordStore', source)(
-    createRouter, createMemoryHistory, getScrollPosition, getLoginReturnPath, true, () => auth, () => ({ refresh: async () => {
-      ledgerReads++
-      if (delayedLedger) await new Promise(resolve => ledger.push(resolve))
-    } }))
-  return { router, auth, session, reads, logins, ledger, get ledgerReads() { return ledgerReads },
+    createRouter, createMemoryHistory, getScrollPosition, getLoginReturnPath, true, () => auth, () => store)
+  return { router, auth, session, reads, logins, ledger, store, setLedgerLoaded: value => { ledgerLoaded = value }, get ledgerReads() { return ledgerReads },
     flush: () => new Promise(resolve => setImmediate(resolve)) }
 }
 const account = { id: '1', username: 'synthetic' }
@@ -73,4 +79,47 @@ test('访客跳登录保留明细完整目的地，已认证访问登录返回�
   assert.equal(env.router.currentRoute.value.fullPath, target)
   await env.router.push({ name: 'Login', query: { redirect: '//example.test' } })
   assert.equal(env.router.currentRoute.value.name, 'Home')
+})
+
+function mountStats(env, server = true) {
+  const scope = Vue.effectScope(), mounted = []
+  const script = readFileSync(new URL('../src/views/Stats.vue', import.meta.url), 'utf8')
+    .split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
+  const bindings = { ...Vue, dayjs, centsText, getMonthReview, useStatsMonthNavigation, useLedgerReload, SERVER_MODE: server,
+    onMounted: callback => mounted.push(callback), useRecordStore: () => env.store, useAuthStore: () => env.auth,
+    useRoute: () => ({ get query() { return env.router.currentRoute.value.query } }), useRouter: () => env.router,
+    useLocalDay: () => useLocalDay({ eventTarget: null, documentTarget: null }) }
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + ';return {reloadRecords, reloadError, error}')(...Object.values(bindings)))
+  return { view, async runMounted() { for (const callback of mounted) await callback() }, dispose: () => scope.stop() }
+}
+
+test('真实guard进入正式Stats后，mounted复用本次读取，不再请求第二次账本', async () => {
+  const env = scene(), navigation = env.router.push('/stats?month=2026-09')
+  await env.flush(); env.reads[0].resolve(account); await navigation
+  const stats = mountStats(env)
+  try {
+    assert.equal(env.ledgerReads, 1)
+    await stats.runMounted()
+    assert.equal(env.ledgerReads, 1)
+    assert.equal(stats.view.error.value, '')
+  } finally { stats.dispose() }
+})
+
+test('正式guard读取失败时Stats保持错误和显式重试，不在mounted后台追加请求', async () => {
+  const env = scene({ ledgerLoaded: false }), navigation = env.router.push('/stats')
+  await env.flush(); env.reads[0].resolve(account); await navigation
+  const stats = mountStats(env)
+  try {
+    await stats.runMounted()
+    assert.equal(env.ledgerReads, 1); assert.equal(stats.view.error.value, '合成读取失败')
+    env.setLedgerLoaded(true); env.store.storageError = ''
+    assert.equal(await stats.view.reloadRecords(true), true)
+    assert.equal(env.ledgerReads, 2); assert.equal(stats.view.error.value, '')
+  } finally { stats.dispose() }
+})
+
+test('演示Stats没有正式guard，mounted仍正常读取本地账本', async () => {
+  const env = scene(), stats = mountStats(env, false)
+  try { await stats.runMounted(); assert.equal(env.ledgerReads, 1); assert.equal(stats.view.error.value, '') }
+  finally { stats.dispose() }
 })

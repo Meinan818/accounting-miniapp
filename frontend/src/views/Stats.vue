@@ -62,7 +62,8 @@ watch([review, selectedMonth], async (_value, _previous, onCleanup) => {
       !dayChart.value || selectedDay.value || !snapshot?.peak) return
   dayChart.value.scrollLeft = Math.max(0, (snapshot.peak.day - 1) * 49 - (dayChart.value.clientWidth - 44) / 2)
 })
-onMounted(reloadRecords)
+// 正式路由已完成当前身份的账本读取；失败由页面显式重试。
+if (!SERVER_MODE) onMounted(reloadRecords)
 </script>
 
 <template>
