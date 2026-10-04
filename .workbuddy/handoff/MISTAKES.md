@@ -377,3 +377,6 @@ Stats曾修不代表所有页面已覆盖。Profile mounted仍无条件reload，
 
 ## 2026-10-04 · 合成浏览器harness选择器和时钟
 本轮多次把猜测的stats-page/bills-month-nav用于断言导致超时；以后写选择器先核实际模板class/aria，定位具体目标，不猜相似命名。Clock先核已安装官方声明和实际1.62.1版本，按正常load→pauseAt→fastForward/focus模拟；模拟不等于实际隔夜。所有harness失败原文保留，不通过删断言或改业务适配测试。
+
+## 2026-10-04 · 浏览器Clock同时推进HTTP超时
+验证码回执延迟不能盲目fastForward超出client的15秒timeout；首轮121秒使fetch先中断而非收到过期challenge，失败原文已保留。用合法短合成TTL10秒/延迟11秒验证收到即过期，不改业务或删断言，模拟参数不能当生产有效期。

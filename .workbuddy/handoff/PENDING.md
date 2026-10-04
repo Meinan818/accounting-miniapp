@@ -1,3 +1,13 @@
+## 新窗口接手与验证码Clock浏览器验证（2026-10-04）
+
+新聊天01a104fa-e0fe-7d43-94ec-381371492329已只读核本次专用success回执、sourceWillModifySharedFiles=false及源最终提交c7f6c60b921bb4d08a18f6554b81b25f9a81a2e8存在；原automation原生view与TOML目标/逐字段保持核完，真正新窗口compact=0，源2保留历史。每小时ACTIVE/failed_runs_only保持，未重复创建或迁移。Java19940/Vite20820仍仅127.0.0.1:8080/5174、未重启。
+
+Login真实隔离无头Chrome/Playwright1.62.1 Clock合成验证8项/10次API完全拦截通过：重发60→1秒禁用、60秒解锁；双击重发仅一次并换challenge/清旧码；119秒有效/120秒过期、过期注册0请求且保输入。改邮箱丢旧挑战、全局冷却保持，新申请用新邮箱；注册503保输入无自动登录。切登录再切注册不复活挑战/密码/旧提示；申请中切模式的迟到成功及503均不污染新页面。短合成有效期10秒/回执延迟11秒检验收到即过期（低于15秒HTTP超时），期限按申请开始、冷却按回执算，注册拒绝。3截图E盘并抽检过期/迟到终态；意外错误/未知请求0，3条预设401/503单列，真实邮件/认证/业务/AI/照片请求0。模拟不能代替实际投递/隔夜/真机/人工验收。
+
+首轮harness把120秒TTL回执延迟121秒，先触发既有15秒HTTP超时，最后等待失败；browser-registration-clock-timeout-before-result.json/截图和first.log原文保留。按真实client超时改用短合成TTL验证同一断言，未删断言或改业务。最终browser-registration-clock-result.json在既有忽略目录。无业务缺陷、源码未改，465前端/同源码两构建沿用已有证据，不无意义重跑。本轮累计新增10组68项合成浏览器/210次API拦截/40截图/3JSON备份，较早demo/server24项/18截图/121条CSV另算，不重复计harness失败。
+
+Push前已官方只读核Meinan818/accounting-miniapp私有/无Pages/0 workflows/0 deployments及远端6a6f8bdb；交接两提交只改既有文档。下一项合成Login邮件申请/注册错误与错误次数限制响应链，核400/429/503/无效回执保输入、无旧challenge或自动认证，禁止真实邮件/账号。持续自主推进，无新增用户依赖。
+
 ## 原生新聊天与续办迁移（2026-10-04，最新交接进度）
 
 已原生创建gpt-6.1-sol/high新聊天01a104fa-e0fe-7d43-94ec-381371492329，目标只读等待本次最终回执。初始本地交接提交d0e8b11e90f8dea7732f00701f046fde8da947a4完成。原automation已原生update/view迁移，TOML逐字段比较确认仅target_thread_id与updated_at改变：名称/prompt/rrule/ACTIVE/failed_runs_only/created_at等均保持，不重复创建。

@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 新窗口01a104fa-e0fe-7d43-94ec-381371492329已核专用success/源停止写入/finalCommit c7f6c60及automation view/TOML字段保持，compact=0。Login验证码Clock8项/10次合成API/3截图通过，过期、重发、改邮箱/切模式及迟到回执已核，真实请求0；累计68新增浏览器/210API/40截图/3JSON备份。465前端/同源码两构建保持，无业务改动。下一项合成邮件申请/注册400/429/503/无效回执错误链；模拟不等于真实投递或隔夜。
+
 - 本次原生gpt-6.1-sol/high目标01a104fa-e0fe-7d43-94ec-381371492329已创建，automation原生迁移/view及toml逐字段保持已核，仅目标/更新时间改变。初始本地d0e8b11完成，最终success/finalCommit以compaction-transfer-result-01a1049d.json为准；success前目标只读，源compact=2保留并回执后停止共享写入。目标核完新窗口0，直接接续验证码Clock边界；本次不Push、不重跑测试、不重复automation。
 
 - 源01a1049d-eea8-7b23-811f-6afe194bff0f第2次实际compact已告知并STATE=2，停止业务代码，仅本地commit交接、不Push。465前端/两构建、60新增合成浏览器/200次拦截API/37截图/3实际JSON备份保持，真实请求0；验证码Clock任务未开始。本次专用compaction-transfer-result-01a1049d.json最终success与源停止共享写入/finalCommit核完前目标只读；新窗口gpt-6.1-sol/high及原automation迁移按实际结果记录，不用旧回执。成功后新窗口0，直接接续验证码期限/重发/切模式合成链。
