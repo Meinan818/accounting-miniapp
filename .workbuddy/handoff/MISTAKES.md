@@ -437,3 +437,8 @@ Home新增ID107在删除ID106前使合成分页顺序非法，实际拒读符合
 ## 2026-10-04 · 日组与总体窗口提示选择器
 
 .bills-window-note既用于日组也用于总体展示数，长列表harness应限定.bills-day-group，底部导航真实类为.home-bottom-nav。first/selector-before/时间戳截图保留；修harness后5项完整通过，不改业务或删具体断言。
+
+
+## 2026-10-04 · v-show隐藏表单与错误选择器
+
+删除确认用v-show保留原表单，错误文案会同时在隐藏form-error和可见delete-error存在。应限定当前确认区/可见错误；busy首轮严格选择器失败日志/selector-before/独立截图保留，修harness后7项完整通过。
