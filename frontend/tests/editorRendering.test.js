@@ -46,6 +46,30 @@ const renderer = Vue.createRenderer({
 })
 const original = { id: 'synthetic', version: 2, type: 'expense', amount: '0.29', category: '餐饮', date: '2026-10-03', remark: '合成账单' }
 const editorSource = source('components/record/RecordEditor.vue'), formSource = source('components/record/RecordForm.vue')
+test('表单错误等待渲染后滚动且保输入，隐藏元素/错误撤下/卸载后的旧回调不滚动', async () => {
+  const props = Vue.reactive({ record: { ...original }, error: '', saving: false, blocked: false })
+  const scope = Vue.effectScope(), scrolls = []
+  const values = scope.run(() => evaluate(formSource.script, { ...Vue, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,
+    defineProps: () => props, defineEmits: () => () => {}, defineExpose: () => {} }, 'form, localError, errorElement'))
+  try {
+    const target = { getClientRects: () => [{}], scrollIntoView: options => scrolls.push(options) }
+    values.errorElement.value = target
+    values.form.value.amount = '13.24'; values.form.value.remark = '未保存输入'
+    props.error = '合成较长保存错误'; await Vue.nextTick(); await Vue.nextTick()
+    assert.deepEqual(scrolls, [{ block: 'nearest' }])
+    assert.equal(values.form.value.amount, '13.24'); assert.equal(values.form.value.remark, '未保存输入')
+    target.getClientRects = () => []
+    props.error = '隐藏表单错误'; await Vue.nextTick(); await Vue.nextTick()
+    assert.equal(scrolls.length, 1)
+    target.getClientRects = () => [{}]
+    values.localError.value = '将被撤下的错误'; await Vue.nextTick()
+    values.localError.value = ''; props.error = ''; await Vue.nextTick(); await Vue.nextTick()
+    assert.equal(scrolls.length, 1)
+    props.error = '将被卸载的错误'; await Vue.nextTick(); scope.stop(); await Vue.nextTick()
+    assert.equal(scrolls.length, 1)
+  } finally { scope.stop() }
+})
+
 function editorComponent(forms) {
   const RecordForm = { props: ['record', 'saving', 'blocked', 'error'], setup(props, context) {
     const values = evaluate(formSource.script, { ...Vue, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,

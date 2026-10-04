@@ -455,3 +455,7 @@ Date.parse宽松接受0与规范化无效日期，不能单凭有限毫秒证明
 ## 2026-10-04 · JSON字段隐式转换与最新时间合并
 
 正则test、对象索引会隐式转换JSON数组；UUID/日期/time及收支type须先核字段类型，原型名称也不能访问分类继承属性。snapshot新未知time不能因previous合并继承旧09:15，现以最新服务值覆盖。时间cache harness泛化时漏替换带空格scene === cache-version，初fixture保持old而等待完整账本失败；修fixture后before-clean重新证实真实接受畸形缓存回执，失败原文保留，不计业务复现或成功统计。
+
+## 2026-10-04 · 错误提示可见性与post watch竞态
+
+DOM alert存在不等于未被sticky按钮遮挡，须量化error.bottom与actions.top并截图。watch cleanup在flush post前尚未执行时nextTick旧回调会滚动已撤错误；45项首轮失败保留，加入即时message相等复核。80px滚动余量还留下390px小数像素0.39交叉，after几何失败保留；96px三宽完整通过。旧RecordForm离线manual harness需补实际Vue watch/nextTick绑定，不能删测试避错。

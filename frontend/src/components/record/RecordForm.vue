@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { validateRecord } from '@/utils/ledger'
@@ -12,6 +12,16 @@ const form = ref({ type: props.record.type || 'expense', amount: props.record.am
   category: props.record.category || '餐饮', date: props.record.date || dayjs().format('YYYY-MM-DD'),
   time: props.record.time || (unknownTime ? '' : dayjs().format('HH:mm')), remark: props.record.remark || '' })
 const localError = ref('')
+const errorElement = ref(null)
+watch(() => localError.value || props.error, async (message, previous, onCleanup) => {
+  let current = true
+  onCleanup(() => { current = false })
+  if (!message) return
+  await nextTick()
+  if (current && message === (localError.value || props.error) && errorElement.value?.getClientRects?.().length) {
+    errorElement.value.scrollIntoView({ block: 'nearest' })
+  }
+}, { flush: 'post' })
 let initialForm = JSON.stringify(form.value)
 function restorePristine(record) {
   if (JSON.stringify(form.value) !== initialForm) return false
@@ -50,7 +60,7 @@ function save() {
       </div>
       <label>备注<input v-model="form.remark" aria-label="备注" type="text" maxlength="120" placeholder="这笔用在了哪里？" /></label>
     </fieldset>
-    <p v-if="localError || error" class="form-error" role="alert">{{ localError || error }}</p>
+    <p v-if="localError || error" ref="errorElement" class="form-error" role="alert">{{ localError || error }}</p>
     <div class="form-actions"><button type="button" :disabled="saving" @click="emit('cancel')">取消</button><button class="primary" type="submit" :disabled="saving || blocked">{{ saving ? '正在保存…' : submitLabel }}</button></div>
   </form>
 </template>
@@ -80,7 +90,7 @@ input, select { width: 100%; min-width: 0; box-sizing: border-box; }
 .form-actions { display: flex; gap: 10px; margin-top: 18px; padding-block:8px; position:sticky; bottom:0; background:linear-gradient(#fffdf800,#fffdf8 20%); z-index:2; }
 .form-actions button { border-width:1.5px; box-shadow:0 3px 0 #ead2bc; }
 .form-actions button.primary { background:#f7ccd7; border-color:#d9a5b6; box-shadow:0 3px 0 #e6acbe; }
-.form-error { color: #aa594d; margin-top: 12px; overflow-wrap: anywhere; }
+.form-error { color: #aa594d; margin-top: 12px; overflow-wrap: anywhere; scroll-margin-block-end: 96px; }
 input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid #8c6c50; outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) { button { transition: background-color 140ms ease, border-color 140ms ease; } }
 button:not(:disabled):active { border-color: #ba9782; }
