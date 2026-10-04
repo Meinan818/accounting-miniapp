@@ -2,13 +2,13 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "当前入口状态与规划已校准，保留历史及验证边界；开始月度统计回到本月快捷入口",
+  "currentTask": "开发已暂停；统计回到本月仅源码草稿，未验证。整理未完成项和本地待续存档。",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "为月度统计补“回到本月”入口，复用现有安全月份导航，保留路由/身份与失败保护；核窄屏和原生键盘，不改账本。",
-  "nextStepReason": "历史月份需要逐月翻回，复用现有月份导航增加明确的本月入口，减少操作而不扩大数据或发布范围。",
-  "pendingUserDecision": "集中记录.workbuddy/handoff/PENDING.md；目前不主动提问，继续独立任务",
+  "nextStep": "仅在用户明确恢复后：核现场并接续Stats回到本月草稿，补相关测试/构建/窄屏键盘验证；再决定后续节点。",
+  "nextStepReason": "本次暂停优先于之前自主持续推进授权。",
+  "pendingUserDecision": "等待用户主动恢复；未完成/待验与后续规划集中PENDING，不催促。",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-04",
   "observedCompactionCount": 1,
@@ -16,11 +16,20 @@
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
-    "status": "ACTIVE",
+    "status": "PAUSED",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a10649-1a5f-77b0-bc50-e8334ce6e784",
-    "transferStatus": "当前新窗口原生view/现场TOML与before逐字段核完，仅目标/更新时间改变，每小时ACTIVE/failed_runs_only保持",
+    "transferStatus": "2026-10-04用户暂停；原生update/view及落盘核仅status/updated_at改变，其余字段保持，未迁移。",
     "scheduledRunVerified": false
-  }
+  },
+  "status": "paused_by_user",
+  "developmentPaused": true,
+  "pausedAt": "2026-10-04",
+  "pauseReason": "用户明确要求所有未完成开发暂停，过几天再开发；等待用户明确恢复，不自动重启。",
+  "lastVerifiedCodeCommit": "c4c741724954f61db115c564e0f38f844785fc93",
+  "lastPushedCommit": "d3e6df1afa42620132fd3ad13719f4eedde6348f",
+  "unverifiedChanges": [
+    "frontend/src/views/Stats.vue：回到本月按钮/月份差值/样式，未补测试及构建交互验证"
+  ]
 }
