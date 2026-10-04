@@ -1607,3 +1607,19 @@ compact=1，本次heartbeat不计实际压缩；原每小时ACTIVE/failed_runs_o
 首轮shape harness替换后残留重复ID写入，操作null.fixture导致Route TypeError/请求中断，fixture-before-result及日志保留；修harness后before-clean确认为实际页面英文错误。失败结果初次仅replace首个结果文件导致catch沿用run名，已改replaceAll并保初失败为独立fixture-before；所有失败截图带时间戳，不覆盖。browser-pagination-shape-*与回归留既有E盘忽略目录，不隐去失败或删除断言。
 
 abe767e已普通Push成功，完整远端核在本节点提交前进行；私有/无Pages/0 workflows/0 deployments保持。compact=1及原静音automation/本机服务保持，无新用户依赖；真机/实际隔夜/人工验收未验。下一项分页删除时间/空记录/空页等结构元数据合成取证，核合法已删除事实排除与非法新快照保留旧账本，禁止真实请求。
+## 新窗口交接核验（2026-10-04）
+
+本聊天01a105cf-1051-7223-8ade-29ce5f7a802e已核本次专用success/源停止共享写入/finalCommit 26afb35a294acb74c4b4f6c77e98198c9f2edd44及Git一致。原automation view与TOML逐字段保持（仅目标/更新时间改变），新窗口compact=0；两本机服务原PID/127.0.0.1保持。接续分页deletedAt/空记录/空页元数据，只用独立合成fixture，真实请求0。476前端/两构建及累计284浏览器729API104截图7JSON为源节点证据，本次未重跑，另源窗口5CSV保持独立统计。
+
+## 分页删除时间与空续页保护（2026-10-04）
+
+已实际复现 deletedAt:"0"误删可见票及空续页接受截断账本（999/500笔错误汇总）；按Java Instant UTC/纳秒合同校验真实日期，并拒绝有继续游标后的空续页，异常保完整旧账本/中文提示，合法空首页保持。34项before32通过2失败保留；76相关/478前端/两构建及9浏览器69合成API2截图通过，显式force三页恢复1000有效/1删除，第三页编辑取消0写。累计43组293浏览器798API106截图7JSON，源窗口5CSV另计；真实请求0、compact=0、原静音automation/本机服务保持。下一项分页账单金额/日期/类型/版本字段异常合成取证，无证据不改业务。
+
+根因：Date.parse接受数字/日期简写并规范化越界日期，旧校验把字符串0当删除事实；空续页没有校验，先前500笔被误当完整快照。Java SnapshotPage按size+1预读判断后续，固定revision的继续页必有记录；合法空账本仅首页。UTC整数秒及3/6/9小数秒合法删除原文逐字保持，不转成毫秒丢精度；null/省略兼容原合同。新版本及同版本各10畸形删除值均保原数组引用。
+
+合成浏览器覆盖首段/第二页删除时间、同版本缓存、空页带游标、空尾页、空revision、缺nextAfter及合法空首页；非法时Stats/Bills隐藏汇总/禁搜索导出翻页，旧25元或完整1000有效笔保持，显式force后正确替换。全部API拦截、未知/外部阻断、真实认证/AI/邮件/照片/业务0，截图抽检完成；before-deleted与before-empty-tail保留错误汇总及时间戳截图。
+
+首轮after脚本沿用结构错误读取次数断言，但删除字段在完整分页后校验；after保留。after-contract/after-settled又在导航guard尚未结束时读旧错误卡，实际只计到第二次请求；改等待真实URL变更/导航完成后同断言全通过，未改业务迎合fixture。各阶段独立结果和时间戳失败截图保留在既有E盘忽略目录。
+
+新窗口交接尾提交26afb35存在/HEAD一致，源sourceWillModifySharedFiles=false；原automation before/after仅目标与更新时间变，live与after一致，原生view已核。远端本节点前核abe767e、私有/无Pages/0workflows/0deployments，Push以后续实际结果为准。无新用户依赖，真机/系统剪贴板/实际隔夜/人工验收未验。
+原分页编号/逆序/游标/revision与force恢复7浏览器48合成API2截图复跑通过，独立metadata-contract-regression前缀保原证据，回归不重复累计。

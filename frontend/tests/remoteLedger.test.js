@@ -359,6 +359,62 @@ test('新版本和同版本分页缺失记录结构均给出可读错误并保�
   } finally { scene.dispose() }
 })
 
+test('删除时间必须是有效UTC时间，畸形值不能隐藏账单或借同版本缓存通过', async () => {
+  let page = { revision: '8', records: [{ record: value, deletedAt: null }], nextAfter: null }
+  const scene = setup({ request: async () => page })
+  try {
+    assert.equal(await scene.store.refresh(), true)
+    const original = scene.store.allRecords.value
+    for (const revision of ['9', '8']) {
+      for (const deletedAt of ['0', '', '2026-10-04', '2026-02-30T00:00:00Z', '2026-10-04T24:00:00Z',
+        '2026-10-04T00:00:00', false, 0, {}, []]) {
+        page = { revision, records: [{ record: value, deletedAt }], nextAfter: null }
+        assert.equal(await scene.store.refresh(), false, `不能接受删除时间 ${JSON.stringify(deletedAt)}`)
+        assert.equal(scene.store.allRecords.value, original)
+        assert.equal(scene.store.records.value.length, 1)
+        assert.match(scene.store.storageError.value, /删除.*原账本已保留/)
+      }
+    }
+    for (const deletedAt of ['2026-10-04T00:00:00Z', '2026-10-04T00:00:00.123Z', '2026-10-04T00:00:00.123456Z', '2026-10-04T00:00:00.123456789Z']) {
+      page = { revision: '9', records: [{ record: value, deletedAt }], nextAfter: null }
+      assert.equal(await scene.store.refresh(true), true)
+      assert.equal(scene.store.records.value.length, 0)
+      assert.equal(scene.store.recordsByIds([id])[0].deletedAt, deletedAt)
+    }
+    page = { revision: '10', records: [{ record: value, deletedAt: null }], nextAfter: null }
+    assert.equal(await scene.store.refresh(true), true)
+    assert.equal(scene.store.records.value.length, 1)
+  } finally { scene.dispose() }
+})
+
+test('空账本可完整读取，带继续游标的空页或续页为空时不能覆盖旧快照', async () => {
+  let mode = 'old', calls = []
+  const scene = setup({ request: async (method, path) => {
+    const after = new URL(path, 'http://synthetic').searchParams.get('after'); calls.push(after)
+    if (mode === 'old') return { revision: '8', records: [{ record: value }], nextAfter: null }
+    if (mode === 'empty-more') return { revision: '9', records: [], nextAfter: id }
+    if (mode === 'empty-tail') return { revision: '9', records: after ? [] : [{ record: { ...value, amount: '0.31' } }], nextAfter: after ? null : id }
+    return { revision: '10', records: [], nextAfter: null }
+  } })
+  try {
+    assert.equal(await scene.store.refresh(), true)
+    const original = scene.store.allRecords.value
+    for (const modeValue of ['empty-more', 'empty-tail']) {
+      mode = modeValue; calls = []
+      assert.equal(await scene.store.refresh(), false, modeValue)
+      assert.equal(scene.store.allRecords.value, original)
+      assert.equal(scene.store.records.value[0].amount, 0.29)
+      assert.match(scene.store.storageError.value, /分页.*原账本已保留/)
+      assert.deepEqual(calls, mode === 'empty-tail' ? [null, id] : [null])
+    }
+    mode = 'empty'; calls = []
+    assert.equal(await scene.store.refresh(true), true)
+    assert.equal(scene.store.allRecords.value.length, 0)
+    assert.equal(scene.store.storageError.value, '')
+    assert.deepEqual(calls, [null])
+  } finally { scene.dispose() }
+})
+
 test('强制刷新等待已有读取后仍完整分页，不能降为版本缓存检查', async () => {
   let reads = 0, release
   const first = { revision: '8', records: [{ record: value }], nextAfter: id }

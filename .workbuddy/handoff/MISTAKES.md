@@ -447,3 +447,7 @@ Home新增ID107在删除ID106前使合成分页顺序非法，实际拒读符合
 ## 2026-10-04 · null分页结构与harness残留
 
 生产entry.record读取早于结构校验，null导致英文TypeError暴露；before-clean与单测失败保留，现先校验对象/非数组并明确保账本。生成shape时不能保留旧重复ID分支操作null；初fixture Route错误不计业务复现，清分支后重新确认。before/after的成功和catch结果均须独立阶段名，使用replaceAll且保初fixture结果。
+
+## 2026-10-04 · 分页字段验证与导航异步取证
+
+Date.parse宽松接受0与规范化无效日期，不能单凭有限毫秒证明Java删除时间合法；已按UTC形状与日期回读校验修复。空续页须核服务size+1/revision语义，不能把部分数组当完整快照。browser metadata首轮沿用null结构错误的请求数，删除字段实际整本后校验；随后只等待错误卡/旧networkidle在导航guard结束前断言又失败。分别核真实刷新时序并等待URL变更，原before及after/after-contract/after-settled失败结果独立保留，不删断言或改业务迎合脚本。

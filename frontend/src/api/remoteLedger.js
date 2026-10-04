@@ -5,6 +5,17 @@ import { createId } from '../utils/ledger.js'
 import { legacyCents, getRecordTotals } from '../utils/money.js'
 import { createLedgerApi, fromRecordView } from './ledger.js'
 
+function validateDeletedAt(value) {
+  if (value == null) return
+  // The Java snapshot emits Instant.toString(): UTC with optional nanoseconds.
+  // Date.parse alone also accepts bare numbers and normalizes invalid dates.
+  const timestamp = typeof value === 'string' ? Date.parse(value) : NaN
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z$/.test(value)
+    || !Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 19) !== value.slice(0, 19)) {
+    throw new Error('账本分页删除状态不合法，原账本已保留。')
+  }
+}
+
 export function createRemoteLedger(client, owner, { storage, eventTarget = globalThis.window, dateClock = {} } = {}) {
   // HMR transfers this state, but a newly created account store must read its
   // own snapshot rather than hydrate data left by a previously disposed store.
@@ -82,6 +93,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
             throw new Error('账本分页回执不完整或版本已变化，原账本已保留。')
           }
           revision = page.revision
+          if (after !== null && page.records.length === 0) throw new Error('账本分页续页为空，原账本已保留。')
           let previousId = after
           for (const entry of page.records) {
             if (!entry || typeof entry !== 'object' || Array.isArray(entry) || !entry.record ||
@@ -99,7 +111,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
           if (after === null && force !== true && snapshotRevision === revision) {
             for (const entry of page.records) {
               fromRecordView(entry.record)
-              if (entry.deletedAt != null && (typeof entry.deletedAt !== 'string' || !Number.isFinite(Date.parse(entry.deletedAt)))) throw new Error('删除状态不合法')
+              validateDeletedAt(entry.deletedAt)
             }
             storageError.value = ''; return true
           }
@@ -107,7 +119,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
         } while (after !== null)
         const previous = new Map(allRecords.value.map(record => [record.id, record]))
         const next = entries.map(value => {
-          if (value.deletedAt != null && (typeof value.deletedAt !== 'string' || !Number.isFinite(Date.parse(value.deletedAt)))) throw new Error('删除状态不合法')
+          validateDeletedAt(value.deletedAt)
           return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
         })
         if (new Set(next.map(record => record.id)).size !== next.length) throw new Error('账本回执编号重复')

@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 新窗口01a105cf已核专用success/源停止共享写入/finalCommit 26afb35及原automation字段保持，compact=0。分页删除时间/空续页两缺陷已合成复现并修复，76相关/478前端/两构建及9浏览器69API2截图通过；累计293浏览器798API106截图7JSON，源窗口5CSV另计。下一项分页账单字段异常合成取证，真实请求0。
+
 - 本次原生gpt-6.1-sol/high目标01a105cf-1051-7223-8ade-29ce5f7a802e已创建只读核交接，初始本地50687d6。原automation迁移/view/TOML逐字段仅目标/更新时间改变、静音与每小时字段保持。源compact=2保留，专用compaction-transfer-result-01a10553.json最终success/源停止共享写入/finalCommit核完前目标只读；核完新窗口0接续分页元数据。本次不Push不重跑，真实请求0。
 
 
