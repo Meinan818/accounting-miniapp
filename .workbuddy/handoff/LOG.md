@@ -1477,3 +1477,14 @@ compact=0、原静音每小时automation沿用当前聊天，真实定时完整�
 first/second/third/fourth/final日志保留：second等待有限动画仍left0证实初次缺陷；fourth使用不存在bills-receipt选择器产生harness假失败，核真实bills-record-text后复跑具体小票断言通过，不删除断言。初次失败截图后续失败使用同名覆写，初次left0的数值日志与工具视觉取证仍在，后续keyboard-before截图单独保留；以后各阶段用独立文件名。browser-stats-scroll-*留既有E盘忽略目录。
 
 手动金额节点b3dfc9b2b93fb11ca6aac931850516cf7a8bcaae完整远端一致已核，私有/无Pages/0 workflows/0 deployments保持；compact=0、原每小时ACTIVE/failed_runs_only automation/current target保持。本机服务未重启，无新用户依赖。下一项Stats分类收支/同名其他→明细筛选→地址刷新/浏览器返回合成链，禁止真实请求；真机/实际隔夜/人工验收仍未验。
+
+
+## 统计分类到明细与地址返回合成验证（2026-10-04）
+
+实际server生产构建8浏览器检查/16合成API/2截图通过：十月支出其他12元/收入其他5元分别保month/type/category，排除同名另一收支、九月与已删除100元；整月收入5/支出32不随筛选变化。真实刷新和浏览器后退/前进保原链接条件；收入内搜索空结果、清除、查看全部0追加API，九月同名收入7/支出9及刷新保持。全部接口完全拦截，0真实请求/AI/账本写，意外错误/未知请求0，2截图已抽检。
+
+首轮input[type=search]误用textbox role使harness等待失败；first.log、role-before结果及独立时间戳失败截图保留，改用searchbox后同8项完整通过，不改业务或删断言。browser-stats-category-*留既有E盘忽略目录。无业务缺陷/源码改动，475前端与两构建保持上节点同源码证据，本轮未重跑。累计新增31组219浏览器/600API/83截图/7JSON备份，另本窗口1CSV。
+
+本聊天第1次实际compact已识别告知并STATE=1，同聊天恢复不归零/heartbeat不计。本机Java19940与Vite20820仍仅127.0.0.1监听、未重启；原automation view核每小时ACTIVE/failed_runs_only及当前目标保持。8069f5f5a786bf1b6d32c47f4fdf5e3990704acd完整远端一致、私有/无Pages/0 workflows/0 deployments已核。无新用户依赖；真机/实际隔夜/人工验收仍未验。
+
+下一项Bills同名收支筛选/搜索/空结果与实际CSV下载合成链，核仅导出当前匹配小票及公式文本保护、0写入/0额外API；禁止真实账本/账号/AI/照片/邮件请求。

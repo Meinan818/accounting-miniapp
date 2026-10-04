@@ -422,3 +422,8 @@ Editor曾把conflict并入saving，实际请求结束仍显示正在保存并禁
 
 - 去掉正式mounted重复刷新后，非immediate watch无初次峰值滚动；实际初始left0、峰值x1210不可见证实，现immediate保既有保护。原生方向键阅读也必须记录手动意图，否则同月重读会拉回峰值；875保持已验。
 - fourth脚本使用猜测bills-receipt空选择器，造成末步假失败；核bills-record-text后保具体小票断言并通过。初始失败截图被后续同名失败覆写，数值/日志/工具视觉证据保持，后续单独保keyboard-before；以后失败快照按阶段独立命名。
+
+
+## 2026-10-04 · 原生搜索框角色
+
+input[type=search]默认role为searchbox；分类harness误用textbox超时，first.log/role-before及时间戳失败截图保留。核真实模板后改searchbox，8项完整通过，不当作产品缺陷。

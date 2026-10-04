@@ -1,3 +1,13 @@
+## 统计分类到明细与地址返回合成验证（2026-10-04）
+
+实际server生产构建8浏览器检查/16合成API/2截图通过：十月支出其他12元/收入其他5元分别保month/type/category，排除同名另一收支、九月与已删除100元；整月收入5/支出32不随筛选变化。真实刷新和浏览器后退/前进保原链接条件；收入内搜索空结果、清除、查看全部0追加API，九月同名收入7/支出9及刷新保持。全部接口完全拦截，0真实请求/AI/账本写，意外错误/未知请求0，2截图已抽检。
+
+首轮input[type=search]误用textbox role使harness等待失败；first.log、role-before结果及独立时间戳失败截图保留，改用searchbox后同8项完整通过，不改业务或删断言。browser-stats-category-*留既有E盘忽略目录。无业务缺陷/源码改动，475前端与两构建保持上节点同源码证据，本轮未重跑。累计新增31组219浏览器/600API/83截图/7JSON备份，另本窗口1CSV。
+
+本聊天第1次实际compact已识别告知并STATE=1，同聊天恢复不归零/heartbeat不计。本机Java19940与Vite20820仍仅127.0.0.1监听、未重启；原automation view核每小时ACTIVE/failed_runs_only及当前目标保持。8069f5f5a786bf1b6d32c47f4fdf5e3990704acd完整远端一致、私有/无Pages/0 workflows/0 deployments已核。无新用户依赖；真机/实际隔夜/人工验收仍未验。
+
+下一项Bills同名收支筛选/搜索/空结果与实际CSV下载合成链，核仅导出当前匹配小票及公式文本保护、0写入/0额外API；禁止真实账本/账号/AI/照片/邮件请求。
+
 ## 统计初次峰值定位与原生键盘阅读修复（2026-10-04）
 
 实际server Stats发现已有账本进入时条带scrollLeft=0，25日峰值按钮x1210在视口外；root watch非immediate且正式router已读好数据，mount不再refresh时无初次变化。改watch immediate，保nextTick/cleanup/月快照/owner/选日保护，不追加账本请求。复跑初始left1035且25日x175可见；随后真实ArrowLeft四次移到875，同月合成API重读会复位峰值已复现，third.log及keyboard-before结果/截图保留。新增仅阅读导航键keydown记录manuallyMoved，不preventDefault，原生滚动保持。
