@@ -1686,3 +1686,13 @@ API回归覆盖金额/版本/日期/收支分类/备注/时间/错序，新API�
 首轮三张卡片截图停在聊天底部未显示卡片，DOM断言通过但视觉证据不足；保原文件，补scrollIntoView后同9/39链全通过，*-card.png显示完整卡片，三张明细加三张卡片共6交付截图，原三张底部截图不累计。同源码无再改，既有97相关/486全量/两构建证据保持，不重复跑。mixed-card已抽检19元/删除咖啡/当前有效1笔。全部材料留既有E盘忽略目录。
 
 本聊天01a105cf第1次实际compact已告知并STATE=1，同聊天不归零；原automation原生view及每小时ACTIVE/failed_runs_only保持，两服务127.0.0.1/19940/20820未重启。前节点6bcf977ad49e9992f904bcfd1248a9a3433f70f9官方完整远端一致，私有/无Pages/0workflows/0deployments再核，当前Push以后续实际结果为准。真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。下一项确认后snapshot缺确认编号完整性合成取证，先复现再最小修复，不提问或委派。
+
+## 确认后快照完整性（2026-10-04）
+
+浏览器before确认两笔34元但完整snapshot空数组200后仍标已记账/已同步，顶部0元与卡片34元矛盾；38项before37通过1失败(Missing expected rejection)及browser-batch-snapshot-before独立证据保留。Java SnapshotPage包含所有软删除记录，确认后的完整当前快照必须含全部确认ID。refresh增加本次requiredIds，等待旧读取后的force仍携带，原子替换前检查，缺项则保完整旧数组引用/中文错误；不以原始receipt填充缺项、恢复已删除事实或覆盖编辑。addRecords仅完整读取后才完成组/手动意图。
+
+98相关/487前端/demo与server两构建通过。新回归含聊天两笔缺首笔与手动一笔全缺，保旧数组0.50元/恢复操作；原键恢复后的当前0.31/版本1及软删除事实合法，manualComplete只恢复完整后落盘。浏览器漏首笔/全组/尾笔3链9检查39API6截图，待重试原组保持、恢复后原始不可变回执与最新编辑/删除事实按顺序关联、37/18/19元正确。手动一笔缺失4检查15API2截图：输入9.50/09:30/备注与原UUID保留、不跳明细/不标完成；真实页面刷新再显式恢复同内容恰好一笔，随后正确month/added及完成状态。全部API拦截，未知外部/意外错误/真实业务认证AI邮件照片0。
+
+累计52组359浏览器1127API134截图7JSON，源窗口5CSV另计。原503后最新编辑/删除回放9浏览器39API6截图回归通过，不重复累计。截图已抽检手动恢复中文错误/未完成状态及删除午饭合计18元卡片。所有before/after脚本日志结果留E盘既有忽略目录，未新增依赖或重启服务，真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。
+
+前节点cc9fb7b8ec14effa3c08cd93d0d56e869df134b7普通Push连接重置原文保batch-content-push.log；现有官方GitHub Git database适配器逐对象SHA相同及force:false上传1提交6blob，完整远端一致已核，无权限或可见性变化，私有/无Pages/0workflows/0deployments保持。本聊天compact=1，automation原生view及现场TOML每小时ACTIVE/failed_runs_only/当前目标保持。下一项snapshot revision倒退只读合同核查与合成取证，无证据不改业务。

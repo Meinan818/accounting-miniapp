@@ -191,6 +191,43 @@ test('重放回执及读取失败不恢复已删除账单或覆盖当前编辑',
     assert.equal(test.store.records.value.length, 0)
   } finally { test.dispose() }
 })
+test('确认后快照缺入账编号拒绝完成并保旧账本，原键恢复允许最新编辑与删除', async () => {
+  const otherId = 'aabf606b-a0d5-4053-98fb-194505f3d10c'
+  const original = [{ ...value }, { ...value, id: otherId, amount: '0.30', note: '合成咖啡' }]
+  const inputs = [input, { ...input, id: 'item2', amount: '0.30', remark: '合成咖啡' }]
+  for (const manual of [false, true]) {
+    const submitted = manual ? inputs.slice(0, 1) : inputs
+    const receipt = manual ? original.slice(0, 1) : original
+    let phase = 'before'
+    const keys = [], puts = []
+    const scene = setup({ request: async (method, path, options) => {
+      if (method === 'PUT') { puts.push(options.body); return { id: path.split('/').at(-1), version: 0, status: 'CONFIRMED', records: options.body.records } }
+      if (method === 'POST') { keys.push(options.headers['Idempotency-Key']); return { records: receipt } }
+      return { revision: phase === 'before' ? '0' : '1', nextAfter: null,
+        records: phase === 'before' ? [{ record: { ...value, amount: '0.50' } }]
+          : phase === 'missing' ? (manual ? [] : [{ record: original[1] }])
+          : receipt.map((record, index) => ({ record: { ...record, amount: index ? record.amount : '0.31', version: 1 },
+            ...(index === receipt.length - 1 ? { deletedAt: '2026-10-04T01:00:00Z' } : {}) })) }
+    } })
+    try {
+      await scene.store.refresh(); const before = scene.store.allRecords.value
+      phase = 'missing'; const batchId = manual ? 'manual-missing' : 'missing'
+      await assert.rejects(scene.store.addRecords(submitted, { batchId }), /服务器已确认.*最新账本/)
+      assert.strictEqual(scene.store.allRecords.value, before)
+      assert.match(scene.store.storageError.value, /缺少已确认账单/)
+      if (manual) assert.equal(scene.store.manualRecovery.value.operations.length, 1)
+      phase = 'restored'
+      await scene.store.addRecords(submitted, { batchId })
+      assert.equal(new Set(keys).size, 1); assert.deepEqual(puts[0], puts[1])
+      assert.equal(scene.store.recordsByIds(receipt.map(record => record.id)).length, receipt.length)
+      assert.equal(scene.store.recordsByIds([id])[0].amount, 0.31)
+      assert.equal(scene.store.recordsByIds([id])[0].version, 1)
+      assert.equal(scene.store.records.value.length, manual ? 0 : 1)
+      if (manual) assert.equal(scene.store.manualRecovery.value.operations.length, 0)
+    } finally { scene.dispose() }
+  }
+})
+
 test('账号改变立即清内存，旧账号迟到响应不进入新账本', async () => {
   let resolve
   const test = setup({ request: () => new Promise(done => { resolve = done }) })

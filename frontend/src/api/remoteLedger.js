@@ -68,9 +68,9 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   function ensure(current) {
     if (!ledger || current !== generation) throw new Error('登录身份已变化，请重新登录并核对账单。')
   }
-  async function refresh(force = false) {
+  async function refresh(force = false, requiredIds = []) {
     if (!ledger) return false
-    if (refreshing) { const result = await refreshing; return force === true ? refresh(true) : result }
+    if (refreshing) { const result = await refreshing; return force === true ? refresh(true, requiredIds) : result }
     const current = generation
     const changesAtStart = localChanges
     function ensureSnapshotCurrent() {
@@ -124,6 +124,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
             ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
         })
         if (new Set(next.map(record => record.id)).size !== next.length) throw new Error('账本回执编号重复')
+        if (requiredIds.some(id => !seen.has(id))) throw new Error('最新账本缺少已确认账单，原账本已保留，请用原操作重试。')
         ensureSnapshotCurrent()
         allRecords.value = next; snapshotRevision = revision; storageError.value = ''; return true
       } catch (failure) { if (current === generation) storageError.value = failure.message; return false }
@@ -141,7 +142,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
     localChanges++; snapshotRevision = null
     // 原回执只建立关联，当前事实继续由snapshot读取，不能恢复删除或覆盖编辑。
     for (const record of saved) links.set(record.id, { source, draftGroupId: batchId, draftItemId: record.draftItemId })
-    if (!await refresh(true)) throw new Error('服务器已确认保存，但最新账本暂未读到。请保留此组并用原操作重试，不要另建一组。')
+    if (!await refresh(true, saved.map(record => record.id))) throw new Error('服务器已确认保存，但最新账本暂未读到。请保留此组并用原操作重试，不要另建一组。')
     ensure(current)
     await currentLedger.completeManual(batchId, saved); ensure(current); manualEpoch.value++
     return saved
