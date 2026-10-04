@@ -1,3 +1,8 @@
+## 当前入口：照片处理与部分保存合成浏览器验证（2026-10-04）
+
+Profile照片真实隔离浏览器4场景/16次完全合成API通过，600×400 canvas色块在本机真实解码并居中裁成256×256 JPEG，四角像素仅中央绿，非原侧边色；不支持txt本机拒绝且清file输入，选择预览/取消均不上传或改资料。合成照片上传成功后昵称PUT 503准确提示部分保存，保留输入并转带expectedAccount的版本1预览；重试仅PUT、照片只上传一次，版本1→2，刷新昵称/签名/头像完整保持。预设1条503控制台单列，意外错误/未知请求0、真实照片/账号/账本/AI/邮件请求0。2截图留E盘并抽检，multipart字段/JPEG边界/身份/CSRF已核；照片色块只是隔离QA输入，不作为项目素材。报告browser-profile-photo-result.json。首轮测试将23字符prefix与24字符期待值比较的fixture失败原文保留，修断言长度，无业务缺陷或改动。
+
+465前端/demo及server两构建沿用前一同业务源码，Profile重复读取修复8e324c6a882863e71d81288c2c185ba623f93ef3完整远端一致已核。compact=1、本机Java19940/Vite20820与每小时静音续办保持；真实账号/真机/用户系统剪贴板/隔夜/最终人工验收未验。下一项Add手动保存/未确认恢复/安全取消的合成server浏览器完整链，复用既有草稿PUT/confirm契约，禁止真实业务和AI。
 ## 当前入口：个人页去除重复账本读取（2026-10-04）
 
 真实隔离server浏览器复现Profile一次进入2次账本读取，browser-profile-duplicate-before-result.json与截图/原日志保留；真实router+session+Profile setup新回归14项12通过2失败原文profile-duplicate-before-node.log保留。根因router guard已读账本，Profile mounted仍无条件reload；最小改为正式模式复用guard，演示mounted读取及账号资料独立读取保持。新增3项链回归，47项相关/465项前端/demo与server两构建通过。
