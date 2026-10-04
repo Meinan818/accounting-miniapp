@@ -362,3 +362,6 @@
 ## 2026-10-04 · 浏览器条件应现场重查并区分实际范围
 - 原多节点将GUI统记工具条件待验，现场load_workspace_dependencies与Chrome路径显示已有bundled Playwright/Chrome可用。独立演示构建+合成localStorage+API/外部拦截真实headless检查12项、9截图及121条CSV下载E盘通过，错误0；不能把端口监听、SSR或演示浏览器扩展成正式账号/真机/用户全部验收。浏览器临时目录需命令级TEMP/TMP在E盘，不能用用户现有浏览器资料。
 - 真实Bills→Editor→Form的关闭再开（含同tick）已有按id的:key保障，新增链34项/全量462通过，无缺陷不新增业务修改。先核父模板实际key和组件复用，不能只从独立Form初始值推断错绑。
+
+## 2026-10-04 · 正式登录GUI合成fixture须遵循账号校验
+- 扩展server浏览器回登录时fixture用synthetic-account，旧账号只允许字母数字下划线，页面正确拒绝，waitForURL超时。失败日志及独立result原文保留；改为合法synthetic_account后12场景通过，无业务修改，不以等待超时冒称登录Bug。server全部31次API完全拦截，预设401/503资源控制台消息另记expectedConsole，不能吞掉意外错误或说所有控制台都无日志。两构建合成GUI不能代替真实账号/真机/最终用户验收。
