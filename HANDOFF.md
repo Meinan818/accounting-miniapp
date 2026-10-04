@@ -1,4 +1,18 @@
-## 当前入口：登录返回原站内页面（2026-10-04）
+## 当前入口：第2次实际压缩交接（2026-10-04）
+
+源聊天01a103ce-1650-7d50-bbe6-8c08120e0346已实际识别第2次上下文压缩并告知，STATE=2，同聊天恢复不归零。已停止业务代码；最新heartbeat仅只读核查，CSV导出尚未实施、没有新增测试。交接仅本地commit，不Push；创建、automation转移及最终保存状态以`.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result.json`为准，不能引用下方旧success回执证明本次成功。新聊天显式gpt-6.1-sol/high，成功前只读等待，核status=success、对应source/target、finalCommit存在及sourceWillModifySharedFiles=false后才设新窗口compact=0并接续；失败如实保留，源计数仍2。
+
+现场：main、开工Git干净，HEAD为9702a1aa824386a27b28e1def147239d64907e16（上轮已核远端一致，本次未重新核远端）。Java19940/Vite20820只监听127.0.0.1:8080/5174，本次再次核端口，未重启；端口证据不代替HTTP或页面验证。其他已列项目聊天均idle/notLoaded，无其他active共享工作。已有automation当前源聊天、heartbeat/每小时/ACTIVE/failed_runs_only；只用原生工具更新目标，保留name/prompt/rrule/status/notificationPolicy等全部字段，不重复建立。
+
+架构与完成范围：Vue3/JavaScript/Vite/Pinia + Java21/Spring Boot3.5.16/Security/JDBC/Flyway + MySQL独立miaoji_dev；server与demo隔离，免费glm-4-flash-250414整理草稿，用户确认才入账。账号认证/邮箱、隔离账本/统计、资料/私有照片、幂等事务/审计与分段读取已接入；首次读取仍全量内存。当前窗口已完成编辑及页面离页保护、跨日月显示、对话Store释放/重建/未保存草稿保留/身份变化/恢复期间新编辑与本机JSON备份、认证Store释放和登录退出多步CSRF代次保护、路由共享身份恢复及安全站内登录返回。最新业务证据为377项前端、demo/server两构建通过，50项登录导航相关通过；本次文档交接未重跑。GUI、窄屏、真机、实际浏览器下载落盘和实际隔夜仍未验，不冒称用户全部验收。
+
+新聊天第一业务任务：评估并最小实现明细当前月份/筛选完整结果的显式本机CSV导出。只读已核Bills/Profile没有导出入口，Bills.listedRecords是完整筛选结果，visibleGroups/60条窗口只负责展示；不能仅导出已展开账单。复用download/money工具，未知时间留空、安全整数分输出两位小数，覆盖逗号/引号/换行/中文编码与表格公式文本保护；读取错误、忙碌、离页或账号变化时不得下载错误快照。仅用户显式点击，不额外服务器读取，不导入/清理；回执只能确认下载发起。合成账单/下载替身验证，禁止真实账号/账本/照片/AI/邮件写入，按范围测试与两构建后独立commit，核全部待上传提交/敏感信息/远端私有与部署影响后自主Push，再继续独立任务，不询问或等待回复。
+
+关键路径与规范：frontend/src/views/Bills.vue、utils/download.js/money.js/journal.js、tests/editorRendering.test.js（后半段真实Bills setup绑定尚需完整阅读）、stores/conversationStore.js/authStore.js、api/client.js/session.js、router/index.js及loginRedirect.js；准确位置先rg核。Pinia4.0.3入口为frontend/node_modules/pinia/dist/pinia.js，Vue Router4.6.4。沿用JavaScript和已有依赖、小步可回退；缓存与单任务TEMP/TMP用E:\CODEX\.cache，不改系统环境。start-local.cmd/scripts/local-dev.mjs为统一本机入口，保护已有服务和数据。配置/存储/照片/凭据/memory/node_modules/dist/target不入Git；零费用/本机，无新部署或权限可见性变更。
+
+本窗口踩坑完整保留于MISTAKES及memory：Pinia重建旧hydrate与草稿基准、身份清空前未保存、恢复watch抑制新编辑、旧认证多步链与新CSRF、路由等待代次，以及测试microtask/重复导航替身错误。最近截断模板导致“Login只显示本页error”推测错误，全文和旧源已核原有error || auth.error，无需重做。Git443失败原文保留，成功上传使用既有官方同SHA/force:false适配器；新聊天不得误认为旧错误仍未修。用户依赖沿用PENDING表，暂缓部分不停止其他工作，不主动提问、不委派代理。
+
+## 前一入口：登录返回原站内页面（2026-10-04）
 
 同步已核：c8bae2a58db1c8186906c2ba7c37140eb041d49d官方同SHA/force:false上传成功，1提交/15blob，login-return-sync保留；当前377项及最后两构建保持。Login初始异常提示已读真实模板与旧源：error || auth.error原有且切模式清理，两者优先级已接，不需重做。此前“只显示本页error”是未读完整模板的错误推测，已更正STATE，不冒称修复。
 

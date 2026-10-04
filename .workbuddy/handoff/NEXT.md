@@ -1,4 +1,12 @@
-## 2026-10-04 · 登录返回原页面（当前入口）
+## 2026-10-04 · 第2次实际压缩交接（当前入口）
+
+先读全局/项目AGENTS、根HANDOFF/PROJECT_PLAN及STATE/LOG/MISTAKES/PENDING。源01a103ce-1650-7d50-bbe6-8c08120e0346实际compact=2，已告知且停业务代码；本次只读现场，CSV未实施，377项/两构建仅既有证据。本地交接不Push，原生新聊天gpt-6.1-sol/high与automation转移实际以`.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result.json`为准。新聊天先只读，核本次success/source/target/finalCommit存在及源不再写共享文件、automation目标/原字段保持后才设新窗口基准0，旧事件不继承。
+
+成功后直接接手明细当前月份/筛选完整listedRecords的显式本机CSV导出：不能只用60条展示窗口，安全整数分两位小数、未知时间留空、CSV/中文/公式文本保护、错误/忙碌/离页/身份保护；合成账单和下载替身，不额外服务器读取或导入/清理，不访问真实业务/账号/AI/邮件。完整阅读editorRendering后半段现有Bills绑定，复用download/money工具和现依赖。验证独立节点后commit，再核全部增量/敏感信息/远端及部署影响自主Push、继续下一项，不主动提问或等用户回复。
+
+main开工干净/9702a1a，上轮已核远端一致，本次未重核；服务19940/20820仅127.0.0.1:8080/5174再次核监听且未动。GUI/真机/实际下载/隔夜仍待工具条件，PENDING沿用。仅文档交接无需重跑业务测试；本聊天恢复不把计数归零。
+
+## 2026-10-04 · 登录返回原页面（前一入口）
 
 c8bae2a完整远端一致已核，377项/两构建保持。Login初始error || auth.error保护原有，完整模板/旧源已核，无需重做；此前假设已更正。automation原生view/toml当前聊天/每小时/ACTIVE/failed_runs_only保持，未重复建；服务19940/20820本机监听未动，compact=1不归零。接手从明细完整listedRecords的本机CSV导出评估/最小实现推进，沿用download工具、安全整数分与文本/公式保护，合成账单和下载替身，不读取/修改真实业务，不导入/清理。
 
