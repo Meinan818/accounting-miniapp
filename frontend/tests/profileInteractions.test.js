@@ -2,7 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { computed, effectScope, reactive, ref, unref } from 'vue'
+import { computed, effectScope, reactive, ref, unref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { createProfileApi } from '../src/api/profile.js'
 import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile } from '../src/utils/localProfile.js'
@@ -14,20 +14,20 @@ import { useLedgerReload } from '../src/utils/navigation.js'
 
 const original = { nickname: '合成名片', signature: '合成签名', avatar: 'cat', version: 0 }
 function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail('不可处理真实照片') } } = {}) {
-  const requests = [], cleanup = [], scope = effectScope()
+  const requests = [], logoutRequests = [], cleanup = [], scope = effectScope()
   const auth = reactive({ user: { id: '1' }, api: { request(method, path, options) {
     return new Promise((resolve, reject) => requests.push({ method, path, options, resolve, reject }))
-  } } })
+  } }, logout() { return new Promise((resolve, reject) => logoutRequests.push({ resolve, reject })) } })
   const script = readFileSync(new URL('../src/views/Profile.vue', import.meta.url), 'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
-  const bindings = { computed, ref, dayjs, onMounted() {}, onBeforeUnmount: fn => cleanup.push(fn), SERVER_MODE: true,
+  const bindings = { computed, ref, watch, dayjs, onMounted() {}, onBeforeUnmount: fn => cleanup.push(fn), SERVER_MODE: true,
     useRecordStore: () => ({ records, storageError: '', refresh() { assert.fail('不可自动读账单') } }),
     useAuthStore: () => auth, getMonthStatistics, getRecentDays, centsText, packageInfo: { version: 'synthetic' },
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }), useLedgerReload,
     DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto: createPhoto }
-  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, loadingProfile }')(...Object.values(bindings)))
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, loadingProfile, logout, loggingOut, logoutError }')(...Object.values(bindings)))
   let opens = 0
   view.profileDialog.value = { open: false, showModal() { opens++; this.open = true }, close() { this.open = false } }
-  return { view, requests, get opens() { return opens }, dispose() { cleanup.forEach(fn => fn()); scope.stop() } }
+  return { view, requests, logoutRequests, auth, get opens() { return opens }, dispose() { cleanup.forEach(fn => fn()); scope.stop() } }
 }
 
 test('重复打开资料编辑不能用迟到读取覆盖用户刚填的昵称', async () => {
@@ -193,4 +193,63 @@ test('个人页跨月同步月份与7天足迹，保留编辑输入且不读取�
   } finally { env?.dispose(); globalThis.Date = OriginalDate }
   assert.equal(events.size, 0)
   assert.equal(cleared, true)
+})
+
+test('个人页退出重复点击只发一次合成认证操作', async () => {
+  const env = scene()
+  try {
+    const first = env.view.logout(), second = env.view.logout(), count = env.logoutRequests.length
+    env.logoutRequests.forEach(request => request.resolve())
+    await Promise.all([first, second])
+    assert.equal(count, 1); assert.equal(env.requests.length, 0)
+  } finally { env.dispose() }
+})
+
+test('个人页离页或账号变化后退出失败不回填旧页面资料错误', async () => {
+  for (const change of [env => env.dispose(), env => { env.auth.user = { id: 'other' } }]) {
+    const env = scene(), before = env.view.profileError.value
+    try {
+      const pending = env.view.logout()
+      change(env); env.logoutRequests[0].reject(Error('合成退出失败')); await pending
+      assert.equal(env.view.profileError.value, before)
+    } finally { env.dispose() }
+  }
+})
+
+test('旧个人页退出入口不能在离页或新账号后追加认证操作', async () => {
+  for (const change of [env => env.dispose(), env => { env.auth.user = { id: 'other' } }]) {
+    const env = scene()
+    try {
+      change(env); const pending = env.view.logout(), count = env.logoutRequests.length
+      env.logoutRequests.forEach(request => request.resolve()); await pending
+      assert.equal(count, 0)
+    } finally { env.dispose() }
+  }
+})
+
+test('正常退出失败只提示退出错误并解除忙碌，可以重试，资料/编辑输入不被污染', async () => {
+  const env = scene()
+  try {
+    env.view.profileError.value = ''; env.view.profileForm.value.nickname = '尚未保存昵称'
+    const pending = env.view.logout()
+    assert.equal(env.view.loggingOut.value, true)
+    env.logoutRequests[0].reject(Error('合成网络中断')); await pending
+    assert.equal(env.view.loggingOut.value, false); assert.equal(env.view.logoutError.value, '合成网络中断')
+    assert.equal(env.view.profileError.value, ''); assert.equal(env.view.profileForm.value.nickname, '尚未保存昵称')
+    const retry = env.view.logout()
+    assert.equal(env.view.logoutError.value, ''); env.logoutRequests[1].resolve(); await retry
+    assert.equal(env.view.loggingOut.value, false); assert.equal(env.view.logoutError.value, '')
+    assert.equal(env.requests.length, 0)
+  } finally { env.dispose() }
+})
+
+test('退出等待期间账号变化后切回，旧失败和旧入口仍失效', async () => {
+  const env = scene()
+  try {
+    const pending = env.view.logout()
+    env.auth.user = { id: 'other' }; env.auth.user = { id: '1' }
+    env.logoutRequests[0].reject(Error('旧退出失败')); await pending
+    assert.equal(env.view.logoutError.value, '')
+    await env.view.logout(); assert.equal(env.logoutRequests.length, 1)
+  } finally { env.dispose() }
 })

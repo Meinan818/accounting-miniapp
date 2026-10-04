@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronRight } from 'lucide-vue-next'
 import NotebookBack from '@/components/common/NotebookBack.vue'
@@ -126,9 +126,18 @@ async function saveProfile() {
   finally { savingProfile.value = false }
 }
 onBeforeUnmount(() => { disposed = true; photoRequest++; profileReadGeneration++ })
+const loggingOut = ref(false)
+const logoutError = ref('')
+const logoutOwnerCurrent = ref(Boolean(auth?.user?.id))
+if (SERVER_MODE) watch(() => auth.user?.id, value => {
+  if (value !== profileOwner) logoutOwnerCurrent.value = false
+}, { flush: 'sync' })
 async function logout() {
+  if (!auth || !isCurrentProfile() || !logoutOwnerCurrent.value || loggingOut.value) return
+  loggingOut.value = true; logoutError.value = ''
   try { await auth.logout() }
-  catch (failure) { profileError.value = failure.message }
+  catch (failure) { if (isCurrentProfile() && logoutOwnerCurrent.value) logoutError.value = failure.message }
+  finally { if (isCurrentProfile() && logoutOwnerCurrent.value) loggingOut.value = false }
 }
 const entries = [
   { title: '账单明细', note: '查看和修改已经记下的小账单', icon: 'receipt', to: '/bills' },
@@ -155,7 +164,7 @@ onMounted(() => { reloadRecords(); loadProfile() })
       <div v-if="profileError" class="profile-error" role="alert"><p>{{ profileError }}</p><button type="button" :disabled="loadingProfile || savingProfile" @click="loadProfile">{{ loadingProfile ? '正在读取…' : '重新读取资料' }}</button></div>
       <section v-if="!SERVER_MODE" class="profile-account-note" aria-label="账号状态"><CatNavIcon kind="home" /><div><h2>小账本，先住在这里</h2><p>当前账单留在这个浏览器。正式账号登录与个人资料同步正在规划，尚未接通。</p></div><img :src="miaoAvatar" alt="" /></section>
 
-      <section v-if="SERVER_MODE" class="profile-account-note"><CatNavIcon kind="profile" /><div><h2>这是你的正式账号</h2><p>账单和资料保存在本机服务，原浏览器演示数据保留。</p><button type="button" @click="logout">退出当前账号</button></div></section>
+      <section v-if="SERVER_MODE" class="profile-account-note"><CatNavIcon kind="profile" /><div><h2>这是你的正式账号</h2><p>账单和资料保存在本机服务，原浏览器演示数据保留。</p><button type="button" :disabled="loggingOut || !logoutOwnerCurrent" :aria-busy="loggingOut" @click="logout">{{ loggingOut ? '正在退出…' : '退出当前账号' }}</button><p v-if="logoutError" class="profile-error" role="alert">{{ logoutError }}</p></div></section>
       <section class="profile-ledger-card" aria-labelledby="profile-ledger-title">
         <div class="profile-section-heading"><h2 id="profile-ledger-title">账本小概况</h2><span>{{ monthTitle }}</span></div>
         <div v-if="error" class="profile-error" role="alert" :aria-busy="reloading">
