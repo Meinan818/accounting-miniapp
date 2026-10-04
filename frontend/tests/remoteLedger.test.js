@@ -369,6 +369,49 @@ test('本页编辑后更高revision不能带回旧单笔version', async () => {
   } finally { scene.dispose() }
 })
 
+test('已删除账单不能因删除状态缺失而复活，兼容合法服务端删除时间精度', async () => {
+  for (const nextVersion of [2, 3]) {
+    let revision = '10', version = 2, deletedAt = '2026-10-04T01:00:00Z'
+    const scene = setup({ request: async () => ({ revision, nextAfter: null,
+      records: [{ record: { ...value, version }, ...(deletedAt !== undefined ? { deletedAt } : {}) }] }) })
+    try {
+      await scene.store.refresh(); const original = scene.store.allRecords.value
+      for (const nextRevision of ['10', '11']) {
+        revision = nextRevision; version = nextVersion
+        for (const missing of [undefined, null]) {
+          deletedAt = missing
+          for (const force of [false, true]) {
+            assert.equal(await scene.store.refresh(force), false)
+            assert.strictEqual(scene.store.allRecords.value, original)
+            assert.match(scene.store.storageError.value, /已删除账单.*状态.*不一致/)
+            assert.equal(scene.store.records.value.length, 0)
+          }
+        }
+      }
+      revision = '11'; version = 3; deletedAt = '2026-10-04T01:00:00.000123Z'
+      assert.equal(await scene.store.refresh(true), true)
+      assert.equal(scene.store.recordsByIds([id])[0].deletedAt, deletedAt)
+      assert.equal(scene.store.records.value.length, 0)
+    } finally { scene.dispose() }
+  }
+})
+
+test('本页删除后合法服务端时间可替换本地时间，但丢删除状态不能重新入汇总', async () => {
+  let revision = '10', serverDeleted = false
+  const scene = setup({ request: async method => method === 'DELETE' ? null : { revision, nextAfter: null,
+    records: [{ record: { ...value, version: revision === '10' ? 0 : 1 },
+      ...(serverDeleted ? { deletedAt: '2026-10-04T01:00:00.123456Z' } : {}) }] } })
+  try {
+    await scene.store.refresh(); await scene.store.deleteRecord(id)
+    const original = scene.store.allRecords.value; revision = '11'
+    assert.equal(await scene.store.refresh(true), false)
+    assert.strictEqual(scene.store.allRecords.value, original)
+    serverDeleted = true; assert.equal(await scene.store.refresh(true), true)
+    assert.equal(scene.store.recordsByIds([id])[0].deletedAt, '2026-10-04T01:00:00.123456Z')
+    assert.equal(scene.store.records.value.length, 0)
+  } finally { scene.dispose() }
+})
+
 test('分页读取超过5000条也完整替换且保留删除事实', async () => {
   const entries = Array.from({ length: 5001 }, (_, index) => ({ record: { ...value,
     id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}` }, deletedAt: index === 0 ? '2026-10-03T01:00:00Z' : null }))
@@ -526,6 +569,8 @@ test('删除时间必须是有效UTC时间，畸形值不能隐藏账单或借�
       assert.equal(scene.store.records.value.length, 0)
       assert.equal(scene.store.recordsByIds([id])[0].deletedAt, deletedAt)
     }
+    // 合法null在新账号独立读取验证；同一账单删除后不能构造无恢复接口的复活。
+    scene.owner.value = '2'
     page = { revision: '10', records: [{ record: value, deletedAt: null }], nextAfter: null }
     assert.equal(await scene.store.refresh(true), true)
     assert.equal(scene.store.records.value.length, 1)

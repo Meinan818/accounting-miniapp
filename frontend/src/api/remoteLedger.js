@@ -112,6 +112,9 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
             if (Number.isSafeInteger(entry.record.version) && previous.has(id) && entry.record.version < previous.get(id).version) {
               throw new Error('账单版本发生倒退，原账本已保留，请重新读取最新账单。')
             }
+            if (previous.get(id)?.deletedAt && entry.deletedAt == null) {
+              throw new Error('已删除账单的状态与最新回执不一致，原账本已保留，请重新读取。')
+            }
             seen.add(id); entries.push(entry); previousId = id
           }
           if (page.nextAfter !== null && (page.records.length === 0 || page.nextAfter !== page.records.at(-1).record?.id
