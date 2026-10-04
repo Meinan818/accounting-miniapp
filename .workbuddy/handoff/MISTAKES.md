@@ -475,3 +475,7 @@ DOM alert存在不等于未被sticky按钮遮挡，须量化error.bottom与actio
 ## 2026-10-04 · Profile长错误换行与滚动
 
 只补换行不能保证长错误完整可读；after-wrap实际尾部874px越过dialog828px，须测几何和原始视图。post watch须在nextTick后同时核message相等/current清理/owner/窗口open/元素可见，避免清错、换错或身份切回前清理回调尚未执行时旧滚动复活。before/after-wrap/22项before2失败保留。首次functions编排对象字段拼写触发SyntaxError，整次未执行/无文件修改，修正后重发。
+
+## 2026-10-04 · 名片文字与装饰几何
+
+card.scrollWidth包含已有右侧flower贴纸超出9px，不能把这个总数作为文字仍溢出的证据。after失败保留，按copy实际宽度/滚动宽度及badge右界/自身/h2/p限定内容，原完整字符串及页面无横滚断言保持。实际账号374px越出文字186px的before证据独立成立；修后badge186px完整折行，未删改装饰。

@@ -1,3 +1,11 @@
+## Profile完整账号标识窄屏换行（2026-10-04）
+
+合法32位连续英文用户名在320px名片文字区宽186px却渲染374px、右边479px越出文字区291px，被页面裁掉；before截图/几何保留。昵称20/签名60连续英文原有overflow-wrap保护正常，缺口只在账号badge。现badge增加max-width100%与overflow-wrap:anywhere，完整账号/邮箱标识在文字区折行，不省略、不改资料。
+
+114相关/499前端/demo与server两构建通过，320/390/1440px各用户名32位与邮箱64位前缀6场景12检查42合成API6截图通过：昵称签名/标识完整换行、无页面/文字区横滚、刷新与编辑取消不截断，0写请求，真实业务账号AI邮件照片0。修后首轮按card.scrollWidth含已有右侧花贴纸9px仍失败，after原结果保留；核真实DOM装饰后改为文字区scrollWidth与badge右界/自身/h2/p六项内容几何断言，保全部数据/编辑/页面断言，不改装饰业务迎合测试。before462px与修后内容186px证据一致；窄屏邮箱成品已视觉抽检。
+
+累计62组440浏览器1412API184截图7JSON/源5CSV，51账本H2/12Profile H2独立保持。上一7cc19a7405147a782a0163377e66a7bafa5a07ab普通Push完整远端一致已核，私有/无Pages/0workflows/0deployments；compact=0/原静音automation及127.0.0.1服务保持。下一项Profile原生保存等待Escape/关闭取消控件/Tab焦点及503重试输入保护合成链；无用户信息依赖，真实账号/真机/剪贴板/实际隔夜/人工验收未验。
+
 ## Profile长保存错误可读性修复（2026-10-04）
 
 真实合成长503回执在320px把dialog撑到1910px/错误1895px，截图及before几何证实连续英文字符串截断。先补overflow-wrap:anywhere后宽度恢复280px，但错误尾部874px仍超过dialog828px，after-wrap失败独立保留。现错误DOM增加ref及post watch/nextTick，仅最新错误/当前owner/未离页/已打开窗口/实际可见元素才滚入，使用start/instant并保护清错、换错、关闭、离页、切回身份与撤元素。22项before20通过2失败保留，新增2有意义实际setup回归全通过。

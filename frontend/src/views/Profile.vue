@@ -277,7 +277,7 @@ onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
 .profile-avatar { width: 86px; height: 88px; object-fit: contain; flex-shrink: 0; transform: rotate(-4deg); }
 .profile-identity h2 { font-size: 17px; font-weight: 400; }
 .profile-identity p { margin-top: 7px; font-size: 12px; line-height: 1.9; color: var(--zz-home-ink-soft); }
-.profile-local-badge { display: inline-block; margin-top: 8px; padding: 4px 8px; background: var(--zz-home-green-soft); border-radius: 9px 6px 10px 7px; color: var(--zz-home-green); font-size: 11px; }
+.profile-local-badge { display: inline-block; max-width: 100%; overflow-wrap: anywhere; margin-top: 8px; padding: 4px 8px; background: var(--zz-home-green-soft); border-radius: 9px 6px 10px 7px; color: var(--zz-home-green); font-size: 11px; }
 .profile-ledger-card, .profile-entry-card, .profile-info-card, .profile-help-card { position: relative; padding: 18px 16px; margin-top: 20px; border: 1.5px solid var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); box-shadow: 3px 4px 0 var(--zz-home-title-brush); }
 .profile-ledger-card::before { content: ''; position: absolute; top: -9px; left: calc(50% - 36px); width: 72px; height: 19px; background: var(--zz-home-pink-soft); border: 1px dashed var(--zz-home-line); border-radius: 3px; transform: rotate(-4deg); }
 .profile-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
