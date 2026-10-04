@@ -2,7 +2,7 @@
 
 本聊天实际compact=0，交接已核、原生每小时ACTIVE/failed_runs_only保持。router等待身份切回、Stats图表/切月/旧显示、Home日历/旧显示及Bills重复编辑目标已修复验证。真实Bills→Editor→Form关闭再开不同id（含同tick）正常重建、输入不串笔，无缺陷不改组件。462项前端通过，两构建沿用同业务源码461节点证据；编辑链回归b9cefcf与演示验证记录完整f27e758be388174831c04b84b52b59da24e6a576已核远端一致。
 
-当前浏览器证据：独立demo与server生产构建，各12项真实无头Chrome场景（共24）；Home/Stats/Bills三页320/390/1280px无横向溢出/图片完整，18截图并抽检窄屏与桌面。demo验证Stats切月、Editor删除返回输入/指定账单保存及121条超展示窗口CSV实际保存E盘（BOM/未知时间/公式保护/账本不变）。server全API拦截31次合成响应，三页每次仅一次账本读取，未知时间编辑省略time而另一笔午夜不变；预设503读取失败只读一次，显式重试再读一次，预设401访客及合成登录保留月/编码搜索/锚点。页面与意外控制台错误0，预设401/503资源日志单列，真实后端/账号/照片/AI/邮件请求0。首轮非法旧账号测试用户名正常被校验拒绝导致等待超时，修正fixture后通过，失败原文另存browser-server-invalid-username-fixture-result.json/browser-server-final.log，未修改业务校验。报告browser-demo-result.json/browser-server-result.json及原日志/截图留E盘内部目录，真实Java19940/Vite20820未重启。
+当前浏览器证据：独立demo与server生产构建，各12项真实无头Chrome场景（共24）；Home/Stats/Bills三页320/390/1280px无横向溢出/图片完整，18截图并抽检窄屏与桌面。demo验证Stats切月、Editor删除返回输入/指定账单保存及121条超展示窗口CSV实际保存E盘（BOM/未知时间/公式保护/账本不变）。server全API拦截32次合成响应（登录返回等待networkidle后的完整计数），三页每次仅一次账本读取，未知时间编辑省略time而另一笔午夜不变；预设503读取失败只读一次，显式重试再读一次，预设401访客及合成登录保留月/编码搜索/锚点。页面与意外控制台错误0，预设401/503资源日志单列，真实后端/账号/照片/AI/邮件请求0。首轮非法旧账号测试用户名正常被校验拒绝导致等待超时，修正fixture后通过，失败原文另存browser-server-invalid-username-fixture-result.json/browser-server-final.log，未修改业务校验。报告browser-demo-result.json/browser-server-result.json及原日志/截图留E盘内部目录，真实Java19940/Vite20820未重启。
 
 已验范围为两种构建的合成浏览器与合成CSV实际下载，真实账号/用户真实下载、真机、系统剪贴板、隔夜及人工最终验收仍未验。Chrome/Playwright已现场可用，不再将全部GUI写成工具阻碍。下一项server Chat→DraftGroupCard→Editor/Form的浏览器草稿编辑及busy语义合成验证，所有AI/账本/认证请求完全拦截，不收费、不使用真实数据，不提问或委派。独立节点验证后自主保存与核查Push。
 ## 第2次实际压缩交接（2026-10-04，当前有效入口）

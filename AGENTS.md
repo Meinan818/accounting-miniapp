@@ -2,7 +2,7 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
-- 新窗口01a1049d-eea8-7b23-811f-6afe194bff0f已核交接与automation，compact=0。router/Stats/Home/Bills修复与编辑完整链已保存上传，完整f27e758远端一致；462前端及同源码两构建保持。独立demo/server无头Chrome各12场景/三页三宽/18截图及121条合成CSV实际下载E盘通过，server31次API完全拦截（含503重读/401登录返回），真实业务/账号/AI/照片/邮件请求0。真实账号/用户下载/真机/剪贴板/隔夜待验；下一项server Chat草稿编辑/busy完整浏览器合成链。
+- 新窗口01a1049d-eea8-7b23-811f-6afe194bff0f已核交接与automation，compact=0。router/Stats/Home/Bills修复与编辑完整链已保存上传，完整f27e758远端一致；462前端及同源码两构建保持。独立demo/server无头Chrome各12场景/三页三宽/18截图及121条合成CSV实际下载E盘通过，server32次API完全拦截（含503重读/401登录返回），真实业务/账号/AI/照片/邮件请求0。真实账号/用户下载/真机/剪贴板/隔夜待验；下一项server Chat草稿编辑/busy完整浏览器合成链。
 
 - 本次原生gpt-6.1-sol/high新聊天01a1049d-eea8-7b23-811f-6afe194bff0f已创建，automation原生转移/view及toml逐字段保持已核，仅目标及更新时间变化。初始本地提交698f305完成，源尾提交与最终success以compaction-transfer-result-01a1043a.json为准；success前目标只读。源实际compact=2保留、最终回执后停止共享写入，目标核完新窗口0并直接接续router身份时序。此次交接不Push、不重跑测试、不重复建automation。
 

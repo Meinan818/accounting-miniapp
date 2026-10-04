@@ -1207,3 +1207,7 @@ Home完整c9901cf80e382dec007550789e0293d9134bf301已核远端一致，Stats0dd6
 当前浏览器证据：独立demo与server生产构建，各12项真实无头Chrome场景（共24）；Home/Stats/Bills三页320/390/1280px无横向溢出/图片完整，18截图并抽检窄屏与桌面。demo验证Stats切月、Editor删除返回输入/指定账单保存及121条超展示窗口CSV实际保存E盘（BOM/未知时间/公式保护/账本不变）。server全API拦截31次合成响应，三页每次仅一次账本读取，未知时间编辑省略time而另一笔午夜不变；预设503读取失败只读一次，显式重试再读一次，预设401访客及合成登录保留月/编码搜索/锚点。页面与意外控制台错误0，预设401/503资源日志单列，真实后端/账号/照片/AI/邮件请求0。首轮非法旧账号测试用户名正常被校验拒绝导致等待超时，修正fixture后通过，失败原文另存browser-server-invalid-username-fixture-result.json/browser-server-final.log，未修改业务校验。报告browser-demo-result.json/browser-server-result.json及原日志/截图留E盘内部目录，真实Java19940/Vite20820未重启。
 
 已验范围为两种构建的合成浏览器与合成CSV实际下载，真实账号/用户真实下载、真机、系统剪贴板、隔夜及人工最终验收仍未验。Chrome/Playwright已现场可用，不再将全部GUI写成工具阻碍。下一项server Chat→DraftGroupCard→Editor/Form的浏览器草稿编辑及busy语义合成验证，所有AI/账本/认证请求完全拦截，不收费、不使用真实数据，不提问或委派。独立节点验证后自主保存与核查Push。
+
+## 2026-10-04 · 浏览器终态计数和远端核实
+
+8900143dbfd3573b32ed7acef68f85e2803f7a7d完整SHA已由官方同SHA/force:false核远端一致，Git干净、本机Vite首页静态HTTP200（不代替业务验证）。浏览器登录返回补等待networkidle，避免URL先到而API还在运行；最新server12场景、32次合成API拦截的日志与result计数一致，意外错误0，预设401/503资源日志2条，真实API0。前条31次是较早运行的中间计数，当前入口已更正32，不把中间结果当最终读取终态。462前端/同源码两构建及demo12场景保持。本次只更新验收记录，原每小时静音续办及server Chat草稿完整浏览器下一项保持。
