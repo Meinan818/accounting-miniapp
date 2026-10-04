@@ -182,6 +182,80 @@ class AccountLedgerIntegrationTest {
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE record_id=?",Long.class,record.id())).isEqualTo(2);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"edit", "delete", "mixed", "allDeleted"})
+    void multiDraftReplaysOriginalOrderWhileSnapshotKeepsLaterEditsAndDeletion(String scenario) throws Exception {
+        var browser = account(); var owner = owner(browser); var draftId = UUID.randomUUID();
+        var date = java.time.LocalDate.of(2026, 10, 3);
+        var inputs = List.of(new RecordInput("expense", "16", date, "餐饮", "合成午饭"),
+                new RecordInput("expense", "18.00", date, "餐饮", "合成咖啡", "00:00"));
+        draftService.save(owner, draftId, null, inputs);
+        var original = mvc.perform(post("/api/drafts/" + draftId + "/confirm").session(browser.session())
+                .header("X-CSRF-TOKEN", browser.token()).header("Idempotency-Key", draftId)
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                .andExpect(status().isCreated()).andExpect(header().string("Idempotency-Replayed", "false"))
+                .andExpect(jsonPath("$.records[0].amount").value("16.00"))
+                .andExpect(jsonPath("$.records[0].note").value("合成午饭"))
+                .andExpect(jsonPath("$.records[0].time").doesNotExist())
+                .andExpect(jsonPath("$.records[1].amount").value("18.00"))
+                .andExpect(jsonPath("$.records[1].note").value("合成咖啡"))
+                .andExpect(jsonPath("$.records[1].time").value("00:00")).andReturn();
+        var receipt = json.readTree(original.getResponse().getContentAsString()).path("records");
+        var lunchId = receipt.get(0).path("id").asText(); var coffeeId = receipt.get(1).path("id").asText();
+        assertThat(lunchId).isNotEqualTo(coffeeId);
+        assertThat(receipt.get(0).path("version").asLong()).isZero();
+        assertThat(receipt.get(1).path("version").asLong()).isZero();
+        boolean edited = scenario.equals("edit") || scenario.equals("mixed");
+        boolean lunchDeleted = scenario.equals("delete") || scenario.equals("allDeleted");
+        boolean coffeeDeleted = scenario.equals("mixed") || scenario.equals("allDeleted");
+        int changes = 0;
+        if (edited) {
+            mvc.perform(put("/api/records/" + lunchId).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"record\":" +
+                            input("19.00").replace("测试午饭", "合成午饭已编辑") + "}"))
+                    .andExpect(status().isOk()).andExpect(jsonPath("$.version").value(1));
+            changes++;
+        }
+        for (var id : List.of(lunchDeleted ? lunchId : "", coffeeDeleted ? coffeeId : "")) {
+            if (id.isEmpty()) continue;
+            mvc.perform(delete("/api/records/" + id).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+                    .param("version", "0")).andExpect(status().isNoContent()); changes++;
+        }
+        var revision = jdbc.queryForObject("SELECT ledger_revision FROM app_user WHERE id=?", Long.class, owner);
+        assertThat(revision).isEqualTo(1L + changes);
+        // 持久化草稿的相同内容PUT与确认重放都不重写当前账单、不增加审计或revision。
+        var savedDraft = draftService.save(owner, draftId, null, inputs);
+        assertThat(savedDraft.status()).isEqualTo("CONFIRMED"); assertThat(savedDraft.version()).isZero();
+        for (int attempt = 0; attempt < 2; attempt++) {
+            mvc.perform(post("/api/drafts/" + draftId + "/confirm").session(browser.session())
+                    .header("X-CSRF-TOKEN", browser.token()).header("Idempotency-Key", draftId)
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0}"))
+                    .andExpect(status().isOk()).andExpect(header().string("Idempotency-Replayed", "true"))
+                    .andExpect(content().string(original.getResponse().getContentAsString()));
+        }
+        var snapshot = mvc.perform(get("/api/records/snapshot/page").session(browser.session()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.revision").value(revision.toString()))
+                .andExpect(jsonPath("$.nextAfter").isEmpty()).andReturn();
+        var rows = json.readTree(snapshot.getResponse().getContentAsString()).path("records");
+        assertThat(rows.size()).isEqualTo(2);
+        var byId = new java.util.HashMap<String, JsonNode>();
+        for (var row : rows) byId.put(row.path("record").path("id").asText(), row);
+        assertThat(byId.keySet()).containsExactlyInAnyOrder(lunchId, coffeeId);
+        var lunch = byId.get(lunchId); var coffee = byId.get(coffeeId);
+        assertThat(lunch.path("record").path("amount").asText()).isEqualTo(edited ? "19.00" : "16.00");
+        assertThat(lunch.path("record").path("version").asLong()).isEqualTo(edited || lunchDeleted ? 1 : 0);
+        assertThat(lunch.path("deletedAt").isTextual()).isEqualTo(lunchDeleted);
+        assertThat(coffee.path("record").path("time").asText()).isEqualTo("00:00");
+        assertThat(coffee.path("record").path("version").asLong()).isEqualTo(coffeeDeleted ? 1 : 0);
+        assertThat(coffee.path("deletedAt").isTextual()).isEqualTo(coffeeDeleted);
+        mvc.perform(get("/api/statistics/month").session(browser.session()).param("month", "2026-10"))
+                .andExpect(jsonPath("$.expense").value(scenario.equals("edit") ? "37.00" : scenario.equals("delete") ? "18.00" : scenario.equals("mixed") ? "19.00" : "0.00"));
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_record WHERE user_id=?", Long.class, owner)).isEqualTo(2);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_write_request WHERE user_id=?", Long.class, owner)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ledger_audit WHERE user_id=?", Long.class, owner)).isEqualTo(2L + changes);
+        assertThat(jdbc.queryForObject("SELECT ledger_revision FROM app_user WHERE id=?", Long.class, owner)).isEqualTo(revision);
+    }
+
     @Test void cancelledExpiredAndInvalidDraftsCannotConfirm() throws Exception {
         var alice=account();var me=mvc.perform(get("/api/auth/me").session(alice.session())).andReturn();
         long owner=json.readTree(me.getResponse().getContentAsString()).path("id").asLong();var id=UUID.randomUUID();

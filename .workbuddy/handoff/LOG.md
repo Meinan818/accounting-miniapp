@@ -1730,3 +1730,11 @@ global版本倒退/大整数/Long溢出四链8浏览器21API8截图同源码回�
 首次harness将Chat顶部p错误当button定位超时，first失败与截图保留；核实际模板后改.chat-month-note定位，保0元断言，final全通过。卡片与统计截图已抽检，无新业务缺陷/源码改动，105相关/494前端/两构建保持上一业务同源码证据，不重复跑。累计56组384浏览器1195API157截图7JSON，源窗口5CSV另计。bbd13fc86d6f1ed14dfe3596c3754535d512a8ce普通Push及官方inspect完整远端一致已核，私有/无Pages/0workflows/0deployments保持。本聊天compact=1/原静音automation及本机服务保持，真实账号/真机/系统剪贴板/实际隔夜/人工验收未验。
 
 下一项核服务端现有AccountLedgerIntegrationTest确认重放/后续编辑删除与分页合同，复用E盘缓存/隔离H2；先核测试配置确保没有真实MySQL/账号/AI/邮件请求，未满足运行条件的部分登记，继续可做合同核查。
+
+## 服务端确认回执持久化合同回归（2026-10-04）
+
+现有AccountLedgerIntegrationTest隔离H2基线47项通过。新增4参数场景edit/delete/mixed/allDeleted：原始午饭16(输入整数16规范化16.00)/咖啡18、未知time/午夜、2独立UUID按输入顺序及version0；后续编辑19、删除午饭、编辑并删咖啡、全部删除，重放2次响应body逐字等原始/Idempotency-Replayed=true，当前snapshot保持版1/删除事实，统计37/18/19/0元，ledger_record2条/write_request1条/audit2+变更/revision1+变更，重放不加任何记录或版本。同内容重新save仍CONFIRMED/version0。
+
+新增4项针对及51项完整账本集成均通过，0失败/错误/跳过，Java编译成功；无服务端业务改动，前端494项/两构建同源码保持，浏览器累计56组384/1195API/157截图/7JSON与源5CSV独立不变。Maven使用现有E盘3.9.11/本项目仓库缓存，--offline，TEMP/TMP与java.io.tmpdir由既有wrapper指向E盘；显式H2内存、关闭AI/邮件、隔离本机.env配置导入与storage-root，全程MockMvc无真实服务/账号/MySQL/AI/邮件请求，原127.0.0.1 Java19940/Vite20820保持。
+
+首轮wrapper直接-o被PowerShell判OutVariable/OutBuffer参数歧义，命令失败原文保server-ledger-baseline.log，改显式-Goals数组/--offline后完成，不安装依赖或修改wrapper。Mockito动态agent未来JDK提示及故意畸形请求400日志不是失败；实际JDK21符合项目。原0792078ad516c7a554ddb58653a6af6c420eaf22普通Push连接重置保留，官方同SHA/force:false同步1提交7blob、远端一致核实，私有/无Pages/0workflows/0deployments保持。本聊天compact=1/原静音automation保持；真实账号/真机/实际隔夜/人工验收未验。下一项服务端单笔更新未知time清旧时间H2往返合同验证。
