@@ -1242,3 +1242,8 @@ Profile照片真实隔离浏览器4场景/16次完全合成API通过，600×400 
 Add真实隔离server浏览器14场景/52次合成API通过：320/390/1280px无横向溢出、本地默认日期时间/金额初始空；双击保存只发一次PUT→confirm，等待中原表单/保存/取消禁用。成功导航保留月/added账单ID，完成状态落盘、再开Add无旧恢复。confirm 503后刷新能恢复原requestId/版本/内容，合成后端恰好1笔；OPEN先GET核实再cancel，0入账、还原原金额/时间/备注；服务端已CONFIRMED但回执失败时拒绝cancel、不发取消请求，保留原操作恢复且不重复入账。3条预设503日志单列，意外错误/未知请求0；真实账本/账号/AI/照片/邮件请求0。3截图留E盘并抽检320px；browser-manual-result.json。初修测试在延迟请求未返回前等恢复区，触发既有请求超时并造成标签等待失败，原文browser-manual-busy-selector-result.json/browser-manual-first.log保留；修harness检查实际忙碌表单，未改业务或删断言。
 
 前一照片记录7dc96002a438e521b315383e3c4a2af8271d36f3完整远端一致已核；465前端/两构建保持同源码，本轮无新业务改动。compact=1，原静音每小时automation、本机服务保持。真实账号/真机/系统剪贴板/隔夜/人工验收未验。下一项合成server Login邮箱验证码注册→自动登录→受保护目标返回完整浏览器链，含申请期间改邮箱/重复、注册失败保输入；禁真实邮件/认证/AI请求。
+## 当前入口：邮箱注册到自动登录返回浏览器链（2026-10-04）
+
+Login真实隔离server浏览器6项/13次合成API通过，登录注册三宽无横向溢出/6截图并抽检320注册；非法邮箱不申请，双击仅1次code申请，申请中不能注册，改邮箱清验证码且旧回执不生效。新challenge绑定规范邮箱并重发倒计时禁用，五位验证码不发注册；注册503保邮箱/验证码/密码且无自动登录，原challenge双击重试只发1次且锁输入/模式，成功仅自动登录1次并返回原Stats月份/hash。3条访客401与1条预设503控制台单列，意外错误/未知请求0、真实邮件/认证/账本/AI/照片请求0。报告browser-registration-result.json。首轮验证返回目标时误用不存在stats-page选择器导致等待超时，原文browser-registration-selector-before-result.json/browser-registration-first.log保留；已核实际stats-content后通过，无业务修改。
+
+手动链记录b02213b0070f4db2016f30eae29cdc4de93d3bfa完整远端一致已核。465前端/同源码两构建保持；compact=1，Java19940/Vite20820及原静音每小时automation保持。真实账号/真机/系统剪贴板/实际隔夜/人工验收仍未验。下一项已有Playwright时钟模拟跨日跨月的Home/Stats/Bills/Profile日期与选择保持浏览器链；先核本机实际API文档，模拟不能冒称实际隔夜通过。
