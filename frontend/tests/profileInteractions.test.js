@@ -11,6 +11,8 @@ import { getRecentDays } from '../src/utils/journal.js'
 import { centsText } from '../src/utils/money.js'
 import { useLocalDay } from '../src/utils/calendar.js'
 import { useLedgerReload } from '../src/utils/navigation.js'
+import { createSSRApp } from 'vue'
+import { renderToString } from '@vue/server-renderer'
 
 const original = { nickname: '合成名片', signature: '合成签名', avatar: 'cat', version: 0 }
 function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail('不可处理真实照片') } } = {}) {
@@ -24,7 +26,7 @@ function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail
     useAuthStore: () => auth, getMonthStatistics, getRecentDays, centsText, packageInfo: { version: 'synthetic' },
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }), useLedgerReload,
     DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto: createPhoto }
-  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, loadingProfile, logout, loggingOut, logoutError }')(...Object.values(bindings)))
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, loadingProfile, logout, loggingOut, logoutError, profileOwnerCurrent, openingProfile }')(...Object.values(bindings)))
   let opens = 0
   view.profileDialog.value = { open: false, showModal() { opens++; this.open = true }, close() { this.open = false } }
   return { view, requests, logoutRequests, auth, get opens() { return opens }, dispose() { cleanup.forEach(fn => fn()); scope.stop() } }
@@ -251,5 +253,94 @@ test('退出等待期间账号变化后切回，旧失败和旧入口仍失效',
     env.logoutRequests[0].reject(Error('旧退出失败')); await pending
     assert.equal(env.view.logoutError.value, '')
     await env.view.logout(); assert.equal(env.logoutRequests.length, 1)
+  } finally { env.dispose() }
+})
+
+test('资料读取期间身份变化后切回原账号，旧回执仍失效且不回填旧名片', async () => {
+  const env = scene(), before = { ...env.view.profile.value }
+  try {
+    const pending = env.view.loadProfile()
+    env.auth.user = { id: 'other' }; env.auth.user = { id: '1' }
+    env.requests[0].resolve({ ...original, nickname: '旧会话名片' })
+    assert.equal(await pending, false)
+    assert.deepEqual(env.view.profile.value, before)
+  } finally { env.dispose() }
+})
+
+test('照片处理期间身份变化后切回，不应用旧照片或旧错误到仍打开的编辑窗口', async () => {
+  for (const fail of [false, true]) {
+    let complete, reject
+    const env = scene({ createPhoto: () => new Promise((resolve, rejectPhoto) => { complete = resolve; reject = rejectPhoto }) })
+    try {
+      const opened = env.view.openProfile(); env.requests[0].resolve(original); await opened
+      const pending = env.view.choosePhoto({ target: { files: [{}], value: 'synthetic' } })
+      env.auth.user = { id: 'other' }; env.auth.user = { id: '1' }
+      env.view.profileForm.value.nickname = '新会话输入'
+      if (fail) reject(Error('旧照片失败')); else complete('data:image/jpeg;base64,/9j/AA==')
+      await pending
+      assert.equal(env.view.profileForm.value.avatar, 'cat')
+      assert.equal(env.view.editError.value, '')
+      assert.equal(env.view.profileForm.value.nickname, '新会话输入')
+      assert.equal(env.requests.length, 1)
+    } finally { env.dispose() }
+  }
+})
+
+test('身份变化后切回原账号，旧个人页读取/保存入口不追加资料请求', async () => {
+  for (const action of ['loadProfile', 'saveProfile']) {
+    const env = scene()
+    try {
+      env.auth.user = { id: 'other' }; env.auth.user = { id: '1' }
+      const pending = env.view[action](), count = env.requests.length
+      env.requests.forEach(request => request.resolve(original)); await pending
+      assert.equal(count, 0)
+    } finally { env.dispose() }
+  }
+})
+
+test('照片上传合成回执前身份变化后切回，原资料适配器不继续PUT或重读', async () => {
+  const env = scene()
+  try {
+    const opened = env.view.openProfile(); env.requests[0].resolve(original); await opened
+    env.view.profileForm.value = { ...original, avatar: 'photo', photo: 'data:image/jpeg;base64,/9j/AA==' }
+    const pending = env.view.saveProfile()
+    assert.equal(env.requests[1].method, 'POST')
+    env.auth.user = { id: 'other' }; env.auth.user = { id: '1' }
+    env.requests[1].resolve({ ...original, avatar: 'photo', avatarUrl: '/api/profile/avatar', version: 1 })
+    await pending
+    assert.equal(env.requests.length, 2); assert.equal(env.view.profile.value.avatar, 'cat')
+    assert.equal(env.view.editError.value, '')
+  } finally { env.dispose() }
+})
+
+test('旧个人页选照片入口在离页或身份变化后不读取文件或清输入', async () => {
+  let photoCalls = 0
+  for (const change of [env => env.dispose(), env => { env.auth.user = { id: 'other' }; env.auth.user = { id: '1' } }]) {
+    const env = scene({ createPhoto: () => { photoCalls++; return 'synthetic' } })
+    try {
+      env.view.profileDialog.value.open = true; change(env)
+      const input = { files: [{}], value: '保留输入' }
+      await env.view.choosePhoto({ target: input })
+      assert.equal(input.value, '保留输入')
+    } finally { env.dispose() }
+  }
+  assert.equal(photoCalls, 0)
+})
+
+test('实际名片模板在身份变化后隐藏旧昵称和私有照片，切回后仍不显示旧快照', async () => {
+  const env = scene()
+  const content = readFileSync(new URL('../src/views/Profile.vue', import.meta.url), 'utf8')
+  const template = content.match(/<section[^>]*class="profile-identity"[\s\S]*?<\/section>/)[0]
+  const render = () => renderToString(createSSRApp({ template, setup: () => ({ ...env.view, SERVER_MODE: true, auth: env.auth }),
+    components: { CatNavIcon: { template: '<i />' }, JournalSticker: { template: '<i />' }, ChevronRight: { template: '<i />' } } }))
+  try {
+    env.view.profile.value = { ...original, nickname: '私有合成昵称', avatar: 'photo', photo: 'synthetic-private-photo' }
+    assert.match(await render(), /私有合成昵称/)
+    assert.match(await render(), /synthetic-private-photo/)
+    env.auth.user = { id: 'other' }
+    assert.doesNotMatch(await render(), /私有合成昵称|synthetic-private-photo/)
+    env.auth.user = { id: '1' }
+    assert.doesNotMatch(await render(), /私有合成昵称|synthetic-private-photo/)
+    assert.equal(env.requests.length, 0)
   } finally { env.dispose() }
 })

@@ -22,9 +22,13 @@ import { useLedgerReload } from '@/utils/navigation'
 const store = useRecordStore()
 const { reloading, reloadError, reloadRecords } = useLedgerReload(store)
 const auth = SERVER_MODE ? useAuthStore() : null
-const profileOwner = auth?.user.id
+const profileOwner = auth?.user?.id
 let disposed = false
-const isCurrentProfile = () => !disposed && auth?.user?.id === profileOwner
+const profileOwnerCurrent = ref(!SERVER_MODE || Boolean(profileOwner))
+if (SERVER_MODE) watch(() => auth.user?.id, value => {
+  if (value !== profileOwner) profileOwnerCurrent.value = false
+}, { flush: 'sync' })
+const isCurrentProfile = () => !disposed && profileOwnerCurrent.value && (!SERVER_MODE || auth.user?.id === profileOwner)
 const remoteProfile = auth ? createProfileApi(auth.api, { owner: profileOwner, isCurrent: isCurrentProfile }) : null
 const { today } = useLocalDay()
 const month = computed(() => today.value.slice(0, 7))
@@ -56,7 +60,7 @@ let photoRequest = 0
 let profileSnapshot = null
 const avatars = [{ key: 'cat', label: '猫猫' }, { key: 'paw', label: '爪印' }, { key: 'flower', label: '小花' }]
 async function loadProfile() {
-  if (disposed) return false
+  if (!isCurrentProfile()) return false
   const request = ++profileReadGeneration
   const isCurrentRead = () => !disposed && request === profileReadGeneration && (!remoteProfile || isCurrentProfile())
   loadingProfile.value = true
@@ -73,20 +77,21 @@ async function loadProfile() {
   } catch (error) {
     if (isCurrentRead()) profileError.value = (remoteProfile ? '账号' : '本地') + '资料暂时无法读取。' + error.message
     return false
-  } finally { if (request === profileReadGeneration) loadingProfile.value = false }
+  } finally { if (isCurrentRead()) loadingProfile.value = false }
 }
 async function openProfile() {
-  if (disposed || openingProfile.value || savingProfile.value || profileDialog.value?.open) return false
+  if (!isCurrentProfile() || openingProfile.value || savingProfile.value || profileDialog.value?.open) return false
   openingProfile.value = true
   try {
-    if (!await loadProfile() || disposed || !profileDialog.value) return false
+    if (!await loadProfile() || !isCurrentProfile() || !profileDialog.value) return false
     profileForm.value = { ...profile.value }; editError.value = ''; profileNotice.value = ''; profileConflict.value = false
     profileDialog.value.showModal()
     return true
-  } finally { openingProfile.value = false }
+  } finally { if (isCurrentProfile()) openingProfile.value = false }
 }
-function closeProfile(event) { if (savingProfile.value) { event?.preventDefault?.(); return }; photoRequest++; processingPhoto.value = false; profileDialog.value.close() }
+function closeProfile(event) { if (savingProfile.value) { event?.preventDefault?.(); return }; photoRequest++; processingPhoto.value = false; profileDialog.value?.close() }
 async function choosePhoto(event) {
+  if (!isCurrentProfile() || !profileDialog.value?.open || savingProfile.value) return
   const file = event.target.files?.[0]
   event.target.value = ''
   if (!file) return
@@ -94,12 +99,12 @@ async function choosePhoto(event) {
   processingPhoto.value = true; editError.value = ''
   try {
     const photo = await createProfilePhoto(file)
-    if (request === photoRequest && profileDialog.value?.open) profileForm.value = { ...profileForm.value, avatar: 'photo', photo }
-  } catch (error) { if (request === photoRequest) editError.value = error.message }
-  finally { if (request === photoRequest) processingPhoto.value = false }
+    if (isCurrentProfile() && request === photoRequest && profileDialog.value?.open) profileForm.value = { ...profileForm.value, avatar: 'photo', photo }
+  } catch (error) { if (isCurrentProfile() && request === photoRequest) editError.value = error.message }
+  finally { if (isCurrentProfile() && request === photoRequest) processingPhoto.value = false }
 }
 async function saveProfile() {
-  if (disposed || processingPhoto.value || savingProfile.value) return
+  if (!isCurrentProfile() || processingPhoto.value || savingProfile.value) return
   // An earlier read cannot replace the version established by this save.
   profileReadGeneration++; loadingProfile.value = false
   savingProfile.value = true
@@ -123,21 +128,17 @@ async function saveProfile() {
     }
     if (remoteProfile) await loadProfile()
   }
-  finally { savingProfile.value = false }
+  finally { if (isCurrentProfile()) savingProfile.value = false }
 }
 onBeforeUnmount(() => { disposed = true; photoRequest++; profileReadGeneration++ })
 const loggingOut = ref(false)
 const logoutError = ref('')
-const logoutOwnerCurrent = ref(Boolean(auth?.user?.id))
-if (SERVER_MODE) watch(() => auth.user?.id, value => {
-  if (value !== profileOwner) logoutOwnerCurrent.value = false
-}, { flush: 'sync' })
 async function logout() {
-  if (!auth || !isCurrentProfile() || !logoutOwnerCurrent.value || loggingOut.value) return
+  if (!auth || !isCurrentProfile() || loggingOut.value) return
   loggingOut.value = true; logoutError.value = ''
   try { await auth.logout() }
-  catch (failure) { if (isCurrentProfile() && logoutOwnerCurrent.value) logoutError.value = failure.message }
-  finally { if (isCurrentProfile() && logoutOwnerCurrent.value) loggingOut.value = false }
+  catch (failure) { if (isCurrentProfile()) logoutError.value = failure.message }
+  finally { if (isCurrentProfile()) loggingOut.value = false }
 }
 const entries = [
   { title: '账单明细', note: '查看和修改已经记下的小账单', icon: 'receipt', to: '/bills' },
@@ -155,7 +156,8 @@ onMounted(() => { reloadRecords(); loadProfile() })
         <div><h1 class="profile-title">我的小账本</h1><p class="profile-subtitle">喵叽智账 · {{ SERVER_MODE ? '当前账号' : '本地演示' }}</p></div>
       </header>
 
-      <section class="profile-identity" aria-label="本地账本说明">
+      <p v-if="!profileOwnerCurrent" class="profile-error" role="alert">登录身份已变化，<a href="/profile">重新打开个人页</a>后再查看资料。</p>
+      <section v-if="profileOwnerCurrent" class="profile-identity" aria-label="本地账本说明">
         <div class="profile-person-avatar"><img v-if="profile.avatar === 'photo'" :src="profile.photo" alt="自定义照片头像" class="profile-custom-photo" /><CatNavIcon v-else-if="profile.avatar === 'cat'" kind="profile" /><JournalSticker v-else :kind="profile.avatar" :tone="profile.avatar === 'flower' ? 'lilac' : 'pink'" /></div>
         <JournalSticker kind="flower" tone="lilac" class="profile-flower" />
         <div class="profile-person-copy"><span class="profile-id-eyebrow">MY LITTLE JOURNAL</span><h2>{{ profile.nickname }}</h2><p>{{ profile.signature || '给生活留一点小空白。' }}</p><span class="profile-local-badge">{{ SERVER_MODE ? auth.user?.username : '本地资料 · 尚未登录' }}</span><button class="profile-edit-button" type="button" :disabled="Boolean(profileError) || openingProfile || loadingProfile || savingProfile" :aria-busy="openingProfile" @click="openProfile">{{ openingProfile ? '正在读取资料…' : SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }} <ChevronRight :size="14" /></button></div>
@@ -164,7 +166,7 @@ onMounted(() => { reloadRecords(); loadProfile() })
       <div v-if="profileError" class="profile-error" role="alert"><p>{{ profileError }}</p><button type="button" :disabled="loadingProfile || savingProfile" @click="loadProfile">{{ loadingProfile ? '正在读取…' : '重新读取资料' }}</button></div>
       <section v-if="!SERVER_MODE" class="profile-account-note" aria-label="账号状态"><CatNavIcon kind="home" /><div><h2>小账本，先住在这里</h2><p>当前账单留在这个浏览器。正式账号登录与个人资料同步正在规划，尚未接通。</p></div><img :src="miaoAvatar" alt="" /></section>
 
-      <section v-if="SERVER_MODE" class="profile-account-note"><CatNavIcon kind="profile" /><div><h2>这是你的正式账号</h2><p>账单和资料保存在本机服务，原浏览器演示数据保留。</p><button type="button" :disabled="loggingOut || !logoutOwnerCurrent" :aria-busy="loggingOut" @click="logout">{{ loggingOut ? '正在退出…' : '退出当前账号' }}</button><p v-if="logoutError" class="profile-error" role="alert">{{ logoutError }}</p></div></section>
+      <section v-if="SERVER_MODE" class="profile-account-note"><CatNavIcon kind="profile" /><div><h2>这是你的正式账号</h2><p>账单和资料保存在本机服务，原浏览器演示数据保留。</p><button type="button" :disabled="loggingOut || !profileOwnerCurrent" :aria-busy="loggingOut" @click="logout">{{ loggingOut ? '正在退出…' : '退出当前账号' }}</button><p v-if="logoutError" class="profile-error" role="alert">{{ logoutError }}</p></div></section>
       <section class="profile-ledger-card" aria-labelledby="profile-ledger-title">
         <div class="profile-section-heading"><h2 id="profile-ledger-title">账本小概况</h2><span>{{ monthTitle }}</span></div>
         <div v-if="error" class="profile-error" role="alert" :aria-busy="reloading">
@@ -204,7 +206,7 @@ onMounted(() => { reloadRecords(); loadProfile() })
       </section>
       <footer class="profile-about">喵叽智账 · {{ SERVER_MODE ? '账号开发版' : '前端演示' }} v{{ appVersion }}<br /><span>好好记账，也好好生活</span></footer>
     </main>
-    <dialog ref="profileDialog" class="profile-editor" aria-labelledby="profile-editor-title" @cancel="closeProfile">
+    <dialog v-if="profileOwnerCurrent" ref="profileDialog" class="profile-editor" aria-labelledby="profile-editor-title" @cancel="closeProfile">
       <header><div><p>属于你的手账名片</p><h2 id="profile-editor-title">{{ SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }}</h2></div><button type="button" aria-label="关闭资料编辑" @click="closeProfile">×</button></header>
       <form @submit.prevent="saveProfile">
         <fieldset :disabled="processingPhoto || savingProfile"><legend>头像贴纸，或自己的照片</legend><div class="profile-avatar-options"><button v-for="avatar in avatars" :key="avatar.key" type="button" :aria-label="'头像：' + avatar.label" :aria-pressed="profileForm.avatar === avatar.key" @click="profileForm.avatar = avatar.key"><CatNavIcon v-if="avatar.key === 'cat'" kind="profile" /><JournalSticker v-else :kind="avatar.key" :tone="avatar.key === 'flower' ? 'lilac' : 'pink'" /><span>{{ avatar.label }}</span></button></div>
