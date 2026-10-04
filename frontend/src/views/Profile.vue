@@ -145,7 +145,7 @@ const entries = [
   { title: '收支统计', note: '按月份看看钱花在哪里', icon: 'chart', to: '/stats' },
   { title: '和本喵聊聊', note: '说说开销，核对后再记账', icon: 'chat', to: '/chat' },
 ]
-onMounted(() => { reloadRecords(); loadProfile() })
+onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
 </script>
 
 <template>

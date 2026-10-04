@@ -11,6 +11,10 @@ import { centsText } from '../src/utils/money.js'
 import { getMonthReview } from '../src/utils/monthReview.js'
 import { useLocalDay } from '../src/utils/calendar.js'
 import { getLoginReturnPath } from '../src/utils/loginRedirect.js'
+import { getMonthStatistics } from '../src/utils/statistics.js'
+import { getRecentDays } from '../src/utils/journal.js'
+import { createProfileApi } from '../src/api/profile.js'
+import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile } from '../src/utils/localProfile.js'
 
 const source = readFileSync(new URL('../src/router/index.js', import.meta.url), 'utf8')
   .replace(/^import .*$/gm, '')
@@ -170,4 +174,64 @@ test('演示Stats没有正式guard，mounted仍正常读取本地账本', async 
   const env = scene(), stats = mountStats(env, false)
   try { await stats.runMounted(); assert.equal(env.ledgerReads, 1); assert.equal(stats.view.error.value, '') }
   finally { stats.dispose() }
+})
+
+function mountProfile(env, server = true) {
+  const scope = Vue.effectScope(), mounted = [], cleanup = [], profileReads = []
+  const script = readFileSync(new URL('../src/views/Profile.vue', import.meta.url), 'utf8')
+    .split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
+  env.auth.api = { async request(method, path) {
+    profileReads.push({ method, path })
+    assert.equal(method, 'GET'); assert.equal(path, '/api/profile')
+    return { nickname: '合成账号名片', signature: '合成签名', avatar: 'cat', version: 0 }
+  } }
+  const bindings = { ...Vue, dayjs, centsText, getMonthStatistics, getRecentDays, useLedgerReload,
+    createProfileApi, DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, SERVER_MODE: server,
+    createProfilePhoto() { assert.fail('不可读取真实照片') }, packageInfo: { version: 'synthetic' },
+    window: { localStorage: { getItem: () => null } },
+    onMounted: callback => mounted.push(callback), onBeforeUnmount: callback => cleanup.push(callback),
+    useRecordStore: () => env.store, useAuthStore: () => env.auth,
+    useLocalDay: () => useLocalDay({ eventTarget: null, documentTarget: null }) }
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + ';return { reloadRecords, error, profile, profileError }')(...Object.values(bindings)))
+  return { view, profileReads, async runMounted() { for (const callback of mounted) await callback(); await env.flush() },
+    dispose() { cleanup.forEach(callback => callback()); scope.stop() } }
+}
+
+test('真实guard进入正式Profile后mounted复用账本读取，独立读取账号资料保持', async () => {
+  const env = scene(), navigation = env.router.push('/profile')
+  await env.flush(); env.reads[0].resolve(account); await navigation
+  const profile = mountProfile(env)
+  try {
+    assert.equal(env.ledgerReads, 1)
+    await profile.runMounted()
+    assert.equal(env.ledgerReads, 1)
+    assert.deepEqual(profile.profileReads, [{ method: 'GET', path: '/api/profile' }])
+    assert.equal(profile.view.profile.value.nickname, '合成账号名片')
+    assert.equal(profile.view.profileError.value, ''); assert.equal(profile.view.error.value, '')
+  } finally { profile.dispose() }
+})
+
+test('Profile guard账本失败不会mounted后台重试；资料独立显示，显式重读可恢复', async () => {
+  const env = scene({ ledgerLoaded: false }), navigation = env.router.push('/profile')
+  await env.flush(); env.reads[0].resolve(account); await navigation
+  const profile = mountProfile(env)
+  try {
+    await profile.runMounted()
+    assert.equal(env.ledgerReads, 1); assert.equal(profile.view.error.value, '合成读取失败')
+    assert.equal(profile.view.profile.value.nickname, '合成账号名片')
+    env.setLedgerLoaded(true); env.store.storageError = ''
+    assert.equal(await profile.view.reloadRecords(true), true)
+    assert.equal(env.ledgerReads, 2); assert.equal(profile.view.error.value, '')
+    assert.equal(profile.profileReads.length, 1)
+  } finally { profile.dispose() }
+})
+
+test('演示Profile无正式guard时mounted仍读本地账本及本地名片，不请求账号资料', async () => {
+  const env = scene(), profile = mountProfile(env, false)
+  try {
+    await profile.runMounted()
+    assert.equal(env.ledgerReads, 1); assert.deepEqual(profile.profileReads, [])
+    assert.equal(profile.view.profile.value.nickname, DEFAULT_PROFILE.nickname)
+    assert.equal(profile.view.error.value, '')
+  } finally { profile.dispose() }
 })

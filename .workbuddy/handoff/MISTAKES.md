@@ -371,3 +371,6 @@
 
 ## 2026-10-04 · 浏览器终态和转场选择器
 networkidle可能沿用原空闲状态，合成延迟响应刚release时不能立刻断言Vue状态；需等saved或实际错误。Vue页面转场短时有两个main，应定位bills-content且截图等有限动画结束，不将旧转场图误判窄屏越界。两次失败原文保留，修harness而非业务。
+
+## 2026-10-04 · Profile路由和mounted重复读取
+Stats曾修不代表所有页面已覆盖。Profile mounted仍无条件reload，真实浏览器一次进入2次账本请求，实际router+Profile链14项12通过2失败。正式仅复用guard，演示mounted及独立资料GET保持；47相关/465全量/两构建、6浏览器场景通过。缺陷证据与正常资料/账本失败显式重试分别验证，不能把Store缓存等同无额外请求。

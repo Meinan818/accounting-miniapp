@@ -1225,3 +1225,10 @@ Home完整c9901cf80e382dec007550789e0293d9134bf301已核远端一致，Stats0dd6
 Chat合成server浏览器又8项通过（正常确认、confirm 503、已确认后snapshot 503三条完整链）；35次API完全拦截，2条预设503控制台日志单列，意外错误/未知请求0。更新草稿不发服务端草稿请求，双击只发一次PUT→confirm；保存中编辑/取消/快捷查询禁用，未知time仍省略、明确午夜保留。失败提示保留原组并解锁，原操作重试复用requestId/版本/内容，合成后端只保留两笔；保存后的recordIds、刷新已记账显示及明细34元同步已核。3截图等待有限转场动画结束后保存E盘并抽检；报告browser-chat-confirm-result.json。首轮DOM回填等待过早及第二轮转场两个main选择器失败原文分别保存，修harness等待实际状态/指定目标，没有业务修改或删除断言。真实账号/账本/AI/照片/邮件请求0，无真实服务器操作。
 
 前一草稿编辑记录d7cb5489e585b86f1dbf972aa30426b1909f0baf完整远端一致已核，私有/无Pages/0 workflows/0 deployments保持。compact=1，462前端/同源码两构建保持；真机/系统剪贴板/隔夜/最终人工验收未验。下一项Profile正式浏览器每次进入读取次数与资料编辑/失败重试/取消完整链；当前onMounted额外reload仅是待取证假设，先完全拦截合成接口，不调用真实账号/照片服务。
+## 当前入口：个人页去除重复账本读取（2026-10-04）
+
+真实隔离server浏览器复现Profile一次进入2次账本读取，browser-profile-duplicate-before-result.json与截图/原日志保留；真实router+session+Profile setup新回归14项12通过2失败原文profile-duplicate-before-node.log保留。根因router guard已读账本，Profile mounted仍无条件reload；最小改为正式模式复用guard，演示mounted读取及账号资料独立读取保持。新增3项链回归，47项相关/465项前端/demo与server两构建通过。
+
+同源码Profile浏览器6场景/24次完全拦截API通过，三宽无横向溢出、6截图并抽检320个人页/1280窗口。每次进入读取1次，guard 503保留账本错误但资料正常，显式重读追加1次；取消资料输入不PUT，保存双击只发1次，等待期间Escape/关闭/取消不丢窗口输入，503后保留昵称签名头像，重试同版本内容成功且刷新显示。预设2条503控制台单列，意外错误/未知请求0、真实账号/账本/AI/照片/邮件请求0，Java19940/Vite20820未重启。证据browser-profile-result.json等在E盘内部目录，未提交测试材料。前一整组确认记录af9af44164814bdd77f8b1ba6385043cad8a09b2完整远端一致已核。
+
+compact=1、原每小时静音续办保持；真机/系统剪贴板/隔夜/真实账号与最终人工验收未验。下一项完全合成Profile照片本地解码/预览取消及头像上传成功后资料失败的重试链，图片用隔离浏览器canvas生成测试色块，仅fixture请求不访问真实照片服务。
