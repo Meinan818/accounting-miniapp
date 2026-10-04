@@ -1,3 +1,6 @@
+## 本次原生交接目标（2026-10-04）
+
+新聊天01a10649-1a5f-77b0-bc50-e8334ce6e784（gpt-6.1-sol/high）已创建，初始待续commit fc5bd3949f1c4845a03269413ad97f73ca739ac0。原automation已原生迁移并view/TOML逐字段核仅目标/更新时间改变，其他字段保持。最终回执compaction-transfer-result-01a105cf.json的success/finalCommit/源停止共享写入核完前目标只读；核完新窗口0直接接续。源01a105cf计数2保持，本次不Push、不重跑；下面资料读取窗口推断以最新纠正为准。
 ## 第2次实际compact · 资料读取校验待续交接（2026-10-04）
 
 源聊天01a105cf-1051-7223-8ade-29ce5f7a802e计数2已告知/登记，停止业务代码，只做本地待续commit、不Push。本次专用回执位于.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a105cf.json；目标须核success、sourceWillModifySharedFiles=false及finalCommit存在/HEAD一致，才登记新窗口基准0继续。原生新聊天指定gpt-6.1-sol/high，原automation每小时ACTIVE/failed_runs_only迁移且保留其他字段，不能重复创建。

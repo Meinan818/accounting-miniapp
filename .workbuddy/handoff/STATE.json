@@ -19,8 +19,8 @@
     "status": "ACTIVE",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
-    "targetThreadId": "01a105cf-1051-7223-8ade-29ce5f7a802e",
-    "transferStatus": "本窗口核成功：原生view/现场TOML与after一致，仅目标/更新时间改变；每小时ACTIVE/failed_runs_only保持，不重复建",
+    "targetThreadId": "01a10649-1a5f-77b0-bc50-e8334ce6e784",
+    "transferStatus": "原生update/view及现场TOML逐字段核完，仅目标与更新时间改变；success/finalCommit以本次01a105cf专用回执为准，源计数2保持，目标核完才设0",
     "scheduledRunVerified": false
   }
 }
