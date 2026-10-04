@@ -1433,3 +1433,11 @@ browser-chat-tabs-qa.cjs/result.json及E盘备份在既有忽略目录，无业�
 脚本/结果/2备份browser-chat-storage-edges-*均在既有E盘忽略目录，2截图已抽检，无业务缺陷/源码改动；473前端/两构建保持旧同源码证据，不重跑。累计新增25组171浏览器/532API/71截图/7JSON备份，较早24场景/18截图/121CSV及回归另算。前一双标签节点4135ae1572d0e0f2f012a6bbbbe6f8312b709ac4普通Push及官方核完整远端一致，私有/无Pages/0 workflows/0 deployments；compact=0、原automation与本机服务保持。
 
 下一项Profile头像文件空/超10MB/损坏/同文件再选/有效格式与取消保护合成浏览器链，本机处理失败保原头像预览与未保存昵称签名，禁止真实上传/资料写入。无新用户依赖，真机/实际隔夜/人工验收仍未验。
+
+## 头像文件失败与重新选择浏览器验证（2026-10-04）
+
+Profile合成浏览器9检查/5API/2截图通过：空PNG、10MiB+1字节、坏PNG/JPEG/WebP实际选文件与真实Image解码失败均保原256JPEG预览、未保存昵称签名，清file输入、0上传/PUT。同名坏WebP再选真实重解码失败、Blob重新创建并释放。正好10MiB含有效PNG的合成文件成功，有效JPEG/WebP可恢复并裁256JPEG；取消后重开恢复原cat/昵称/签名。8个实际Blob逐个释放，意外错误/未知请求0，全部API合成，真实账号/照片/资料/认证/AI/邮件/账本请求0。
+
+browser-profile-photo-errors-*脚本/结果/2截图在既有E盘忽略目录，截图已抽检，无业务缺陷/源码改动；累计新增26组180浏览器/537API/73截图/7JSON备份，473前端/两构建仍为旧同源码证据，未重跑。前节点e7655e8452301a1b1de426e4f2e7fddbe3d181cb普通Push低速失败原文chat-storage-edges-push.log保留，既有官方Git数据库适配器按同SHA/force:false成功并核远端一致，私有/无Pages/0 workflows/0 deployments保持。
+
+compact=0、原静音每小时automation及本机服务保持，无新增用户依赖；下一项Profile实际照片处理的迟到成功/失败、取消重开/换图与输入保护浏览器合成链，控制解码回调时序不冒称真机或自然网络耗时，0真实上传。

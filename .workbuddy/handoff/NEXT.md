@@ -1,3 +1,11 @@
+## 头像文件失败与重新选择浏览器验证（2026-10-04）
+
+Profile合成浏览器9检查/5API/2截图通过：空PNG、10MiB+1字节、坏PNG/JPEG/WebP实际选文件与真实Image解码失败均保原256JPEG预览、未保存昵称签名，清file输入、0上传/PUT。同名坏WebP再选真实重解码失败、Blob重新创建并释放。正好10MiB含有效PNG的合成文件成功，有效JPEG/WebP可恢复并裁256JPEG；取消后重开恢复原cat/昵称/签名。8个实际Blob逐个释放，意外错误/未知请求0，全部API合成，真实账号/照片/资料/认证/AI/邮件/账本请求0。
+
+browser-profile-photo-errors-*脚本/结果/2截图在既有E盘忽略目录，截图已抽检，无业务缺陷/源码改动；累计新增26组180浏览器/537API/73截图/7JSON备份，473前端/两构建仍为旧同源码证据，未重跑。前节点e7655e8452301a1b1de426e4f2e7fddbe3d181cb普通Push低速失败原文chat-storage-edges-push.log保留，既有官方Git数据库适配器按同SHA/force:false成功并核远端一致，私有/无Pages/0 workflows/0 deployments保持。
+
+compact=0、原静音每小时automation及本机服务保持，无新增用户依赖；下一项Profile实际照片处理的迟到成功/失败、取消重开/换图与输入保护浏览器合成链，控制解码回调时序不冒称真机或自然网络耗时，0真实上传。
+
 ## 外部对话存储删除/损坏/恢复验证（2026-10-04）
 
 独立fresh context双标签7浏览器/6API/2截图/2实际JSON备份通过：无关键事件不误标冲突；坏JSON显式重读失败保完整25元旧组/未知time，干净快照备份unsaved=false且逐字保坏原文；外部修复后显式重读才恢复且0存储写入。removeItem及clear受信任key=null事件均只标冲突，显式读空存储才采用欢迎页，不自动回填旧历史。损坏后本页编辑26元、外部修复25元，仍拒绝重读覆盖；实际备份messages保26元，storedHistory.raw保修复25元。全API合成，0草稿/账本写入及真实请求，意外错误/未知请求0。
