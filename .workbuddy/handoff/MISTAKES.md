@@ -427,3 +427,8 @@ Editor曾把conflict并入saving，实际请求结束仍显示正在保存并禁
 ## 2026-10-04 · 原生搜索框角色
 
 input[type=search]默认role为searchbox；分类harness误用textbox超时，first.log/role-before及时间戳失败截图保留。核真实模板后改searchbox，8项完整通过，不当作产品缺陷。
+
+
+## 2026-10-04 · 快照fixture顺序
+
+Home新增ID107在删除ID106前使合成分页顺序非法，实际拒读符合保护。first/order-before及独立截图保留，核严格递增ID后改删除ID108，同6项通过。新增fixture须同时核ID排序、唯一性与record/deletedAt同层。
