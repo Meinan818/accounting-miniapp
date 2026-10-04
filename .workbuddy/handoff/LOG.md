@@ -1564,3 +1564,14 @@ compact=1、原静音automation与本机服务保持，无新用户依赖；真�
 56cd805a73cf01dc6cb58fe6be1b5d36f8b7b2fc普通Push低速失败日志保留，官方同SHA/force:false同步并核完整远端一致，私有/无Pages/0 workflows/0 deployments保持。compact=1、本机Java19940/Vite20820仅127.0.0.1/未重启，原automation TOML再核每小时ACTIVE/failed_runs_only/当前聊天保持，无新用户依赖；真机/真实账号/系统剪贴板/实际隔夜/人工验收仍未验。
 
 下一项Bills地址重复参数/无效月与类型/超长筛选合成浏览器链，核安全回退/120字符上限/刷新与有效月账本一致，禁止真实请求。
+
+
+## 明细无效重复及超长地址合成验证（2026-10-04）
+
+实际server6浏览器检查/14合成API/2截图通过：Vue Router重复month/type/category/q数组安全回退本机10月/全部/空搜索；0001与未知type、非法13月/五位年份回退有效月但合法收入筛选保持。140字符搜索/分类在实际DOM截120，真实刷新保9月7/9元月汇总、空结果及320px无横向溢出；分类HTML仅普通文字、不插img或触发外部请求。重复added数组不清合法搜索/类型、不显示伪新账单定位，仍只九月7元收入票。接口全拦截、源快照不变、真实请求/AI/账本写/意外错误/未知请求0，2截图已抽检。
+
+browser-bill-query-*留既有E盘忽略目录，无新业务缺陷/源码改动，475前端/两构建为最近业务源码证据，本轮未重跑。累计新增40组273浏览器/656API/100截图/7JSON备份，另本窗口5CSV；本heartbeat新增10组62检查/72合成API/19截图/4实际CSV，较早24场景/18截图/121CSV仍独立统计。
+
+5fbb790defac61b44a91d8b65b8deb7fa5f12e84普通Push成功且官方完整远端一致已核，私有/无Pages/0 workflows/0 deployments保持。compact=1、原每小时ACTIVE/failed_runs_only automation/current target与127.0.0.1服务保持，无新用户依赖；真实账号/真机/系统剪贴板/实际隔夜/人工验收仍未验。
+
+下一项账本snapshot/page重复编号/非递增/跨页revision变化及显式force恢复的实际浏览器合成链：先核现有pagination harness，复用独立fixture/当前旧快照，确保非法新快照不部分覆盖、同版本缓存仍校验回执，禁止真实请求。无缺陷只记录，有复现才最小修复/相关回归/两构建。
