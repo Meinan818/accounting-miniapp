@@ -58,7 +58,7 @@ watch([selectedMonth, searchText, selectedType, selectedCategory, editingRecord,
   filterLinkText.value = ''; filterLinkMessage.value = ''
 }, { flush: 'sync' })
 async function copyFilterLink() {
-  if (copyLinkUnavailable.value) return false
+  if (!active || !ownerCurrent.value || copyLinkUnavailable.value) return false
   const generation = ++filterLinkGeneration
   copyingLink.value = true
   filterLinkText.value = ''; filterLinkMessage.value = ''
@@ -155,14 +155,14 @@ const hiddenCount = computed(() => listedRecords.value.length - displayedCount.v
 const recordElements = new Map()
 function setRecordElement(id, element) { if (element) recordElements.set(id, element); else recordElements.delete(id) }
 async function loadMoreRecords() {
-  if (!active || editingRecord.value) return
+  if (!active || !ownerCurrent.value || editingRecord.value) return
   const query = JSON.stringify([selectedMonth.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])
   const nextRecord = listedRecords.value.slice(visibleLimit.value, visibleLimit.value + displayBatchSize)
     .find(record => record.id !== highlightedId.value)
   visibleLimit.value += displayBatchSize
   const limit = visibleLimit.value
   await nextTick()
-  if (!active || editingRecord.value || limit !== visibleLimit.value ||
+  if (!active || !ownerCurrent.value || editingRecord.value || limit !== visibleLimit.value ||
     query !== JSON.stringify([selectedMonth.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])) return
   const element = recordElements.get(nextRecord?.id)
   element?.focus({ preventScroll: true })
@@ -171,50 +171,54 @@ async function loadMoreRecords() {
 watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => record.id === highlightedId.value)], async ([id], previous, onCleanup) => {
   let current = true
   onCleanup(() => { current = false })
-  if (!id || !monthRecords.value.some(record => record.id === id)) return
+  if (!active || !ownerCurrent.value || !id || !monthRecords.value.some(record => record.id === id)) return
   notice.value = '新账单已保存，已定位到刚刚记下的这一笔。'
   resetFilters()
   await nextTick()
-  if (!active || !current || id !== highlightedId.value || filtering.value || editingRecord.value) return
+  if (!active || !ownerCurrent.value || !current || id !== highlightedId.value || filtering.value || editingRecord.value) return
   const element = recordElements.get(id)
   element?.scrollIntoView({ block: 'center', behavior: 'auto' })
   element?.focus({ preventScroll: true })
 }, { immediate: true })
 
-function edit(record) { editingRecord.value = { ...record }; saveError.value = ''; editConflict.value = null; notice.value = '' }
+function edit(record) {
+  if (!active || !ownerCurrent.value || saving.value) return
+  editingRecord.value = { ...record }; saveError.value = ''; editConflict.value = null; notice.value = ''
+}
 function handleEditFailure(failure) {
+  if (!active || !ownerCurrent.value) return
   saveError.value = failure.message
   if (failure.recoveryLoaded) editConflict.value = { current: failure.currentRecord }
 }
 function adoptLatestVersion() {
-  if (saving.value || !editingRecord.value || !editConflict.value?.current) return
+  if (!active || !ownerCurrent.value || saving.value || !editingRecord.value || !editConflict.value?.current) return
   editingRecord.value = { ...editingRecord.value, version: editConflict.value.current.version }
   editConflict.value = null; saveError.value = ''
 }
 async function saveEdit(input) {
-  if (!active || saving.value || editConflict.value || !editingRecord.value) return
+  if (!active || !ownerCurrent.value || saving.value || editConflict.value || !editingRecord.value) return
   saving.value = true; saveError.value = ''
   try {
     const updated = await recordStore.updateRecord(editingRecord.value.id, input, { version: editingRecord.value.version })
-    if (!active) return
+    if (!active || !ownerCurrent.value) return
     selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。'
   }
-  catch (e) { if (active) handleEditFailure(e) }
-  finally { if (active) saving.value = false }
+  catch (e) { if (active && ownerCurrent.value) handleEditFailure(e) }
+  finally { if (active && ownerCurrent.value) saving.value = false }
 }
 
 async function deleteEdit() {
-  if (!active || saving.value || editConflict.value || !editingRecord.value) return
+  if (!active || !ownerCurrent.value || saving.value || editConflict.value || !editingRecord.value) return
   if (typeof recordStore.deleteRecord !== 'function') { saveError.value = '当前页面仍使用旧版本数据模块。请先退出编辑并刷新页面，原账单尚未删除。'; return }
   saving.value = true; saveError.value = ''
   try {
     await recordStore.deleteRecord(editingRecord.value.id, { version: editingRecord.value.version })
-    if (!active) return
+    if (!active || !ownerCurrent.value) return
     editingRecord.value = null; notice.value = '这笔账单已删除：首页、明细和聊天查询已同步。'
-    await nextTick(); if (active) noticeElement.value?.focus()
+    await nextTick(); if (active && ownerCurrent.value) noticeElement.value?.focus()
   }
-  catch (e) { if (active) handleEditFailure(e) }
-  finally { if (active) saving.value = false }
+  catch (e) { if (active && ownerCurrent.value) handleEditFailure(e) }
+  finally { if (active && ownerCurrent.value) saving.value = false }
 }
 
 // 5. 方法
@@ -257,7 +261,7 @@ function getSign(record) {
 
 <template>
   <div class="journal-bills notebook-evolution">
-    <main class="bills-content">
+    <main v-if="ownerCurrent" class="bills-content">
       <header class="bills-header">
         <NotebookBack />
         <img :src="miaoWriting" alt="猫猫抱着账本陪你看明细" class="bills-header-cat" />
@@ -392,7 +396,8 @@ function getSign(record) {
       </section>
     </main>
 
-    <RecordEditor v-if="editingRecord" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" :conflict="editConflict" allow-delete @recover="adoptLatestVersion" @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
+    <main v-else class="bills-content"><NotebookBack /><h1 class="bills-title">账单明细</h1><p class="bills-storage-note" role="status">登录身份已变化，请重新打开账单明细。</p></main>
+    <RecordEditor v-if="editingRecord && ownerCurrent" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" :conflict="editConflict" allow-delete @recover="adoptLatestVersion" @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
     <BottomNav active="detail" />
   </div>
 </template>

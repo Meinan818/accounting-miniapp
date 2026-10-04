@@ -10,7 +10,9 @@ import { CATEGORY_OPTIONS } from '../src/utils/categories.js'
 import { validateRecord } from '../src/utils/ledger.js'
 import { createBillFilterPath, useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { filterRecords, windowRecordGroups } from '../src/utils/journal.js'
-import { getRecordTotals } from '../src/utils/money.js'
+import { centsText, getRecordTotals } from '../src/utils/money.js'
+import { formatCurrency } from '../src/utils/format.js'
+import { getCategoryArtwork } from '../src/utils/categoryArtwork.js'
 import { useLocalDay } from '../src/utils/calendar.js'
 import { createBillCsv } from '../src/utils/billCsv.js'
 
@@ -23,6 +25,8 @@ function evaluate(script, bindings, returned) {
 }
 function node(tag) {
   return { tag, children: [], props: {}, style: {}, parent: null, text: '', focusCount: 0, scrollCount: 0,
+    addEventListener() {}, removeEventListener() {},
+    getRootNode() { return {} },
     focus() { this.focusCount++ }, scrollIntoView() { this.scrollCount++ }, showModal() { this.open = true }, close() { this.open = false } }
 }
 const renderer = Vue.createRenderer({
@@ -113,7 +117,7 @@ test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚�
   } finally { if (state.view) state.dispose() }
 })
 
-function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false, clipboard = {} } = {}) {
+function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false, clipboard = {}, template = false } = {}) {
   const bills = source('views/Bills.vue'), calls = []
   const route = Vue.reactive({ query: { month: '2026-10' } })
   const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), downloads = []
@@ -122,19 +126,23 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
     updateRecord: (...args) => { calls.push(['update', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) },
     deleteRecord: (...args) => { calls.push(['delete', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) } })
   const focusTarget = node('notice')
-  const app = renderer.createApp({ setup() {
+  const stub = { render: () => Vue.h('span') }
+  const Bills = { components: { CategoryIcon: stub, ManualEntry: stub, NotebookBack: stub, ChevronLeft: stub, ChevronRight: stub, BottomNav: stub,
+    RecordEditor: { props: ['record'], render() { return Vue.h('section', { class: 'synthetic-editor' }, this.record.remark) } } }, setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
       createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage')
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign')
     values.noticeElement.value = focusTarget
-    return () => Vue.h('main')
-  } })
-  app.mount(node('root')); values.edit(original)
-  return { values, calls, route, store, auth, downloads, focusTarget, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
+    return template ? { ...values, SERVER_MODE: server, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
+  } }
+  if (template) { Bills.render = new Function('Vue', compile(bills.template, { mode: 'function' }).code)(Vue); Bills.render._rc = true }
+  const app = renderer.createApp(Bills), root = node('root')
+  app.mount(root); values.edit(original)
+  return { values, calls, route, store, auth, downloads, focusTarget, root, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
 }
 
 test('编辑保存拒绝重复请求，离页后成功回执不改本页月份/提示', async () => {
@@ -467,4 +475,92 @@ test('编辑或保存期间拒绝复制，筛选变化和账号失效撤下手�
     assert.equal(state.values.filterLinkText.value, ''); assert.equal(state.values.filterLinkMessage.value, '')
     assert.equal(await state.values.copyFilterLink(), false)
   } finally { state.dispose() }
+})
+
+test('明细身份首次变化再切回，旧编辑/保存/删除/采用冲突入口不能操作或改旧输入', async () => {
+  const state = mountBills({ server: true })
+  try {
+    state.values.editConflict.value = { current: { ...original, version: 3 } }
+    state.values.saveError.value = '保留旧错误'
+    state.auth.user = { id: 'other' }; state.auth.user = { id: 'synthetic-owner' }
+    state.values.adoptLatestVersion()
+    state.values.edit({ ...original, remark: '不得替换旧输入' })
+    const pending = state.values.saveEdit({ amount: 12.34 })
+    if (state.calls.length) state.finish({ ...original })
+    await pending
+    const deletion = state.values.deleteEdit()
+    if (state.calls.length > 1) state.finish()
+    await deletion
+    assert.deepEqual(state.calls, [])
+    assert.equal(state.values.editingRecord.value.version, 2)
+    assert.equal(state.values.editingRecord.value.remark, original.remark)
+    assert.equal(state.values.saveError.value, '保留旧错误')
+  } finally { state.dispose() }
+})
+
+test('明细身份切回后的旧保存和删除入口各自不发Store请求', async () => {
+  for (const action of ['saveEdit', 'deleteEdit']) {
+    const state = mountBills({ server: true })
+    try {
+      state.auth.user = null; state.auth.user = { id: 'synthetic-owner' }
+      const pending = state.values[action]({ amount: 12.34 })
+      if (state.calls.length) state.finish({ ...original })
+      await pending
+      assert.deepEqual(state.calls, [])
+    } finally { state.dispose() }
+  }
+})
+
+test('复制禁用状态已缓存为可用时离页，旧入口仍不调用系统剪贴板', async () => {
+  let writes = 0
+  const state = mountBills({ clipboard: { writeText: async () => { writes++ } } })
+  try {
+    state.values.editingRecord.value = null
+    assert.equal(state.values.copyLinkUnavailable.value, false)
+    state.dispose()
+    assert.equal(await state.values.copyFilterLink(), false)
+    assert.equal(writes, 0)
+  } finally { state.dispose() }
+})
+
+test('编辑或删除等待身份变化再切回，迟到成功/冲突不回填，不改月/关闭旧输入或聚焦', async () => {
+  for (const action of ['saveEdit', 'deleteEdit']) {
+    for (const rejected of [false, true]) {
+      const state = mountBills({ server: true })
+      try {
+        const pending = state.values[action]({ amount: 12.34 })
+        state.auth.user = null; state.auth.user = { id: 'synthetic-owner' }
+        if (rejected) state.fail(Object.assign(Error('合成旧冲突'), { recoveryLoaded: true, currentRecord: { ...original, version: 3 } }))
+        else state.finish({ ...original, date: '2026-11-02' })
+        await pending
+        assert.equal(state.values.selectedMonth.value, '2026-10')
+        assert.equal(state.values.editingRecord.value.id, original.id)
+        assert.equal(state.values.notice.value, ''); assert.equal(state.values.saveError.value, '')
+        assert.equal(state.values.editConflict.value, null); assert.equal(state.focusTarget.focusCount, 0)
+      } finally { state.dispose() }
+    }
+  }
+})
+
+function hasClass(root, className) { return typeof root.props.class === 'string' && root.props.class.split(' ').includes(className) || root.children.some(child => hasClass(child, className)) }
+
+test('实际Bills模板身份变化撤下旧搜索和编辑窗口，切回不复活，账本/输入快照保留', async () => {
+  const previousDocument = globalThis.document, previousDocumentType = globalThis.Document, previousShadowType = globalThis.ShadowRoot
+  globalThis.document = { activeElement: null, addEventListener() {}, removeEventListener() {} }
+  globalThis.Document = class {}; globalThis.ShadowRoot = class {}
+  const state = mountBills({ server: true, template: true })
+  try {
+    state.values.searchText.value = '私有搜索'; state.values.editingRecord.value.remark = '私有未保存输入'
+    await Vue.nextTick()
+    assert.equal(hasClass(state.root, 'synthetic-editor'), true)
+    assert.equal(hasClass(state.root, 'bills-search-card'), true)
+    state.auth.user = null; await Vue.nextTick()
+    const hidden = !hasClass(state.root, 'synthetic-editor') && !hasClass(state.root, 'bills-search-card')
+    state.auth.user = { id: 'synthetic-owner' }; await Vue.nextTick()
+    assert.equal(hidden, true)
+    assert.equal(hasClass(state.root, 'synthetic-editor'), false); assert.equal(hasClass(state.root, 'bills-search-card'), false)
+    assert.equal(state.values.searchText.value, '私有搜索')
+    assert.equal(state.values.editingRecord.value.remark, '私有未保存输入')
+    assert.equal(state.store.records.length, 1)
+  } finally { state.dispose(); globalThis.document = previousDocument; globalThis.Document = previousDocumentType; globalThis.ShadowRoot = previousShadowType }
 })

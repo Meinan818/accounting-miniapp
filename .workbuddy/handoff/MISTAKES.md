@@ -326,3 +326,7 @@
 
 ## 2026-10-04 · 手动页缺少身份边界
 - useManualRecordSave只有scope active，旧入口身份切回后仍发起写入/导航，迟到保存和取消回执回填，Add保留旧表单显示。manual-owner-before39项34通过5失败已保留。增加永久owner保护及Add撤显示后70项针对/415项全量/两构建通过。以后共享Store的页面入口和await回执分别核身份，Store旧请求守卫不能替代页级入口保护。GUI仍未验。
+
+## 2026-10-04 · Bills页身份保护缺口与缓存
+- 既有ownerCurrent仅用于导出/清搜索，旧编辑/保存/删除和表单显示未接入，切回后会操作共享Store或回填旧回执。bills-owner-before-final-harness25项22通过3失败原文保留，接入后90项针对/420全量/两构建通过。复制入口只读computed，其中active是普通变量，缓存为可用后dispose不会失效；27项26通过1失败已保留，加显式active检查后通过。以后事件入口直接核scope与身份，不能把含普通变量的computed当安全守卫。
+- 完整Bills模板首次harness缺少v-model用到的addEventListener/getRootNode/Document/ShadowRoot及calendar监听释放，前三日志分别保留。补齐合成节点和全局类型、finally恢复后才取得三项业务失败证据，未以harness错误冒充产品Bug；今后扩展真实模板先核指令所需DOM接口。GUI仍未验。
