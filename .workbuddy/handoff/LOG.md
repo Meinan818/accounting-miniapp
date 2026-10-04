@@ -1109,3 +1109,8 @@
 
 - 最新403项前端与两构建通过，CSV/搜索焦点/退出/资料照片身份/统计滚动均已独立保存。明细筛选地址栏已只读取证（bills-query-readonly）：选月/关键词/收支/分类只改useBillQuery refs，重建读原route.query恢复旧条件；router.beforeEach每次受保护query导航均刷新账本且refresh仍请求首页核版本。因此下一项采用显式复制当前筛选链接，安全编码当前refs，失败提供可复制文本，不自动导航/后台新增账本请求。纯合成未访问真实账号/账本/照片/AI/邮件；compact=0、原生每小时ACTIVE/failed_runs_only保持，GUI/真机/实际下载/隔夜仍待工具条件。
 - 统计5ab573f完整远端SHA已由官方同SHA/force:false核一致（stats-scroll-sync）；私有/无Pages/0 workflows/0 deployments保持，既有Git低速/443失败不删除。下一项功能尚未实施，不能说手动选择已经自动写地址栏或剪贴板已验证；本次只读评估无新测试，403项/最后两构建保持。
+
+## 2026-10-04 · 当前筛选链接复制
+
+- 明细显式复制当前筛选链接，URLSearchParams编码月/搜索/收支/分类，不带账号/added，不导航或追加账本读取；失败提供只读文本，空结果可复制，重复/条件变换再恢复/编辑/离页/账号切回拒绝旧回执。53项针对、410项前端及demo/server两构建通过，无真实业务/账号/照片/AI/邮件请求。实际剪贴板/GUI/真机/下载/隔夜仍未验；第1次实际压缩已告知并STATE=1，原生每小时静音续办保持。下一项手动保存/恢复/取消身份边界合成取证，Push实际结果见LOG后续。
+- 原生已发起系统复制不能冒称撤销；失败文本随条件/编辑/身份变化撤下。纯路径重建及登录返回、实际Bills setup合成剪贴板已验证，filter-link-tests/build/build-server日志保留。官方inspect核6e6a680完整远端一致，私有/无Pages/0 workflows/0 deployments；本节点上传实际结果后记。

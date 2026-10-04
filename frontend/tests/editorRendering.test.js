@@ -8,7 +8,7 @@ import { compile } from '@vue/compiler-dom'
 import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '../src/utils/categories.js'
 import { validateRecord } from '../src/utils/ledger.js'
-import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
+import { createBillFilterPath, useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { filterRecords, windowRecordGroups } from '../src/utils/journal.js'
 import { getRecordTotals } from '../src/utils/money.js'
 import { useLocalDay } from '../src/utils/calendar.js'
@@ -113,7 +113,7 @@ test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚�
   } finally { if (state.view) state.dispose() }
 })
 
-function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false } = {}) {
+function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false, clipboard = {} } = {}) {
   const bills = source('views/Bills.vue'), calls = []
   const route = Vue.reactive({ query: { month: '2026-10' } })
   const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), downloads = []
@@ -125,10 +125,11 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
   const app = renderer.createApp({ setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
-      useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS,
+      createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS,
+      window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput')
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage')
     values.noticeElement.value = focusTarget
     return () => Vue.h('main')
   } })
@@ -372,4 +373,98 @@ test('离页或旧账号清除入口不清新输入也不聚焦', async () => {
       assert.equal(state.values.searchText.value, '保留输入'); assert.equal(input.focusCount, 0)
     } finally { state.dispose() }
   }
+})
+
+test('复制当前refs的筛选链接包含空结果条件，重复点击只写一次，不导航或读写账本', async () => {
+  const writes = []; let finish
+  const state = mountBills({ records: [], clipboard: { writeText: text => { writes.push(text); return new Promise(done => { finish = done }) } } })
+  try {
+    state.values.editingRecord.value = null
+    state.values.selectedMonth.value = '2026-09'; state.values.searchText.value = '咖啡 & +/#'
+    state.values.selectedType.value = 'expense'; state.values.selectedCategory.value = '餐饮'
+    state.store.refresh = () => { throw Error('复制不得读取账本') }
+    const pending = state.values.copyFilterLink()
+    assert.equal(state.values.copyingLink.value, true)
+    assert.equal(await state.values.copyFilterLink(), false)
+    assert.equal(writes.length, 1)
+    const url = new URL(writes[0])
+    assert.equal(url.origin, 'http://127.0.0.1:5174'); assert.equal(url.pathname, '/bills')
+    assert.deepEqual(Object.fromEntries(url.searchParams), { month: '2026-09', q: '咖啡 & +/#', type: 'expense', category: '餐饮' })
+    assert.deepEqual(state.route.query, { month: '2026-10' }); assert.deepEqual(state.calls, [])
+    finish(); assert.equal(await pending, true)
+    assert.equal(state.values.copyingLink.value, false); assert.match(state.values.filterLinkMessage.value, /已复制/)
+    assert.equal(state.values.filterLinkText.value, '')
+  } finally { state.dispose() }
+})
+
+test('剪贴板不支持或失败提供相同链接手动复制，重试成功清除文本', async () => {
+  for (const clipboard of [{}, { writeText: () => { throw Error('合成拒绝') } }, { writeText: async () => { throw Error('合成异步拒绝') } }]) {
+    const state = mountBills({ clipboard })
+    try {
+      state.values.editingRecord.value = null
+      assert.equal(await state.values.copyFilterLink(), false)
+      assert.equal(state.values.filterLinkText.value, 'http://127.0.0.1:5174/bills?month=2026-10')
+      assert.match(state.values.filterLinkMessage.value, /手动复制/)
+      clipboard.writeText = async () => {}
+      assert.equal(await state.values.copyFilterLink(), true)
+      assert.equal(state.values.filterLinkText.value, '')
+      assert.match(state.values.filterLinkMessage.value, /已复制/)
+    } finally { state.dispose() }
+  }
+})
+
+test('复制等待期间筛选变化再恢复或进入编辑，旧成功/失败不显示，当前条件仍可重新复制', async () => {
+  for (const change of [state => { state.values.searchText.value = '新搜索'; state.values.searchText.value = '' },
+    state => { state.values.selectedMonth.value = '2026-11' }, state => { state.values.selectedType.value = 'income' },
+    state => { state.values.selectedCategory.value = '工资' }, state => state.values.edit(original)]) {
+    for (const rejected of [false, true]) {
+      let finish, fail
+      const clipboard = { writeText: () => new Promise((resolve, reject) => { finish = resolve; fail = reject }) }
+      const state = mountBills({ clipboard })
+      try {
+        state.values.editingRecord.value = null
+        const pending = state.values.copyFilterLink(); change(state)
+        if (rejected) fail(Error('合成拒绝')); else finish()
+        assert.equal(await pending, false)
+        assert.equal(state.values.filterLinkMessage.value, ''); assert.equal(state.values.filterLinkText.value, '')
+        assert.equal(state.values.copyingLink.value, false)
+        state.values.editingRecord.value = null; clipboard.writeText = async () => {}
+        assert.equal(await state.values.copyFilterLink(), true)
+      } finally { state.dispose() }
+    }
+  }
+})
+
+test('离页和身份变化再切回永久拒绝旧复制入口及迟到回执，不继续系统剪贴板操作', async () => {
+  for (const leave of [state => state.dispose(), state => { state.auth.user = { id: 'other' }; state.auth.user = { id: 'synthetic-owner' } }]) {
+    for (const rejected of [false, true]) {
+      let finish, fail, writes = 0
+      const state = mountBills({ server: true, clipboard: { writeText: () => { writes++; return new Promise((resolve, reject) => { finish = resolve; fail = reject }) } } })
+      try {
+        state.values.editingRecord.value = null
+        const pending = state.values.copyFilterLink(); leave(state)
+        if (rejected) fail(Error('合成拒绝')); else finish()
+        assert.equal(await pending, false)
+        assert.equal(state.values.filterLinkMessage.value, ''); assert.equal(state.values.filterLinkText.value, '')
+        assert.equal(await state.values.copyFilterLink(), false); assert.equal(writes, 1)
+      } finally { state.dispose() }
+    }
+  }
+})
+
+test('编辑或保存期间拒绝复制，筛选变化和账号失效撤下手动链接', async () => {
+  const state = mountBills({ server: true })
+  try {
+    assert.equal(await state.values.copyFilterLink(), false)
+    state.values.editingRecord.value = null; state.values.saving.value = true
+    assert.equal(await state.values.copyFilterLink(), false)
+    state.values.saving.value = false
+    await state.values.copyFilterLink(); assert.ok(state.values.filterLinkText.value)
+    state.values.searchText.value = '新搜索'
+    assert.equal(state.values.filterLinkText.value, ''); assert.equal(state.values.filterLinkMessage.value, '')
+    await state.values.copyFilterLink(); assert.ok(state.values.filterLinkText.value)
+    state.auth.user = null
+    assert.equal(state.values.filterLinkText.value, ''); assert.equal(state.values.filterLinkMessage.value, '')
+    assert.equal(await state.values.copyFilterLink(), false)
+  } finally { state.dispose() }
 })

@@ -21,7 +21,7 @@ import { filterRecords, windowRecordGroups } from '@/utils/journal'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { getCategoryArtwork } from '@/utils/categoryArtwork'
 import { SERVER_MODE } from '@/api/mode'
-import { useBillQuery, useLedgerReload } from '@/utils/navigation'
+import { createBillFilterPath, useBillQuery, useLedgerReload } from '@/utils/navigation'
 import { useLocalDay } from '@/utils/calendar'
 
 // 2. 组合式函数
@@ -48,6 +48,38 @@ if (SERVER_MODE) watch(() => auth.user?.id, value => {
   if (value !== owner) ownerCurrent.value = false
 }, { flush: 'sync' })
 const exportError = ref('')
+const copyingLink = ref(false)
+const filterLinkText = ref('')
+const filterLinkMessage = ref('')
+let filterLinkGeneration = 0
+const copyLinkUnavailable = computed(() => !active || !ownerCurrent.value || copyingLink.value || saving.value || Boolean(editingRecord.value))
+watch([selectedMonth, searchText, selectedType, selectedCategory, editingRecord, ownerCurrent], () => {
+  filterLinkGeneration++
+  filterLinkText.value = ''; filterLinkMessage.value = ''
+}, { flush: 'sync' })
+async function copyFilterLink() {
+  if (copyLinkUnavailable.value) return false
+  const generation = ++filterLinkGeneration
+  copyingLink.value = true
+  filterLinkText.value = ''; filterLinkMessage.value = ''
+  const current = () => active && ownerCurrent.value && generation === filterLinkGeneration
+  let link = ''
+  try {
+    link = new URL(createBillFilterPath({ month: selectedMonth.value, query: searchText.value,
+      type: selectedType.value, category: selectedCategory.value }), window.location.origin).href
+    if (typeof navigator.clipboard?.writeText !== 'function') throw new Error('clipboard unavailable')
+    await navigator.clipboard.writeText(link)
+    if (!current()) return false
+    filterLinkMessage.value = '已复制当前筛选链接。'
+    return true
+  } catch {
+    if (current()) {
+      filterLinkText.value = link
+      filterLinkMessage.value = link ? '自动复制未完成，请选中下方链接手动复制。' : '链接暂时无法生成，请重试。'
+    }
+    return false
+  } finally { if (active && ownerCurrent.value) copyingLink.value = false }
+}
 const displayBatchSize = 60
 const visibleLimit = ref(displayBatchSize)
 watch([selectedMonth, searchText, selectedType, selectedCategory], () => { visibleLimit.value = displayBatchSize })
@@ -287,8 +319,12 @@ function getSign(record) {
       <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" @click="resetFilters">查看全部</button></div>
       <div class="bills-export">
         <button type="button" :disabled="exportUnavailable" @click="exportBills">{{ filtering ? '导出筛选账单' : '导出本月账单' }} · CSV</button>
+        <button type="button" :disabled="copyLinkUnavailable" :aria-busy="copyingLink" @click="copyFilterLink">{{ copyingLink ? '正在复制…' : '复制当前筛选链接' }}</button>
         <p>下载完整{{ filtering ? '筛选结果' : '月份账单' }}，包含尚未展开的小票</p>
         <p v-if="exportError" class="bills-alert" role="alert">{{ exportError }}</p>
+        <p>链接保留月份和筛选条件；打开后查看{{ SERVER_MODE ? '当前登录账号的账本' : '当前浏览器的演示账本' }}。</p>
+        <p v-if="filterLinkMessage" role="status">{{ filterLinkMessage }}</p>
+        <textarea v-if="filterLinkText" class="bills-filter-link" :value="filterLinkText" readonly rows="3" aria-label="当前筛选链接，选中后可手动复制"></textarea>
       </div>
       <p class="bills-storage-note">{{ SERVER_MODE ? '账单保存在当前账号；这里的修改会同步到首页和聊天查询' : '账单保存在当前浏览器；这里的修改会同步到首页和聊天查询' }}</p>
       <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
@@ -363,9 +399,10 @@ function getSign(record) {
 
 <style scoped>
 .bills-export { margin-top:16px; text-align:center; color:var(--zz-home-ink-soft); font-size:11px; line-height:1.8; }
-.bills-export button { min-height:44px; padding:9px 16px; border:1px solid #b79076; border-radius:13px; background:#fff7ec; color:#785640; font-size:12px; }
+.bills-export button { min-height:44px; margin:3px; padding:9px 16px; border:1px solid #b79076; border-radius:13px; background:#fff7ec; color:#785640; font-size:12px; }
 .bills-export button:disabled { opacity:.5; cursor:not-allowed; }
 .bills-export button:focus-visible { outline:2px solid var(--zz-home-ink); outline-offset:3px; }
+.bills-filter-link { display:block; width:100%; box-sizing:border-box; margin-top:8px; padding:10px; border:1px solid #b79076; border-radius:10px; background:#fffaf3; color:var(--zz-home-ink); font-size:12px; overflow-wrap:anywhere; resize:vertical; }
 .bills-export p { margin-top:6px; }
 .bills-filter-shelf { margin-top:18px; }
 .bills-filter-heading { display:flex; align-items:center; justify-content:space-between; gap:6px; color:#846450; font-size:12px; }

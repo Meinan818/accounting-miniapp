@@ -2,6 +2,15 @@ import { computed, onScopeDispose, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { isValidMonth } from './statistics.js'
 
+export function createBillFilterPath({ month, query = '', type = 'all', category = '' }) {
+  if (!isValidMonth(month)) throw new Error('请选择有效月份。')
+  const params = new URLSearchParams({ month })
+  if (typeof query === 'string' && query) params.set('q', query.slice(0, 120))
+  if (['income', 'expense'].includes(type)) params.set('type', type)
+  if (typeof category === 'string' && category) params.set('category', category.slice(0, 120))
+  return '/bills?' + params.toString()
+}
+
 export function useBillQuery(route, currentMonth = () => dayjs().format('YYYY-MM')) {
   const selectedMonth = ref(isValidMonth(route.query.month) ? route.query.month : currentMonth())
   const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0, 120) : '')

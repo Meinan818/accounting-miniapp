@@ -1,12 +1,37 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getScrollPosition } from '../src/utils/navigation.js'
+import { createBillFilterPath, getScrollPosition } from '../src/utils/navigation.js'
 import { useStatsMonthNavigation } from '../src/utils/navigation.js'
 import { useManualRecordSave } from '../src/utils/navigation.js'
 import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { effectScope, reactive } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { getLoginReturnPath } from '../src/utils/loginRedirect.js'
+
+test('筛选链接编码中文及特殊字符，重建明细和登录返回保留条件，只表达白名单', () => {
+  const input = { month: '2026-09', query: '咖啡 & +/#?\n备注', type: 'expense', category: '餐饮&其他', added: 'private-id', user: 'private-owner' }
+  const path = createBillFilterPath(input)
+  assert.equal(getLoginReturnPath(path), path)
+  assert.equal(path.includes('private'), false)
+  const scope = effectScope()
+  const query = scope.run(() => useBillQuery(reactive({ query: Object.fromEntries(new URL(path, 'https://example.test').searchParams) })))
+  try {
+    assert.equal(query.selectedMonth.value, input.month)
+    assert.equal(query.searchText.value, input.query)
+    assert.equal(query.selectedType.value, input.type)
+    assert.equal(query.selectedCategory.value, input.category)
+  } finally { scope.stop() }
+})
+
+test('筛选链接固定站内路径，非法月份拒绝，空条件省略及文本长度与读取保持一致', () => {
+  assert.equal(createBillFilterPath({ month: '2026-10' }), '/bills?month=2026-10')
+  for (const month of ['0001-01', '2026-13', ['2026-10'], undefined]) assert.throws(() => createBillFilterPath({ month }))
+  const path = createBillFilterPath({ month: '2026-10', query: '字'.repeat(140), category: '类'.repeat(140), type: 'external' })
+  const params = new URL(path, 'https://example.test').searchParams
+  assert.equal(params.get('q').length, 120); assert.equal(params.get('category').length, 120)
+  assert.equal(params.has('type'), false)
+  assert.equal(createBillFilterPath({ month: '2026-10', query: ['a'], category: ['b'] }), '/bills?month=2026-10')
+})
 
 test('登录返回保留站内月份/搜索与锚点，拒绝外站/未知页/循环和控制字符', () => {
   for (const value of ['/bills?month=2026-09&q=%E5%92%96%E5%95%A1#record', '/stats?month=2026-08', '/chat', '/profile', '/add', '/']) {
