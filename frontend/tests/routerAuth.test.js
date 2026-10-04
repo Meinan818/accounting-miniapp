@@ -19,21 +19,69 @@ const source = readFileSync(new URL('../src/router/index.js', import.meta.url), 
   .replace('export default router', 'return router')
 function scene({ delayedLedger = false, ledgerLoaded = true } = {}) {
   const reads = [], logins = [], ledger = []
+  const watches = []
   let ledgerReads = 0
   const session = createSession({ request: () => new Promise((resolve, reject) => reads.push({ resolve, reject })),
     login: () => new Promise(resolve => logins.push(resolve)) })
   const auth = Vue.reactive(session)
   const store = Vue.reactive({ records: [], storageError: ledgerLoaded ? '' : '合成读取失败', refresh: async () => {
     ledgerReads++
-    if (delayedLedger) await new Promise(resolve => ledger.push(resolve))
+    if (delayedLedger) await new Promise((resolve, reject) => ledger.push(Object.assign(resolve, { reject })))
     return ledgerLoaded
   } })
-  const router = new Function('createRouter', 'createMemoryHistory', 'getScrollPosition', 'getLoginReturnPath', 'SERVER_MODE', 'useAuthStore', 'useRecordStore', source)(
-    createRouter, createMemoryHistory, getScrollPosition, getLoginReturnPath, true, () => auth, () => store)
-  return { router, auth, session, reads, logins, ledger, store, setLedgerLoaded: value => { ledgerLoaded = value }, get ledgerReads() { return ledgerReads },
+  const watch = (...args) => {
+    const entry = { active: true }, stop = Vue.watch(...args)
+    watches.push(entry)
+    return () => { entry.active = false; stop() }
+  }
+  const router = new Function('createRouter', 'createMemoryHistory', 'getScrollPosition', 'getLoginReturnPath', 'SERVER_MODE', 'useAuthStore', 'useRecordStore', 'watch', source)(
+    createRouter, createMemoryHistory, getScrollPosition, getLoginReturnPath, true, () => auth, () => store, watch)
+  return { router, auth, session, reads, logins, ledger, store, watches, setLedgerLoaded: value => { ledgerLoaded = value }, get ledgerReads() { return ledgerReads },
     flush: () => new Promise(resolve => setImmediate(resolve)) }
 }
 const account = { id: '1', username: 'synthetic' }
+test('账本await期间退出并重新登录同账号，旧导航永久取消，新导航重新读取', async () => {
+  const env = scene({ delayedLedger: true })
+  env.session.expire(); await env.router.push('/login')
+  const login = env.session.login('synthetic', 'synthetic-password'); env.logins[0](account); await login
+  const pending = env.router.push('/bills?month=2026-09'); await env.flush()
+  assert.equal(env.ledgerReads, 1)
+  env.session.expire()
+  const relogin = env.session.login('synthetic', 'synthetic-password'); env.logins[1](account); await relogin
+  env.ledger[0](); await pending
+  assert.equal(env.router.currentRoute.value.name, 'Login')
+  assert.equal(env.ledgerReads, 1); assert.ok(env.watches.every(entry => !entry.active))
+  const retry = env.router.push('/bills?month=2026-09'); await env.flush()
+  env.ledger[1](); await retry
+  assert.equal(env.router.currentRoute.value.name, 'Bills'); assert.equal(env.ledgerReads, 2)
+  assert.ok(env.watches.every(entry => !entry.active))
+})
+test('同tick身份A到B再切回A，旧账本回执不能放行导航', async () => {
+  const env = scene({ delayedLedger: true }), pending = env.router.push('/stats')
+  await env.flush(); env.reads[0].resolve(account); await env.flush()
+  env.auth.user = { id: '2', username: 'synthetic-other' }; env.auth.user = account
+  env.ledger[0](); await pending
+  assert.notEqual(env.router.currentRoute.value.name, 'Stats')
+  assert.equal(env.ledgerReads, 1); assert.ok(env.watches.every(entry => !entry.active))
+})
+test('账本等待正常、异常及被新导航取代后，临时身份watch都释放', async () => {
+  for (const outcome of ['success', 'error', 'superseded']) {
+    const env = scene({ delayedLedger: true })
+    env.router.onError(() => {})
+    const pending = env.router.push('/bills'); const settled = pending.catch(error => error)
+    await env.flush(); env.reads[0].resolve(account); await env.flush()
+    assert.equal(env.watches.filter(entry => entry.active).length, 1)
+    let latest
+    if (outcome === 'superseded') { latest = env.router.push('/stats'); await env.flush() }
+    if (outcome === 'error') env.ledger[0].reject(Error('synthetic-ledger-failure'))
+    else env.ledger[0]()
+    const result = await settled
+    if (latest) { env.ledger[1](); await latest }
+    if (outcome === 'error') assert.equal(result.message, 'synthetic-ledger-failure')
+    else assert.equal(env.router.currentRoute.value.name, latest ? 'Stats' : 'Bills')
+    assert.ok(env.watches.every(entry => !entry.active))
+  }
+})
 test('并发导航共享正在恢复的身份，恢复前不误判访客，最新目的地保留', async () => {
   const env = scene(), first = env.router.push('/bills'); await env.flush()
   assert.equal(env.auth.status, 'loading'); assert.equal(env.reads.length, 1)

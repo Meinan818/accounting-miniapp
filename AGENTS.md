@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 新窗口01a1049d-eea8-7b23-811f-6afe194bff0f已核本次success/源停止写入/finalCommit与原生automation，compact=0。router账本await期间身份首次变化永久拒绝旧导航，访客目的地返回和新导航保持；69针对/451前端/两构建通过，before11项8通过3失败原文保留。真实业务/账号/照片/AI/邮件请求0。下一项Stats图表身份变化合成取证；GUI/真机/实际系统操作仍未验。
+
 - 本次原生gpt-6.1-sol/high新聊天01a1049d-eea8-7b23-811f-6afe194bff0f已创建，automation原生转移/view及toml逐字段保持已核，仅目标及更新时间变化。初始本地提交698f305完成，源尾提交与最终success以compaction-transfer-result-01a1043a.json为准；success前目标只读。源实际compact=2保留、最终回执后停止共享写入，目标核完新窗口0并直接接续router身份时序。此次交接不Push、不重跑测试、不重复建automation。
 
 - 源01a1043a-8b46-7423-b6dd-5c26009b5280第2次实际compact已告知，STATE=2，停止业务代码并本地commit交接，不Push；448项前端/两构建是已验证统计去重节点。本次专用回执compaction-transfer-result-01a1043a.json，status=success及源停止共享写入/finalCommit核完前目标只读。原生gpt-6.1-sol/high新聊天及现有automation转移按实际结果记录；成功后新窗口0，下一项router瞬时身份切回旧导航合成取证。下方compact=1仅历史。

@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "第2次实际compact交接：已本地保存统计读取去重，新聊天已原生创建，automation字段保持转移已核，待源最终回执",
+  "currentTask": "路由瞬时身份切回已合成复现并隔离，69针对/451全量/两构建通过，准备节点保存上传",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "合成验证真实router guard账本await期间身份变化再切回是否仍放行旧导航；保持访客登录返回及正常并发导航，不发真实账号/业务请求",
-  "nextStepReason": "guard当前账本await后仅比较id，瞬时变化再切回可能跳过新会话账本读取或放行旧意图；先证据后最小修复并核watch释放",
+  "nextStep": "合成验证Stats图表await定位与同步查看入口在身份首次变化/切回期间是否仍操作旧页面，先取证后最小修复",
+  "nextStepReason": "重读已有永久owner保护，但图表active/滚动/选日入口是否同样隔离尚未取证；不追加真实业务请求",
   "pendingUserDecision": "集中记录.workbuddy/handoff/PENDING.md；目前不主动提问，继续独立任务",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-04",
-  "observedCompactionCount": 2,
-  "compactionCountBasis": "本聊天01a1043a-8b46-7423-b6dd-5c26009b5280第2次实际上下文压缩已识别并告知，立即停止业务代码并执行本地保存与原生交接；同聊天恢复不归零，自动唤醒或摘要提及不计",
+  "observedCompactionCount": 0,
+  "compactionCountBasis": "全新聊天01a1049d-eea8-7b23-811f-6afe194bff0f核交接后实际基准0；源计数2仅历史，摘要及唤醒不计事件",
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
@@ -20,7 +20,7 @@
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a1049d-eea8-7b23-811f-6afe194bff0f",
-    "transferStatus": "原生gpt-6.1-sol/high新聊天已创建，automation view/toml逐字段保持已核；目标核本次专用success回执及finalCommit前只读。源实际compact=2保持",
+    "transferStatus": "本次专用success回执、finalCommit、源停止写入及原生view/toml字段保持已核",
     "scheduledRunVerified": false
   }
 }

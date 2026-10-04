@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { watch } from 'vue'
 import { getScrollPosition } from '@/utils/navigation'
 import { SERVER_MODE } from '@/api/mode'
 import { useAuthStore } from '@/stores/authStore'
@@ -79,9 +80,16 @@ if (SERVER_MODE) router.beforeEach(async to => {
   if (to.meta.requiresAuth && !auth.user) return loginTarget(to)
   if (to.name === 'Login' && auth.user) return getLoginReturnPath(to.query.redirect)
   const owner = auth.user?.id
-  if (to.meta.requiresAuth) await useRecordStore().refresh()
-  if (current !== navigationGeneration) return false
-  if (to.meta.requiresAuth && auth.user?.id !== owner) return loginTarget(to)
+  if (to.meta.requiresAuth) {
+    let ownerChanged = false
+    const stop = watch(() => auth.user?.id, () => { ownerChanged = true }, { flush: 'sync' })
+    try {
+      await useRecordStore().refresh()
+      if (current !== navigationGeneration) return false
+      // A restored id cannot revive a navigation started by an earlier identity.
+      if (ownerChanged || auth.user?.id !== owner) return auth.user ? false : loginTarget(to)
+    } finally { stop() }
+  }
 })
 
 export default router

@@ -346,3 +346,6 @@
 
 ## 2026-10-04 · 路由与统计挂载重复读账本
 - 正式guard已经await refresh，Stats仍mounted重读，成功/失败均多一次请求。stats-duplicate-before8项6通过2失败保留；只保留演示mounted读、正式显式失败重试后28项针对/448全量/两构建通过。以后入口测试连路由guard与组件生命周期，不把单个helper单次锁当完整链去重；GUI仍未验。
+
+## 2026-10-04 · router await后账号id相等仍可能是旧意图
+- 实际内存router+session复现退出后同账号重登、同步A→B→A仍放行旧导航，两条业务失败及一条缺临时watch生命周期能力断言保留在router-owner-return-before（11项8通过3失败）。等待期间flush:sync永久标记，finally释放；已认证身份变化取消旧导航，仍为访客保留站内返回目标，避免跳Login又自动放行而追加读取。69针对/451前端/两构建通过。不能把账号id重相等当原请求所有者从未变化；合成session不能代替真实GUI认证。
