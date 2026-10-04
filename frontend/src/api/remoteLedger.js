@@ -84,6 +84,10 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
           revision = page.revision
           let previousId = after
           for (const entry of page.records) {
+            if (!entry || typeof entry !== 'object' || Array.isArray(entry) || !entry.record ||
+                typeof entry.record !== 'object' || Array.isArray(entry.record)) {
+              throw new Error('账本分页记录格式不完整，原账本已保留。')
+            }
             const id = entry.record?.id
             if (seen.has(id)) throw new Error('账本分页编号重复，原账本已保留。')
             if (typeof id !== 'string' || (previousId !== null && id <= previousId)) throw new Error('账本分页顺序或位置不合法，原账本已保留。')

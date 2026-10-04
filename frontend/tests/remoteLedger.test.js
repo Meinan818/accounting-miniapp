@@ -338,6 +338,27 @@ test('同版本首段畸形仍拒绝，不能借版本缓存跳过字段校验',
   } finally { test.dispose() }
 })
 
+test('新版本和同版本分页缺失记录结构均给出可读错误并保留原完整账本', async () => {
+  let page = { revision: '8', records: [{ record: value }], nextAfter: null }
+  const scene = setup({ request: async () => page })
+  try {
+    assert.equal(await scene.store.refresh(), true)
+    const original = scene.store.records.value
+    for (const revision of ['9', '8']) {
+      for (const entry of [null, false, 1, 'bad', [], {}, { record: null }, { record: [] }]) {
+        page = { revision, records: [entry], nextAfter: null }
+        assert.equal(await scene.store.refresh(), false)
+        assert.equal(scene.store.records.value, original)
+        assert.equal(scene.store.storageError.value, '账本分页记录格式不完整，原账本已保留。')
+      }
+    }
+    page = { revision: '9', records: [{ record: { ...value, amount: '0.31', version: 1 } }], nextAfter: null }
+    assert.equal(await scene.store.refresh(true), true)
+    assert.equal(scene.store.records.value[0].amount, 0.31)
+    assert.equal(scene.store.storageError.value, '')
+  } finally { scene.dispose() }
+})
+
 test('强制刷新等待已有读取后仍完整分页，不能降为版本缓存检查', async () => {
   let reads = 0, release
   const first = { revision: '8', records: [{ record: value }], nextAfter: id }

@@ -2,6 +2,11 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 当前源01a10553第2次实际compact已告知并STATE=2，业务停止/仅本地commit不Push。476前端/两构建/累计284浏览器729API104截图7JSON另5CSV保持。本次专用compaction-transfer-result-01a10553.json的success、源停止共享写入及finalCommit核完前新聊天只读；新窗口gpt-6.1-sol/high及原automation迁移按实况记，核完设0直接接续分页deletedAt/空记录/空页元数据取证。
+
+
+- 分页null记录英文TypeError已实际复现，先校验对象/非数组修为中文保账本提示；32before31通过1失败保留、74相关/476前端/两构建/4浏览器25API2截图与原7项分页回归通过。累计284浏览器/729API/104截图/7JSON备份，另5CSV；compact=1/原静音automation保持，下一项删除时间/空页元数据合成取证，真实请求0。
+
 - 分页页内/跨页重复、逆序/错游标/revision变化/同版本缓存及force恢复7浏览器/48API/2截图通过，完整旧快照保护，真实请求0。累计280浏览器/704API/102截图/7JSON备份，另5CSV；475前端/两构建同源码保持，02c7a67完整远端一致。compact=1保持，当前heartbeat不计，下一项null/结构缺失回执文案合成取证。
 
 - Bills重复参数数组/无效月份类型/120字符上限/HTML文字/重复added6浏览器/14API/2截图通过，320px/刷新保持、真实请求0。累计273浏览器/656API/100截图/7JSON备份，另5CSV；475前端/两构建同源码保持，5fbb790完整远端一致。compact=1及原静音automation保持，下一项分页畸形重复/顺序/revision与显式force恢复合成链。

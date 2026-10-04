@@ -442,3 +442,8 @@ Home新增ID107在删除ID106前使合成分页顺序非法，实际拒读符合
 ## 2026-10-04 · v-show隐藏表单与错误选择器
 
 删除确认用v-show保留原表单，错误文案会同时在隐藏form-error和可见delete-error存在。应限定当前确认区/可见错误；busy首轮严格选择器失败日志/selector-before/独立截图保留，修harness后7项完整通过。
+
+
+## 2026-10-04 · null分页结构与harness残留
+
+生产entry.record读取早于结构校验，null导致英文TypeError暴露；before-clean与单测失败保留，现先校验对象/非数组并明确保账本。生成shape时不能保留旧重复ID分支操作null；初fixture Route错误不计业务复现，清分支后重新确认。before/after的成功和catch结果均须独立阶段名，使用replaceAll且保初fixture结果。
