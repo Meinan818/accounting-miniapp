@@ -1078,3 +1078,9 @@
 - create_thread明确传model=gpt-6.1-sol、thinking=high，项目ec44e80f-fe41-4919-999a-6d1c165b2e66/local；原生返回threadId=01a1043a-8b46-7423-b6dd-5c26009b5280、hostId=local。一次wait_threads即时快照核目标active，commentary明确只读核回执、确认源停止写入后才接CSV。
 - 复用automation原生update，传完整既有name/prompt/rrule/status/notificationPolicy且仅换targetThreadId；工具成功返回ACTIVE，原生view成功显示。toml与E盘before副本逐字段比较，version/id/kind/name/prompt/status/rrule/notification_policy/created_at全部相同，只有target_thread_id到新聊天及updated_at变化，未重复创建，仍每小时/ACTIVE/failed_runs_only。
 - 更新STATE/NEXT/根HANDOFF/AGENTS/PENDING的实际结果，源计数2保留。尾提交核差异与敏感信息后只本地保存，finalCommit写本次compaction-transfer-result.json；最终success回执写出后源不再修改任何共享文件，目标核回执/提交/归属再设新基准0接续。未确认整次定时scheduler终态，不把创建/转移当CSV完成或浏览器验收。
+
+## 2026-10-04 · 新窗口接手与完整明细CSV
+
+- 新窗口01a1043a-8b46-7423-b6dd-5c26009b5280已核本次success回执、源ec45d68提交存在及源停止共享写入，原生automation view/toml已到本聊天、每小时ACTIVE/failed_runs_only保持，compact基准0。明细CSV显式入口已接完整listedRecords，未展开小票全部导出；未知时间空、安全整数分两位小数、CSV转义/中文UTF-8 BOM/表格公式文本保护、错误/忙碌/编辑/离页/账号切回拒绝旧导出已验证。69项针对、385项全量及demo/server两构建通过，真实账号/账本/照片/AI/邮件写入0，无新增依赖费用或部署。GUI/窄屏/真机/实际下载落盘/隔夜仍未验。下一项明细清除搜索后的焦点时序先取证，不主动提问、等回复或委派。
+- 已读完整editorRendering源setup绑定，新增billCsv纯函数与下载Blob复用；下载替身核UTF-8字节BOM、CSV MIME及成功/失败释放URL，页面合成账单核121条窗口之外和收支/分类/搜索交集，不改原账本或发额外请求。日志csv-targeted/frontend/demo/server保留，项目无lint/typecheck脚本，不虚报。
+- 官方只读GitHub接口当前核私有/无Pages/0 workflows/0 deployments，远端9702a1a与本地origin/main一致；源两交接提交及本节点相关差异核归属，无真实凭据或生成物，保存后普通Push并核远端结果。Git443失败历史保持。

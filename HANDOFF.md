@@ -1,3 +1,7 @@
+## 当前入口：完整明细CSV与新窗口接手（2026-10-04）
+
+新窗口01a1043a-8b46-7423-b6dd-5c26009b5280已核本次success回执、源ec45d68提交存在及源停止共享写入，原生automation view/toml已到本聊天、每小时ACTIVE/failed_runs_only保持，compact基准0。明细CSV显式入口已接完整listedRecords，未展开小票全部导出；未知时间空、安全整数分两位小数、CSV转义/中文UTF-8 BOM/表格公式文本保护、错误/忙碌/编辑/离页/账号切回拒绝旧导出已验证。69项针对、385项全量及demo/server两构建通过，真实账号/账本/照片/AI/邮件写入0，无新增依赖费用或部署。GUI/窄屏/真机/实际下载落盘/隔夜仍未验。下一项明细清除搜索后的焦点时序先取证，不主动提问、等回复或委派。
+
 ## 当前入口：第2次实际压缩交接（2026-10-04）
 
 本次原生结果已核：准备交接commit e1cda784246423538290be3865435c06eb2720da成功，新聊天01a1043a-8b46-7423-b6dd-5c26009b5280按gpt-6.1-sol/high创建返回，目标已active并只读等待。automation原生update/view成功，toml逐字段核仅target_thread_id和updated_at变化，原每小时/ACTIVE/failed_runs_only及name/prompt/created_at等保持；源保存尾提交后写最终success回执即停止共享写入，finalCommit以本次回执为准。源STATE计数2保留到目标核完自行设新基准0，此交接不Push。

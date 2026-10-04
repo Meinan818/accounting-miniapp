@@ -12,6 +12,7 @@ import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { filterRecords, windowRecordGroups } from '../src/utils/journal.js'
 import { getRecordTotals } from '../src/utils/money.js'
 import { useLocalDay } from '../src/utils/calendar.js'
+import { createBillCsv } from '../src/utils/billCsv.js'
 
 function source(file) {
   const { descriptor } = parse(readFileSync(new URL('../src/' + file, import.meta.url), 'utf8'))
@@ -112,9 +113,10 @@ test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚�
   } finally { if (state.view) state.dispose() }
 })
 
-function mountBills({ records = [{ ...original }], dateClock = {} } = {}) {
+function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false } = {}) {
   const bills = source('views/Bills.vue'), calls = []
   const route = Vue.reactive({ query: { month: '2026-10' } })
+  const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), downloads = []
   let finish, fail, values
   const store = Vue.reactive({ records, storageError: '', refresh: async () => true,
     updateRecord: (...args) => { calls.push(['update', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) },
@@ -123,13 +125,15 @@ function mountBills({ records = [{ ...original }], dateClock = {} } = {}) {
   const app = renderer.createApp({ setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
-      useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit')
+      useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS,
+      SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
+      downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError')
     values.noticeElement.value = focusTarget
     return () => Vue.h('main')
   } })
   app.mount(node('root')); values.edit(original)
-  return { values, calls, route, focusTarget, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
+  return { values, calls, route, store, auth, downloads, focusTarget, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
 }
 
 test('编辑保存拒绝重复请求，离页后成功回执不改本页月份/提示', async () => {
@@ -275,4 +279,60 @@ test('连续翻页只由最新展开目标聚焦，正常单次展开仍定位�
     assert.equal(second.focusCount, 1)
     assert.equal(second.scrollCount, 1)
   } finally { state.dispose() }
+})
+
+test('明细导出全部121笔未展开账单，随后只导出当前月收入/分类/搜索完整交集，不发请求或改原账本', () => {
+  const records = Array.from({ length: 121 }, (_, id) => ({ ...original, id: String(id) }))
+  records.push({ ...original, id: 'income', type: 'income', category: '工资', remark: '合成工资' },
+    { ...original, id: 'other-month', date: '2026-09-03' }, { ...original, id: 'deleted', deletedAt: 'synthetic' })
+  const before = JSON.stringify(records), state = mountBills({ records })
+  try {
+    state.values.editingRecord.value = null
+    assert.equal(state.downloads.length, 0)
+    state.values.exportBills()
+    assert.equal(state.downloads[0].csv.split('\r\n').length, 124)
+    assert.equal(state.downloads[0].filename, 'miaoji-bills-2026-10.csv')
+    assert.equal(state.values.visibleLimit.value, 60)
+    assert.match(state.values.notice.value, /已发起下载 122 笔/)
+    state.values.selectedType.value = 'income'; state.values.selectedCategory.value = '工资'; state.values.searchText.value = '合成工资'
+    state.values.exportBills()
+    assert.equal(state.downloads[1].csv.split('\r\n').length, 3)
+    assert.match(state.downloads[1].csv, /"收入","工资","0.29","合成工资"/)
+    assert.equal(state.downloads[1].filename, 'miaoji-bills-2026-10-filtered.csv')
+    assert.equal(JSON.stringify(records), before); assert.deepEqual(state.calls, [])
+  } finally { state.dispose() }
+})
+
+test('明细读取错误/重读/保存/编辑/空结果时禁用导出，离页与账号切回后旧入口不能下载', () => {
+  const state = mountBills({ server: true })
+  try {
+    state.values.exportBills(); assert.equal(state.downloads.length, 0)
+    state.values.editingRecord.value = null
+    for (const key of ['reloading', 'saving']) {
+      state.values[key].value = true; assert.equal(state.values.exportUnavailable.value, true); state.values.exportBills(); state.values[key].value = false
+    }
+    state.store.storageError = '合成读取错误'; state.values.exportBills(); state.store.storageError = ''
+    state.values.reloadError.value = '合成重读错误'; state.values.exportBills(); state.values.reloadError.value = ''
+    state.values.searchText.value = '没有匹配'; state.values.exportBills(); state.values.searchText.value = ''
+    assert.equal(state.downloads.length, 0)
+    state.values.exportBills(); assert.equal(state.downloads.length, 1)
+    state.auth.user = { id: 'other-owner' }; state.values.exportBills()
+    state.auth.user = { id: 'synthetic-owner' }; state.values.exportBills()
+    assert.equal(state.downloads.length, 1)
+  } finally { state.dispose() }
+  const disposed = mountBills()
+  disposed.values.editingRecord.value = null; disposed.dispose(); disposed.values.exportBills()
+  assert.equal(disposed.downloads.length, 0)
+})
+
+test('CSV字段错误与下载失败明确提示未完成，不能出现已保存文件的回执', () => {
+  for (const options of [{ records: [{ ...original, amount: '0.291' }] }, { downloadFailure: true }]) {
+    const state = mountBills(options)
+    try {
+      state.values.editingRecord.value = null; state.values.exportBills()
+      assert.match(state.values.exportError.value, /导出未完成/)
+      assert.equal(state.values.notice.value, ''); assert.equal(state.downloads.length, 0)
+      assert.equal(state.calls.length, 0)
+    } finally { state.dispose() }
+  }
 })

@@ -13,6 +13,9 @@ import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
+import { useAuthStore } from '@/stores/authStore'
+import { createBillCsv } from '@/utils/billCsv'
+import { downloadCsv } from '@/utils/download'
 import { formatCurrency } from '@/utils/format'
 import { filterRecords, windowRecordGroups } from '@/utils/journal'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
@@ -38,6 +41,13 @@ const noticeElement = ref(null)
 const searchInput = ref(null)
 let active = true
 onScopeDispose(() => { active = false })
+const auth = SERVER_MODE ? useAuthStore() : null
+const owner = auth?.user?.id
+const exportOwnerCurrent = ref(!SERVER_MODE || Boolean(owner))
+if (SERVER_MODE) watch(() => auth.user?.id, value => {
+  if (value !== owner) exportOwnerCurrent.value = false
+}, { flush: 'sync' })
+const exportError = ref('')
 const displayBatchSize = 60
 const visibleLimit = ref(displayBatchSize)
 watch([selectedMonth, searchText, selectedType, selectedCategory], () => { visibleLimit.value = displayBatchSize })
@@ -56,6 +66,19 @@ const monthTotals = computed(() => getRecordTotals(monthRecords.value))
 
 const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
 const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
+const exportUnavailable = computed(() => !active || !exportOwnerCurrent.value || Boolean(recordStore.storageError || reloadError.value) ||
+  reloading.value || saving.value || Boolean(editingRecord.value) || !listedRecords.value.length)
+watch([selectedMonth, searchText, selectedType, selectedCategory], () => { exportError.value = '' })
+function exportBills() {
+  if (exportUnavailable.value || !active) return
+  exportError.value = ''; notice.value = ''
+  try {
+    const snapshot = listedRecords.value.map(record => ({ ...record }))
+    const csv = createBillCsv(snapshot)
+    downloadCsv(csv, `miaoji-bills-${selectedMonth.value}${filtering.value ? '-filtered' : ''}.csv`)
+    notice.value = `已发起下载 ${snapshot.length} 笔${filtering.value ? '筛选' : '本月'}账单，请查看浏览器下载记录。`
+  } catch (failure) { exportError.value = '导出未完成：' + failure.message }
+}
 const filterCategories = computed(() => {
   const counts = new Map()
   for (const record of monthRecords.value) {
@@ -255,6 +278,11 @@ function getSign(record) {
         <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
       </section>
       <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" @click="resetFilters">查看全部</button></div>
+      <div class="bills-export">
+        <button type="button" :disabled="exportUnavailable" @click="exportBills">{{ filtering ? '导出筛选账单' : '导出本月账单' }} · CSV</button>
+        <p>下载完整{{ filtering ? '筛选结果' : '月份账单' }}，包含尚未展开的小票</p>
+        <p v-if="exportError" class="bills-alert" role="alert">{{ exportError }}</p>
+      </div>
       <p class="bills-storage-note">{{ SERVER_MODE ? '账单保存在当前账号；这里的修改会同步到首页和聊天查询' : '账单保存在当前浏览器；这里的修改会同步到首页和聊天查询' }}</p>
       <p v-if="groupedRecords.length" class="bills-edit-hint">点账单可编辑</p>
 
@@ -327,6 +355,11 @@ function getSign(record) {
 </template>
 
 <style scoped>
+.bills-export { margin-top:16px; text-align:center; color:var(--zz-home-ink-soft); font-size:11px; line-height:1.8; }
+.bills-export button { min-height:44px; padding:9px 16px; border:1px solid #b79076; border-radius:13px; background:#fff7ec; color:#785640; font-size:12px; }
+.bills-export button:disabled { opacity:.5; cursor:not-allowed; }
+.bills-export button:focus-visible { outline:2px solid var(--zz-home-ink); outline-offset:3px; }
+.bills-export p { margin-top:6px; }
 .bills-filter-shelf { margin-top:18px; }
 .bills-filter-heading { display:flex; align-items:center; justify-content:space-between; gap:6px; color:#846450; font-size:12px; }
 .bills-type-tabs { display:flex; gap:3px; border:1px solid #e5cbb5; border-radius:15px; background:#fff7ec; padding:3px; }
