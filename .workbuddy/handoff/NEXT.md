@@ -1,3 +1,13 @@
+## 资料与照片保存回执一致性（2026-10-04）
+
+错误昵称200回执关闭编辑并显示合成别的昵称已浏览器复现；47before45通过2失败及wrong-name-before/时间戳截图保留。createProfileApi现核资料下一version及昵称签名头像与提交一致；照片回执须下一version/photo/原资料文本，不正确不继续PUT/不标部分保存。边缘空白按Java Unicode White_Space含U+0085及既有JS trim清理，避免合法服务端规范化误判。100相关/496前端/demo与server两构建通过，新增2有意义回归覆盖资料5畸形、照片5畸形/0后续PUT、不改原输入、合法Unicode规范化。
+
+三条资料wrong-name/wrong-version/wrong-avatar12浏览器检查48合成API9截图通过：双击单PUT、busy输入/关闭锁、200异常不显示保存成功/不关窗口，保昵称签名头像；既有GET重读真实fixture版1，用户显式再保存才PUT版1到2，刷新保持，账本503显式重读正常。新增照片畸形version0链4浏览器13API3截图：真实合成PNG本机裁256JPEG/预览取消保护，POST实际fixture照片版1却回旧0时拒绝、不继续任何PUT/不误标部分保存、保原data预览及新文本；既有GET核最新1，显式取消刷新可读实际保存照片，文本仍原值，0自动重传/重复上传。
+
+原照片成功/资料503/显式原版重试只PUT4浏览器16API2截图回归通过，不重复累计。服务端ProfileIntegrationTest12项隔离H2/UUID独立E盘照片目录/离线Maven通过，无真实照片或账号/MySQL/AI/邮件请求；账本51H2保持此前节点证据。全部浏览器API拦截/未知外部阻断/意外错误0，资料3预期账本503、照片异常0预期HTTP错误，合成POST仅1。错误与原未保存文本/绿色预览截图已抽检，材料在既有E盘忽略目录。
+
+累计58组400浏览器1256API169截图7JSON，源5CSV另计。2f10cab3883a8fa29163ace6a4a0e744e7edb2d5普通Push及官方inspect完整远端一致已核，私有/无Pages/0workflows/0deployments保持。函数编排初次生成script中scene字符串转义错误，未运行/改文件，重发正确patch后生成；第一次API patch锚点不匹配未写入，核原模板再patch。compact=1/原静音automation与本机服务保持，真实账号/真机/系统剪贴板/实际隔夜/人工验收未验。下一项Profile读取昵称/签名字数与空白结构合成合同取证。
+
 ## 服务端未知时间往返合同（2026-10-04）
 
 扩展现有businessTime回归：21:15入账、更新22:05，再版1省略time改1.25元返回版2且time省略，直接SQL business_time为null，snapshot省略time/保版2。原写入键重放仍逐字返回原21:15/1.00回执，随后GET当前账单仍1.25元/未知时间，不恢复旧字段。1针对/51完整账本H2集成通过，无服务端业务改动，前端494项/两构建及累计56组384浏览器1195API157截图7JSON/源5CSV保持，不重复统计或跑前端。

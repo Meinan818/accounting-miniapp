@@ -779,6 +779,39 @@ test('预置资料保存不上传照片，Unicode超长不发请求', async () =
   await assert.rejects(api.save(profile, { ...profile, nickname: '😀'.repeat(21) })); assert.equal(calls, 1)
 })
 
+test('资料200回执须匹配下一版本与提交内容，失败保原资料及输入', async () => {
+  const current = { nickname: '旧猫', signature: '旧签名', avatar: 'cat', version: 2 }
+  const form = { ...current, nickname: ' 新猫 ', signature: ' 新签名 ', avatar: 'flower' }
+  const valid = { nickname: '新猫', signature: '新签名', avatar: 'flower', version: 3 }
+  for (const wrong of [{ ...valid, version: 2 }, { ...valid, version: 4 }, { ...valid, nickname: '别人' },
+    { ...valid, signature: '别的签名' }, { ...valid, avatar: 'paw' }]) {
+    const calls = []
+    const api = createProfileApi({ request: async (...args) => { calls.push(args); return wrong } })
+    await assert.rejects(api.save(current, form), /资料保存回执.*不一致/)
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], 'PUT')
+    assert.deepEqual(calls[0][2].body, { ...valid, version: 2 })
+    assert.equal(current.nickname, '旧猫'); assert.equal(current.version, 2); assert.equal(form.nickname, ' 新猫 ')
+  }
+  const api = createProfileApi({ request: async (method, path, options) => {
+    assert.deepEqual(options.body, { ...valid, version: 2 }); return valid
+  } })
+  assert.equal((await api.save(current, { ...form, nickname: '\u0085新猫\u0085', signature: '\u0085新签名\u0085' })).nickname, '新猫')
+})
+
+test('照片200回执须匹配下一版本和原资料，异常不继续PUT或标部分保存', async () => {
+  const current = { nickname: '旧猫', signature: '旧签名', avatar: 'cat', version: 0 }
+  const form = { ...current, nickname: '新猫', avatar: 'photo', photo: 'data:image/jpeg;base64,/9j/' }
+  const valid = { ...current, avatar: 'photo', avatarUrl: '/api/profile/avatar', version: 1 }
+  for (const wrong of [{ ...valid, version: 0 }, { ...valid, version: 2 }, { ...valid, avatar: 'paw' },
+    { ...valid, nickname: '别人' }, { ...valid, signature: '别的签名' }]) {
+    const calls = []
+    const api = createProfileApi({ request: async (...args) => { calls.push(args); return wrong } })
+    await assert.rejects(api.save(current, form), error => /照片保存回执.*不一致/.test(error.message) && !error.partialProfile)
+    assert.equal(calls.length, 1); assert.equal(calls[0][0], 'POST'); assert.equal(current.version, 0)
+    assert.equal(form.photo, 'data:image/jpeg;base64,/9j/')
+  }
+})
+
 test('照片部分保存失败提供已保存版本，重试只保存文字不重复上传', async () => {
   const calls = [], original = { nickname: '猫', signature: '', avatar: 'cat', version: 0 }
   let fail = true

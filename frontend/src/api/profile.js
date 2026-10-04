@@ -16,7 +16,9 @@ export function createProfileApi(client, { owner, isCurrent = () => true } = {})
   async function read() { return fromProfileView(await request('GET', '/api/profile'), owner) }
   async function save(current, form) {
     guard()
-    const nickname = form.nickname.trim(), signature = form.signature.trim()
+    // Java ProfileService strips Unicode White_Space, including U+0085.
+    const clean = text => text.trim().replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '')
+    const nickname = clean(form.nickname), signature = clean(form.signature)
     if (!nickname || [...nickname].length > 20 || [...signature].length > 60 || !['cat', 'paw', 'flower', 'photo'].includes(form.avatar)) {
       throw new Error('昵称须为1–20个字，签名最多60个字，请选择有效头像。')
     }
@@ -27,9 +29,19 @@ export function createProfileApi(client, { owner, isCurrent = () => true } = {})
       const bytes = Uint8Array.from(atob(encoded), character => character.charCodeAt(0))
       const body = new FormData(); body.append('image', new Blob([bytes], { type: 'image/jpeg' }), 'avatar.jpg')
       const photo = fromProfileView(await request('POST', `/api/profile/avatar?version=${version}`, { body, multipart: true }), owner)
+      if (photo.version !== version + 1 || photo.avatar !== 'photo'
+        || photo.nickname !== current.nickname || photo.signature !== current.signature) {
+        throw new Error('照片保存回执与原操作不一致，请保留输入并重新读取资料核对，暂勿重复上传。')
+      }
       version = photo.version; uploadedProfile = photo
     }
-    try { return fromProfileView(await request('PUT', '/api/profile', { body: { version, nickname, signature, avatar: form.avatar } }), owner) }
+    try {
+      const saved = fromProfileView(await request('PUT', '/api/profile', { body: { version, nickname, signature, avatar: form.avatar } }), owner)
+      if (saved.version !== version + 1 || saved.nickname !== nickname || saved.signature !== signature || saved.avatar !== form.avatar) {
+        throw new Error('资料保存回执与本次操作不一致，请保留输入并重新读取资料核对，暂勿重复保存。')
+      }
+      return saved
+    }
     catch (failure) {
       if (uploadedProfile) throw Object.assign(new Error('照片已保存，但昵称或签名的保存尚未确认。' + failure.message + ' 请重新核对后再试。'),
         { code: failure.code, status: failure.status, partialProfile: uploadedProfile, cause: failure })
