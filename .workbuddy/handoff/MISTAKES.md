@@ -413,3 +413,7 @@ Editor曾把conflict并入saving，实际请求结束仍显示正在保存并禁
 
 - 金额边界harness数组与后续const拼接缺分隔符，first.log保留；修正后先node --check。不能把语法失败归为业务缺陷。
 - 明细汇总三列大额会任意换行，原最高金额截图及浏览器单行失败断言已保留；启用既有Stats大额阈值单列后10浏览器/473前端/两构建通过，普通金额三列保持。
+
+## 2026-10-04 · 写意图键须核源码
+
+- 手动金额harness初用猜测不存在的pending键，首轮null断言无证据价值；核ledger.js实际miaoji_account_write_intents_v1_1后修正并11项复跑通过，保first/final日志、不重复累计。
