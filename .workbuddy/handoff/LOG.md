@@ -1104,3 +1104,8 @@
 
 - 统计页峰值定位核等待前后月份/复盘快照与watch cleanup，离页旧滚动入口无效；用户箭头/触摸/滚轮查看后同月更新保留位置，切月恢复自动定位。stats-scroll-before6项3通过3失败保留，47项针对/403项前端及demo/server两构建通过，无真实账号/业务/照片/AI/邮件请求。资料身份隔离2dea56c完整远端一致已核（profile-owner-sync），compact=0，原生每小时ACTIVE/failed_runs_only保持。GUI/窄屏/真机/实际下载/隔夜仍待工具条件；下一项明细筛选与地址栏刷新/登录返回一致性只读评估，避免追加服务器请求。
 - 实际Stats setup配合合成账单/滚动替身，保留正常自动定位与选日，新增4项回归覆盖手动位置/旧月份/离页及切月恢复。pointerdown与wheel.passive绑定只取消自动定位，不阻止原生滚动；当前月份手动查看后直到切月不强制居中。源模块/编译与native调用不代替GUI。
+
+## 2026-10-04 · 明细筛选链接只读评估
+
+- 最新403项前端与两构建通过，CSV/搜索焦点/退出/资料照片身份/统计滚动均已独立保存。明细筛选地址栏已只读取证（bills-query-readonly）：选月/关键词/收支/分类只改useBillQuery refs，重建读原route.query恢复旧条件；router.beforeEach每次受保护query导航均刷新账本且refresh仍请求首页核版本。因此下一项采用显式复制当前筛选链接，安全编码当前refs，失败提供可复制文本，不自动导航/后台新增账本请求。纯合成未访问真实账号/账本/照片/AI/邮件；compact=0、原生每小时ACTIVE/failed_runs_only保持，GUI/真机/实际下载/隔夜仍待工具条件。
+- 统计5ab573f完整远端SHA已由官方同SHA/force:false核一致（stats-scroll-sync）；私有/无Pages/0 workflows/0 deployments保持，既有Git低速/443失败不删除。下一项功能尚未实施，不能说手动选择已经自动写地址栏或剪贴板已验证；本次只读评估无新测试，403项/最后两构建保持。
