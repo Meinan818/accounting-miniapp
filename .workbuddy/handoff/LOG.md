@@ -1252,3 +1252,10 @@ Login真实隔离server浏览器6项/13次合成API通过，登录注册三宽�
 按本机官方Playwright 1.62.1类型声明Clock文档（playwright-core/types/types.d.ts 20090起及package.json）核install/pauseAt/fastForward/setSystemTime，用Asia/Tokyo时区隔离context模拟10月31日→11月1/2日。Home/Stats/Bills/Profile 6场景/14次合成API通过：默认选日/日历/月汇总及Stats本月更新，Home历史选日/Stats显式历史月与收入选择保持，Bills今天→昨天但月/搜索/Editor金额日期时间保持，Profile月份/足迹更新且未保存昵称保持。每条变化前后请求计数不增加，原合成账本不变，意外错误/未知请求0、真实业务/账号/照片/AI/邮件0。6截图留E盘并抽检默认Home/更新Profile，browser-clock-result.json。首轮Bills选择器误用bills-month-nav等待超时原文browser-clock-selector-before-result.json/browser-clock-first.log保留；核实际bills-month后通过，无业务修改。模拟不作为实际隔夜/真机证明。
 
 注册记录74f0461572e83b920855622c6836b72cbccbcc95完整远端一致已核；465前端及同源码两构建保持，Java19940/Vite20820未重启。当前聊天实际compact=1，原automation view已调用，本次不改字段或重复建。真实账号/用户系统剪贴板/真机/实际隔夜/最终人工验收仍未验。下一项Chat存储异常备份的合成浏览器实际JSON下载，核坏原文保留、未保存本页消息和部分备份提示，禁止读取用户浏览器资料/真实对话。
+## 当前入口：对话异常备份实际合成下载（2026-10-04）
+
+Chat corrupt/quota/unreadable三种合成存储异常真实浏览器4项/12次拦截API通过，3个JSON实际保存E盘并解析字节：坏原文逐字保留，配额不足保既有旧消息与本页新消息/待确认草稿；不可读标storedHistory.readable=false/raw=null并明确部分备份提示。所有备份hasUnsavedChanges=true；下载前后合成原存储不变、备份0追加请求/存储写入，Blob和临时a释放，意外错误/未知请求0。3截图抽检坏原文场景。browser-chat-backup-result.json与browser-chat-backup-{corrupt,quota,unreadable}.json留E盘忽略目录；测试不读取真实对话或用户浏览器资料。真实业务/认证/AI/照片/邮件请求0，无业务修改。
+
+本轮累计新增8组56项合成浏览器验证/174次最终成功场景API拦截（不含较早demo/server24项或harness重跑）；35截图及3备份JSON。唯一业务修改为Profile去除guard/mounted重复账本读取，47相关/465全量/demo与server构建通过；后续仅验证和记录，未重复无意义测试。前一跨月记录fbc9641c0239104d9c67a45f64f2fcdf717f2671完整远端一致已核。原automation已原生view及toml实际核当前聊天/每小时/ACTIVE/failed_runs_only，无字段修改。compact=1，本机Java19940/Vite20820保持，真实账号/用户剪贴板/真机/实际隔夜/人工最终验收未验。
+
+下一项完全合成server浏览器验证Bills编辑期间ACCOUNT_CHANGED/401会话失效到Login保留站内目标，再合成登录另一账号，核旧账单隐藏与新CSRF/账号请求隔离；禁止真实账号/用户数据。低打扰续办保持，不提问或委派。

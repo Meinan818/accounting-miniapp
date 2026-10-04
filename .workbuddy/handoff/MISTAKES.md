@@ -374,3 +374,6 @@ networkidle可能沿用原空闲状态，合成延迟响应刚release时不能�
 
 ## 2026-10-04 · Profile路由和mounted重复读取
 Stats曾修不代表所有页面已覆盖。Profile mounted仍无条件reload，真实浏览器一次进入2次账本请求，实际router+Profile链14项12通过2失败。正式仅复用guard，演示mounted及独立资料GET保持；47相关/465全量/两构建、6浏览器场景通过。缺陷证据与正常资料/账本失败显式重试分别验证，不能把Store缓存等同无额外请求。
+
+## 2026-10-04 · 合成浏览器harness选择器和时钟
+本轮多次把猜测的stats-page/bills-month-nav用于断言导致超时；以后写选择器先核实际模板class/aria，定位具体目标，不猜相似命名。Clock先核已安装官方声明和实际1.62.1版本，按正常load→pauseAt→fastForward/focus模拟；模拟不等于实际隔夜。所有harness失败原文保留，不通过删断言或改业务适配测试。
