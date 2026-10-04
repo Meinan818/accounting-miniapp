@@ -1,3 +1,10 @@
+## 当前入口：编辑中会话失效与另账号隔离浏览器链（2026-10-04）
+
+Bills编辑期间401与ACCOUNT_CHANGED两条真实合成浏览器链4项/26次API拦截通过：等待中表单禁用，失效回执撤下旧窗口/账单，Login保原月/编码搜索/hash；合成登录账号2后仅显示B账单，A旧账单仍25元未改。新编辑只能发账号2/新CSRF、B改12元；旧A合成对话原文保持、不自动迁移到账号2，旧写没有重试。4条预设401/409资源控制台单列，意外错误/未知请求0、真实认证/账本/AI/照片/邮件0。browser-session-result.json与2截图留E盘，抽检账号变化终态。本轮无新业务缺陷或源码修改。
+
+当前累计新增9组合成浏览器检查60项，最终成功场景API完全拦截200次、37截图及3个实际JSON备份E盘下载；较早demo/server24项/18截图/121条CSV另算，未把harness重跑计入新增场景数。唯一业务修改Profile重复账本读取已修，47相关/465前端/demo与server两构建通过，之后同业务源码保持不无意义重跑。备份记录d38b8b43876c21c0072b3f4df14514e1721f0147完整远端一致已核。原automation原生view和toml已核当前聊天/每小时/ACTIVE/failed_runs_only，未重复创建或改字段；compact=1保持。本机服务未重启，真实账号/真机/系统剪贴板/实际隔夜/人工最终验收未验。
+
+下一项Login验证码challenge过期/倒计时重发的合成浏览器Clock链，核未发真实邮件、过期不注册、改邮箱/切模式不复用旧挑战；先核现有API，不新增依赖费用。低打扰持续续办，不主动提问或委派。
 ## 当前入口：对话异常备份实际合成下载（2026-10-04）
 
 Chat corrupt/quota/unreadable三种合成存储异常真实浏览器4项/12次拦截API通过，3个JSON实际保存E盘并解析字节：坏原文逐字保留，配额不足保既有旧消息与本页新消息/待确认草稿；不可读标storedHistory.readable=false/raw=null并明确部分备份提示。所有备份hasUnsavedChanges=true；下载前后合成原存储不变、备份0追加请求/存储写入，Blob和临时a释放，意外错误/未知请求0。3截图抽检坏原文场景。browser-chat-backup-result.json与browser-chat-backup-{corrupt,quota,unreadable}.json留E盘忽略目录；测试不读取真实对话或用户浏览器资料。真实业务/认证/AI/照片/邮件请求0，无业务修改。
