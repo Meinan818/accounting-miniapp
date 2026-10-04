@@ -1276,3 +1276,9 @@ Bills编辑期间401与ACCOUNT_CHANGED两条真实合成浏览器链4项/26次AP
 本次专用回执：.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a1049d.json。先本地commit，再原生创建gpt-6.1-sol/high新聊天及迁移automation。目标须只读核status=success、finalCommit存在、源停止共享写入、automation目标和其余字段保持后才能接手；不能用旧回执代替本次。新窗口实际compact从0开始，源保留2。
 
 交接后直接接续Login验证码challenge过期/倒计时重发/改邮箱与切模式边界合成浏览器Clock验证，未发真实邮件认证；复用browser-registration-qa.cjs/browser-clock-qa.cjs及Playwright1.62.1、本机Chrome、frontend/dist-server。选择器先查模板，正常load后pauseAt，再fastForward或setSystemTime+focus；全部API拦截、未知/外部请求阻断、E盘临时缓存。无已复现新缺陷，不为测试改业务；失败原文保留。独立节点验证后commit并核查上传全部待上传提交，持续自主推进、不提问或委派。
+
+## 原生新聊天与续办迁移（2026-10-04，最新交接进度）
+
+已原生创建gpt-6.1-sol/high新聊天01a104fa-e0fe-7d43-94ec-381371492329，目标只读等待本次最终回执。初始本地交接提交d0e8b11e90f8dea7732f00701f046fde8da947a4完成。原automation已原生update/view迁移，TOML逐字段比较确认仅target_thread_id与updated_at改变：名称/prompt/rrule/ACTIVE/failed_runs_only/created_at等均保持，不重复创建。
+
+源实际compact=2保留，业务停止。本次专用compaction-transfer-result-01a1049d.json当前finalizing，源尾commit及最终success以该回执为准，源完成回执后停止共享写入；目标核finalCommit/源停止写入/automation后设新窗口0并直接续验证码Clock任务。465前端/两构建与60新增合成浏览器是此前实际证据，本次不重跑、不Push、未发真实业务/认证/照片/邮件/AI请求，服务未重启。

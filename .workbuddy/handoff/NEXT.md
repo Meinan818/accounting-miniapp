@@ -1,3 +1,9 @@
+## 原生新聊天与续办迁移（2026-10-04，最新交接进度）
+
+已原生创建gpt-6.1-sol/high新聊天01a104fa-e0fe-7d43-94ec-381371492329，目标只读等待本次最终回执。初始本地交接提交d0e8b11e90f8dea7732f00701f046fde8da947a4完成。原automation已原生update/view迁移，TOML逐字段比较确认仅target_thread_id与updated_at改变：名称/prompt/rrule/ACTIVE/failed_runs_only/created_at等均保持，不重复创建。
+
+源实际compact=2保留，业务停止。本次专用compaction-transfer-result-01a1049d.json当前finalizing，源尾commit及最终success以该回执为准，源完成回执后停止共享写入；目标核finalCommit/源停止写入/automation后设新窗口0并直接续验证码Clock任务。465前端/两构建与60新增合成浏览器是此前实际证据，本次不重跑、不Push、未发真实业务/认证/照片/邮件/AI请求，服务未重启。
+
 ## 第2次实际压缩交接（2026-10-04，最新入口）
 
 源聊天01a1049d-eea8-7b23-811f-6afe194bff0f已识别并告知第2次实际compact，STATE=2，停止业务代码；03:29 heartbeat仅核现场，验证码Clock任务尚未开始。Profile正式挂载去除重复账本读取修复8e324c6已保存上传，47项相关/465项前端/demo与server两构建通过；本轮9组新增合成浏览器60项、200次完全拦截API、37截图及3实际JSON备份E盘下载保持，较早24场景/18截图/121条CSV另算。真实账号/账本/AI/照片/邮件请求0，真机/系统剪贴板/实际隔夜/最终人工验收未验；本次不重跑测试、不Push，不改已批准免费模型或本机服务。

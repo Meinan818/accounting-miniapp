@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 本次原生gpt-6.1-sol/high目标01a104fa-e0fe-7d43-94ec-381371492329已创建，automation原生迁移/view及toml逐字段保持已核，仅目标/更新时间改变。初始本地d0e8b11完成，最终success/finalCommit以compaction-transfer-result-01a1049d.json为准；success前目标只读，源compact=2保留并回执后停止共享写入。目标核完新窗口0，直接接续验证码Clock边界；本次不Push、不重跑测试、不重复automation。
+
 - 源01a1049d-eea8-7b23-811f-6afe194bff0f第2次实际compact已告知并STATE=2，停止业务代码，仅本地commit交接、不Push。465前端/两构建、60新增合成浏览器/200次拦截API/37截图/3实际JSON备份保持，真实请求0；验证码Clock任务未开始。本次专用compaction-transfer-result-01a1049d.json最终success与源停止共享写入/finalCommit核完前目标只读；新窗口gpt-6.1-sol/high及原automation迁移按实际结果记录，不用旧回执。成功后新窗口0，直接接续验证码期限/重发/切模式合成链。
 
 - 编辑中401/ACCOUNT_CHANGED→Login保筛选→合成另账号4浏览器项/26次API完全拦截通过，旧窗口撤下、旧账单不改、旧对话不迁移、新写账号2/新CSRF隔离。累计本轮60新增浏览器项/200次合成API/37截图/3实际JSON备份；465前端/两构建保持，d38b8b43完整远端一致，compact=1及原静音每小时automation保持。下一项合成Clock验证验证码过期/重发/切模式边界，真实请求0。

@@ -19,8 +19,8 @@
     "status": "ACTIVE",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
-    "targetThreadId": "01a1049d-eea8-7b23-811f-6afe194bff0f",
-    "transferStatus": "本次01a1049d交接待执行，目标尚未创建；旧success回执仅历史",
+    "targetThreadId": "01a104fa-e0fe-7d43-94ec-381371492329",
+    "transferStatus": "本次新聊天01a104fa-e0fe-7d43-94ec-381371492329已创建，原生update/view及toml字段保持已核；源尾commit和专用success回执待完成，目标只读",
     "scheduledRunVerified": false
   }
 }
