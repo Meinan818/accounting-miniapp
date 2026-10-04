@@ -95,6 +95,7 @@ const monthRecords = computed(() => recordStore.records
   }))
 
 const monthTotals = computed(() => getRecordTotals(monthRecords.value))
+const needsWideAmounts = computed(() => !monthTotals.value.error && [monthTotals.value.incomeCents, monthTotals.value.expenseCents, monthTotals.value.balanceCents].some(value => centsText(value).length > 7))
 
 const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
 const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
@@ -299,7 +300,7 @@ function getSign(record) {
         </div>
 
         <p v-if="!recordStore.storageError && monthTotals.error" class="bills-storage-note" role="alert">{{ monthTotals.error }}</p>
-        <dl v-else-if="!recordStore.storageError" class="bills-totals">
+        <dl v-else-if="!recordStore.storageError" class="bills-totals" :class="{ 'bills-totals-wide': needsWideAmounts }">
           <div class="bills-total-income">
             <dt>收入</dt>
             <dd class="bills-income">¥{{ centsText(monthTotals.incomeCents) }}</dd>
@@ -467,6 +468,9 @@ function getSign(record) {
 .bills-totals > div { min-width: 0; padding: 11px 8px; border-radius: 14px 11px 15px 12px; text-align: center; }
 .bills-totals dt { color: var(--zz-home-ink-soft); font-size: 12px; }
 .bills-totals dd { margin-top: 4px; font-size: 15px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.bills-totals-wide { grid-template-columns: 1fr; }
+.bills-totals-wide > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: right; }
+.bills-totals-wide dd { margin-top: 0; white-space: nowrap; }
 .bills-total-income { background: var(--zz-home-income-panel); }
 .bills-total-expense { background: var(--zz-home-expense-panel); }
 .bills-total-balance { background: var(--zz-home-title-brush); }

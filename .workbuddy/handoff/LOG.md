@@ -1449,3 +1449,13 @@ compact=0、原静音每小时automation及本机服务保持，无新增用户�
 browser-profile-photo-race-*留既有E盘忽略目录，无缺陷/源码改动；累计新增27组185浏览器/544API/75截图/7JSON备份，473前端/两构建保持同源码旧证据未重跑。前节点d1d7e03ffa38b4f3eec0a32f0bd2c0d0311fe086已按官方同SHA/force:false上传并核远端一致；普通Push低速失败profile-photo-errors-push.log保留，私有/无Pages/0 workflows/0 deployments保持。
 
 compact=0、原静音automation及本机服务保持，无新用户依赖；下一项最高合法金额与累加汇总在四页窄屏的实际布局/精度及CSV合成导出链，只使用独立合成数据、禁止真实请求。
+
+## 明细大额汇总连续显示修复与金额边界验证（2026-10-04）
+
+最高合法单笔999999999.99与两笔总支出1999999999.98在四页320/390px、3笔实际CSV合成链取证。原明细三列允许任意换行，实际截图最大汇总被拆两行，single-line-before断言失败与wrapped-before结果/截图已保留。Bills按既有Stats阈值（金额文本>7字符）启用单列横向标签/金额，nowrap保持完整数值；普通金额仍三列，失败汇总仍按原错误分支。既有实际模板harness补centsText绑定及新computed暴露，不新增镜像断言或依赖。
+
+50相关/473全量前端、demo与server两构建通过。本轮同修复源码10浏览器/20API/2截图/1实际CSV通过：四页两宽精度与视口范围，明细大额单行、普通9.50与19元仍三列；CSV三笔上限两位小数、UTF8 BOM、公式文本保护/引号转义/换行/猫字符字节保持，0额外请求。截图已抽检单列明细与统计。全API合成、真实请求/AI/账本写0，意外错误/未知请求0；1CSV另计不计入对话JSON。累计新增28组195浏览器/564API/77截图/7JSON备份，较早24场景/18截图/121CSV与回归另算。
+
+首次harness拼接数组末尾与const间丢分隔符导致语法失败，first.log保留；已修拼接并node --check通过，不计业务缺陷。browser-money-boundary-*均留既有E盘忽略目录。照片时序节点0145fa5ebe67437ed9099cbf26b6e1b274d87dc1按官方同SHA/force:false成功并核远端一致，普通Push443失败原文保留，私有/无Pages/0 workflows/0 deployments保持。compact=0、原静音automation及本机Java19940/Vite20820仅127.0.0.1保持，未重启。
+
+下一项手动表单非法金额/千分位/上限与超过一分钱的输入保护合成浏览器链，0真实请求；无新用户依赖，真机/实际隔夜/人工验收保持未验。

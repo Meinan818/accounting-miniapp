@@ -186,11 +186,11 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
     RecordEditor: realEditor ? editorComponent(forms) : { props: ['record'], render() { return Vue.h('section', { class: 'synthetic-editor' }, this.record.remark) } } }, setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
-      createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS,
+      createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, centsText, CATEGORY_OPTIONS,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign')
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
