@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "第2次实际compact停止业务；Profile读取文本校验已通过单元与构建，浏览器定位歧义及窗口实际状态待核",
+  "currentTask": "Profile读取文本校验浏览器与回归已完成，112相关/497全量/两构建通过",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "先核compaction-transfer-result-01a105cf.json的success/源停止共享写入/finalCommit；新窗口核完设0，核Profile读取失败dialog实际open状态及定位歧义并复验3场景",
-  "nextStepReason": "497前端/101相关/两构建通过但新读取浏览器after失败，不能当完成；本聊天仅本地待续提交交接、不Push、不继续业务",
+  "nextStep": "核Profile实际Unicode码点输入边界/非法输入0写请求/显式保存刷新合成链",
+  "nextStepReason": "读取回执合同闭环完成，继续实际表单与API校验一致性；全部API拦截，无真实请求。",
   "pendingUserDecision": "集中记录.workbuddy/handoff/PENDING.md；目前不主动提问，继续独立任务",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-04",
-  "observedCompactionCount": 2,
-  "compactionCountBasis": "本聊天01a105cf-1051-7223-8ade-29ce5f7a802e第2次实际compact已识别并告知，停止业务，仅本地待续提交交接、不Push；同聊天恢复保留2，新窗口核专用success/finalCommit和源停止写入后才设0。",
+  "observedCompactionCount": 0,
+  "compactionCountBasis": "新聊天01a10649-1a5f-77b0-bc50-e8334ce6e784核专用success、源停止共享写入及finalCommit 483882b8fffb6e9a4b3578a39f71e74e6cf81f8e/HEAD一致后新窗口基准0；源2保留，不计自动唤醒。",
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
@@ -20,7 +20,7 @@
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a10649-1a5f-77b0-bc50-e8334ce6e784",
-    "transferStatus": "原生update/view及现场TOML逐字段核完，仅目标与更新时间改变；success/finalCommit以本次01a105cf专用回执为准，源计数2保持，目标核完才设0",
+    "transferStatus": "当前新窗口原生view/现场TOML与before逐字段核完，仅目标/更新时间改变，每小时ACTIVE/failed_runs_only保持",
     "scheduledRunVerified": false
   }
 }

@@ -463,3 +463,7 @@ DOM alert存在不等于未被sticky按钮遮挡，须量化error.bottom与actio
 ## 2026-10-04 · 关闭dialog内DOM与locator strict歧义
 
 .profile-error匹配页面与dialog两个元素不能证明dialog打开；当前Profile.vue openProfile已有loadProfile失败return false，visible文本也不含编辑表单。接手摘要的业务根因推断须更正为未验证，目标先核dialog.open与可见状态，保留不打开窗口断言及失败证据，不用.first()或删断言掩盖缺陷。官方Codex自动化文档本次读取403，未据此改变工具合同或虚报核实；交接按当前原生工具schema执行。
+
+## 2026-10-04 · 资料读取strict定位复验
+
+原诊断实际dialog.open=false/getClientRects空且窗口内错误不可见，关闭dialog仍有DOM导致.profile-error strict两匹配。按页面role=alert和重读资料按钮定位，保原getByRole(dialog).count=0并补原生open/可见性，6检查全过；不得以元素数量推断窗口打开或用.first()/删除断言掩盖。新增diagnostic失败与源before/after独立保留。

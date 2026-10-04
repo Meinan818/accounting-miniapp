@@ -1,3 +1,11 @@
+## 资料读取文本校验完成（2026-10-04）
+
+新窗口01a10649核专用success/源停止共享写入/finalCommit 483882b8与HEAD一致及原automation仅目标/更新时间变化后compact=0。浏览器diagnostic保留原strict失败并实测dialog.open=false/不可见、内部错误不可见，确认两元素由关闭dialog保留DOM造成，不存在已证实的“读取失败打开窗口”缺陷。仅按页面role=alert及“重新读取资料”按钮语义限定harness，保全部旧资料/禁编辑/无成功提示/不打开窗口断言，并补原生open与可见性断言；不改Profile业务迎合测试。
+
+空白昵称/21字昵称/61字签名3场景6浏览器检查18合成API3截图通过：原昵称签名不覆盖，明确中文错误，显式有效重读后才编辑及取消。原资料wrong-name保存/重读/显式再保存/账本503链4检查16API、照片上传成功文字503只PUT重试链4检查16API、照片畸形回执拒绝后续PUT链4检查13API均回归通过，不重复累计。112相关/497全量前端/demo与server两构建通过；51账本H2/12Profile H2为此前独立证据，本轮未重跑。原before/after/新增diagnostic失败及时间戳截图全部保留，不计通过。新截图已视觉抽检。
+
+累计59组406浏览器1274API172截图7JSON备份，源5CSV另计；全部API拦截/未知外部阻断，真实业务账号AI邮件照片请求0。原127.0.0.1 Java19940/Vite20820保持；原静音每小时automation目标本聊天字段保持，未另建。远端已读核私有main/无Pages/0workflows/0deployments，本节点提交Push结果另记；真机/真实账号/系统剪贴板/实际隔夜/人工验收未验。下一项Profile实际输入Unicode码点边界与非法输入0写请求、显式保存刷新链，继续独立合成验证。
+
 ## 最新接续：源01a105cf第2次compact待续交接（2026-10-04）
 
 先只读核本次专用compaction-transfer-result-01a105cf.json的success、sourceWillModifySharedFiles=false及finalCommit；核完新窗口设0，源本聊天计数2不得归零。Profile空白/超长Unicode资料读取校验101相关/497全量/两构建通过但3场景浏览器未完成，源仅本地待续提交、不Push。先核dialog实际open状态：openProfile源码已有读取失败return false，.profile-error匹配2元素可能因关闭dialog仍有DOM，摘要“仍打开窗口”不是已证实根因。保留不打开窗口与旧资料保持断言，按语义定位页面/窗口，不能用.first()掩盖问题；有实际业务失败才最小修复。复跑读取3场景、资料/照片保存回归与适当测试，再完成节点commit/核查Push并连续下一项。累计58组400浏览器1256API169截图7JSON/源5CSV保持，51账本H2/12Profile H2独立保持；本次不重跑、不计失败为通过。

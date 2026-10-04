@@ -1762,3 +1762,15 @@ global版本倒退/大整数/Long溢出四链8浏览器21API8截图同源码回�
 ## 原生交接目标与自动化迁移（2026-10-04）
 
 gpt-6.1-sol/high新聊天01a10649-1a5f-77b0-bc50-e8334ce6e784已原生创建，初始本地待续提交fc5bd3949f1c4845a03269413ad97f73ca739ac0。原automation原生update/view及before/after现场TOML逐字段核完，仅target_thread_id/updated_at改变，每小时ACTIVE/failed_runs_only/原提示保持。目标目前只读；本次最终success/finalCommit/源停止共享写入以compaction-transfer-result-01a105cf.json为准。源计数2保持，尾提交后发布回执并停止共享写入，目标核完才设0直接继续读取浏览器验证。本次无Push/重跑/业务代码追加/重复自动化。
+
+## 新窗口只读交接核验（2026-10-04）
+
+01a10649新窗口核本次专用success/目标本聊天/sourceWillModifySharedFiles=false/finalCommit 483882b8与HEAD一致及干净工作树。原automation原生view及现场TOML与before逐字段核只目标/更新时间改变，新窗口compact=0，源2保留。Java19940/8080与Vite20820/5174仍仅127.0.0.1，未重启。开始读取浏览器状态核验，原失败保留、未提前计通过。
+
+## 资料读取文本校验完成（2026-10-04）
+
+新窗口01a10649核专用success/源停止共享写入/finalCommit 483882b8与HEAD一致及原automation仅目标/更新时间变化后compact=0。浏览器diagnostic保留原strict失败并实测dialog.open=false/不可见、内部错误不可见，确认两元素由关闭dialog保留DOM造成，不存在已证实的“读取失败打开窗口”缺陷。仅按页面role=alert及“重新读取资料”按钮语义限定harness，保全部旧资料/禁编辑/无成功提示/不打开窗口断言，并补原生open与可见性断言；不改Profile业务迎合测试。
+
+空白昵称/21字昵称/61字签名3场景6浏览器检查18合成API3截图通过：原昵称签名不覆盖，明确中文错误，显式有效重读后才编辑及取消。原资料wrong-name保存/重读/显式再保存/账本503链4检查16API、照片上传成功文字503只PUT重试链4检查16API、照片畸形回执拒绝后续PUT链4检查13API均回归通过，不重复累计。112相关/497全量前端/demo与server两构建通过；51账本H2/12Profile H2为此前独立证据，本轮未重跑。原before/after/新增diagnostic失败及时间戳截图全部保留，不计通过。新截图已视觉抽检。
+
+累计59组406浏览器1274API172截图7JSON备份，源5CSV另计；全部API拦截/未知外部阻断，真实业务账号AI邮件照片请求0。原127.0.0.1 Java19940/Vite20820保持；原静音每小时automation目标本聊天字段保持，未另建。远端已读核私有main/无Pages/0workflows/0deployments，本节点提交Push结果另记；真机/真实账号/系统剪贴板/实际隔夜/人工验收未验。下一项Profile实际输入Unicode码点边界与非法输入0写请求、显式保存刷新链，继续独立合成验证。
