@@ -415,6 +415,51 @@ test('空账本可完整读取，带继续游标的空页或续页为空时不�
   } finally { scene.dispose() }
 })
 
+test('分页收支类型严格限定字符串，原型名称与数组不能替换账本或借缓存通过', async () => {
+  let page = { revision: '8', records: [{ record: value }], nextAfter: null }
+  const scene = setup({ request: async () => page })
+  try {
+    assert.equal(await scene.store.refresh(), true)
+    const original = scene.store.allRecords.value
+    for (const revision of ['9', '8']) {
+      for (const type of ['constructor', '__proto__', 'toString', ['expense'], ['income'], {}, null, 0, false]) {
+        page = { revision, records: [{ record: { ...value, type, category: '其他' } }], nextAfter: null }
+        assert.equal(await scene.store.refresh(), false, JSON.stringify(type))
+        assert.equal(scene.store.allRecords.value, original)
+        assert.equal(scene.store.storageError.value, '服务账单格式不正确，暂不替换当前账本。')
+      }
+    }
+    for (const type of ['expense', 'income']) {
+      page = { revision: '9', records: [{ record: { ...value, type, category: '其他' } }], nextAfter: null }
+      assert.equal(await scene.store.refresh(true), true)
+      assert.equal(scene.store.records.value[0].type, type)
+      assert.equal(scene.store.storageError.value, '')
+    }
+  } finally { scene.dispose() }
+})
+
+test('分页日期和时间不能隐式转换JSON数组，新版本及同版本均保留原账本', async () => {
+  let page = { revision: '8', records: [{ record: value }], nextAfter: null }
+  const scene = setup({ request: async () => page })
+  try {
+    assert.equal(await scene.store.refresh(), true)
+    const original = scene.store.allRecords.value
+    for (const revision of ['9', '8']) {
+      for (const patch of [{ date: [value.date] }, { date: {} }, { time: [value.time] }, { time: {} }]) {
+        page = { revision, records: [{ record: { ...value, ...patch } }], nextAfter: null }
+        assert.equal(await scene.store.refresh(), false, JSON.stringify(patch))
+        assert.equal(scene.store.allRecords.value, original)
+        assert.equal(scene.store.storageError.value, '服务账单格式不正确，暂不替换当前账本。')
+      }
+    }
+    for (const time of [null, undefined, '00:00', '23:59']) {
+      page = { revision: '9', records: [{ record: { ...value, time } }], nextAfter: null }
+      assert.equal(await scene.store.refresh(true), true)
+      assert.equal(scene.store.records.value[0].time, time ?? undefined)
+    }
+  } finally { scene.dispose() }
+})
+
 test('强制刷新等待已有读取后仍完整分页，不能降为版本缓存检查', async () => {
   let reads = 0, release
   const first = { revision: '8', records: [{ record: value }], nextAfter: id }

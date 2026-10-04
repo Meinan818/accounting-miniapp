@@ -184,6 +184,11 @@ test('金额双向适配保留分精度和未知时间，不信任畸形回执',
     assert.throws(() => fromRecordView({ ...view, ...patch }))
   }
 })
+test('服务账单标识拒绝数组，不把JSON自动转换当作有效UUID', () => {
+  assert.throws(() => fromRecordView({ ...view, id: [view.id] }), /服务账单格式不正确/)
+  assert.equal(fromRecordView(view).id, view.id)
+})
+
 test('超时及新实例重试复用持久化UUID，账户相同操作独立', async () => {
   const storage = memory(); const keys = []; let fail = true
   const client = { request: async (method, path, options) => {

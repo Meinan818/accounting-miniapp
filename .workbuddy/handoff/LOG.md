@@ -1623,3 +1623,18 @@ abe767e已普通Push成功，完整远端核在本节点提交前进行；私有
 
 新窗口交接尾提交26afb35存在/HEAD一致，源sourceWillModifySharedFiles=false；原automation before/after仅目标与更新时间变，live与after一致，原生view已核。远端本节点前核abe767e、私有/无Pages/0workflows/0deployments，Push以后续实际结果为准。无新用户依赖，真机/系统剪贴板/实际隔夜/人工验收未验。
 原分页编号/逆序/游标/revision与force恢复7浏览器48合成API2截图复跑通过，独立metadata-contract-regression前缀保原证据，回归不重复累计。
+
+## 账单字段类型与快照时间同步（2026-10-04）
+
+分页constructor类型英文TypeError、数组收支被接受/替换旧账本、日期数组英文split错误、缓存时间数组被接受均已合成复现；fromRecordView现先核UUID/日期/时间字符串与income/expense枚举。新快照未知time不再继承旧09:15，保关联元数据/金额精度。79相关/481前端/两构建、11字段浏览器106API2截图与2时间浏览器10API1截图通过；累计45组306浏览器914API109截图7JSON，源窗口5CSV另计。6195895完整远端一致已核，当前修复Push以后续记录为准；compact=0/原静音automation/本机服务保持。下一项单笔编辑回执未知时间与旧time合成取证，真实请求0。
+
+原分页元数据节点61958954eddc4f1621c20ade898e5e9970ed1e01普通Push成功，官方inspect完整SHA一致，私有/无Pages/0workflows/0deployments。源交接两提交与新节点同次fast-forward上传，敏感扫描0。
+
+根因：CATEGORY_OPTIONS为普通对象，constructor/原型名称访问继承属性后调用some抛英文TypeError；数组['expense']能转成键expense，导致非字符串收支被接受并替换旧账本。UUID.test、时间正则及validDate也隐式转换数组，日期随后split抛英文错误、time数组被接受。按Java RecordView/RecordInput字符串及income|expense合同增加短路校验；实际原型名称/收支数组/日期数组/缓存time数组before均留独立日志/结果/时间戳截图。新增3回归覆盖新版本与同版本9畸形type、8日期time数组/对象、直接回执UUID数组拒绝及正常income/expense/未知/午夜。
+
+进一步回归发现snapshot合并previous保留原09:15，即使服务新回执time未知；79项最初78通过1失败保留，Java更新business_time可为null且RecordView省略null，snapshot映射现明确time以最新服务值覆盖，未知undefined。独立浏览器before旧25元09:15读新1000有效笔仍遗留09:15已复现；after首票--:--、编辑时间空、取消0写入，真实页面刷新仍未知。草稿关联由原merge保持，真实认证/AI/邮件/照片/业务请求0，全部API拦截/未知外部阻断/意外错误0。
+
+初收支回归35项34通过1失败；类型修复后七条字段链8检查75API2截图通过，仅作为中间验证不重复累计。扩展日期/time前66项64通过2失败（UUID数组/日期英文split）；最终79相关与481全量、demo/server两构建通过。最终字段10场景11检查106API2截图、快照时间2检查10API1截图累计如上，2组共13/116/3。字段cache-time初harness保phase==='cache-version'空格形式导致仍old25，loaded等待失败；初fixture日志独立保留，改缓存初始化后重新复现服务实际接受time数组。
+
+截图已抽检；脚本/失败证据/浏览器结果在既有E盘忽略生命周期目录，未提交生成材料或真实数据。无新用户依赖，真机/系统剪贴板/实际隔夜/人工验收未验，不把模拟当实际账号验证。
+分页删除时间/空页元数据9浏览器69合成API2截图独立fields-metadata-regression复跑通过，回归不重复累计。

@@ -120,7 +120,8 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
         const previous = new Map(allRecords.value.map(record => [record.id, record]))
         const next = entries.map(value => {
           validateDeletedAt(value.deletedAt)
-          return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
+          return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), time: value.record.time ?? undefined,
+            ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
         })
         if (new Set(next.map(record => record.id)).size !== next.length) throw new Error('账本回执编号重复')
         ensureSnapshotCurrent()

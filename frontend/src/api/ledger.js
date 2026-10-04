@@ -12,10 +12,10 @@ export function toRecordInput(input) {
 }
 
 export function fromRecordView(value) {
-  if (!value || !UUID.test(value.id) || typeof value.amount !== 'string' || !Number.isSafeInteger(value.version) || value.version < 0
-    || !validDate(value.date) || !CATEGORY_OPTIONS[value.type]?.some(c => c.label === value.category)
+  if (!value || typeof value.id !== 'string' || !UUID.test(value.id) || typeof value.amount !== 'string' || !Number.isSafeInteger(value.version) || value.version < 0
+    || typeof value.date !== 'string' || !validDate(value.date) || !['income', 'expense'].includes(value.type) || !CATEGORY_OPTIONS[value.type].some(c => c.label === value.category)
     || typeof value.note !== 'string' || value.note.length > 200
-    || (value.time != null && !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value.time))) {
+    || (value.time != null && (typeof value.time !== 'string' || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value.time)))) {
     throw new Error('服务账单格式不正确，暂不替换当前账本。')
   }
   const amount = parseCents(value.amount) / 100

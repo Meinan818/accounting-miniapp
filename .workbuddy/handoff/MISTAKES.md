@@ -451,3 +451,7 @@ Home新增ID107在删除ID106前使合成分页顺序非法，实际拒读符合
 ## 2026-10-04 · 分页字段验证与导航异步取证
 
 Date.parse宽松接受0与规范化无效日期，不能单凭有限毫秒证明Java删除时间合法；已按UTC形状与日期回读校验修复。空续页须核服务size+1/revision语义，不能把部分数组当完整快照。browser metadata首轮沿用null结构错误的请求数，删除字段实际整本后校验；随后只等待错误卡/旧networkidle在导航guard结束前断言又失败。分别核真实刷新时序并等待URL变更，原before及after/after-contract/after-settled失败结果独立保留，不删断言或改业务迎合脚本。
+
+## 2026-10-04 · JSON字段隐式转换与最新时间合并
+
+正则test、对象索引会隐式转换JSON数组；UUID/日期/time及收支type须先核字段类型，原型名称也不能访问分类继承属性。snapshot新未知time不能因previous合并继承旧09:15，现以最新服务值覆盖。时间cache harness泛化时漏替换带空格scene === cache-version，初fixture保持old而等待完整账本失败；修fixture后before-clean重新证实真实接受畸形缓存回执，失败原文保留，不计业务复现或成功统计。
