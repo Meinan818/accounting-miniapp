@@ -1409,3 +1409,9 @@ server合成浏览器复现“全部历史总支出”被送入AI、替换待确
 本聊天01a104fa-e0fe-7d43-94ec-381371492329第2次实际compact已识别并告知、STATE=2，停止业务代码。此heartbeat前只读核查未新增QA，双标签对话storage冲突链未开始。HEAD01544a4570d8f251a60bb2d506ad58350d100c18，开工工作区干净；Java19940/Vite20820仍仅127.0.0.1:8080/5174监听，未重启。473前端/demo与server两构建、23组157新增合成浏览器/518API/67截图/3JSON备份为既有证据，本次不重跑或追加虚构累计，真实请求0。
 
 全局/项目规则及现有交接入口已读；更新HANDOFF/STATE/NEXT/PENDING/PROJECT_PLAN/AGENTS，保留旧失败记录。原automation每小时ACTIVE/failed_runs_only/current source目标已原生view及TOML核，E盘专用before快照保存。不重复建自动化、不手改TOML。本次只本地commit、不Push；原生gpt-6.1-sol/high目标及automation迁移尚未执行，最终以本次专用compaction-transfer-result-01a104fa.json为准，不能用旧success。新目标success/finalCommit/源停止共享写入核完前只读，新窗口核完才设0并直接接续双标签对话冲突/未保存草稿/实际备份浏览器链。
+
+## 2026-10-04 · 原生目标01a10553与automation迁移已核
+
+初始本地交接提交f4976032932a30750e8b743485cc439645f4d36c，7文件仅交接文档，diff/JSON/敏感模式核查通过，工作区曾干净。源已改名总结，原生create_thread显式gpt-6.1-sol/high/local成功返回01a10553-9d76-73d3-a70c-19641bc889e9；compact仍源2，未替目标归零。原automation update成功转到目标，原生view及before/TOML逐字段核仅target_thread_id/updated_at变化，其余字段包括名称/提示/rrule/ACTIVE/failed_runs_only/created_at保持，不重复建立或手改配置。wait_threads零等待快照已核目标active且明确只读核交接；源正在保存此尾记录，最终以本次专用compaction-transfer-result-01a104fa.json的success/finalCommit为准。
+
+本次无业务改动、新QA、重跑测试、Push、服务重启或真实请求；473前端/两构建及157新增合成浏览器/518API/67截图/3JSON备份保持既有证据。目标核最终回执后设新窗口0，直接接续双标签对话外部冲突/未保存草稿/实际JSON备份链；源最终回执后停止共享文件写入，不与目标并行推进。

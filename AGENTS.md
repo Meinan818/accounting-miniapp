@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 本次原生gpt-6.1-sol/high目标01a10553-9d76-73d3-a70c-19641bc889e9已创建并只读核交接，初始本地f497603；原automation原生update/view及TOML逐字段核仅目标/更新时间改变，其他字段保持。源01a104fa计数2保留，尾提交与success/finalCommit以compaction-transfer-result-01a104fa.json为准；sourceWillModifySharedFiles=false及finalCommit核完前目标只读，核完新窗口0直接接续双标签对话冲突。此交接不Push、不重跑、不重复automation。
+
 - 源聊天01a104fa-e0fe-7d43-94ec-381371492329第2次实际compact已识别告知、STATE=2并停止业务，仅本地commit交接、不Push。473前端/两构建与157新增合成浏览器/518API/67截图/3JSON备份保持，双标签对话storage冲突尚未开始。本次专用compaction-transfer-result-01a104fa.json的success、finalCommit及源停止共享写入核完前，新聊天只读；原生gpt-6.1-sol/high及原automation迁移以实际结果为准，新窗口核完才设0。
 
 - 双标签手动原生Web Locks/存储事件/503释放/另页恢复/同ID再次提交6浏览器/18API/2截图通过，只一笔9.50、原输入保持、无锁泄露。累计157新增浏览器/518API/67截图/3JSON备份，473前端/两构建/da22f889完整远端一致，compact=1/原静音automation及本机127.0.0.1服务保持。下一项双标签对话外部冲突/未保存草稿/备份合成链，真实请求0。
