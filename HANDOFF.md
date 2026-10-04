@@ -1,3 +1,9 @@
+## 服务端未知时间往返合同（2026-10-04）
+
+扩展现有businessTime回归：21:15入账、更新22:05，再版1省略time改1.25元返回版2且time省略，直接SQL business_time为null，snapshot省略time/保版2。原写入键重放仍逐字返回原21:15/1.00回执，随后GET当前账单仍1.25元/未知时间，不恢复旧字段。1针对/51完整账本H2集成通过，无服务端业务改动，前端494项/两构建及累计56组384浏览器1195API157截图7JSON/源5CSV保持，不重复统计或跑前端。
+
+沿用--offline/E盘Maven缓存与TEMP/TMP/java.io.tmpdir、H2内存、隔离本机配置、AI/邮件关闭、MockMvc且无真实请求。7be74075cb3974a44b4c83911aeda18699d69cfa普通Push及官方inspect完整远端一致，私有/无Pages/0workflows/0deployments保持。compact=1/原静音automation及本机服务保持，真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。下一项Profile资料保存/照片回执下一version/提交字段一致性，核JavaUnicode边缘空白规范化，先合成复现，禁止真实账号/照片请求。
+
 ## 服务端确认回执持久化合同回归（2026-10-04）
 
 现有AccountLedgerIntegrationTest隔离H2基线47项通过。新增4参数场景edit/delete/mixed/allDeleted：原始午饭16(输入整数16规范化16.00)/咖啡18、未知time/午夜、2独立UUID按输入顺序及version0；后续编辑19、删除午饭、编辑并删咖啡、全部删除，重放2次响应body逐字等原始/Idempotency-Replayed=true，当前snapshot保持版1/删除事实，统计37/18/19/0元，ledger_record2条/write_request1条/audit2+变更/revision1+变更，重放不加任何记录或版本。同内容重新save仍CONFIRMED/version0。

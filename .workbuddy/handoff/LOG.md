@@ -1738,3 +1738,9 @@ global版本倒退/大整数/Long溢出四链8浏览器21API8截图同源码回�
 新增4项针对及51项完整账本集成均通过，0失败/错误/跳过，Java编译成功；无服务端业务改动，前端494项/两构建同源码保持，浏览器累计56组384/1195API/157截图/7JSON与源5CSV独立不变。Maven使用现有E盘3.9.11/本项目仓库缓存，--offline，TEMP/TMP与java.io.tmpdir由既有wrapper指向E盘；显式H2内存、关闭AI/邮件、隔离本机.env配置导入与storage-root，全程MockMvc无真实服务/账号/MySQL/AI/邮件请求，原127.0.0.1 Java19940/Vite20820保持。
 
 首轮wrapper直接-o被PowerShell判OutVariable/OutBuffer参数歧义，命令失败原文保server-ledger-baseline.log，改显式-Goals数组/--offline后完成，不安装依赖或修改wrapper。Mockito动态agent未来JDK提示及故意畸形请求400日志不是失败；实际JDK21符合项目。原0792078ad516c7a554ddb58653a6af6c420eaf22普通Push连接重置保留，官方同SHA/force:false同步1提交7blob、远端一致核实，私有/无Pages/0workflows/0deployments保持。本聊天compact=1/原静音automation保持；真实账号/真机/实际隔夜/人工验收未验。下一项服务端单笔更新未知time清旧时间H2往返合同验证。
+
+## 服务端未知时间往返合同（2026-10-04）
+
+扩展现有businessTime回归：21:15入账、更新22:05，再版1省略time改1.25元返回版2且time省略，直接SQL business_time为null，snapshot省略time/保版2。原写入键重放仍逐字返回原21:15/1.00回执，随后GET当前账单仍1.25元/未知时间，不恢复旧字段。1针对/51完整账本H2集成通过，无服务端业务改动，前端494项/两构建及累计56组384浏览器1195API157截图7JSON/源5CSV保持，不重复统计或跑前端。
+
+沿用--offline/E盘Maven缓存与TEMP/TMP/java.io.tmpdir、H2内存、隔离本机配置、AI/邮件关闭、MockMvc且无真实请求。7be74075cb3974a44b4c83911aeda18699d69cfa普通Push及官方inspect完整远端一致，私有/无Pages/0workflows/0deployments保持。compact=1/原静音automation及本机服务保持，真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。下一项Profile资料保存/照片回执下一version/提交字段一致性，核JavaUnicode边缘空白规范化，先合成复现，禁止真实账号/照片请求。

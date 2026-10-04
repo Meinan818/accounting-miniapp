@@ -831,6 +831,20 @@ class AccountLedgerIntegrationTest {
         mvc.perform(put("/api/records/" + id).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
                 .contentType(MediaType.APPLICATION_JSON).content("{\"version\":0,\"record\":" + body.replace("21:15", "22:05") + "}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.time").value("22:05"));
+        // 省略time代表最新时间未知，更新及snapshot不能沿用旧22:05。
+        mvc.perform(put("/api/records/" + id).session(browser.session()).header("X-CSRF-TOKEN", browser.token())
+                .contentType(MediaType.APPLICATION_JSON).content("{\"version\":1,\"record\":" + input("1.25") + "}"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.version").value(2))
+                .andExpect(jsonPath("$.amount").value("1.25")).andExpect(jsonPath("$.time").doesNotExist());
+        assertThat(jdbc.queryForObject("SELECT business_time FROM ledger_record WHERE id=?", String.class, id)).isNull();
+        mvc.perform(get("/api/records/snapshot/page").session(browser.session()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.records[0].record.id").value(id))
+                .andExpect(jsonPath("$.records[0].record.version").value(2))
+                .andExpect(jsonPath("$.records[0].record.time").doesNotExist());
+        write(browser, key, body, false).andExpect(status().isOk())
+                .andExpect(content().string(original.getResponse().getContentAsString()));
+        mvc.perform(get("/api/records/" + id).session(browser.session())).andExpect(status().isOk())
+                .andExpect(jsonPath("$.amount").value("1.25")).andExpect(jsonPath("$.time").doesNotExist());
     }
 
     private record LegacyInput(String type, String amount, java.time.LocalDate date, String category, String note) {}
