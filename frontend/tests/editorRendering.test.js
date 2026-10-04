@@ -10,7 +10,8 @@ import { CATEGORY_OPTIONS } from '../src/utils/categories.js'
 import { validateRecord } from '../src/utils/ledger.js'
 import { createBillFilterPath, useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { filterRecords, windowRecordGroups } from '../src/utils/journal.js'
-import { centsText, getRecordTotals } from '../src/utils/money.js'
+import { centsText, legacyCents, getRecordTotals } from '../src/utils/money.js'
+import { createAiDraftApi } from '../src/api/aiDraft.js'
 import { formatCurrency } from '../src/utils/format.js'
 import { getCategoryArtwork } from '../src/utils/categoryArtwork.js'
 import { useLocalDay } from '../src/utils/calendar.js'
@@ -563,4 +564,42 @@ test('实际Bills模板身份变化撤下旧搜索和编辑窗口，切回不复
     assert.equal(state.values.editingRecord.value.remark, '私有未保存输入')
     assert.equal(state.store.records.length, 1)
   } finally { state.dispose(); globalThis.document = previousDocument; globalThis.Document = previousDocumentType; globalThis.ShadowRoot = previousShadowType }
+})
+
+function mountDraftGroup(group) {
+  const previousDocument = globalThis.document
+  globalThis.document = { body: { style: { overflow: 'scroll' } } }
+  const forms = [], events = [], draft = source('components/common/DraftGroupCard.vue')
+  const props = Vue.reactive({ group, savedRecords: [], busy: false, error: '' })
+  let values
+  const Group = { props: ['group', 'savedRecords', 'busy', 'error'], components: { RecordEditor: editorComponent(forms),
+    CategoryIcon: { render: () => Vue.h('span') }, RouterLink: { render: () => Vue.h('span') } },
+    setup(componentProps, context) {
+      values = evaluate(draft.script, { ...Vue, centsText, legacyCents, defineProps: () => componentProps, defineEmits: () => context.emit },
+        'props, emit, editing, editRecord, update, items, saved, status, deletedCount, statusLabel, totals, centsText')
+      return values
+    }, render: new Function('Vue', compile(draft.template, { mode: 'function' }).code)(Vue) }
+  Group.render._rc = true
+  const app = renderer.createApp({ render: () => Vue.h(Group, { ...props, onUpdate: value => events.push(value) }) })
+  app.mount(node('root'))
+  return { props, values, forms, events, dispose() { app.unmount(); globalThis.document = previousDocument } }
+}
+
+test('实际AI草稿卡→Editor→Form仅改金额时保留未知时间，显式午夜/其他时间仍原样提交', async () => {
+  for (const time of [undefined, '00:00', '09:15']) {
+    const api = createAiDraftApi({ request: async () => ({ model: 'glm-4-flash-250414', status: 'ready', question: '',
+      records: [{ type: 'expense', amount: '25.00', date: '2026-10-04', category: '餐饮', note: '合成午饭', ...(time ? { time } : {}) }] }) })
+    const { group } = await api.parse('合成午饭25', { date: '2026-10-04' })
+    const snapshot = JSON.stringify(group), state = mountDraftGroup(group)
+    try {
+      state.values.editing.value = group.items[0].id; await Vue.nextTick()
+      const form = state.forms[0]
+      assert.equal(form.form.value.time, time || '')
+      form.form.value.amount = '16.00'; form.save()
+      assert.equal(state.events.length, 1)
+      assert.equal(state.events[0].record.amount, 16)
+      assert.equal(state.events[0].record.time, time)
+      assert.equal(JSON.stringify(group), snapshot)
+    } finally { state.dispose() }
+  }
 })

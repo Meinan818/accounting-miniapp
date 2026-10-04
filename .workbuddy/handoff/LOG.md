@@ -1134,3 +1134,8 @@
 
 - 聊天身份首次变化后永久失效，切回不复活旧历史/备份/重读/查询/确认/发送及同步改笔/取消入口；中止本页AI等待、释放计时器，旧回执不改草稿或清新页面thinking，实际Chat模板SSR隐藏旧消息与输入。chat-owner-before22项17通过5失败原文保留，91项针对后补正常改笔/取消回归，440项前端/demo与server两构建通过；真实AI/账号/业务/照片/邮件请求0。e44dc54a952251c4e12a7a04e39f2dfaf041cfe7完整远端一致已核（ledger-owner-sync）。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项AI草稿编辑未知时间是否被默认00:00填入的组件链取证。
 - 页与AI守卫过去只比当前id，切回会复活；同步取消/改笔/旧更新/语音入口也缺少页守卫。flush:sync永久owner失效，清本页controller/计时器而不写新会话等待状态；AI确定改价同步完成至Chat await回执的间隙亦保护，正常同步改笔/取消不自动入账。原已发请求与Store成功事实不冒称撤销，SSR子组件替身不加载图片，不代表GUI验收。
+
+## 2026-10-04 · AI草稿编辑保留未知时间
+
+- AI草稿编辑不再把未指定时间填成00:00；Chat接受原AI未知时间的金额/备注编辑，显式午夜和其他时间保持，已有时间不可默默清空。实际DraftGroupCard→RecordEditor→RecordForm合成挂载及Chat链验证，draft-time-before53项51通过2失败保留，71项针对/442项前端/demo与server两构建通过，真实业务/AI/账号/照片/邮件请求0。b98d2a712eee7afe6c3e1737afdd96e867f9230e完整远端一致已核（chat-owner-sync）。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项草稿编辑窗口忙碌输入保护及保存语义取证。
+- 根因是卡片editRecord默认00:00让Form unknownTime失效；去掉默认后Chat validateRecord又要求time，现仅原AI未知时间且未填写时用内部校验占位后删除该字段，原稿与对外编辑结果保留未知。没有批量迁移历史账本，普通演示和已有时间校验不改变。实际editor/form脚本与Editor模板、卡片模板在合成renderer运行，无浏览器GUI验收。

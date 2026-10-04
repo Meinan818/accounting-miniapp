@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- AI草稿编辑不再把未指定时间填成00:00；Chat接受原AI未知时间的金额/备注编辑，显式午夜和其他时间保持，已有时间不可默默清空。实际DraftGroupCard→RecordEditor→RecordForm合成挂载及Chat链验证，draft-time-before53项51通过2失败保留，71项针对/442项前端/demo与server两构建通过，真实业务/AI/账号/照片/邮件请求0。b98d2a712eee7afe6c3e1737afdd96e867f9230e完整远端一致已核（chat-owner-sync）。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项草稿编辑窗口忙碌输入保护及保存语义取证。
+
 - 聊天身份首次变化后永久失效，切回不复活旧历史/备份/重读/查询/确认/发送及同步改笔/取消入口；中止本页AI等待、释放计时器，旧回执不改草稿或清新页面thinking，实际Chat模板SSR隐藏旧消息与输入。chat-owner-before22项17通过5失败原文保留，91项针对后补正常改笔/取消回归，440项前端/demo与server两构建通过；真实AI/账号/业务/照片/邮件请求0。e44dc54a952251c4e12a7a04e39f2dfaf041cfe7完整远端一致已核（ledger-owner-sync）。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项AI草稿编辑未知时间是否被默认00:00填入的组件链取证。
 
 - 共用useLedgerReload增加永久owner保护，Home/Stats/Bills/Profile均已接入；身份首次变化及切回旧入口不发当前Store重读，旧成功/false/异常不回填页面错误或解锁。ledger-owner-before13项2通过11失败原文保留（含2个父测试失败），99项针对、433项前端与demo/server两构建通过，无真实业务/账号/照片/AI/邮件请求。明细f71946be5c7680805aad970ba63d4fee433b05bc完整远端一致已核（bills-owner-sync），私有/无Pages/0 workflows/0 deployments保持。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项聊天身份瞬时变化再切回的旧入口与模型后续链合成取证。

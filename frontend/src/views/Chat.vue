@@ -191,7 +191,9 @@ function editDraft(messageId, { itemId, record }) {
   const item = group.items.find(i => i.id === itemId)
   if (!item) return
   try {
-    const normalized = validateRecord(record)
+    const omitTime = SERVER_MODE && group.origin === 'ai' && !item.time && !record.time
+    const normalized = validateRecord({ ...record, time: omitTime ? '00:00' : record.time })
+    if (omitTime) delete normalized.time
     Object.assign(item, normalized, { amountCents: legacyCents(normalized.amount), description: normalized.remark || normalized.category, errors: { amount: '', date: '', time: '' } })
     if (group.origin !== 'ai') { group.pending = null; resolveGroup(group) }
     conversationStore.updateGroup(messageId, group); actionErrors.value[messageId] = ''; reply(group.pending?.kind === 'ai' ? group.pending.question : groupReply(group))

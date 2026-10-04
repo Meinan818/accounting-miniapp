@@ -17,7 +17,7 @@ const statusLabel = computed(() => status.value === 'saved' && deletedCount.valu
   ? (deletedCount.value === items.value.length ? '全部已删除' : '已记录 · 删除' + deletedCount.value + '笔')
   : ({ needs_input: '待补充', ready: '待确认', saved: '已记账', cancelled: '已取消' })[status.value] || '保存中')
 const totals = computed(() => ({ expense: items.value.filter(i => !i.deleted && i.type === 'expense').reduce((n, i) => n + (i.amountCents || 0), 0), income: items.value.filter(i => !i.deleted && i.type === 'income').reduce((n, i) => n + (i.amountCents || 0), 0) }))
-const editRecord = computed(() => { const i = props.group.items.find(i => i.id === editing.value); return i ? { ...i, time: i.time ?? '00:00', amount: i.amountCents == null ? '' : centsText(i.amountCents) } : null })
+const editRecord = computed(() => { const i = props.group.items.find(i => i.id === editing.value); return i ? { ...i, amount: i.amountCents == null ? '' : centsText(i.amountCents) } : null })
 function update(record) { emit('update', { itemId: editing.value, record }); editing.value = null }
 </script>
 <template>

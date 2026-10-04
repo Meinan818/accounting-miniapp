@@ -417,3 +417,23 @@ test('实际Chat模板身份变化隐藏原对话/输入/备份，切回不复�
     assert.equal(env.conversation.messages.length, 90)
   } finally { env.dispose() }
 })
+
+test('Chat接收AI草稿编辑的缺省时间保持未知；显式时间可补充，已知时间不可默默清空', async () => {
+  const env = scene()
+  try {
+    const { group } = await createAiDraftApi({ request: async () => readyAi({ options: { body: { date: '2026-10-04' } } }) }).parse('午饭25', { date: '2026-10-04' })
+    env.conversation.messages.push({ id: 'editable-ai', kind: 'draft-group', group })
+    const editedRecord = { ...record, amount: 16 }; delete editedRecord.time
+    env.view.editDraft('editable-ai', { itemId: group.items[0].id, record: editedRecord })
+    let item = env.conversation.messages.find(message => message.id === 'editable-ai').group.items[0]
+    assert.equal(env.view.actionErrors.value['editable-ai'] || '', '')
+    assert.equal(item.amountCents, 1600); assert.equal(item.time, undefined)
+    env.view.editDraft('editable-ai', { itemId: item.id, record: { ...editedRecord, time: '00:00' } })
+    item = env.conversation.messages.find(message => message.id === 'editable-ai').group.items[0]
+    assert.equal(item.time, '00:00')
+    env.view.editDraft('editable-ai', { itemId: item.id, record: editedRecord })
+    assert.match(env.view.actionErrors.value['editable-ai'], /时间/)
+    assert.equal(env.conversation.messages.find(message => message.id === 'editable-ai').group.items[0].time, '00:00')
+    assert.equal(env.writes.length, 0)
+  } finally { env.dispose() }
+})
