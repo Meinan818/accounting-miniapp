@@ -1169,3 +1169,9 @@ Vue3/Pinia/Router前端与Java21/Spring/MySQL后端沿用；相关入口frontend
 本聊天01a1049d-eea8-7b23-811f-6afe194bff0f已核本次专用success回执、源停止共享写入、97e467d完整提交及原生automation view/toml字段保持；实际compact基准0。router账本await期间身份首次变化永久取消旧导航，切回原账号不复活；当前访客仍返回带站内目的地的Login，已重新登录的旧意图取消，新显式导航重新读账本。同步临时watch在成功/异常/被取代回执后finally释放。router-owner-return-before11项8通过3失败（两条旧导航放行、1条缺监听生命周期能力断言）原文保留；69项针对、451项全量及demo/server两构建通过。无真实账号/账本/照片/AI/邮件请求，未重启服务，GUI/真机/系统剪贴板/下载落盘/隔夜仍未验。
 
 官方只读inspect核远端0db997d完整一致、私有/无Pages/0 workflows/0 deployments；源两交接提交及本节点差异核完后自主上传，实际结果另记。下一项：Stats图表等待和同步查看入口在身份变化/切回期间的离线取证；目前只是待取证假设，不冒称缺陷。每小时ACTIVE/failed_runs_only沿用，不提问、不委派。
+
+## 新窗口当前入口：统计页身份边界（2026-10-04）
+
+本聊天实际compact=0，交接核验与原生每小时ACTIVE/failed_runs_only保持。Stats图表等待/箭头/选日/分类/切月采用永久owner保护，身份首次变化后撤下旧金额、分类、图表及操作入口，切回不复活；保留原账本、选择及pending快照。stats-owner-before10项7通过3失败原文保留；68项针对、456项全量与demo/server两构建通过，完整Stats模板SSR验证撤显示，正常演示切月/选日/自动定位保持。无真实账号/账本/照片/AI/邮件请求、费用或服务重启，GUI/真机/系统剪贴板/下载落盘/隔夜仍未验。
+
+路由与源交接3提交已由既有官方同SHA/force:false适配器上传，完整3410b9df74d79f136299feacd15ff966fae7366c远端一致（router-owner-return-sync）；私有/无Pages/0 workflows/0 deployments保持。统计节点保存后核查自主上传，实际结果另记。下一项：首页日历选择与旧页面数据在身份首次变化/切回期间的合成取证，不新增真实请求，不提问或委派。

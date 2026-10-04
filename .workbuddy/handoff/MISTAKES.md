@@ -349,3 +349,6 @@
 
 ## 2026-10-04 · router await后账号id相等仍可能是旧意图
 - 实际内存router+session复现退出后同账号重登、同步A→B→A仍放行旧导航，两条业务失败及一条缺临时watch生命周期能力断言保留在router-owner-return-before（11项8通过3失败）。等待期间flush:sync永久标记，finally释放；已认证身份变化取消旧导航，仍为访客保留站内返回目标，避免跳Login又自动放行而追加读取。69针对/451前端/两构建通过。不能把账号id重相等当原请求所有者从未变化；合成session不能代替真实GUI认证。
+
+## 2026-10-04 · Stats图表和切月仅保护离页
+- 重读helper已隔离身份，但Stats旧图表await与箭头、切月helper仍只核active，A→null→A复活入口，旧导航失败回填错误/清pending。stats-owner-before10项7通过3失败保留。切月helper可选owner同步永久失效并提供ownerCurrent，Stats滚动/选日/分类/月份watch和模板接入；68针对/456全量/两构建通过，SSR核旧金额分类隐藏且合成账本未清。不要把一个重读入口身份保护当整页交互与显示隔离；已发送路由事实不能冒称撤销，GUI待验。

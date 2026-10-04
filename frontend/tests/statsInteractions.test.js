@@ -3,6 +3,9 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { computed, effectScope, nextTick, onScopeDispose, reactive, ref, watch } from 'vue'
+import * as Vue from 'vue'
+import { compile } from '@vue/compiler-dom'
+import { renderToString } from '@vue/server-renderer'
 import dayjs from 'dayjs'
 import { centsText } from '../src/utils/money.js'
 import { getMonthReview } from '../src/utils/monthReview.js'
@@ -15,18 +18,94 @@ const records = [
   { id: 'oct', type: 'expense', date: '2026-10-31', category: '餐饮', amount: 0.29 },
   { id: 'nov', type: 'expense', date: '2026-11-01', category: '餐饮', amount: 0.31 },
 ]
-function scene(query = {}, dateClock = {}) {
+function scene(query = {}, dateClock = {}, { server = false, delayedNavigation = false } = {}) {
   const scope = effectScope(), route = reactive({ query }), scrolls = [], calls = []
+  const auth = reactive({ user: { id: 'synthetic-owner' } }), navigations = []
   const store = reactive({ records: structuredClone(records), storageError: '', refresh: async () => { calls.push('refresh'); return true } })
-  const router = { replace: async ({ query }) => { route.query = query } }
-  const bindings = { computed, nextTick, onScopeDispose, ref, watch, dayjs, centsText, getMonthReview, useStatsMonthNavigation, useLedgerReload, SERVER_MODE: false,
+  const router = { replace: async ({ query }) => {
+    if (delayedNavigation) return new Promise((resolve, reject) => navigations.push({ resolve, reject, query }))
+    route.query = query
+  } }
+  const bindings = { computed, nextTick, onScopeDispose, ref, watch, dayjs, centsText, getMonthReview, useStatsMonthNavigation, useLedgerReload, SERVER_MODE: server, useAuthStore: () => auth,
     onMounted() {}, matchMedia: () => ({ matches: true }), useRecordStore: () => store, useRoute: () => route, useRouter: () => router,
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition}')(...Object.values(bindings)))
+    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition, pendingMonth, navigationError, ownerCurrent, selectDay, selectType, navigationMonth, pointedDay, maximumDayExpense, error, needsWideAmounts, categoryRows, leadingCategory, typeLabel, reloading, reloadRecords}')(...Object.values(bindings)))
   view.dayChart.value = { clientWidth: 200, set scrollLeft(value) { scrolls.push(value) }, scrollBy: options => calls.push(options) }
-  return { view, store, route, calls, scrolls, dispose: () => scope.stop() }
+  return { view, store, route, calls, scrolls, auth, navigations, dispose: () => scope.stop() }
 }
+
+test('正式Stats图表等待期间身份首次变化并切回，旧自动定位和箭头入口不滚动', async () => {
+  const env = scene({ month: '2026-10' }, {}, { server: true })
+  try {
+    env.store.records.push({ ...records[0], id: 'new', amount: 1 })
+    await nextTick(() => { env.auth.user = null; env.auth.user = { id: 'synthetic-owner' } })
+    await nextTick(); env.view.slideDays(1)
+    assert.deepEqual(env.scrolls, []); assert.deepEqual(env.calls, [])
+  } finally { env.dispose() }
+})
+test('正式Stats身份切回后旧切月入口不导航', async () => {
+  const env = scene({ month: '2026-10' }, {}, { server: true, delayedNavigation: true })
+  try {
+    env.auth.user = null; env.auth.user = { id: 'synthetic-owner' }
+    const pending = env.view.changeMonth(1); env.navigations[0]?.resolve({ type: 4 })
+    assert.equal(await pending, false); assert.equal(env.navigations.length, 0)
+    assert.equal(env.view.pendingMonth.value, '')
+  } finally { env.dispose() }
+})
+test('正式Stats切月等待身份变化，旧失败不回填错误或清原pending快照', async () => {
+  for (const outcome of ['false', 'reject']) {
+    const env = scene({ month: '2026-10' }, {}, { server: true, delayedNavigation: true })
+    try {
+      const pending = env.view.changeMonth(1)
+      assert.equal(env.view.pendingMonth.value, '2026-11')
+      env.auth.user = null; env.auth.user = { id: 'synthetic-owner' }
+      if (outcome === 'reject') env.navigations[0].reject(Error('synthetic-navigation'))
+      else env.navigations[0].resolve({ type: 4 })
+      assert.equal(await pending, false); assert.equal(env.view.navigationError.value, '')
+      assert.equal(env.view.pendingMonth.value, '2026-11')
+    } finally { env.dispose() }
+  }
+})
+
+test('正式Stats正常选日/类型保持，身份变化及离页后旧点击不修改原选择快照', () => {
+  const env = scene({ month: '2026-10' }, {}, { server: true })
+  try {
+    env.view.selectDay('2026-10-31'); env.view.selectType('income')
+    assert.equal(env.view.selectedDay.value, '2026-10-31'); assert.equal(env.view.selectedType.value, 'income')
+    env.auth.user = { id: 'other' }; env.auth.user = { id: 'synthetic-owner' }
+    env.view.selectDay('2026-10-15'); env.view.selectType('expense')
+    env.route.query = { month: '2026-11' }
+    assert.equal(env.view.selectedDay.value, '2026-10-31'); assert.equal(env.view.selectedType.value, 'income')
+  } finally { env.dispose() }
+  env.view.selectDay('2026-11-01'); env.view.selectType('expense')
+  assert.equal(env.view.selectedDay.value, '2026-10-31'); assert.equal(env.view.selectedType.value, 'income')
+})
+
+test('实际Stats完整模板身份变化撤下旧金额/分类/选日/切月入口，切回不复活且保留账本', async () => {
+  const env = scene({ month: '2026-10' }, {}, { server: true })
+  const content = readFileSync(new URL('../src/views/Stats.vue', import.meta.url), 'utf8')
+  const template = content.slice(content.indexOf('<template>') + 10, content.lastIndexOf('</template>'))
+  const stub = { render: () => Vue.h('span') }
+  const component = { components: Object.fromEntries(['NotebookBack', 'BottomNav', 'ChevronLeft', 'ChevronRight', 'CategoryIcon', 'CategoryWheel', 'CatNavIcon', 'JournalSticker'].map(name => [name, stub])),
+    setup: () => ({ ...env.view, centsText, SERVER_MODE: true, JOURNAL_COLORS: ['#fff'], miaoWriting: 'synthetic', receiptKitten: 'synthetic' }),
+    render: new Function('Vue', compile(template, { mode: 'function' }).code)(Vue) }
+  component.components.RouterLink = { props: ['to'], render() { return Vue.h('a', this.$slots.default?.()) } }
+  component.render._rc = true
+  const render = () => renderToString(Vue.createSSRApp(component))
+  try {
+    assert.match(await render(), /¥0.29/); assert.match(await render(), /餐饮/)
+    env.auth.user = null
+    const expired = await render()
+    env.auth.user = { id: 'synthetic-owner' }
+    const returned = await render()
+    for (const html of [expired, returned]) {
+      assert.doesNotMatch(html, /¥0.29|餐饮|上个月|review-day-chart/)
+      assert.match(html, /登录身份已变化/)
+    }
+    assert.deepEqual(env.store.records, records); assert.deepEqual(env.calls, [])
+  } finally { env.dispose() }
+})
 
 test('统计默认本月跨月更新概况并重置旧选日，保留收支类别且释放日期时钟', async () => {
   const OriginalDate = globalThis.Date

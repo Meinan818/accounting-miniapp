@@ -24,7 +24,7 @@ const router = useRouter()
 const store = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
 const { today } = useLocalDay()
-const { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth } = useStatsMonthNavigation(route, router, () => today.value.slice(0, 7))
+const { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth, ownerCurrent } = useStatsMonthNavigation(route, router, () => today.value.slice(0, 7), { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const { reloading, reloadError, reloadRecords } = useLedgerReload(store, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const selectedType = ref('expense')
 const monthTitle = computed(() => dayjs(selectedMonth.value + '-01').format('YYYY年M月'))
@@ -46,19 +46,22 @@ const typeLabel = computed(() => selectedType.value === 'income' ? '收入' : '�
 let active = true
 let manuallyMoved = false
 onScopeDispose(() => { active = false })
-function keepChartPosition() { if (active) manuallyMoved = true }
+const isCurrentView = () => active && ownerCurrent.value
+function keepChartPosition() { if (isCurrentView()) manuallyMoved = true }
+function selectDay(date) { if (isCurrentView()) selectedDay.value = date }
+function selectType(type) { if (isCurrentView()) selectedType.value = type }
 function slideDays(direction) {
-  if (!active) return
+  if (!isCurrentView()) return
   keepChartPosition()
   dayChart.value?.scrollBy({ left: direction * 7 * 49, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
 }
-watch(selectedMonth, () => { selectedDay.value = ''; manuallyMoved = false }, { flush: 'sync' })
+watch(selectedMonth, () => { if (isCurrentView()) { selectedDay.value = ''; manuallyMoved = false } }, { flush: 'sync' })
 watch([review, selectedMonth], async (_value, _previous, onCleanup) => {
   let current = true
   onCleanup(() => { current = false })
   const month = selectedMonth.value, snapshot = review.value
   await nextTick()
-  if (!active || !current || manuallyMoved || month !== selectedMonth.value || snapshot !== review.value ||
+  if (!isCurrentView() || !current || manuallyMoved || month !== selectedMonth.value || snapshot !== review.value ||
       !dayChart.value || selectedDay.value || !snapshot?.peak) return
   dayChart.value.scrollLeft = Math.max(0, (snapshot.peak.day - 1) * 49 - (dayChart.value.clientWidth - 44) / 2)
 })
@@ -74,6 +77,8 @@ if (!SERVER_MODE) onMounted(reloadRecords)
         <img :src="miaoWriting" alt="猫猫陪你整理收支" class="stats-header-cat" />
         <div><h1 class="stats-title">月度复盘</h1><p class="stats-subtitle">翻开这一月 · 看见钱去了哪里</p></div>
       </header>
+      <p v-if="!ownerCurrent" class="review-scope-note" role="status">登录身份已变化，请重新打开统计页。</p>
+      <template v-if="ownerCurrent">
       <section class="stats-month-card" aria-label="统计月份">
         <div class="stats-month-nav">
           <button type="button" aria-label="上个月" :disabled="navigationMonth === '1000-01'" @click="changeMonth(-1)"><ChevronLeft :size="22" :stroke-width="1.5" /></button>
@@ -99,7 +104,7 @@ if (!SERVER_MODE) onMounted(reloadRecords)
           <div class="review-cat-guide"><CatNavIcon kind="chart" /><span>本喵的爪爪花费轨迹</span><div class="review-scroll-actions"><button type="button" aria-label="查看前7天" @click="slideDays(-1)">‹</button><button type="button" aria-label="查看后7天" @click="slideDays(1)">›</button></div></div>
           <p class="review-pointed-day" role="status">{{ pointedDay ? pointedDay.date + ' · 支出 ¥' + centsText(pointedDay.expenseCents) : '还没有支出足迹，记下第一笔后再来看看。' }}</p>
           <div ref="dayChart" class="review-day-chart" :style="{ '--day-count': review.days.length }" aria-label="每日支出，点击日期查看数额" @pointerdown="keepChartPosition" @wheel.passive="keepChartPosition">
-            <button v-for="day in review.days" :key="day.date" type="button" class="review-day" :class="{ selected: pointedDay?.date === day.date, recorded: day.count }" :aria-pressed="pointedDay?.date === day.date" :aria-label="day.date + '，支出' + centsText(day.expenseCents) + '元'" @click="selectedDay = day.date"><span class="review-day-track" aria-hidden="true"><i :style="{ height: day.expenseCents ? Math.max(5, day.expenseCents / maximumDayExpense * 100) + '%' : '0%' }"></i></span><span>{{ day.day }}</span></button>
+            <button v-for="day in review.days" :key="day.date" type="button" class="review-day" :class="{ selected: pointedDay?.date === day.date, recorded: day.count }" :aria-pressed="pointedDay?.date === day.date" :aria-label="day.date + '，支出' + centsText(day.expenseCents) + '元'" @click="selectDay(day.date)"><span class="review-day-track" aria-hidden="true"><i :style="{ height: day.expenseCents ? Math.max(5, day.expenseCents / maximumDayExpense * 100) + '%' : '0%' }"></i></span><span>{{ day.day }}</span></button>
           </div>
           <router-link v-if="pointedDay?.count" class="review-day-link" :to="{ path: '/bills', query: { month: selectedMonth, q: pointedDay.date } }">翻开这一天的 {{ pointedDay.count }} 张小票 →</router-link>
           <p class="review-scope-note">按完整业务月份统计，未来日期按所属月计入；记录日包含收入与支出，不是连续打卡。</p>
@@ -115,7 +120,7 @@ if (!SERVER_MODE) onMounted(reloadRecords)
           <p v-else class="review-scope-note">上月没有有效账单，先留一页空白；不虚构环比百分比。</p>
         </section>
         <section class="stats-category-card" aria-labelledby="stats-category-title">
-          <div class="stats-category-heading"><h2 id="stats-category-title">{{ typeLabel }}分类</h2><div class="stats-type-switch" aria-label="选择分类统计类型"><button v-for="type in ['expense', 'income']" :key="type" type="button" :aria-pressed="selectedType === type" :class="{ selected: selectedType === type }" @click="selectedType = type">{{ type === 'income' ? '收入' : '支出' }}</button></div></div>
+          <div class="stats-category-heading"><h2 id="stats-category-title">{{ typeLabel }}分类</h2><div class="stats-type-switch" aria-label="选择分类统计类型"><button v-for="type in ['expense', 'income']" :key="type" type="button" :aria-pressed="selectedType === type" :class="{ selected: selectedType === type }" @click="selectType(type)">{{ type === 'income' ? '收入' : '支出' }}</button></div></div>
           <div v-if="categoryRows.length" class="stats-wheel-scene"><span class="stats-wheel-label edition-ribbon">本月账本色谱</span><CategoryWheel :categories="categoryRows" :type="selectedType" :label="typeLabel + '分类分布，共' + categoryRows.length + '类'"><div class="stats-wheel-center"><span>{{ selectedType === 'income' ? '收入来源' : '支出去向' }}</span><strong>{{ categoryRows.length }}<small>类</small></strong><span>{{ statistics[selectedType + 'Count'] }}笔有效账单</span></div></CategoryWheel><JournalSticker kind="spark" tone="honey" class="stats-wheel-spark" /><JournalSticker kind="flower" tone="lilac" class="stats-wheel-flower" /></div>
           <aside v-if="leadingCategory" class="stats-insight desk-note" aria-label="基于实际账单的小发现"><JournalSticker tone="sage" /><div><p class="edition-kicker">账本小发现 · 非AI预测</p><p>本月{{ typeLabel }}最多的是 <strong>{{ leadingCategory.category }}</strong></p><span>¥{{ centsText(leadingCategory.amountCents) }} · 占{{ leadingCategory.percent.toFixed(1) }}%</span></div></aside>
           <p class="stats-category-note">{{ statistics[selectedType + 'Count'] }} 笔{{ typeLabel }} · 金额从高到低</p>
@@ -130,6 +135,7 @@ if (!SERVER_MODE) onMounted(reloadRecords)
           <p v-if="categoryRows.length" class="stats-rounding-note">占比按{{ typeLabel }}总额计算，显示到一位小数，四舍五入后可能略有差异。</p>
         </section>
         <p class="stats-storage-note">只统计当前账本的有效账单，未确认草稿和已删除账单不计入。{{ SERVER_MODE ? '数据保存在当前账号。' : '数据保存在当前浏览器。' }}</p>
+      </template>
       </template>
     </main>
     <BottomNav active="saving" />
