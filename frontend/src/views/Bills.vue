@@ -43,9 +43,9 @@ let active = true
 onScopeDispose(() => { active = false })
 const auth = SERVER_MODE ? useAuthStore() : null
 const owner = auth?.user?.id
-const exportOwnerCurrent = ref(!SERVER_MODE || Boolean(owner))
+const ownerCurrent = ref(!SERVER_MODE || Boolean(owner))
 if (SERVER_MODE) watch(() => auth.user?.id, value => {
-  if (value !== owner) exportOwnerCurrent.value = false
+  if (value !== owner) ownerCurrent.value = false
 }, { flush: 'sync' })
 const exportError = ref('')
 const displayBatchSize = 60
@@ -66,7 +66,7 @@ const monthTotals = computed(() => getRecordTotals(monthRecords.value))
 
 const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
 const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
-const exportUnavailable = computed(() => !active || !exportOwnerCurrent.value || Boolean(recordStore.storageError || reloadError.value) ||
+const exportUnavailable = computed(() => !active || !ownerCurrent.value || Boolean(recordStore.storageError || reloadError.value) ||
   reloading.value || saving.value || Boolean(editingRecord.value) || !listedRecords.value.length)
 watch([selectedMonth, searchText, selectedType, selectedCategory], () => { exportError.value = '' })
 function exportBills() {
@@ -186,9 +186,16 @@ async function deleteEdit() {
 }
 
 // 5. 方法
+let searchFocusGeneration = 0
+watch([selectedMonth, searchText, selectedType, selectedCategory, editingRecord], () => {
+  searchFocusGeneration++
+}, { flush: 'sync' })
 async function clearSearch() {
+  if (!active || !ownerCurrent.value || editingRecord.value) return
   searchText.value = ''
+  const current = ++searchFocusGeneration
   await nextTick()
+  if (!active || !ownerCurrent.value || editingRecord.value || current !== searchFocusGeneration) return
   searchInput.value?.focus()
 }
 

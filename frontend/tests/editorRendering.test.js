@@ -128,7 +128,7 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
       useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS,
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError')
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput')
     values.noticeElement.value = focusTarget
     return () => Vue.h('main')
   } })
@@ -333,6 +333,43 @@ test('CSV字段错误与下载失败明确提示未完成，不能出现已保�
       assert.match(state.values.exportError.value, /导出未完成/)
       assert.equal(state.values.notice.value, ''); assert.equal(state.downloads.length, 0)
       assert.equal(state.calls.length, 0)
+    } finally { state.dispose() }
+  }
+})
+
+test('清除搜索正常聚焦一次，重复清除仅最新回调聚焦', async () => {
+  const state = mountBills(), input = node('search')
+  try {
+    state.values.editingRecord.value = null; state.values.searchInput.value = input; state.values.searchText.value = '合成'
+    await state.values.clearSearch()
+    assert.equal(state.values.searchText.value, ''); assert.equal(input.focusCount, 1)
+    input.focusCount = 0
+    await Promise.all([state.values.clearSearch(), state.values.clearSearch()])
+    assert.equal(input.focusCount, 1)
+  } finally { state.dispose() }
+})
+
+test('清除搜索await期间新搜索/编辑/切月/切分类/账号切换/离页不被旧焦点回调抢占', async () => {
+  for (const change of [state => { state.values.searchText.value = '新关键词' }, state => state.values.edit(original),
+    state => { state.values.selectedMonth.value = '2026-11' }, state => { state.values.selectedCategory.value = '餐饮' },
+    state => { state.auth.user = { id: 'other-owner' } }, state => state.dispose()]) {
+    const state = mountBills({ server: true }), input = node('search')
+    try {
+      state.values.editingRecord.value = null; state.values.searchInput.value = input; state.values.searchText.value = '合成'
+      const pending = state.values.clearSearch()
+      change(state); await pending
+      assert.equal(input.focusCount, 0)
+    } finally { state.dispose() }
+  }
+})
+
+test('离页或旧账号清除入口不清新输入也不聚焦', async () => {
+  for (const change of [state => state.dispose(), state => { state.auth.user = { id: 'other-owner' } }]) {
+    const state = mountBills({ server: true }), input = node('search')
+    try {
+      state.values.editingRecord.value = null; state.values.searchInput.value = input; state.values.searchText.value = '保留输入'
+      change(state); await state.values.clearSearch()
+      assert.equal(state.values.searchText.value, '保留输入'); assert.equal(input.focusCount, 0)
     } finally { state.dispose() }
   }
 })

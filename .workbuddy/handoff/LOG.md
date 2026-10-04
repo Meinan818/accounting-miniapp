@@ -1084,3 +1084,8 @@
 - 新窗口01a1043a-8b46-7423-b6dd-5c26009b5280已核本次success回执、源ec45d68提交存在及源停止共享写入，原生automation view/toml已到本聊天、每小时ACTIVE/failed_runs_only保持，compact基准0。明细CSV显式入口已接完整listedRecords，未展开小票全部导出；未知时间空、安全整数分两位小数、CSV转义/中文UTF-8 BOM/表格公式文本保护、错误/忙碌/编辑/离页/账号切回拒绝旧导出已验证。69项针对、385项全量及demo/server两构建通过，真实账号/账本/照片/AI/邮件写入0，无新增依赖费用或部署。GUI/窄屏/真机/实际下载落盘/隔夜仍未验。下一项明细清除搜索后的焦点时序先取证，不主动提问、等回复或委派。
 - 已读完整editorRendering源setup绑定，新增billCsv纯函数与下载Blob复用；下载替身核UTF-8字节BOM、CSV MIME及成功/失败释放URL，页面合成账单核121条窗口之外和收支/分类/搜索交集，不改原账本或发额外请求。日志csv-targeted/frontend/demo/server保留，项目无lint/typecheck脚本，不虚报。
 - 官方只读GitHub接口当前核私有/无Pages/0 workflows/0 deployments，远端9702a1a与本地origin/main一致；源两交接提交及本节点相关差异核归属，无真实凭据或生成物，保存后普通Push并核远端结果。Git443失败历史保持。
+
+## 2026-10-04 · 清除搜索异步焦点保护
+
+- 388项前端及demo/server两构建通过，明细clearSearch等待前后核页面/账号及同步意图代次，新搜索、编辑、切月/分类或重复清除不再被旧回调聚焦；正常清除保持。clear-search-before17项14通过3失败原文保留，22项针对通过。CSV节点144b72f完整SHA已由官方同SHA/force:false适配器核远端一致（3提交/25blob），普通Git低速超时原文csv-push.log保留，仓库仍私有/无Pages/0 workflows/0 deployments。compact=0，无真实账号/业务/照片/AI/邮件请求。下一项个人页退出重复点击及离页失败回执合成取证，GUI/真机/实际下载/隔夜仍待工具条件。
+- 仅Bills焦点与共享页面owner锁命名调整，3项真实setup新增回归；同tick重复只聚焦最新清除，flush:sync意图代次覆盖筛选变化后切回，离页旧入口不清输入。全量388及两构建日志clear-search-*保留，原生焦点仅合成调用，不冒称GUI。
