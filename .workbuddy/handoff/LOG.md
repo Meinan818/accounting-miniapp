@@ -1129,3 +1129,8 @@
 
 - 共用useLedgerReload增加永久owner保护，Home/Stats/Bills/Profile均已接入；身份首次变化及切回旧入口不发当前Store重读，旧成功/false/异常不回填页面错误或解锁。ledger-owner-before13项2通过11失败原文保留（含2个父测试失败），99项针对、433项前端与demo/server两构建通过，无真实业务/账号/照片/AI/邮件请求。明细f71946be5c7680805aad970ba63d4fee433b05bc完整远端一致已核（bills-owner-sync），私有/无Pages/0 workflows/0 deployments保持。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项聊天身份瞬时变化再切回的旧入口与模型后续链合成取证。
 - 根因是reload helper仅核scope active，旧入口可以调用新身份共享Store，await后仅离页检查不足。可选owner getter的同步watch永久失效，默认演示模式不受账号影响；正常force/单次锁/失败重试/离页保持。新增实际四页setup合成Store集成测试纳入npm test，未执行mounted或真实fetch。
+
+## 2026-10-04 · 聊天永久身份保护
+
+- 聊天身份首次变化后永久失效，切回不复活旧历史/备份/重读/查询/确认/发送及同步改笔/取消入口；中止本页AI等待、释放计时器，旧回执不改草稿或清新页面thinking，实际Chat模板SSR隐藏旧消息与输入。chat-owner-before22项17通过5失败原文保留，91项针对后补正常改笔/取消回归，440项前端/demo与server两构建通过；真实AI/账号/业务/照片/邮件请求0。e44dc54a952251c4e12a7a04e39f2dfaf041cfe7完整远端一致已核（ledger-owner-sync）。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项AI草稿编辑未知时间是否被默认00:00填入的组件链取证。
+- 页与AI守卫过去只比当前id，切回会复活；同步取消/改笔/旧更新/语音入口也缺少页守卫。flush:sync永久owner失效，清本页controller/计时器而不写新会话等待状态；AI确定改价同步完成至Chat await回执的间隙亦保护，正常同步改笔/取消不自动入账。原已发请求与Store成功事实不冒称撤销，SSR子组件替身不加载图片，不代表GUI验收。

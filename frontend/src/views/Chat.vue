@@ -31,8 +31,9 @@ const recordStore = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
 const owner = auth?.user?.id
 let disposed = false
-function isCurrentView() { return !disposed && (!SERVER_MODE || auth.user?.id === owner) }
-const aiDraft = SERVER_MODE ? createAiDraftApi(auth.api, { isCurrent: () => !disposed && auth.user?.id === owner }) : null
+const ownerCurrent = ref(!SERVER_MODE || Boolean(owner))
+function isCurrentView() { return !disposed && ownerCurrent.value }
+const aiDraft = SERVER_MODE ? createAiDraftApi(auth.api, { isCurrent: isCurrentView }) : null
 const aiElapsed = ref(0)
 const aiRunning = ref(false)
 let aiController = null
@@ -44,7 +45,7 @@ function clearAiWait() {
   aiTimer = null; aiRunning.value = false; aiElapsed.value = 0
 }
 function stopAiWait() {
-  if (!aiController) return
+  if (!isCurrentView() || !aiController) return
   aiController.abort(); aiController = null; clearAiWait(); sendGeneration++
   sending = false; conversationStore.setThinking(false); conversationStore.setMascotMood('happy')
   reply('本次整理已停止，未入账。原草稿保留；平台任务可能仍在结束中，请稍后再发。')
@@ -56,6 +57,13 @@ const catDisplayName = '小宝'
 // 3. 响应式数据
 const messagesContainer = ref(null)
 let moodTimer = null
+if (SERVER_MODE) watch(() => auth.user?.id, value => {
+  if (value === owner) return
+  ownerCurrent.value = false
+  sending = false; sendGeneration++
+  aiController?.abort(); aiController = null; clearAiWait()
+  if (moodTimer) { window.clearTimeout(moodTimer); moodTimer = null }
+}, { flush: 'sync' })
 
 // 4. 计算属性
 const monthExpenseText = computed(() => recordStore.storageError ? '暂不可读取'
@@ -167,6 +175,7 @@ async function saveDraft(messageId) {
   finally { if (isCurrentView()) { savingGroup.value = null; scrollToBottom() } }
 }
 function cancelDraft(messageId) {
+  if (!isCurrentView()) return
   const message = conversationStore.messages.find(m => m.id === messageId)
   if (!message?.group || conversationStore.isThinking || savingGroup.value || retryingPersistence.value || recordStore.batchRecords(message.group.id).length) return
   const result = message.group.origin === 'ai'
@@ -175,6 +184,7 @@ function cancelDraft(messageId) {
   conversationStore.updateGroup(messageId, result.group); actionErrors.value[messageId] = ''; reply(result.reply)
 }
 function editDraft(messageId, { itemId, record }) {
+  if (!isCurrentView()) return
   const message = conversationStore.messages.find(m => m.id === messageId)
   if (!message?.group || conversationStore.isThinking || savingGroup.value || retryingPersistence.value || ['saved', 'cancelled'].includes(message.group.status) || recordStore.batchRecords(message.group.id).length) return
   const group = JSON.parse(JSON.stringify(message.group))
@@ -216,6 +226,7 @@ async function handleSend(userInput) {
   finally { if (isCurrentView() && generation === sendGeneration) { sending = false; conversationStore.setThinking(false); conversationStore.setMascotMood('happy'); scrollToBottom() } }
 }
 async function handleServerSend(text) {
+  if (!isCurrentView()) return
   const active = activeDraftMessage.value
   if (isQuery(text)) { await queryReply(text); return }
   const control = draftControl(text)
@@ -233,13 +244,16 @@ async function handleServerSend(text) {
   const controller = new AbortController()
   aiController = controller; aiRunning.value = true; aiElapsed.value = 0
   const started = Date.now()
-  aiTimer = window.setInterval(() => { aiElapsed.value = Math.floor((Date.now() - started) / 1000) }, 1000)
+  aiTimer = window.setInterval(() => {
+    if (isCurrentView() && aiController === controller) aiElapsed.value = Math.floor((Date.now() - started) / 1000)
+  }, 1000)
   try {
     const result = await aiDraft.parse(text, { date: dayjs().format('YYYY-MM-DD'), group: active?.group, signal: controller.signal })
+    if (!isCurrentView() || controller.signal.aborted) return
     if (active) { conversationStore.updateGroup(active.id, result.group); actionErrors.value[active.id] = '' }
     else conversationStore.addMessage({ role: 'assistant', kind: 'draft-group', group: result.group })
     reply(result.reply)
-  } catch (error) { if (!controller.signal.aborted && !disposed && auth.user?.id === owner) reply(error.message + '。原草稿保留，尚未入账。') }
+  } catch (error) { if (!controller.signal.aborted && isCurrentView()) reply(error.message + '。原草稿保留，尚未入账。') }
   finally { if (aiController === controller) { aiController = null; clearAiWait() } }
 }
 function legacySaved(message) { return message.confirmed || recordStore.batchRecords('legacy-' + message.id).length > 0 }
@@ -249,6 +263,7 @@ function savedRecords(group) {
     ? linkGroupRecords(group, recordStore.recordsByIds(group.recordIds)) : recordStore.batchRecords(group.id)
 }
 function handleUpdateRecord(messageId, updatedRecord) {
+  if (!isCurrentView()) return
   const message = conversationStore.messages.find(m => m.id === messageId)
   if (retryingPersistence.value) return
   if (!message || legacySaved(message)) { reply('这笔已入账，请直接到明细修改。'); return }
@@ -271,6 +286,7 @@ async function handleConfirmRecord(messageId, record) {
 }
 
 function handleVoice() {
+  if (!isCurrentView()) return
   conversationStore.setMascotMood('confused')
   resetMoodLater()
 }
@@ -297,7 +313,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="miao-chat notebook-evolution">
+  <div v-if="ownerCurrent" class="miao-chat notebook-evolution">
     <header class="miao-header">
       <div class="miao-header-content">
         <div class="miao-brand">
@@ -377,6 +393,7 @@ onBeforeUnmount(() => {
 
     <ChatInput :disabled="conversationStore.isThinking || Boolean(savingGroup) || retryingPersistence" cat-appearance @send="handleSend" @voice="handleVoice" />
   </div>
+  <main v-else class="miao-chat notebook-evolution"><header class="miao-header"><div class="miao-brand miao-header-content"><NotebookBack /><div><h1 class="miao-title">聊天记账</h1><p class="miao-subtitle" role="status">登录身份已变化，请重新打开聊天页。</p></div></div></header></main>
 </template>
 
 <style scoped>

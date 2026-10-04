@@ -333,3 +333,6 @@
 
 ## 2026-10-04 · 重读helper缺少账号边界
 - useLedgerReload只核active，四页旧重读入口身份切回后仍调用当前Store，迟到回执也通过。ledger-owner-before13项2通过11失败（含父测试2项）保留；可选永久owner保护及四页接入后99项针对/433全量/两构建通过。以后所有共享Store读取入口与catch/finally也核身份，正常单次锁和force不能替代身份保护；GUI仍未验。
+
+## 2026-10-04 · Chat当前id相等不能证明原页面仍有效
+- isCurrentView及AI守卫仅比较id，身份切回让旧下载/查询/确认/模型回执复活；同步草稿入口部分无保护。chat-owner-before22项17通过5失败保留。永久owner与同步入口守卫、AI await再核和模板撤显示后440项全量/两构建通过。以后身份首次变化永久失效，模板、同步入口、网络适配器与await回执各自核，不能依赖Store隔离代替页面保护。真实业务/AI请求0，GUI仍未验。

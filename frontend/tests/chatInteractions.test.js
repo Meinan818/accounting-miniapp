@@ -3,10 +3,15 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import * as Vue from 'vue'
+import { compile } from '@vue/compiler-dom'
+import { renderToString } from '@vue/server-renderer'
 import { createAiDraftApi, draftControl } from '../src/api/aiDraft.js'
 import dayjs from 'dayjs'
 import { getMonthQueryReply } from '../src/utils/chatQuery.js'
 import { createDraft, applyDraftInput, groupReply, isQuery, resolveGroup } from '../src/utils/draftEngine.js'
+import { validateRecord } from '../src/utils/ledger.js'
+import { centsText, legacyCents } from '../src/utils/money.js'
+import { linkGroupRecords } from '../src/utils/groupRecords.js'
 
 const script = readFileSync(new URL('../src/views/Chat.vue', import.meta.url), 'utf8')
   .split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
@@ -32,14 +37,14 @@ function scene({ server = true, syntheticAi = false } = {}) {
     return new Promise((resolve, reject) => aiRequests.push({ options, resolve, reject }))
   } } })
   const bindings = { ...Vue, onMounted() {}, onBeforeUnmount: callback => cleanup.push(callback), SERVER_MODE: server, createAiDraftApi, getMonthQueryReply, draftControl, dayjs,
-    createDraft, applyDraftInput, groupReply, isQuery, resolveGroup,
+    createDraft, applyDraftInput, groupReply, isQuery, resolveGroup, validateRecord, centsText, legacyCents, linkGroupRecords,
     downloadJson: (value, filename) => { if (downloadFails) throw Error('合成下载失败'); downloads.push({ value, filename }) },
     window: { setTimeout: callback => { timers.push(callback); return timers.length }, clearTimeout() {},
       setInterval: callback => { intervals.push(callback); return intervals.length }, clearInterval: id => clearedIntervals.push(id) },
     useAuthStore: () => auth, useConversationStore: () => conversation,
     useRecordStore: () => store }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {loadEarlier, retryConversation, backupConversation, backupNote, messagesContainer, visibleLimit, loadingHistory, retryingPersistence, actionErrors, queryReply, saveDraft, handleConfirmRecord, savingGroup, handleSend, stopAiWait, aiRunning}')(...Object.values(bindings)))
+    ';return {loadEarlier, retryConversation, backupConversation, backupNote, messagesContainer, visibleLimit, loadingHistory, retryingPersistence, actionErrors, queryReply, saveDraft, handleConfirmRecord, savingGroup, handleSend, stopAiWait, aiRunning, aiElapsed, cancelDraft, editDraft, handleUpdateRecord, handleVoice, ownerCurrent, conversationStore, recordStore, catDisplayName, monthExpenseText, hiddenCount, visibleMessages, pinnedDraft, savedRecords, legacyRecord, legacySaved}')(...Object.values(bindings)))
   const container = { scrollHeight: 1000, get scrollTop() { return top }, set scrollTop(value) { top = value; scrolls.push(value) } }
   view.messagesContainer.value = container
   return { view, auth, conversation, writes, queries, facts, timers, aiRequests, clearedIntervals, downloads, failDownload() { downloadFails = true }, container, scrolls, get retries() { return retries }, finish: value => finish(value), dispose() {
@@ -280,4 +285,135 @@ test('正式Chat离页中止合成AI，旧结果不能清新页面thinking或追
   assert.equal(env.conversation.messages.length, 91)
   assert.equal(env.conversation.isThinking, true)
   assert.equal(env.writes.length, 0)
+})
+
+test('聊天身份变化再切回，旧备份/历史/重读/查询/确认/发送入口均不复活', async () => {
+  for (const action of ['backupConversation', 'loadEarlier', 'retryConversation', 'queryReply', 'saveDraft', 'handleConfirmRecord', 'handleSend']) {
+    const env = scene({ syntheticAi: true }); addDraft(env)
+    env.conversation.messages.push({ id: 'legacy', kind: 'record', record })
+    try {
+      env.auth.user = null; env.auth.user = { id: 'synthetic' }
+      const args = { queryReply: ['本月支出'], saveDraft: ['draft'], handleConfirmRecord: ['legacy', record], handleSend: ['午饭25'] }[action] || []
+      const pending = env.view[action](...args)
+      if (env.retries) env.finish(true)
+      env.queries.forEach(request => request.resolve(true))
+      env.writes.forEach(request => request.resolve(action === 'handleConfirmRecord' ? record : [record]))
+      env.aiRequests.forEach(request => request.resolve(readyAi(request)))
+      await pending
+      assert.deepEqual([env.downloads.length, env.retries, env.queries.length, env.writes.length, env.aiRequests.length], [0, 0, 0, 0, 0], action)
+      assert.equal(env.view.visibleLimit.value, 40)
+      assert.equal(env.conversation.messages.length, 92)
+    } finally { env.dispose() }
+  }
+})
+
+test('聊天同步草稿取消/改笔/旧单笔更新/语音入口在身份失效后不改变原快照', async () => {
+  for (const action of ['cancelDraft', 'editDraft', 'handleUpdateRecord', 'handleVoice']) {
+    const env = scene(); addDraft(env)
+    env.conversation.messages.push({ id: 'legacy', kind: 'record', record })
+    try {
+      const snapshot = JSON.stringify(env.conversation.messages), mood = env.conversation.mascotMood
+      env.auth.user = { id: 'other' }; env.auth.user = { id: 'synthetic' }
+      const args = { cancelDraft: ['draft'], editDraft: ['draft', { itemId: record.id, record: { ...record, amount: 12.34 } }],
+        handleUpdateRecord: ['legacy', { ...record, amount: 12.34 }], handleVoice: [] }[action]
+      env.view[action](...args)
+      assert.equal(JSON.stringify(env.conversation.messages), snapshot, action)
+      assert.equal(env.conversation.mascotMood, mood, action)
+    } finally { env.dispose() }
+  }
+})
+
+test('查询和整组/单笔确认等待身份切回，迟到回执不改旧消息或错误，Store事实保留', async () => {
+  for (const action of ['queryReply', 'saveDraft', 'handleConfirmRecord']) {
+    for (const rejected of [false, true]) {
+      const env = scene(); addDraft(env)
+      env.conversation.messages.push({ id: 'legacy', kind: 'record', record })
+      try {
+        const args = { queryReply: ['本月支出'], saveDraft: ['draft'], handleConfirmRecord: ['legacy', record] }[action]
+        const pending = env.view[action](...args)
+        const snapshot = JSON.stringify(env.conversation.messages)
+        env.auth.user = null; env.auth.user = { id: 'synthetic' }
+        const request = action === 'queryReply' ? env.queries[0] : env.writes[0]
+        // queryReply的现有读取拒绝交给调用方handleSend处理；这里只核加载false及成功。
+        if (rejected && action !== 'queryReply') request.reject(Error('合成旧确认失败'))
+        else request.resolve(action === 'queryReply' ? !rejected : action === 'saveDraft' ? [record] : record)
+        await pending
+        assert.equal(JSON.stringify(env.conversation.messages), snapshot)
+        assert.equal(env.view.actionErrors.value.draft || '', '')
+        assert.equal(env.timers.length, 0)
+        assert.equal(env.facts.length, !rejected && action !== 'queryReply' ? 1 : 0)
+      } finally { env.dispose() }
+    }
+  }
+})
+
+test('身份切回中止旧AI并释放本页等待，迟到结果不追加草稿或清新页面thinking', async () => {
+  for (const rejected of [false, true]) {
+    const env = scene({ syntheticAi: true }), pending = env.view.handleSend('午饭25')
+    try {
+      env.auth.user = { id: 'other' }; env.auth.user = { id: 'synthetic' }
+      const aborted = env.aiRequests[0].options.signal.aborted
+      env.conversation.setThinking(true)
+      if (rejected) env.aiRequests[0].reject(Error('合成旧AI失败'))
+      else env.aiRequests[0].resolve(readyAi(env.aiRequests[0]))
+      await pending
+      assert.equal(aborted, true)
+      assert.equal(env.view.aiRunning.value, false)
+      assert.equal(env.conversation.messages.length, 91); assert.equal(env.conversation.isThinking, true)
+      assert.deepEqual(env.clearedIntervals, [1])
+      assert.equal(env.writes.length, 0)
+    } finally { env.dispose() }
+  }
+})
+
+test('AI确定改价同步完成与Chat await回执之间身份变化，不更新旧草稿或追加回复', async () => {
+  const env = scene({ syntheticAi: true })
+  try {
+    const { group } = createDraft('午饭25', { date: '2026-10-04' })
+    group.origin = 'ai'
+    env.conversation.messages.push({ id: 'ai-current', kind: 'draft-group', group })
+    const snapshot = JSON.stringify(group), pending = env.view.handleSend('午饭改成16')
+    assert.equal(env.aiRequests.length, 0)
+    env.auth.user = null; env.auth.user = { id: 'synthetic' }
+    env.conversation.setThinking(true); await pending
+    assert.equal(JSON.stringify(env.conversation.messages.find(message => message.id === 'ai-current').group), snapshot)
+    assert.equal(env.conversation.messages.length, 92); assert.equal(env.conversation.isThinking, true)
+    assert.equal(env.writes.length, 0)
+  } finally { env.dispose() }
+})
+
+test('当前聊天草稿改笔/取消及旧单笔改价仍有效，均需确认才入账', () => {
+  const env = scene()
+  try {
+    const { group } = createDraft('午饭25', { date: '2026-10-04' })
+    env.conversation.messages.push({ id: 'editable', kind: 'draft-group', group })
+    env.view.editDraft('editable', { itemId: group.items[0].id, record: { ...record, amount: 12.34 } })
+    assert.equal(env.conversation.messages.find(message => message.id === 'editable').group.items[0].amountCents, 1234)
+    env.view.cancelDraft('editable')
+    assert.equal(env.conversation.messages.find(message => message.id === 'editable').group.status, 'cancelled')
+    env.conversation.messages.push({ id: 'legacy', kind: 'record', record })
+    env.view.handleUpdateRecord('legacy', { ...record, amount: 0.65 })
+    assert.equal(env.conversation.messages.find(message => message.id === 'legacy').record.amount, 0.65)
+    assert.equal(env.writes.length, 0)
+  } finally { env.dispose() }
+})
+
+test('实际Chat模板身份变化隐藏原对话/输入/备份，切回不复活，不清消息快照', async () => {
+  const env = scene()
+  const template = readFileSync(new URL('../src/views/Chat.vue', import.meta.url), 'utf8').split('<template>')[1].split('</template>')[0]
+  const stub = { render: () => Vue.h('span') }
+  const Chat = { components: Object.fromEntries(['ManualEntry', 'NotebookBack', 'JournalSticker', 'CatNavIcon', 'ChatInput', 'ConfirmCard', 'DraftGroupCard'].map(name => [name, stub])),
+    setup: () => ({ ...env.view, SERVER_MODE: true, miaoAvatar: 'synthetic', miaoThinking: 'synthetic' }),
+    render: new Function('Vue', compile(template, { mode: 'function' }).code)(Vue) }
+  Chat.components.ChatBubble = { props: ['message'], render() { return Vue.h('p', this.message.content) } }
+  Chat.render._rc = true
+  try {
+    const before = await renderToString(Vue.createSSRApp(Chat)); assert.match(before, /合成历史/)
+    env.auth.user = null
+    const expired = await renderToString(Vue.createSSRApp(Chat))
+    env.auth.user = { id: 'synthetic' }
+    const returned = await renderToString(Vue.createSSRApp(Chat))
+    for (const html of [expired, returned]) { assert.doesNotMatch(html, /合成历史|miao-input-wrap|下载对话备份/); assert.match(html, /登录身份已变化/) }
+    assert.equal(env.conversation.messages.length, 90)
+  } finally { env.dispose() }
 })
