@@ -1,3 +1,8 @@
+## 当前入口：四页浏览器模拟跨日跨月（2026-10-04）
+
+按本机官方Playwright 1.62.1类型声明Clock文档（playwright-core/types/types.d.ts 20090起及package.json）核install/pauseAt/fastForward/setSystemTime，用Asia/Tokyo时区隔离context模拟10月31日→11月1/2日。Home/Stats/Bills/Profile 6场景/14次合成API通过：默认选日/日历/月汇总及Stats本月更新，Home历史选日/Stats显式历史月与收入选择保持，Bills今天→昨天但月/搜索/Editor金额日期时间保持，Profile月份/足迹更新且未保存昵称保持。每条变化前后请求计数不增加，原合成账本不变，意外错误/未知请求0、真实业务/账号/照片/AI/邮件0。6截图留E盘并抽检默认Home/更新Profile，browser-clock-result.json。首轮Bills选择器误用bills-month-nav等待超时原文browser-clock-selector-before-result.json/browser-clock-first.log保留；核实际bills-month后通过，无业务修改。模拟不作为实际隔夜/真机证明。
+
+注册记录74f0461572e83b920855622c6836b72cbccbcc95完整远端一致已核；465前端及同源码两构建保持，Java19940/Vite20820未重启。当前聊天实际compact=1，原automation view已调用，本次不改字段或重复建。真实账号/用户系统剪贴板/真机/实际隔夜/最终人工验收仍未验。下一项Chat存储异常备份的合成浏览器实际JSON下载，核坏原文保留、未保存本页消息和部分备份提示，禁止读取用户浏览器资料/真实对话。
 ## 当前入口：邮箱注册到自动登录返回浏览器链（2026-10-04）
 
 Login真实隔离server浏览器6项/13次合成API通过，登录注册三宽无横向溢出/6截图并抽检320注册；非法邮箱不申请，双击仅1次code申请，申请中不能注册，改邮箱清验证码且旧回执不生效。新challenge绑定规范邮箱并重发倒计时禁用，五位验证码不发注册；注册503保邮箱/验证码/密码且无自动登录，原challenge双击重试只发1次且锁输入/模式，成功仅自动登录1次并返回原Stats月份/hash。3条访客401与1条预设503控制台单列，意外错误/未知请求0、真实邮件/认证/账本/AI/照片请求0。报告browser-registration-result.json。首轮验证返回目标时误用不存在stats-page选择器导致等待超时，原文browser-registration-selector-before-result.json/browser-registration-first.log保留；已核实际stats-content后通过，无业务修改。
