@@ -1,3 +1,13 @@
+## 第2次实际压缩交接（2026-10-04，最新入口）
+
+源聊天01a1049d-eea8-7b23-811f-6afe194bff0f已识别并告知第2次实际compact，STATE=2，停止业务代码；03:29 heartbeat仅核现场，验证码Clock任务尚未开始。Profile正式挂载去除重复账本读取修复8e324c6已保存上传，47项相关/465项前端/demo与server两构建通过；本轮9组新增合成浏览器60项、200次完全拦截API、37截图及3实际JSON备份E盘下载保持，较早24场景/18截图/121条CSV另算。真实账号/账本/AI/照片/邮件请求0，真机/系统剪贴板/实际隔夜/最终人工验收未验；本次不重跑测试、不Push，不改已批准免费模型或本机服务。
+
+现场HEAD为6a6f8bdb60c0a82283f1fac1dee21ed062138598，交接前工作区干净，Java19940/Vite20820仍只监听127.0.0.1:8080/5174，未重启。现有automation每小时/ACTIVE/failed_runs_only、目标源聊天已原生view及toml核实；不重复创建。
+
+本次专用回执：.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a1049d.json。先本地commit，再原生创建gpt-6.1-sol/high新聊天及迁移automation。目标须只读核status=success、finalCommit存在、源停止共享写入、automation目标和其余字段保持后才能接手；不能用旧回执代替本次。新窗口实际compact从0开始，源保留2。
+
+交接后直接接续Login验证码challenge过期/倒计时重发/改邮箱与切模式边界合成浏览器Clock验证，未发真实邮件认证；复用browser-registration-qa.cjs/browser-clock-qa.cjs及Playwright1.62.1、本机Chrome、frontend/dist-server。选择器先查模板，正常load后pauseAt，再fastForward或setSystemTime+focus；全部API拦截、未知/外部请求阻断、E盘临时缓存。无已复现新缺陷，不为测试改业务；失败原文保留。独立节点验证后commit并核查上传全部待上传提交，持续自主推进、不提问或委派。
+
 ## 当前入口：编辑中会话失效与另账号隔离浏览器链（2026-10-04）
 
 Bills编辑期间401与ACCOUNT_CHANGED两条真实合成浏览器链4项/26次API拦截通过：等待中表单禁用，失效回执撤下旧窗口/账单，Login保原月/编码搜索/hash；合成登录账号2后仅显示B账单，A旧账单仍25元未改。新编辑只能发账号2/新CSRF、B改12元；旧A合成对话原文保持、不自动迁移到账号2，旧写没有重试。4条预设401/409资源控制台单列，意外错误/未知请求0、真实认证/账本/AI/照片/邮件0。browser-session-result.json与2截图留E盘，抽检账号变化终态。本轮无新业务缺陷或源码修改。
