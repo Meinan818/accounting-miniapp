@@ -1,3 +1,11 @@
+## 照片解码迟到与取消重开浏览器验证（2026-10-04）
+
+实际Profile5浏览器/7API/2截图通过：原生Image真实解码，控制load/error回调交付时序。处理中禁保存/换图/贴纸、可填昵称签名及取消；取消重开且新图处理中，旧红图load不套新预览、不清新processing或改输入。当前绿色图完成才显示256JPEG并解锁。Escape取消坏图重开处理蓝图，旧error不回填错误/清新busy，当前蓝图才应用；4Blob全释放、0上传/PUT/真实请求，意外错误/未知请求0。截图实际像素核绿/蓝且抽检输入，新成功/error由原生解码产生，不冒称自然耗时或真机。
+
+browser-profile-photo-race-*留既有E盘忽略目录，无缺陷/源码改动；累计新增27组185浏览器/544API/75截图/7JSON备份，473前端/两构建保持同源码旧证据未重跑。前节点d1d7e03ffa38b4f3eec0a32f0bd2c0d0311fe086已按官方同SHA/force:false上传并核远端一致；普通Push低速失败profile-photo-errors-push.log保留，私有/无Pages/0 workflows/0 deployments保持。
+
+compact=0、原静音automation及本机服务保持，无新用户依赖；下一项最高合法金额与累加汇总在四页窄屏的实际布局/精度及CSV合成导出链，只使用独立合成数据、禁止真实请求。
+
 ## 头像文件失败与重新选择浏览器验证（2026-10-04）
 
 Profile合成浏览器9检查/5API/2截图通过：空PNG、10MiB+1字节、坏PNG/JPEG/WebP实际选文件与真实Image解码失败均保原256JPEG预览、未保存昵称签名，清file输入、0上传/PUT。同名坏WebP再选真实重解码失败、Blob重新创建并释放。正好10MiB含有效PNG的合成文件成功，有效JPEG/WebP可恢复并裁256JPEG；取消后重开恢复原cat/昵称/签名。8个实际Blob逐个释放，意外错误/未知请求0，全部API合成，真实账号/照片/资料/认证/AI/邮件/账本请求0。
