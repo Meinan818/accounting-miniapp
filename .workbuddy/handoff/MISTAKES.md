@@ -399,3 +399,8 @@ Editor曾把conflict并入saving，实际请求结束仍显示正在保存并禁
 ## 2026-10-04 · 长历史阅读位置验证
 
 - 首轮harness把最终展开后删除控制区/固定提示、总高度下降19px且scrollTop=0的必要截断当位置错误。first/instrumented及before结果/截图保留；证据核前两次高度差补偿正确，最终浏览器无法负滚动。改核具体旧消息坐标与max(0,旧scrollTop+高度差)，保留严格位置断言及有限动画等待，6项浏览器通过，无业务修改。
+
+## 2026-10-04 · 查询范围与删除fixture合同
+
+- SnapshotRecord删除时间与record同层；首轮fixture错塞record.deletedAt导致100元被视为有效，fixture-before/first.log保留。以后先核当前Java DTO与前端映射，不从本地Store字段猜服务合同。
+- isQuery范围只剥一次使全部历史汇总漏判并调AI；实际browser及55项2失败保留。组合已知范围现走安全查询/范围说明，473项/两构建/安全查询及确定控制browser通过，商品/书名负例保持。

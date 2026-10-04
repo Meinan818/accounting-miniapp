@@ -43,8 +43,8 @@ test('待补金额时复盘不修改草稿或入账', () => {
   const {group}=createDraft('买咖啡');const raw=JSON.stringify(group);const result=applyDraftInput(group,'本月复盘')
   assert.equal(result.action,'query');assert.equal(JSON.stringify(result.group),raw)
 })
-test('聊天复盘明确演示/月份/预测边界，读取新账单值', () => {
+test('聊天复盘明确月份/预测边界，不把账本事实称为演示，读取新账单值', () => {
   const rows=[bill({amount:12}),bill({amount:20,date:'2026-09-02'})]
-  const text=getMonthQueryReply('本月复盘',rows,'2026-10');assert.match(text,/规则演示/);assert.match(text,/支出 ¥12.00/);assert.match(text,/少 ¥8.00/);assert.match(text,/不是AI预测/)
+  const text=getMonthQueryReply('本月复盘',rows,'2026-10');assert.match(text,/按完整业务月份统计/);assert.doesNotMatch(text,/规则演示/);assert.match(text,/支出 ¥12.00/);assert.match(text,/少 ¥8.00/);assert.match(text,/不是AI预测/)
   rows[0].amount=9;assert.match(getMonthQueryReply('本月复盘',rows,'2026-10'),/支出 ¥9.00/)
 })

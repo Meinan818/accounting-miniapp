@@ -12,7 +12,7 @@ export function isQuery(input) {
   // Summary shorthand must never become a bill. Anchor the whole phrase so product names still work.
   let summary = text.replace(/\s+/g, '').replace(/[？?。！!]+$/, '')
     .replace(/^(?:(?:请|帮我|我想知道|想知道|我想|看看|看下|查一下|查询|查看|统计|汇总|算一下|算算))+/, '')
-    .replace(/^(?:本月|这个月|当月|今天|昨天|前天|上个月|上月|下个月|下月|今年|去年|本周|上周|全部|所有|历史)(?:的)?/, '')
+    .replace(/^(?:(?:本月|这个月|当月|今天|昨天|前天|上个月|上月|下个月|下月|今年|去年|全年|本周|上周|全部|所有|历史)(?:的)?)+/, '')
   const category = categoryLabels.find(label => summary.startsWith(label))
   if (category) summary = summary.slice(category.length)
   if (/^(?:(?:总|总共|一共|累计|合计)(?:支出|收入|开销|花费)|(?:支出|收入|开销|花费)(?:总额|总计|总共|一共|合计))(?:的)?(?:(?:是|有)?多少(?:钱|元|块)?|呢|呀|啊|吗|(?:是|为)?[\d,]+(?:\.\d+)?(?:元|块)?(?:吗|对吗)?)?$/.test(summary)) return true

@@ -12,7 +12,7 @@ export function getMonthQueryReply(text, records, month = dayjs().format('YYYY-M
   if (!explicitMonth && /全部|所有|历史|累计|至今|一直以来/.test(text)) {
     return '全部历史总额暂不支持查询；这版先支持本月汇总，其他月份可到明细查看。本喵不会拿本月数据冒充全部历史。'
   }
-  if (/上个月|下个月|去年|今年|昨天|前天|今天|明天|后天|本周|这周|上周|下周|上月|下月|本年|年度|\d{4}[-年]|\d{1,2}月/.test(text)) {
+  if (/上个月|下个月|去年|今年|全年|昨天|前天|今天|明天|后天|本周|这周|上周|下周|上月|下月|本年|年度|\d{4}[-年]|\d{1,2}月/.test(text)) {
     return '这版查询先支持本月汇总；其他日期请到明细切月查看。本喵不会拿本月数据冒充其他日期。'
   }
   const statistics = getMonthStatistics(records, month)

@@ -440,6 +440,21 @@ test('实际Chat模板仅传当前组入账进度，整理/重读仅阻止操作
   } finally { env.dispose() }
 })
 
+test('全部历史组合范围只查询账本并明确不支持，不调用AI或覆盖已有草稿', async () => {
+  const env = scene({ syntheticAi: true }); addDraft(env)
+  const snapshot = JSON.stringify(env.conversation.messages.find(m => m.id === 'draft').group)
+  try {
+    const pending = env.view.handleSend('全部历史总支出')
+    assert.equal(env.aiRequests.length, 0)
+    assert.equal(env.queries.length, 1)
+    env.queries[0].resolve(true); await pending
+    assert.match(env.conversation.messages.at(-1).content, /全部历史总额暂不支持/)
+    assert.equal(JSON.stringify(env.conversation.messages.find(m => m.id === 'draft').group), snapshot)
+    assert.equal(env.writes.length, 0)
+    assert.equal(env.conversation.isThinking, false)
+  } finally { env.dispose() }
+})
+
 test('Chat接收AI草稿编辑的缺省时间保持未知；显式时间可补充，已知时间不可默默清空', async () => {
   const env = scene()
   try {

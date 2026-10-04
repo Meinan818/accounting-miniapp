@@ -31,7 +31,7 @@ export function getMonthReview(records, month) {
 
 export function formatMonthReviewReply(review) {
   const s = review.current
-  const lines = ['本月账本复盘（规则演示，按完整业务月份统计）',
+  const lines = ['本月账本复盘（按完整业务月份统计）',
     '收入 ¥' + centsText(s.incomeCents) + ' · 支出 ¥' + centsText(s.expenseCents) + ' · 结余 ¥' + centsText(s.balanceCents),
     '有效账单 ' + s.recordCount + ' 笔，分布在 ' + review.activeDays + ' 个记录日。']
   if (review.peak) lines.push('花费最多的一天：' + review.peak.date + '，¥' + centsText(review.peak.expenseCents) + '。')

@@ -157,3 +157,9 @@ test('汇总金额陈述不作为实际消费入账，分类汇总短句仍为�
     assert.equal(isQuery(text),true,text); assert.equal(draft(text).group,undefined,text)
   }
 })
+test('组合查询范围仍识别为查询，书名/商品中的范围词不变成查询', () => {
+  for (const text of ['全部历史总支出', '所有历史总收入', '查询全部历史总支出', '今年全年总支出', '全部历史的总收入']) {
+    assert.equal(isQuery(text), true, text)
+  }
+  for (const text of ['买历史书25元', '今天买全部历史书25元', '本月历史课花了20元']) assert.equal(isQuery(text), false, text)
+})
