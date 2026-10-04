@@ -48,6 +48,9 @@ let manuallyMoved = false
 onScopeDispose(() => { active = false })
 const isCurrentView = () => active && ownerCurrent.value
 function keepChartPosition() { if (isCurrentView()) manuallyMoved = true }
+function keepChartKeyPosition(event) {
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) keepChartPosition()
+}
 function selectDay(date) { if (isCurrentView()) selectedDay.value = date }
 function selectType(type) { if (isCurrentView()) selectedType.value = type }
 function slideDays(direction) {
@@ -64,7 +67,7 @@ watch([review, selectedMonth], async (_value, _previous, onCleanup) => {
   if (!isCurrentView() || !current || manuallyMoved || month !== selectedMonth.value || snapshot !== review.value ||
       !dayChart.value || selectedDay.value || !snapshot?.peak) return
   dayChart.value.scrollLeft = Math.max(0, (snapshot.peak.day - 1) * 49 - (dayChart.value.clientWidth - 44) / 2)
-})
+}, { immediate: true })
 // 正式路由已完成当前身份的账本读取；失败由页面显式重试。
 if (!SERVER_MODE) onMounted(reloadRecords)
 </script>
@@ -103,7 +106,7 @@ if (!SERVER_MODE) onMounted(reloadRecords)
           <div class="review-section-title"><div><p class="edition-kicker">花费足迹 · 每天一小格 · 左右滑动</p><h2 id="review-trend-title">这一月，钱是怎么花的？</h2></div><span>{{ review.activeDays }} 个记录日</span></div>
           <div class="review-cat-guide"><CatNavIcon kind="chart" /><span>本喵的爪爪花费轨迹</span><div class="review-scroll-actions"><button type="button" aria-label="查看前7天" @click="slideDays(-1)">‹</button><button type="button" aria-label="查看后7天" @click="slideDays(1)">›</button></div></div>
           <p class="review-pointed-day" role="status">{{ pointedDay ? pointedDay.date + ' · 支出 ¥' + centsText(pointedDay.expenseCents) : '还没有支出足迹，记下第一笔后再来看看。' }}</p>
-          <div ref="dayChart" class="review-day-chart" :style="{ '--day-count': review.days.length }" aria-label="每日支出，点击日期查看数额" @pointerdown="keepChartPosition" @wheel.passive="keepChartPosition">
+          <div ref="dayChart" class="review-day-chart" :style="{ '--day-count': review.days.length }" aria-label="每日支出，点击日期查看数额" @pointerdown="keepChartPosition" @wheel.passive="keepChartPosition" @keydown="keepChartKeyPosition">
             <button v-for="day in review.days" :key="day.date" type="button" class="review-day" :class="{ selected: pointedDay?.date === day.date, recorded: day.count }" :aria-pressed="pointedDay?.date === day.date" :aria-label="day.date + '，支出' + centsText(day.expenseCents) + '元'" @click="selectDay(day.date)"><span class="review-day-track" aria-hidden="true"><i :style="{ height: day.expenseCents ? Math.max(5, day.expenseCents / maximumDayExpense * 100) + '%' : '0%' }"></i></span><span>{{ day.day }}</span></button>
           </div>
           <router-link v-if="pointedDay?.count" class="review-day-link" :to="{ path: '/bills', query: { month: selectedMonth, q: pointedDay.date } }">翻开这一天的 {{ pointedDay.count }} 张小票 →</router-link>

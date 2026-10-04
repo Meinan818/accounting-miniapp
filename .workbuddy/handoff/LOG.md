@@ -1467,3 +1467,13 @@ compact=0、原静音automation及本机服务保持，无新用户依赖；下�
 首次脚本写意图断言用了猜测的不存在键，随后核ledger.js真实miaoji_account_write_intents_v1_1并修正/同11项复跑通过；first/final日志均留存、不重复累计，不把首轮该断言当有效证据。browser-manual-money-*留既有E盘忽略目录，无业务缺陷/源码改动，473前端/两构建保持上一修复同源码证据。累计新增29组206浏览器/578API/79截图/7JSON备份，另本窗口1实际CSV（较早121CSV另算）。Bills修复7116495c105ecac69640905b685189b4fd60037c已按官方同SHA/force:false上传并核完整远端一致，普通Push低速失败保留，私有/无Pages/0 workflows/0 deployments保持。
 
 compact=0、原静音每小时automation沿用当前聊天，真实定时完整成功不冒称，本机服务未重启，无新用户依赖。下一项Stats七天条带原生键盘/手动滚动与峰值定位、切月/明细日期跳转合成浏览器链，保护用户阅读位置，禁止真实请求；真机/实际隔夜/人工验收保持未验。
+
+## 统计初次峰值定位与原生键盘阅读修复（2026-10-04）
+
+实际server Stats发现已有账本进入时条带scrollLeft=0，25日峰值按钮x1210在视口外；root watch非immediate且正式router已读好数据，mount不再refresh时无初次变化。改watch immediate，保nextTick/cleanup/月快照/owner/选日保护，不追加账本请求。复跑初始left1035且25日x175可见；随后真实ArrowLeft四次移到875，同月合成API重读会复位峰值已复现，third.log及keyboard-before结果/截图保留。新增仅阅读导航键keydown记录manuallyMoved，不preventDefault，原生滚动保持。
+
+新增2有意义回归：预读账本初次定位且0重复读取，方向键保同月位置/普通字符仍自动定位/切月重置。68相关/475全量前端/demo与server两构建通过；实际5浏览器/6API/2截图通过：进入峰值、真实键盘1035→875且重读后875、7天按钮滚动保位置、9月新峰值20日定位、Enter选日带month/q到明细原小票。全部API合成、真实请求/AI/账本写0、意外错误/未知请求0，2截图已抽检。累计新增30组211浏览器/584API/81截图/7JSON备份，本窗口1CSV另计。
+
+first/second/third/fourth/final日志保留：second等待有限动画仍left0证实初次缺陷；fourth使用不存在bills-receipt选择器产生harness假失败，核真实bills-record-text后复跑具体小票断言通过，不删除断言。初次失败截图后续失败使用同名覆写，初次left0的数值日志与工具视觉取证仍在，后续keyboard-before截图单独保留；以后各阶段用独立文件名。browser-stats-scroll-*留既有E盘忽略目录。
+
+手动金额节点b3dfc9b2b93fb11ca6aac931850516cf7a8bcaae完整远端一致已核，私有/无Pages/0 workflows/0 deployments保持；compact=0、原每小时ACTIVE/failed_runs_only automation/current target保持。本机服务未重启，无新用户依赖。下一项Stats分类收支/同名其他→明细筛选→地址刷新/浏览器返回合成链，禁止真实请求；真机/实际隔夜/人工验收仍未验。

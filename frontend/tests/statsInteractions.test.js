@@ -30,10 +30,20 @@ function scene(query = {}, dateClock = {}, { server = false, delayedNavigation =
     onMounted() {}, matchMedia: () => ({ matches: true }), useRecordStore: () => store, useRoute: () => route, useRouter: () => router,
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition, pendingMonth, navigationError, ownerCurrent, selectDay, selectType, navigationMonth, pointedDay, maximumDayExpense, error, needsWideAmounts, categoryRows, leadingCategory, typeLabel, reloading, reloadRecords}')(...Object.values(bindings)))
+    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition, keepChartKeyPosition, pendingMonth, navigationError, ownerCurrent, selectDay, selectType, navigationMonth, pointedDay, maximumDayExpense, error, needsWideAmounts, categoryRows, leadingCategory, typeLabel, reloading, reloadRecords}')(...Object.values(bindings)))
   view.dayChart.value = { clientWidth: 200, set scrollLeft(value) { scrolls.push(value) }, scrollBy: options => calls.push(options) }
   return { view, store, route, calls, scrolls, auth, navigations, dispose: () => scope.stop() }
 }
+
+test('正式Stats进入时账本已由路由读好，初次渲染仍定位峰值且不重复读取', async () => {
+  const env = scene({ month: '2026-10' }, {}, { server: true })
+  try {
+    await nextTick()
+    assert.deepEqual(env.scrolls, [1392])
+    assert.equal(env.view.pointedDay.value.date, '2026-10-31')
+    assert.deepEqual(env.calls, [])
+  } finally { env.dispose() }
+})
 
 test('正式Stats图表等待期间身份首次变化并切回，旧自动定位和箭头入口不滚动', async () => {
   const env = scene({ month: '2026-10' }, {}, { server: true })
@@ -197,6 +207,23 @@ test('统计定位等待期间切月，仅最新月份滚动一次', async () =>
     assert.equal(env.view.selectedMonth.value, '2026-11')
     assert.deepEqual(env.scrolls, [0])
   } finally { env.dispose() }
+})
+
+test('原生方向键阅读保同月位置，普通字符不取消自动定位，切月恢复峰值', async () => {
+  for (const key of ['ArrowLeft', 'x']) {
+    const env = scene({ month: '2026-10' }, {}, { server: true })
+    try {
+      await nextTick(); env.scrolls.length = 0
+      env.view.keepChartKeyPosition({ key })
+      env.store.records.push({ ...records[0], id: 'new', date: '2026-10-15', amount: 1 })
+      await nextTick(); await nextTick()
+      assert.deepEqual(env.scrolls, key === 'ArrowLeft' ? [] : [608])
+      env.scrolls.length = 0
+      env.route.query = { month: '2026-11' }
+      await nextTick(); await nextTick()
+      assert.deepEqual(env.scrolls, [0])
+    } finally { env.dispose() }
+  }
 })
 
 test('手动触摸/滚轮查看后同月更新保持位置，切月恢复自动峰值定位', async () => {

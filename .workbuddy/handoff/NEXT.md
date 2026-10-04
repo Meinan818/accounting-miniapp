@@ -1,3 +1,13 @@
+## 统计初次峰值定位与原生键盘阅读修复（2026-10-04）
+
+实际server Stats发现已有账本进入时条带scrollLeft=0，25日峰值按钮x1210在视口外；root watch非immediate且正式router已读好数据，mount不再refresh时无初次变化。改watch immediate，保nextTick/cleanup/月快照/owner/选日保护，不追加账本请求。复跑初始left1035且25日x175可见；随后真实ArrowLeft四次移到875，同月合成API重读会复位峰值已复现，third.log及keyboard-before结果/截图保留。新增仅阅读导航键keydown记录manuallyMoved，不preventDefault，原生滚动保持。
+
+新增2有意义回归：预读账本初次定位且0重复读取，方向键保同月位置/普通字符仍自动定位/切月重置。68相关/475全量前端/demo与server两构建通过；实际5浏览器/6API/2截图通过：进入峰值、真实键盘1035→875且重读后875、7天按钮滚动保位置、9月新峰值20日定位、Enter选日带month/q到明细原小票。全部API合成、真实请求/AI/账本写0、意外错误/未知请求0，2截图已抽检。累计新增30组211浏览器/584API/81截图/7JSON备份，本窗口1CSV另计。
+
+first/second/third/fourth/final日志保留：second等待有限动画仍left0证实初次缺陷；fourth使用不存在bills-receipt选择器产生harness假失败，核真实bills-record-text后复跑具体小票断言通过，不删除断言。初次失败截图后续失败使用同名覆写，初次left0的数值日志与工具视觉取证仍在，后续keyboard-before截图单独保留；以后各阶段用独立文件名。browser-stats-scroll-*留既有E盘忽略目录。
+
+手动金额节点b3dfc9b2b93fb11ca6aac931850516cf7a8bcaae完整远端一致已核，私有/无Pages/0 workflows/0 deployments保持；compact=0、原每小时ACTIVE/failed_runs_only automation/current target保持。本机服务未重启，无新用户依赖。下一项Stats分类收支/同名其他→明细筛选→地址刷新/浏览器返回合成链，禁止真实请求；真机/实际隔夜/人工验收仍未验。
+
 ## 手动金额输入边界与精确保存浏览器验证（2026-10-04）
 
 11浏览器/14API/2截图通过：0/负数/科学计数/三位小数/错误千分位/超过上限/超一分钱精度等8非法输入实际点击保存均本机拒绝、0API/无写意图，原金额/日期/09:30/备注保持。最高合法999,999,999.99切收入后字段保持，显式保存仅一次PUT/confirm并精确999999999.99；最小0.01支出及显式午夜00:00保存一笔，结余999999999.98准确。两笔均完全合成账本，无AI/真实账号/认证/邮件/照片/账本请求，意外错误/未知请求0。2截图已抽检错误输入与最终账单。
