@@ -206,6 +206,33 @@ test('超时及新实例重试复用持久化UUID，账户相同操作独立', a
   assert.equal(keys.at(-1), otherId)
   assert.equal(storage.values.has('zhizhang_mock_records'), false)
 })
+test('整组确认回执编号必须唯一，畸形回执失败后原键重试保持候选关联', async () => {
+  const storage = memory(), calls = []
+  const otherId = '7ebf606b-a0d5-4053-98fb-194505f3d10d'
+  const inputs = [input, { ...input, id: 'item2', amount: '0.30' }]
+  let malformed = 'duplicate', generated = 0
+  const api = createLedgerApi({ request: async (method, path, options) => {
+    calls.push({ method, path, options })
+    if (method === 'PUT') return { id, version: 0, status: 'CONFIRMED', records: options.body.records }
+    return { records: [view, { ...view, id: malformed === 'duplicate' ? id : malformed === 'case-alias' ? id.toUpperCase() : otherId, amount: '0.30' }] }
+  } }, { storage, owner: '1', newUuid: () => { generated++; return id } })
+  await assert.rejects(api.createBatch(inputs, 'group-unique'), /保存回执编号重复.*原操作重试/)
+  const savedIntent = storage.getItem('miaoji_account_write_intents_v1_1')
+  assert.equal(JSON.parse(savedIntent)['group-unique'].requestId, id)
+  malformed = 'case-alias'
+  await assert.rejects(api.createBatch(inputs, 'group-unique'), /保存回执编号重复.*原操作重试/)
+  assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), savedIntent)
+  malformed = ''
+  const saved = await api.createBatch(inputs, 'group-unique')
+  assert.deepEqual(saved.map(record => record.id), [id, otherId])
+  assert.deepEqual(saved.map(record => record.draftItemId), ['item1', 'item2'])
+  assert(saved.every(record => record.draftGroupId === 'group-unique'))
+  assert.equal(generated, 1)
+  assert.deepEqual(calls.filter(call => call.method === 'PUT').map(call => call.options.body), [calls[0].options.body, calls[0].options.body, calls[0].options.body])
+  assert.deepEqual(calls.filter(call => call.method === 'POST').map(call => call.options.headers['Idempotency-Key']), [id, id, id])
+  assert.equal(storage.getItem('miaoji_account_write_intents_v1_1'), savedIntent)
+})
+
 test('同次确认内容变化拒绝发请求，防止超时后改稿重复入账', async () => {
   let requests = 0
   const api = createLedgerApi({ request: async (method, path, options) => {

@@ -115,6 +115,9 @@ export function createLedgerApi(client, { storage, owner, newUuid = () => global
     const receipt = response?.records
     if (!Array.isArray(receipt) || receipt.length !== inputs.length) throw new Error('保存回执不完整，请用原操作重试。')
     const records = receipt.map((value, index) => ({ ...fromRecordView(value), draftGroupId: batchId, draftItemId: ids[index] }))
+    if (new Set(records.map(record => record.id.toLowerCase())).size !== records.length) {
+      throw new Error('保存回执编号重复，请保留这组并用原操作重试。')
+    }
     receiptIntents.set(records, expected)
     return records
   }
