@@ -15,6 +15,61 @@ import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 
 const original = { nickname: '合成名片', signature: '合成签名', avatar: 'cat', version: 0 }
+test('资料保存完成先恢复入口可用DOM，再关闭窗口交还原生焦点', async () => {
+  const env = scene(), closes = [], focuses = []
+  let renderedDisabled = false
+  const stop = watch(env.view.savingProfile, value => { renderedDisabled = value }, { flush: 'post' })
+  try {
+    env.view.profileDialog.value.open = true
+    env.view.profileDialog.value.close = () => { closes.push(renderedDisabled); env.view.profileDialog.value.open = false }
+    env.view.profileEditButton.value = { focus: () => focuses.push(renderedDisabled) }
+    env.view.profile.value = { ...original }; env.view.profileForm.value = { ...original, nickname: '保存新名' }
+    const pending = env.view.saveProfile(); await nextTick()
+    assert.equal(renderedDisabled, true)
+    env.requests[0].resolve({ ...original, nickname: '保存新名', version: 1 }); await pending
+    assert.deepEqual(closes, [false])
+    assert.deepEqual(focuses, [false])
+    assert.equal(env.view.profile.value.version, 1)
+    assert.equal(env.requests.length, 1)
+  } finally { stop(); env.dispose() }
+})
+
+test('保存回执后恢复入口DOM期间离页或身份变化，不关闭旧窗口或显示成功提示', async () => {
+  for (const change of [env => env.dispose(), env => { env.auth.user = { id: 'other' }; env.auth.user = { id: '1' } }]) {
+    const env = scene(), closes = []
+    const stop = watch(env.view.savingProfile, value => { if (!value) change(env) }, { flush: 'post' })
+    try {
+      env.view.profileDialog.value.open = true
+      env.view.profileDialog.value.close = () => closes.push(true)
+      env.view.profileEditButton.value = { focus: () => assert.fail('旧页面不可抢焦点') }
+      env.view.profile.value = { ...original }; env.view.profileForm.value = { ...original, nickname: '保存新名' }
+      const pending = env.view.saveProfile(); await nextTick()
+      env.requests[0].resolve({ ...original, nickname: '保存新名', version: 1 }); await pending; await nextTick()
+      assert.deepEqual(closes, [])
+      assert.equal(env.view.profileNotice.value, '')
+      assert.equal(env.view.profileForm.value.nickname, '保存新名')
+      assert.equal(env.requests.length, 1)
+    } finally { stop(); env.dispose() }
+  }
+})
+
+test('普通资料窗口关闭恢复编辑入口焦点，保存中或旧页面关闭入口不拉走焦点', () => {
+  for (const phase of ['current', 'saving', 'closed', 'disposed', 'owner']) {
+    const env = scene(), focused = []
+    try {
+      env.view.profileEditButton.value = { focus: () => focused.push(true) }
+      env.view.profileDialog.value.open = phase !== 'closed'
+      if (phase === 'saving') env.view.savingProfile.value = true
+      if (phase === 'disposed') env.dispose()
+      if (phase === 'owner') { env.auth.user = { id: 'other' }; env.auth.user = { id: '1' } }
+      env.view.closeProfile()
+      assert.deepEqual(focused, phase === 'current' ? [true] : [])
+      assert.equal(env.requests.length, 0)
+      if (phase === 'saving') assert.equal(env.view.profileDialog.value.open, true)
+    } finally { env.dispose() }
+  }
+})
+
 test('资料保存失败后显示最新完整错误，自动滚入已打开窗口但不修改输入或重复请求', async () => {
   const env = scene(), scrolled = []
   try {
@@ -70,7 +125,7 @@ function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail
     useAuthStore: () => auth, getMonthStatistics, getRecentDays, centsText, packageInfo: { version: 'synthetic' },
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }), useLedgerReload,
     DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto: createPhoto }
-  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, editErrorElement, loadingProfile, logout, loggingOut, logoutError, profileOwnerCurrent, openingProfile }')(...Object.values(bindings)))
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileNotice, profileDialog, profileEditButton, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, editErrorElement, loadingProfile, logout, loggingOut, logoutError, profileOwnerCurrent, openingProfile }')(...Object.values(bindings)))
   let opens = 0
   view.profileDialog.value = { open: false, showModal() { opens++; this.open = true }, close() { this.open = false } }
   return { view, requests, logoutRequests, auth, get opens() { return opens }, dispose() { cleanup.forEach(fn => fn()); scope.stop() } }

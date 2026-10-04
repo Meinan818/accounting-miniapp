@@ -479,3 +479,7 @@ DOM alert存在不等于未被sticky按钮遮挡，须量化error.bottom与actio
 ## 2026-10-04 · 名片文字与装饰几何
 
 card.scrollWidth包含已有右侧flower贴纸超出9px，不能把这个总数作为文字仍溢出的证据。after失败保留，按copy实际宽度/滚动宽度及badge右界/自身/h2/p限定内容，原完整字符串及页面无横滚断言保持。实际账号374px越出文字186px的before证据独立成立；修后badge186px完整折行，未删改装饰。
+
+## 2026-10-04 · 原生dialog焦点与忙碌控件回归
+
+仅等saving=false的DOM更新不能保证原生dialog恢复入口焦点，实际showModal前入口被opening禁用，activeElement已变BODY。focus-diagnostic保留，需显式恢复当前入口焦点并核owner/窗口先前open；异步完成还需等待入口可用DOM。旧回归点击现在禁用的按钮会等到请求超时，不代表业务仍允许关闭；改为disabled断言且保Escape/窗口/输入/重复请求断言，失败原文独立保留。

@@ -47,6 +47,7 @@ const profile = ref({ ...DEFAULT_PROFILE })
 const profileError = ref(SERVER_MODE ? '正在读取账号资料…' : '')
 const profileNotice = ref('')
 const profileDialog = ref(null)
+const profileEditButton = ref(null)
 const profileForm = ref({ ...DEFAULT_PROFILE })
 const editError = ref('')
 const editErrorElement = ref(null)
@@ -100,7 +101,13 @@ async function openProfile() {
     return true
   } finally { if (isCurrentProfile()) openingProfile.value = false }
 }
-function closeProfile(event) { if (savingProfile.value) { event?.preventDefault?.(); return }; photoRequest++; processingPhoto.value = false; profileDialog.value?.close() }
+function closeProfile(event) {
+  if (savingProfile.value) { event?.preventDefault?.(); return }
+  photoRequest++; processingPhoto.value = false
+  const wasOpen = profileDialog.value?.open
+  profileDialog.value?.close()
+  if (wasOpen && isCurrentProfile()) profileEditButton.value?.focus()
+}
 async function choosePhoto(event) {
   if (!isCurrentProfile() || !profileDialog.value?.open || savingProfile.value) return
   const file = event.target.files?.[0]
@@ -124,11 +131,11 @@ async function saveProfile() {
       const saved = await remoteProfile.save(profile.value, profileForm.value)
       if (!isCurrentProfile()) return
       profile.value = saved; profileError.value = ''
-      savingProfile.value = false; closeProfile(); profileNotice.value = '资料已保存到当前账号。'; return
+      await finishProfileSave('资料已保存到当前账号。'); return
     }
     const result = saveLocalProfile(window.localStorage, profileForm.value, profileSnapshot)
     profile.value = result.profile; profileSnapshot = result.snapshot; profileError.value = ''
-    savingProfile.value = false; closeProfile(); profileNotice.value = '本地资料已保存，只保存在当前浏览器。'
+    await finishProfileSave('本地资料已保存，只保存在当前浏览器。')
   } catch (error) {
     if (disposed || (remoteProfile && !isCurrentProfile())) return
     editError.value = error.message
@@ -140,6 +147,12 @@ async function saveProfile() {
     if (remoteProfile) await loadProfile()
   }
   finally { if (isCurrentProfile()) savingProfile.value = false }
+}
+async function finishProfileSave(notice) {
+  savingProfile.value = false
+  await nextTick()
+  if (!isCurrentProfile()) return
+  closeProfile(); profileNotice.value = notice
 }
 onBeforeUnmount(() => { disposed = true; photoRequest++; profileReadGeneration++ })
 const loggingOut = ref(false)
@@ -171,7 +184,7 @@ onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
       <section v-if="profileOwnerCurrent" class="profile-identity" aria-label="本地账本说明">
         <div class="profile-person-avatar"><img v-if="profile.avatar === 'photo'" :src="profile.photo" alt="自定义照片头像" class="profile-custom-photo" /><CatNavIcon v-else-if="profile.avatar === 'cat'" kind="profile" /><JournalSticker v-else :kind="profile.avatar" :tone="profile.avatar === 'flower' ? 'lilac' : 'pink'" /></div>
         <JournalSticker kind="flower" tone="lilac" class="profile-flower" />
-        <div class="profile-person-copy"><span class="profile-id-eyebrow">MY LITTLE JOURNAL</span><h2>{{ profile.nickname }}</h2><p>{{ profile.signature || '给生活留一点小空白。' }}</p><span class="profile-local-badge">{{ SERVER_MODE ? auth.user?.username : '本地资料 · 尚未登录' }}</span><button class="profile-edit-button" type="button" :disabled="Boolean(profileError) || openingProfile || loadingProfile || savingProfile" :aria-busy="openingProfile" @click="openProfile">{{ openingProfile ? '正在读取资料…' : SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }} <ChevronRight :size="14" /></button></div>
+        <div class="profile-person-copy"><span class="profile-id-eyebrow">MY LITTLE JOURNAL</span><h2>{{ profile.nickname }}</h2><p>{{ profile.signature || '给生活留一点小空白。' }}</p><span class="profile-local-badge">{{ SERVER_MODE ? auth.user?.username : '本地资料 · 尚未登录' }}</span><button ref="profileEditButton" class="profile-edit-button" type="button" :disabled="Boolean(profileError) || openingProfile || loadingProfile || savingProfile" :aria-busy="openingProfile" @click="openProfile">{{ openingProfile ? '正在读取资料…' : SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }} <ChevronRight :size="14" /></button></div>
       </section>
       <p v-if="profileNotice" class="profile-notice" role="status">{{ profileNotice }}</p>
       <div v-if="profileError" class="profile-error" role="alert"><p>{{ profileError }}</p><button type="button" :disabled="loadingProfile || savingProfile" @click="loadProfile">{{ loadingProfile ? '正在读取…' : '重新读取资料' }}</button></div>
@@ -218,8 +231,8 @@ onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
       <footer class="profile-about">喵叽智账 · {{ SERVER_MODE ? '账号开发版' : '前端演示' }} v{{ appVersion }}<br /><span>好好记账，也好好生活</span></footer>
     </main>
     <dialog v-if="profileOwnerCurrent" ref="profileDialog" class="profile-editor" aria-labelledby="profile-editor-title" @cancel="closeProfile">
-      <header><div><p>属于你的手账名片</p><h2 id="profile-editor-title">{{ SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }}</h2></div><button type="button" aria-label="关闭资料编辑" @click="closeProfile">×</button></header>
-      <form @submit.prevent="saveProfile">
+      <header><div><p>属于你的手账名片</p><h2 id="profile-editor-title">{{ SERVER_MODE ? '编辑账号资料' : '编辑本地资料' }}</h2></div><button type="button" aria-label="关闭资料编辑" :disabled="savingProfile" @click="closeProfile">×</button></header>
+      <form :aria-busy="savingProfile" @submit.prevent="saveProfile">
         <fieldset :disabled="processingPhoto || savingProfile"><legend>头像贴纸，或自己的照片</legend><div class="profile-avatar-options"><button v-for="avatar in avatars" :key="avatar.key" type="button" :aria-label="'头像：' + avatar.label" :aria-pressed="profileForm.avatar === avatar.key" @click="profileForm.avatar = avatar.key"><CatNavIcon v-if="avatar.key === 'cat'" kind="profile" /><JournalSticker v-else :kind="avatar.key" :tone="avatar.key === 'flower' ? 'lilac' : 'pink'" /><span>{{ avatar.label }}</span></button></div>
           <div class="profile-photo-choice"><img v-if="profileForm.avatar === 'photo'" :src="profileForm.photo" alt="自定义头像预览" /><button type="button" @click="photoInput.click()">{{ processingPhoto ? '正在处理照片…' : profileForm.avatar === 'photo' ? '更换照片' : '选择照片' }}</button><input ref="photoInput" type="file" accept="image/jpeg,image/png,image/webp" aria-label="选择头像照片" hidden @change="choosePhoto" /></div><p class="profile-editor-note">JPG / PNG / WebP，10MB以内。照片会居中裁成头像，保存前可以取消。{{ SERVER_MODE ? '确认保存后上传到当前账号。' : '只在本机处理。' }}</p>
         </fieldset>
@@ -233,7 +246,7 @@ onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
           <p v-else>最新资料暂时无法读取，请稍后重试；你的输入没有丢失。</p>
         </div>
         <div v-if="remoteProfile && profileError" class="profile-error"><p>{{ profileError }}</p><button type="button" :disabled="savingProfile || loadingProfile" @click="loadProfile">{{ loadingProfile ? '正在读取…' : '重新读取最新资料' }}</button></div>
-        <div class="profile-editor-actions"><button type="button" @click="closeProfile">取消</button><button type="submit" :disabled="processingPhoto || savingProfile">{{ SERVER_MODE ? '保存账号资料' : '保存本地资料' }}</button></div>
+        <div class="profile-editor-actions"><button type="button" :disabled="savingProfile" @click="closeProfile">取消</button><button type="submit" :disabled="processingPhoto || savingProfile">{{ savingProfile ? '正在保存…' : SERVER_MODE ? '保存账号资料' : '保存本地资料' }}</button></div>
       </form>
     </dialog>
     <BottomNav active="profile" />
