@@ -1,5 +1,7 @@
 ## 2026-10-04 · 第2次实际压缩交接（当前入口）
 
+原生新聊天01a1043a-8b46-7423-b6dd-5c26009b5280按指定gpt-6.1-sol/high已创建并active只读等待；automation转移、view及toml逐字段保持已核，最终success与finalCommit待源尾保存后写回执。不要把源STATE=2继承为新聊天次数，核完门槛后新基准0、直接开发CSV。源本次交接不Push，后继核全增量再上传。
+
 先读全局/项目AGENTS、根HANDOFF/PROJECT_PLAN及STATE/LOG/MISTAKES/PENDING。源01a103ce-1650-7d50-bbe6-8c08120e0346实际compact=2，已告知且停业务代码；本次只读现场，CSV未实施，377项/两构建仅既有证据。本地交接不Push，原生新聊天gpt-6.1-sol/high与automation转移实际以`.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result.json`为准。新聊天先只读，核本次success/source/target/finalCommit存在及源不再写共享文件、automation目标/原字段保持后才设新窗口基准0，旧事件不继承。
 
 成功后直接接手明细当前月份/筛选完整listedRecords的显式本机CSV导出：不能只用60条展示窗口，安全整数分两位小数、未知时间留空、CSV/中文/公式文本保护、错误/忙碌/离页/身份保护；合成账单和下载替身，不额外服务器读取或导入/清理，不访问真实业务/账号/AI/邮件。完整阅读editorRendering后半段现有Bills绑定，复用download/money工具和现依赖。验证独立节点后commit，再核全部增量/敏感信息/远端及部署影响自主Push、继续下一项，不主动提问或等用户回复。

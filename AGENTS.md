@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 本次原生gpt-6.1-sol/high新聊天01a1043a-8b46-7423-b6dd-5c26009b5280已创建、active只读等最终回执；automation原生转移/view与toml逐字段保持已核，仅目标及更新时间变化。源尾提交及最终success以conversation-lifecycle-2026-10-04/compaction-transfer-result.json为准；源实际compact=2保留，目标核源停止共享写入及finalCommit后新窗口基准0、直接接续CSV任务。本次交接不Push，不重复建automation或等待用户回复。
+
 - 当前聊天01a103ce-1650-7d50-bbe6-8c08120e0346已实际识别第2次上下文压缩并告知，STATE=2，业务代码停止。最新heartbeat只读核查，CSV尚未实施；377项前端与两构建是上一业务节点证据，GUI/真机/下载落盘/隔夜仍未验。按规则本地commit交接、不Push，再原生gpt-6.1-sol/high创建与automation转移；实际结果以conversation-lifecycle-2026-10-04/compaction-transfer-result.json为准，success前新聊天只读等待。下一任务为Bills完整月份/筛选CSV导出，保护真实账号/账本/照片，零费用/本机。下方compact=1与旧下一步仅历史。
 
 - c8bae2a完整远端一致已核，377项/两构建保持。已核Login原模板error || auth.error及切模式清理原有，无缺陷不重复开发，上条“初始提示”仅待取证假设已更正。原生view/toml再次核automation当前聊天/每小时/ACTIVE/failed_runs_only，服务19940/20820仍仅本机，无重启。compact=1保持；下一项Bills完整筛选结果本机CSV导出评估，真实账本/账号/AI/邮件写入0，GUI/真机待验。

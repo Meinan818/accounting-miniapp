@@ -1071,3 +1071,10 @@
 - automation原生view及toml核仍为源聊天/每小时/ACTIVE/failed_runs_only，后续仅原生转移目标并逐字段核保持，未重复建立。OpenAI Docs官方automation页本次HTTP403，未据此推断工具不可用，执行以当前原生工具schema与实际回执为准。
 - 按规则先改名、核差异/归属/敏感信息并本地commit（交接不Push），再创建指定gpt-6.1-sol/high新聊天及转移。最终结果写conversation-lifecycle-2026-10-04/compaction-transfer-result.json，success前目标只读等待；源停止共享写入后新聊天设基准0、直接接手明细完整月份/筛选CSV导出，不等待用户回复。
 - 原生改名成功：喵叽智账·对话与认证生命周期、登录返回验证交接；7个交接文档差异已逐行核查，未跟踪文件0，新增内容敏感模式0命中，STATE JSON/计数2及diff --check通过，无源码变更。
+
+## 2026-10-04 · 指定新聊天创建与原生续办转移核实
+
+- 改名及准备交接提交e1cda784246423538290be3865435c06eb2720da已成功，本地保存7个文档；没有源码修改，本次不Push。
+- create_thread明确传model=gpt-6.1-sol、thinking=high，项目ec44e80f-fe41-4919-999a-6d1c165b2e66/local；原生返回threadId=01a1043a-8b46-7423-b6dd-5c26009b5280、hostId=local。一次wait_threads即时快照核目标active，commentary明确只读核回执、确认源停止写入后才接CSV。
+- 复用automation原生update，传完整既有name/prompt/rrule/status/notificationPolicy且仅换targetThreadId；工具成功返回ACTIVE，原生view成功显示。toml与E盘before副本逐字段比较，version/id/kind/name/prompt/status/rrule/notification_policy/created_at全部相同，只有target_thread_id到新聊天及updated_at变化，未重复创建，仍每小时/ACTIVE/failed_runs_only。
+- 更新STATE/NEXT/根HANDOFF/AGENTS/PENDING的实际结果，源计数2保留。尾提交核差异与敏感信息后只本地保存，finalCommit写本次compaction-transfer-result.json；最终success回执写出后源不再修改任何共享文件，目标核回执/提交/归属再设新基准0接续。未确认整次定时scheduler终态，不把创建/转移当CSV完成或浏览器验收。

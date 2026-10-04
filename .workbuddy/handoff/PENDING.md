@@ -1,5 +1,7 @@
 # 集中待办与外部依赖
 
+本次新聊天01a1043a-8b46-7423-b6dd-5c26009b5280与原生automation转移已核返回/目标/字段保持，无用户决定依赖；目标已active只读等待源最终success及finalCommit回执，随后直接接续CSV。源交接仅本地保存不Push，源计数2/新基准0按回执区分，实际定时scheduler终态仍未核，不冒称。
+
 当前入口：源01a103ce-1650-7d50-bbe6-8c08120e0346实际compact=2，已停业务代码，仅本地保存交接不Push；原生创建/续办转移结果见conversation-lifecycle-2026-10-04/compaction-transfer-result.json。本次只读未实施CSV，无新增用户资料依赖。377项/两构建保持为既有证据，GUI/真机/实际浏览器下载/隔夜继续由Codex工具恢复后核验；新窗口成功接手后直接做Bills完整筛选CSV导出，不主动提问或等待审核。
 
 c8bae2a完整远端一致已核，377项及两构建保持；Login原有auth.error显示与切换清理已经存在，无缺陷无需用户介入。现有automation原生view/落盘再次核当前聊天/每小时ACTIVE/failed_runs_only，未重复建立。GUI/真机/本机下载实际落盘/隔夜仍受工具条件暂缓；继续Bills筛选账单本机导出评估，compact=1保持。
