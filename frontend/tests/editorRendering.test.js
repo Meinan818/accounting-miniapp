@@ -16,6 +16,7 @@ import { formatCurrency } from '../src/utils/format.js'
 import { getCategoryArtwork } from '../src/utils/categoryArtwork.js'
 import { useLocalDay } from '../src/utils/calendar.js'
 import { createBillCsv } from '../src/utils/billCsv.js'
+import { renderToString } from '@vue/server-renderer'
 
 function source(file) {
   const { descriptor } = parse(readFileSync(new URL('../src/' + file, import.meta.url), 'utf8'))
@@ -46,9 +47,9 @@ const renderer = Vue.createRenderer({
 const original = { id: 'synthetic', version: 2, type: 'expense', amount: '0.29', category: '餐饮', date: '2026-10-03', remark: '合成账单' }
 const editorSource = source('components/record/RecordEditor.vue'), formSource = source('components/record/RecordForm.vue')
 function editorComponent(forms) {
-  const RecordForm = { props: ['record', 'saving', 'error'], setup(props, context) {
+  const RecordForm = { props: ['record', 'saving', 'blocked', 'error'], setup(props, context) {
     const values = evaluate(formSource.script, { ...Vue, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,
-      defineProps: () => props, defineEmits: () => context.emit, defineExpose: context.expose }, 'form, save, localError')
+      defineProps: () => props, defineEmits: () => context.emit, defineExpose: context.expose }, 'form, save, localError, props')
     forms.push(values)
     return () => Vue.h('form', { class: 'record-form' }, values.form.value.amount)
   } }
@@ -113,6 +114,44 @@ test('同账单冲突版本更新保留真实Editor表单输入和未知时间�
     assert.equal(state.events[0][1].amount, 12.34); assert.equal(state.events[0][1].remark, '保留待保存输入')
     assert.equal('time' in state.events[0][1], false); assert.equal(state.forms.length, 1)
   } finally { state.dispose() }
+})
+
+test('冲突只阻止写入，不冒称请求中；原输入保留且采用新版本后可以保存', async () => {
+  for (const current of [null, { ...original, version: 3, amount: 99 }]) {
+    const state = mountEditor()
+    try {
+      const form = state.forms[0]
+      form.form.value.amount = '16.00'; form.form.value.remark = '冲突未保存输入'
+      state.props.conflict = { current }; await Vue.nextTick()
+      assert.equal(form.props.saving, false)
+      assert.equal(form.props.blocked, true)
+      form.save(); assert.deepEqual(state.events, [])
+      assert.equal(form.form.value.amount, '16.00'); assert.equal(form.form.value.remark, '冲突未保存输入')
+      state.props.conflict = null; await Vue.nextTick(); form.save()
+      assert.equal(state.events[0][1].amount, 16)
+      assert.equal(state.events[0][1].remark, '冲突未保存输入')
+      assert.equal('time' in state.events[0][1], false)
+    } finally { state.dispose() }
+  }
+})
+
+test('真实表单冲突模板保留保存按钮名称和可关闭入口，实际请求中才显示进度及锁定取消', async () => {
+  const Form = {
+    props: { record: Object, saving: Boolean, blocked: Boolean, error: String, submitLabel: String },
+    components: { CategoryIcon: { render: () => Vue.h('span') } }, template: formSource.template,
+    setup(props, context) {
+      return evaluate(formSource.script, { ...Vue, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,
+        defineProps: () => props, defineEmits: () => context.emit, defineExpose: context.expose },
+      'props, emit, form, localError, categories, changeType, save, unknownTime')
+    },
+  }
+  for (const saving of [false, true]) {
+    const html = await renderToString(Vue.createSSRApp({ render: () => Vue.h(Form, { record: original, blocked: true, saving, submitLabel: '保存修改' }) }))
+    assert.match(html, /<fieldset disabled/)
+    assert.match(html, saving ? /<button[^>]*class="primary"[^>]*disabled[^>]*>正在保存…/ : /<button[^>]*class="primary"[^>]*disabled[^>]*>保存修改/)
+    assert.match(html, saving ? /<button type="button" disabled>取消/ : /<button type="button">取消/)
+    if (!saving) assert.doesNotMatch(html, /正在保存/)
+  }
 })
 
 test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚焦旧按钮并恢复overflow', async () => {

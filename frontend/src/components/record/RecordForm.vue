@@ -5,7 +5,7 @@ import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { validateRecord } from '@/utils/ledger'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import { SERVER_MODE } from '@/api/mode'
-const props = defineProps({ record: { type: Object, default: () => ({}) }, saving: Boolean, error: { type: String, default: '' }, submitLabel: { type: String, default: '保存账单' } })
+const props = defineProps({ record: { type: Object, default: () => ({}) }, saving: Boolean, blocked: Boolean, error: { type: String, default: '' }, submitLabel: { type: String, default: '保存账单' } })
 const emit = defineEmits(['save', 'cancel'])
 const unknownTime = SERVER_MODE && Boolean(props.record.id) && !props.record.time
 const form = ref({ type: props.record.type || 'expense', amount: props.record.amount != null ? String(props.record.amount) : '',
@@ -25,14 +25,14 @@ defineExpose({ restorePristine })
 const categories = computed(() => CATEGORY_OPTIONS[form.value.type])
 function changeType(type) { form.value.type = type; if (!categories.value.some(c => c.label === form.value.category)) form.value.category = categories.value[0].label }
 function save() {
-  if (props.saving) return
+  if (props.saving || props.blocked) return
   try { const omitTime = unknownTime && !form.value.time; const record = validateRecord({ ...form.value, time: omitTime ? '00:00' : form.value.time, description: form.value.remark || form.value.category }); if (omitTime) delete record.time; localError.value = ''; emit('save', record) }
   catch (e) { localError.value = e.message }
 }
 </script>
 <template>
   <form class="record-form" @submit.prevent="save">
-    <fieldset :disabled="saving">
+    <fieldset :disabled="saving || blocked">
       <legend>收支类型</legend>
       <div class="type-options"><button v-for="type in ['expense', 'income']" :key="type" type="button" :aria-pressed="form.type === type" :class="{ selected: form.type === type }" @click="changeType(type)">{{ type === 'income' ? '收入' : '支出' }}</button></div>
       <div class="field-grid">
@@ -51,7 +51,7 @@ function save() {
       <label>备注<input v-model="form.remark" aria-label="备注" type="text" maxlength="120" placeholder="这笔用在了哪里？" /></label>
     </fieldset>
     <p v-if="localError || error" class="form-error" role="alert">{{ localError || error }}</p>
-    <div class="form-actions"><button type="button" :disabled="saving" @click="emit('cancel')">取消</button><button class="primary" type="submit" :disabled="saving">{{ saving ? '正在保存…' : submitLabel }}</button></div>
+    <div class="form-actions"><button type="button" :disabled="saving" @click="emit('cancel')">取消</button><button class="primary" type="submit" :disabled="saving || blocked">{{ saving ? '正在保存…' : submitLabel }}</button></div>
   </form>
 </template>
 <style scoped>
