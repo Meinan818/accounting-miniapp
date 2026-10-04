@@ -100,6 +100,21 @@ test('删除确认返回编辑保留金额/备注/未知时间的同一表单，
   } finally { if (state.view) state.dispose() }
 })
 
+test('同账单冲突版本更新保留真实Editor表单输入和未知时间，返回删除确认后仍保存原输入', async () => {
+  const state = mountEditor()
+  try {
+    const form = state.forms[0]
+    form.form.value.amount = '12.34'; form.form.value.remark = '保留待保存输入'
+    state.props.conflict = { current: { ...original, version: 3, amount: 99 } }; await Vue.nextTick()
+    assert.equal(state.forms.length, 1); assert.equal(form.form.value.amount, '12.34')
+    state.props.record = { ...original, version: 3 }; state.props.conflict = null; await Vue.nextTick()
+    await state.view.startDelete(); await state.view.cancelDelete()
+    form.save()
+    assert.equal(state.events[0][1].amount, 12.34); assert.equal(state.events[0][1].remark, '保留待保存输入')
+    assert.equal('time' in state.events[0][1], false); assert.equal(state.forms.length, 1)
+  } finally { state.dispose() }
+})
+
 test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚焦旧按钮并恢复overflow', async () => {
   const state = mountEditor(), priorDocument = document
   try {
@@ -475,6 +490,24 @@ test('编辑或保存期间拒绝复制，筛选变化和账号失效撤下手�
     state.auth.user = null
     assert.equal(state.values.filterLinkText.value, ''); assert.equal(state.values.filterLinkMessage.value, '')
     assert.equal(await state.values.copyFilterLink(), false)
+  } finally { state.dispose() }
+})
+
+test('明细已打开编辑后重复或其他记录旧入口不替换当前目标，保存沿用首笔id和版本', async () => {
+  const state = mountBills({ server: true })
+  try {
+    const snapshot = { ...state.values.editingRecord.value }
+    state.values.saveError.value = '保留待复核错误'
+    state.values.edit({ ...original, id: 'other', version: 9, remark: '不得替换' })
+    state.values.edit({ ...original, remark: '重复入口也不得重置' })
+    assert.deepEqual(state.values.editingRecord.value, snapshot)
+    assert.equal(state.values.saveError.value, '保留待复核错误')
+    const pending = state.values.saveEdit({ amount: 12.34 })
+    state.finish({ ...snapshot, amount: 12.34 }); await pending
+    assert.equal(state.calls[0][1], snapshot.id)
+    assert.deepEqual(state.calls[0][3], { version: snapshot.version })
+    state.values.edit({ ...original, id: 'other', version: 9 })
+    assert.equal(state.values.editingRecord.value.id, 'other')
   } finally { state.dispose() }
 })
 

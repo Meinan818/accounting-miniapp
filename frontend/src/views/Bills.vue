@@ -182,7 +182,7 @@ watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => rec
 }, { immediate: true })
 
 function edit(record) {
-  if (!active || !ownerCurrent.value || saving.value) return
+  if (!active || !ownerCurrent.value || saving.value || editingRecord.value) return
   editingRecord.value = { ...record }; saveError.value = ''; editConflict.value = null; notice.value = ''
 }
 function handleEditFailure(failure) {
