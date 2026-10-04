@@ -19,7 +19,7 @@ function scene(query = {}, dateClock = {}) {
   const scope = effectScope(), route = reactive({ query }), scrolls = [], calls = []
   const store = reactive({ records: structuredClone(records), storageError: '', refresh: async () => { calls.push('refresh'); return true } })
   const router = { replace: async ({ query }) => { route.query = query } }
-  const bindings = { computed, nextTick, onScopeDispose, ref, watch, dayjs, centsText, getMonthReview, useStatsMonthNavigation, useLedgerReload,
+  const bindings = { computed, nextTick, onScopeDispose, ref, watch, dayjs, centsText, getMonthReview, useStatsMonthNavigation, useLedgerReload, SERVER_MODE: false,
     onMounted() {}, matchMedia: () => ({ matches: true }), useRecordStore: () => store, useRoute: () => route, useRouter: () => router,
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +

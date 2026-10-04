@@ -12,6 +12,7 @@ import BottomNav from '@/components/layout/BottomNav.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import { useRecordStore } from '@/stores/recordStore'
+import { useAuthStore } from '@/stores/authStore'
 import { centsText } from '@/utils/money'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import { JOURNAL_COLORS } from '@/utils/journal'
@@ -21,9 +22,10 @@ import { getMonthReview } from '@/utils/monthReview'
 const route = useRoute()
 const router = useRouter()
 const store = useRecordStore()
+const auth = SERVER_MODE ? useAuthStore() : null
 const { today } = useLocalDay()
 const { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth } = useStatsMonthNavigation(route, router, () => today.value.slice(0, 7))
-const { reloading, reloadError, reloadRecords } = useLedgerReload(store)
+const { reloading, reloadError, reloadRecords } = useLedgerReload(store, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const selectedType = ref('expense')
 const monthTitle = computed(() => dayjs(selectedMonth.value + '-01').format('YYYY年M月'))
 const calculated = computed(() => {

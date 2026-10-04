@@ -20,8 +20,8 @@ import { useLocalDay } from '@/utils/calendar'
 import { useLedgerReload } from '@/utils/navigation'
 
 const store = useRecordStore()
-const { reloading, reloadError, reloadRecords } = useLedgerReload(store)
 const auth = SERVER_MODE ? useAuthStore() : null
+const { reloading, reloadError, reloadRecords } = useLedgerReload(store, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const profileOwner = auth?.user?.id
 let disposed = false
 const profileOwnerCurrent = ref(!SERVER_MODE || Boolean(profileOwner))

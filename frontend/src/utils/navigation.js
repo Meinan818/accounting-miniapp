@@ -82,22 +82,28 @@ export function useManualRecordSave(store, router, batchId, { owner } = {}) {
   return { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, ownerCurrent }
 }
 
-export function useLedgerReload(store) {
+export function useLedgerReload(store, { owner } = {}) {
   const reloading = ref(false), reloadError = ref('')
   let active = true
   onScopeDispose(() => { active = false })
+  const initialOwner = owner?.()
+  const ownerCurrent = ref(!owner || Boolean(initialOwner))
+  if (owner) watch(owner, value => {
+    if (value !== initialOwner) ownerCurrent.value = false
+  }, { flush: 'sync' })
+  const isCurrent = () => active && ownerCurrent.value
   async function reloadRecords(force = false) {
-    if (!active || reloading.value) return false
+    if (!isCurrent() || reloading.value) return false
     reloading.value = true; reloadError.value = ''
     try {
       const loaded = await store.refresh(force === true)
-      if (!active) return false
+      if (!isCurrent()) return false
       if (!loaded) reloadError.value = store.storageError || '账本暂未完整读到，原账本已保留，请重新读取。'
       return loaded === true
     } catch (failure) {
-      if (active) reloadError.value = failure?.message || '账本暂时无法读取，请稍后重试。'
+      if (isCurrent()) reloadError.value = failure?.message || '账本暂时无法读取，请稍后重试。'
       return false
-    } finally { if (active) reloading.value = false }
+    } finally { if (isCurrent()) reloading.value = false }
   }
   return { reloading, reloadError, reloadRecords }
 }

@@ -26,7 +26,8 @@ import { useLocalDay } from '@/utils/calendar'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
-const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore)
+const auth = SERVER_MODE ? useAuthStore() : null
+const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const { today } = useLocalDay()
 
 // 3. 响应式数据
@@ -41,7 +42,6 @@ const noticeElement = ref(null)
 const searchInput = ref(null)
 let active = true
 onScopeDispose(() => { active = false })
-const auth = SERVER_MODE ? useAuthStore() : null
 const owner = auth?.user?.id
 const ownerCurrent = ref(!SERVER_MODE || Boolean(owner))
 if (SERVER_MODE) watch(() => auth.user?.id, value => {

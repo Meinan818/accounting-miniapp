@@ -1,3 +1,7 @@
+## 当前入口：四页账本重读身份保护（2026-10-04）
+
+共用useLedgerReload增加永久owner保护，Home/Stats/Bills/Profile均已接入；身份首次变化及切回旧入口不发当前Store重读，旧成功/false/异常不回填页面错误或解锁。ledger-owner-before13项2通过11失败原文保留（含2个父测试失败），99项针对、433项前端与demo/server两构建通过，无真实业务/账号/照片/AI/邮件请求。明细f71946be5c7680805aad970ba63d4fee433b05bc完整远端一致已核（bills-owner-sync），私有/无Pages/0 workflows/0 deployments保持。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项聊天身份瞬时变化再切回的旧入口与模型后续链合成取证。
+
 ## 当前入口：明细编辑身份保护（2026-10-04）
 
 明细编辑/保存/删除/冲突采用及定位使用永久owner保护，身份首次变化后撤下旧搜索和编辑窗口、切回不复活，不清账本或旧输入快照。bills-owner-before-final-harness25项22通过3失败保留；90项针对、420项前端/demo与server两构建通过，无真实账号/业务/照片/AI/邮件请求。复制入口额外直接核active，避免computed缓存可用状态使离页旧入口调用剪贴板，bills-copy-cached-before27项26通过1失败保留。手动831b8ece286e835f7412312fd72d0c6f93e29192完整远端一致已核（manual-owner-sync）。compact=1、原生每小时静音续办保持，GUI/真机/实际剪贴板/下载/隔夜未验。下一项共用账本原地重读的身份变化和旧入口取证。

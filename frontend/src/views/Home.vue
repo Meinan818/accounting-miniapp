@@ -11,6 +11,7 @@ import miaoConfused from '@/assets/design/mascot/poses/miao-confused.png'
 import CalendarCard from '@/components/calendar/CalendarCard.vue'
 import BottomNav from '@/components/layout/BottomNav.vue'
 import { useRecordStore } from '@/stores/recordStore'
+import { useAuthStore } from '@/stores/authStore'
 import { formatCurrency } from '@/utils/format'
 import { centsText, getRecordTotals } from '@/utils/money'
 import { SERVER_MODE } from '@/api/mode'
@@ -19,7 +20,8 @@ import { useHomeCalendar } from '@/utils/calendar'
 
 // 2. 组合式函数
 const recordStore = useRecordStore()
-const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore)
+const auth = SERVER_MODE ? useAuthStore() : null
+const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 
 // 3. 响应式数据
 const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange, handleDateChange } = useHomeCalendar()
