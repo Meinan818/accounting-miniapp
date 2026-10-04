@@ -352,3 +352,6 @@
 
 ## 2026-10-04 · Stats图表和切月仅保护离页
 - 重读helper已隔离身份，但Stats旧图表await与箭头、切月helper仍只核active，A→null→A复活入口，旧导航失败回填错误/清pending。stats-owner-before10项7通过3失败保留。切月helper可选owner同步永久失效并提供ownerCurrent，Stats滚动/选日/分类/月份watch和模板接入；68针对/456全量/两构建通过，SSR核旧金额分类隐藏且合成账本未清。不要把一个重读入口身份保护当整页交互与显示隔离；已发送路由事实不能冒称撤销，GUI待验。
+
+## 2026-10-04 · Home日历只核active且旧账本仍显示
+- 旧选日/切月/回今天及跨月watch仅检查scope active，身份切回后会修改原选择，Home模板仍显示旧金额备注。home-owner-before10项7通过3失败保留；useHomeCalendar可选owner同步永久失效、自动选日与事件入口共用守卫，页面只撤显示不清账本。46针对/459全量/两构建和完整模板SSR通过。时钟公开日期可继续更新，但不能继续改失效页面的选择；正常默认/历史选择与监听释放需保持。GUI仍未验。

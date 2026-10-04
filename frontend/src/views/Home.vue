@@ -24,7 +24,7 @@ const auth = SERVER_MODE ? useAuthStore() : null
 const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 
 // 3. 响应式数据
-const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange, handleDateChange } = useHomeCalendar()
+const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange, handleDateChange, ownerCurrent } = useHomeCalendar({ owner: SERVER_MODE ? () => auth.user?.id : undefined })
 
 // 4. 计算属性
 const visibleMonthRecords = computed(() => recordStore.records.filter((record) => (
@@ -68,6 +68,8 @@ function getRecordSign(record) {
         <span class="home-header-note">每一笔，都好好记下</span>
       </header>
 
+      <p v-if="!ownerCurrent" class="home-subtitle" role="status">登录身份已变化，请重新打开首页。</p>
+      <template v-if="ownerCurrent">
       <section class="home-desk-hero desk-note" aria-label="今日记账便签">
         <div class="home-date-bookmark" aria-label="今天的日期"><span>{{ dayjs(today).format('M月') }}</span><strong>{{ dayjs(today).format('DD') }}</strong><span>{{ weekdayLabel }}</span></div>
         <div class="home-note-copy"><p class="edition-kicker">每天一页 · 慢慢记下</p><h2>把小开销，写成小日子</h2><p v-if="!recordStore.storageError && !todayTotals.error" class="home-today-line">今天 {{ todayRecords.length }} 笔 · 支出 ¥{{ centsText(todayTotals.expenseCents) }}</p><p v-else-if="!recordStore.storageError" class="home-today-line" role="alert">今天 {{ todayRecords.length }} 笔 · {{ todayTotals.error }}</p><p v-else class="home-today-line">先保留账本，再慢慢整理</p><router-link to="/chat" class="journal-action home-chat-action">和本喵聊着记 <span aria-hidden="true">↗</span></router-link></div>
@@ -129,6 +131,7 @@ function getRecordSign(record) {
           </div>
         </div>
       </section>
+      </template>
     </main>
 
     <BottomNav active="bill" />

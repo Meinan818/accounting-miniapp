@@ -3,16 +3,22 @@ import assert from 'node:assert/strict'
 import { computed, effectScope, reactive } from 'vue'
 import dayjs from 'dayjs'
 import { readFileSync } from 'node:fs'
+import * as Vue from 'vue'
+import { compile } from '@vue/compiler-dom'
+import { renderToString } from '@vue/server-renderer'
+import { useLedgerReload } from '../src/utils/navigation.js'
+import { centsText, getRecordTotals } from '../src/utils/money.js'
+import { formatCurrency } from '../src/utils/format.js'
 import * as calendarUtils from '../src/utils/calendar.js'
 import { validDate } from '../src/utils/ledger.js'
 const { useHomeCalendar } = calendarUtils
 
-function scene(date = '2026-10-31') {
+function scene(date = '2026-10-31', { owner } = {}) {
   const events = new Map(), scope = effectScope()
   let current = date, tick, cleared = false
   const window = { addEventListener: (key, fn) => events.set(key, fn), removeEventListener: key => events.delete(key) }
   const document = { ...window, visibilityState: 'visible' }
-  const calendar = scope.run(() => useHomeCalendar({ now: () => current, eventTarget: window, documentTarget: document,
+  const calendar = scope.run(() => useHomeCalendar({ owner, now: () => current, eventTarget: window, documentTarget: document,
     timers: { setInterval: (fn, ms) => { assert.equal(ms, 60000); tick = fn; return 1 }, clearInterval: id => { assert.equal(id, 1); cleared = true } } }))
   return { calendar, events, document, setDate: date => { current = date }, tick: () => tick(),
     dispose: () => scope.stop(), cleared: () => cleared }
@@ -29,6 +35,53 @@ test('首页跨日与跨月更新今日汇总、星期及默认选择', () => {
     assert.equal(state.calendar.selectedDate.value, '2026-11-01')
     assert.equal(state.calendar.weekdayLabel.value, '周日')
   } finally { state.dispose() }
+})
+
+test('首页日历身份首次变化及切回后，旧选日/切月/回今天不修改选择', () => {
+  const auth = reactive({ user: { id: 'synthetic' } }), state = scene('2026-10-31', { owner: () => auth.user?.id })
+  try {
+    state.calendar.handleDateChange('2026-09-12')
+    auth.user = null; auth.user = { id: 'synthetic' }
+    state.calendar.handleDateChange('2026-11-02'); state.calendar.handleMonthChange('2026-12'); state.calendar.returnToday()
+    assert.equal(state.calendar.selectedDate.value, '2026-09-12'); assert.equal(state.calendar.calendarMonth.value, '2026-09')
+  } finally { state.dispose() }
+})
+test('首页身份变化后跨月时钟不重置旧日历选择，释放监听保持', () => {
+  const auth = reactive({ user: { id: 'synthetic' } }), state = scene('2026-10-31', { owner: () => auth.user?.id })
+  try {
+    auth.user = null; auth.user = { id: 'synthetic' }
+    state.setDate('2026-11-01'); state.tick()
+    assert.equal(state.calendar.selectedDate.value, '2026-10-31'); assert.equal(state.calendar.calendarMonth.value, '2026-10')
+  } finally { state.dispose() }
+  assert.equal(state.events.size, 0); assert.equal(state.cleared(), true)
+})
+
+test('实际Home模板身份变化隐藏旧金额/备注和日历入口，切回不复活也不清账本', async () => {
+  const scope = Vue.effectScope(), auth = reactive({ user: { id: 'synthetic' } })
+  const records = [{ id: 'synthetic-record', type: 'expense', amount: 19.29, date: '2026-10-04', category: '餐饮', remark: '私有合成备注' }]
+  const store = reactive({ records: structuredClone(records), storageError: '', refresh: () => assert.fail('禁止后台读取') })
+  const content = readFileSync(new URL('../src/views/Home.vue', import.meta.url), 'utf8')
+  const script = content.split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
+  const bindings = { ...Vue, dayjs, centsText, getRecordTotals, formatCurrency, useLedgerReload, SERVER_MODE: true,
+    useRecordStore: () => store, useAuthStore: () => auth, useHomeCalendar: options => useHomeCalendar({ ...options, now: () => '2026-10-04', eventTarget: null, documentTarget: null }) }
+  const view = scope.run(() => new Function(...Object.keys(bindings), script +
+    ';return {recordStore,today,calendarMonth,selectedDate,weekdayLabel,returnToday,handleMonthChange,handleDateChange,todayRecords,todayTotals,monthTotals,selectedRecords,selectedDateLabel,getRecordSign,reloading,reloadError,reloadRecords,ownerCurrent: typeof ownerCurrent === "undefined" ? undefined : ownerCurrent}')(...Object.values(bindings)))
+  const template = content.slice(content.indexOf('<template>') + 10, content.lastIndexOf('</template>'))
+  const stub = { render: () => Vue.h('span') }
+  const component = { components: Object.fromEntries(['JournalSticker', 'CatNavIcon', 'ManualEntry', 'CategoryIcon', 'BottomNav', 'CalendarCard'].map(name => [name, stub])),
+    setup: () => ({ ...view, dayjs, centsText, formatCurrency, SERVER_MODE: true, miaoAvatar: 'synthetic', miaoConfused: 'synthetic' }),
+    render: new Function('Vue', compile(template, { mode: 'function' }).code)(Vue) }
+  component.components.RouterLink = { render() { return Vue.h('a', this.$slots.default?.()) } }; component.render._rc = true
+  const render = () => renderToString(Vue.createSSRApp(component))
+  try {
+    assert.match(await render(), /私有合成备注/)
+    auth.user = null; const expired = await render(); auth.user = { id: 'synthetic' }; const returned = await render()
+    for (const html of [expired, returned]) {
+      assert.doesNotMatch(html, /19.29|私有合成备注|回到今天/)
+      assert.match(html, /登录身份已变化/)
+    }
+    assert.deepEqual(store.records, records)
+  } finally { scope.stop() }
 })
 
 test('跨日不抢用户正在看的历史月份，回到今天先核最新日期', () => {

@@ -56,23 +56,29 @@ export function useHomeCalendar(options = {}) {
   const weekdayLabel = computed(() => ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dayjs(today.value).day()])
   let active = true
   onScopeDispose(() => { active = false })
+  const initialOwner = options.owner?.()
+  const ownerCurrent = ref(!options.owner || Boolean(initialOwner))
+  if (options.owner) watch(options.owner, value => {
+    if (value !== initialOwner) ownerCurrent.value = false
+  }, { flush: 'sync' })
+  const isCurrent = () => active && ownerCurrent.value
   watch(today, (next, previous) => {
-    if (selectedDate.value === previous && calendarMonth.value === previous.slice(0, 7)) {
+    if (isCurrent() && selectedDate.value === previous && calendarMonth.value === previous.slice(0, 7)) {
       selectedDate.value = next; calendarMonth.value = next.slice(0, 7)
     }
   }, { flush: 'sync' })
   function returnToday() {
-    if (!active) return
+    if (!isCurrent()) return
     refreshToday(); calendarMonth.value = todayMonth.value; selectedDate.value = today.value
   }
   function handleMonthChange(month) {
-    if (!active || !isValidMonth(month)) return
+    if (!isCurrent() || !isValidMonth(month)) return
     refreshToday(); calendarMonth.value = month
     selectedDate.value = month === todayMonth.value ? today.value : `${month}-01`
   }
   function handleDateChange(date) {
-    if (!active || !validDate(date)) return
+    if (!isCurrent() || !validDate(date)) return
     calendarMonth.value = date.slice(0, 7); selectedDate.value = date
   }
-  return { today, todayMonth, calendarMonth, selectedDate, weekdayLabel, refreshToday, returnToday, handleMonthChange, handleDateChange }
+  return { today, todayMonth, calendarMonth, selectedDate, weekdayLabel, refreshToday, returnToday, handleMonthChange, handleDateChange, ownerCurrent }
 }
