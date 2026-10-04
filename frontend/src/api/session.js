@@ -76,7 +76,14 @@ export function createSession(client, { onIdentityChange = () => {} } = {}) {
       throw failure
     }
     if (current !== generation) return false
-    return login(email, password)
+    const automaticLogin = login(email, password)
+    const loginGeneration = generation
+    try { return await automaticLogin }
+    catch (failure) {
+      if (!active || loginGeneration !== generation) return false
+      error.value = `注册已成功，但自动登录未完成。请切换到登录，用此邮箱和密码重试。${failure.message}`
+      throw new ApiError(error.value, { status: failure.status, code: failure.code })
+    }
   }
   async function logout() {
     if (!active) return false

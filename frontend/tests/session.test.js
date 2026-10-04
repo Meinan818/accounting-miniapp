@@ -191,6 +191,40 @@ test('注册成功后实际登录；注册失败不创建身份', async () => {
   const failed = createSession({ request: async () => { throw new ApiError('taken', { status: 409 }) } })
   await assert.rejects(failed.register('a', 'synthetic'), /taken/); assert.equal(failed.user.value, null)
 })
+
+test('账号已创建但自动登录失败时明确指引登录，保留原错误类型且不重复注册', async () => {
+  for (const status of [401, 503]) {
+    const calls = []
+    const session = createSession({
+      request: async (...args) => { calls.push(args[1]) },
+      login: async () => { calls.push('login'); throw new ApiError('合成自动登录失败', { status, code: 'SYNTHETIC_LOGIN_FAILED' }) },
+    })
+    await assert.rejects(session.register('synthetic@example.test', 'SyntheticPass123!', 'synthetic-challenge', '123456'), failure => {
+      assert(failure instanceof ApiError)
+      assert.match(failure.message, /注册已成功/)
+      assert.match(failure.message, /切换到登录/)
+      assert.match(failure.message, /合成自动登录失败/)
+      assert.equal(failure.status, status); assert.equal(failure.code, 'SYNTHETIC_LOGIN_FAILED')
+      return true
+    })
+    assert.deepEqual(calls, ['/api/auth/email/register', 'login'])
+    assert.equal(session.user.value, null)
+    assert.equal(session.status.value, status === 401 ? 'guest' : 'unavailable')
+  }
+})
+
+test('注册后的自动登录等待中释放或失效，迟到失败不冒称注册完成或复活账号', async () => {
+  for (const action of ['dispose', 'expire']) {
+    let rejectLogin
+    const session = createSession({ request: async () => {}, login: () => new Promise((_, reject) => { rejectLogin = reject }) })
+    const pending = session.register('synthetic@example.test', 'SyntheticPass123!', 'synthetic-challenge', '123456')
+    await Promise.resolve()
+    assert.equal(typeof rejectLogin, 'function')
+    session[action](); const errorBefore = session.error.value
+    rejectLogin(new ApiError('迟到合成登录失败', { status: 503 }))
+    assert.equal(await pending, false); assert.equal(session.error.value, errorBefore); assert.equal(session.user.value, null)
+  }
+})
 test('退出网络失败保留当前会话并提示，401可正常清理', async () => {
   let fail = 0
   const session = createSession({ login: async () => alice, logout: async () => { throw new ApiError('failed', { status: fail }) } })

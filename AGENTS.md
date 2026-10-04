@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 注册201成功后自动登录503原提示缺账号创建事实已复现，session.register现明确注册成功/切登录，保原状态/code并guard旧generation。22项before21通过1失败保留；81相关/467前端/两构建及错误10浏览器/19API/2截图、正常6项回归通过。累计78新增浏览器/229API/42截图/3JSON备份，真实请求0，compact=0。c51e143完整远端一致已核；下一项Login恢复/CSRF/身份读取失败合成浏览器链。
+
 - 新窗口01a104fa-e0fe-7d43-94ec-381371492329已核专用success/源停止写入/finalCommit c7f6c60及automation view/TOML字段保持，compact=0。Login验证码Clock8项/10次合成API/3截图通过，过期、重发、改邮箱/切模式及迟到回执已核，真实请求0；累计68新增浏览器/210API/40截图/3JSON备份。465前端/同源码两构建保持，无业务改动。下一项合成邮件申请/注册400/429/503/无效回执错误链；模拟不等于真实投递或隔夜。
 
 - 本次原生gpt-6.1-sol/high目标01a104fa-e0fe-7d43-94ec-381371492329已创建，automation原生迁移/view及toml逐字段保持已核，仅目标/更新时间改变。初始本地d0e8b11完成，最终success/finalCommit以compaction-transfer-result-01a1049d.json为准；success前目标只读，源compact=2保留并回执后停止共享写入。目标核完新窗口0，直接接续验证码Clock边界；本次不Push、不重跑测试、不重复automation。

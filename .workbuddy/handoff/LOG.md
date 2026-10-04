@@ -1292,3 +1292,13 @@ Login真实隔离无头Chrome/Playwright1.62.1 Clock合成验证8项/10次API完
 首轮harness把120秒TTL回执延迟121秒，先触发既有15秒HTTP超时，最后等待失败；browser-registration-clock-timeout-before-result.json/截图和first.log原文保留。按真实client超时改用短合成TTL验证同一断言，未删断言或改业务。最终browser-registration-clock-result.json在既有忽略目录。无业务缺陷、源码未改，465前端/同源码两构建沿用已有证据，不无意义重跑。本轮累计新增10组68项合成浏览器/210次API拦截/40截图/3JSON备份，较早demo/server24项/18截图/121条CSV另算，不重复计harness失败。
 
 Push前已官方只读核Meinan818/accounting-miniapp私有/无Pages/0 workflows/0 deployments及远端6a6f8bdb；交接两提交只改既有文档。下一项合成Login邮件申请/注册错误与错误次数限制响应链，核400/429/503/无效回执保输入、无旧challenge或自动认证，禁止真实邮件/账号。持续自主推进，无新增用户依赖。
+
+## 注册成功后自动登录失败提示修复（2026-10-04）
+
+合成server浏览器复现注册201已成功、随后自动登录503，页面仅显示登录错误，未告知账号已创建或切登录。browser-registration-auto-login-before-result.json/截图及before.log保留，8项前置错误场景通过后指引断言失败；新增session回归22项21通过1失败原文保留。根因session.register直接返回login，未区分注册完成与自动登录失败。
+
+最小修改session.register：仅注册请求成功且当前自动登录失败时明确“注册已成功，但自动登录未完成。请切换到登录，用此邮箱和密码重试”，保留原HTTP状态/错误code和详情；按自动登录generation/active拒绝旧回执，不重复注册/自动重试，不伪造身份或清密码。新增2项回归覆盖401/503及释放/expire迟到失败。81相关/467前端全量/demo与server两构建通过，无额外依赖或类型/lint脚本。Node --run在本机中文路径找package.json失败原文保留，直接按package.json已有node --test列表运行成功；不是业务测试失败。
+
+修复后合成Login错误浏览器10项/19次API完全拦截通过：申请503/429/畸形challenge/HTML成功回执无挑战、保邮箱密码且可重试；注册400错码/429次数耗尽/410过期显示服务说明、保输入无登录；重发429撤旧挑战，新申请恢复。注册201→登录503明确账号已创建、保输入；显式切登录只发登录，返回原Bills月/编码搜索/hash，4次注册fixture中仅最后201创建一次。2截图并抽检失败提示/登录返回。正常注册6项/13次API另重跑通过，不重复计入累计。错误链8条预设失败控制台单列，意外错误/未知请求0，真实邮件/认证/业务/AI/照片请求0；合成响应不冒称真实服务端错误计数/投递验证。
+
+累计新增11组78项合成浏览器/229次API/42截图/3JSON备份，较早24场景/18截图/121条CSV另算。验证码记录c51e14369be58d482fecfd048dbd1a766b333298及两交接提交已普通Push，官方核完整远端一致/私有/无Pages/0 workflows/0 deployments。compact=0、原每小时静音automation/本机服务未改；真实账号/真机/系统剪贴板/实际隔夜/最终人工验收未验，无新增用户依赖。下一项合成Login恢复与登录链CSRF/身份读取失败、坏身份、显式重试返回筛选边界，禁止真实认证。
