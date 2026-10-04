@@ -432,3 +432,8 @@ input[type=search]默认role为searchbox；分类harness误用textbox超时，fi
 ## 2026-10-04 · 快照fixture顺序
 
 Home新增ID107在删除ID106前使合成分页顺序非法，实际拒读符合保护。first/order-before及独立截图保留，核严格递增ID后改删除ID108，同6项通过。新增fixture须同时核ID排序、唯一性与record/deletedAt同层。
+
+
+## 2026-10-04 · 日组与总体窗口提示选择器
+
+.bills-window-note既用于日组也用于总体展示数，长列表harness应限定.bills-day-group，底部导航真实类为.home-bottom-nav。first/selector-before/时间戳截图保留；修harness后5项完整通过，不改业务或删具体断言。
