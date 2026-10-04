@@ -1,3 +1,11 @@
+## 单笔版本单调保护（2026-10-04）
+
+新global revision11带回version0的午饭16/咖啡18时接受并改成34元、恢复咖啡已浏览器复现；43项before41通过2失败及browser-record-version-before日志结果保留。读取开始建立原账单Map，每页先核当前同ID的单笔version下限，同版本缓存也执行，不因global版本增长接受旧单笔；generation/localChanges原保护保持，旧页失败不替换完整数组。
+
+103相关/492前端/demo与server两构建通过。新增回归涵盖当前编辑/删除、global10同版本缓存与global11、普通/force及本页更新后更高global带旧record版本；金额0.31/版2/删除事实和本页0.35/版1保持，合法version2/global11可恢复。三条浏览器普通/503后force/cache链6检查16合成API6截图通过，Stats/Bills提示账单版本倒退、保当前31元/一有效笔，咖啡删除不复活，禁搜索导出；合法11读回31元、编辑取消0写。全部API拦截，1预期503，意外错误/未知外部/真实业务认证AI邮件照片0。
+
+global版本倒退/大整数/Long溢出四链8浏览器21API8截图同源码回归通过，不重复累计。累计54组373浏览器1164API148截图7JSON，源窗口5CSV另计；cache-error截图已抽检。48eeb788d2cc60e08d79283ce17c3260987305ff普通Push及官方inspect完整远端一致已核，私有/无Pages/0workflows/0deployments保持。本聊天compact=1/原静音automation与本机服务保持，真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。下一项相同/更高单笔版本丢失既有deletedAt的终态合成取证，不提问或委派。
+
 ## 快照版本单调与Long合同（2026-10-04）
 
 旧revision完整快照把最新31元改回16元并恢复已删除咖啡18元，统计变成34元已浏览器复现。remoteLedger独立记已读latestRevision，本页写入使分页缓存失效后也保版本下限，账号变化清下限；BigInt精确比較，拒绝较旧revision。revision格式同时限定Java非负Long标准字符串/最大9223372036854775807，避免前导零/超范围污染恢复。40before38通过2失败及范围41before40通过1失败独立保留；101相关/490前端/demo与server两构建通过。

@@ -74,6 +74,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
     if (refreshing) { const result = await refreshing; return force === true ? refresh(true, requiredIds) : result }
     const current = generation
     const changesAtStart = localChanges
+    const previous = new Map(allRecords.value.map(record => [record.id, record]))
     function ensureSnapshotCurrent() {
       ensure(current)
       if (changesAtStart !== localChanges) throw new Error('读取期间账本已更新，已保留最新改动，请重新读取账本。')
@@ -108,6 +109,9 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
             const id = entry.record?.id
             if (seen.has(id)) throw new Error('账本分页编号重复，原账本已保留。')
             if (typeof id !== 'string' || (previousId !== null && id <= previousId)) throw new Error('账本分页顺序或位置不合法，原账本已保留。')
+            if (Number.isSafeInteger(entry.record.version) && previous.has(id) && entry.record.version < previous.get(id).version) {
+              throw new Error('账单版本发生倒退，原账本已保留，请重新读取最新账单。')
+            }
             seen.add(id); entries.push(entry); previousId = id
           }
           if (page.nextAfter !== null && (page.records.length === 0 || page.nextAfter !== page.records.at(-1).record?.id
@@ -122,7 +126,6 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
           }
           after = page.nextAfter
         } while (after !== null)
-        const previous = new Map(allRecords.value.map(record => [record.id, record]))
         const next = entries.map(value => {
           validateDeletedAt(value.deletedAt)
           return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), time: value.record.time ?? undefined,

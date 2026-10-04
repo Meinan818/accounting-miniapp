@@ -331,6 +331,44 @@ test('本页编辑删除使缓存失效后仍拒绝已知较旧revision', async 
   }
 })
 
+test('新revision或缓存同版本夹带旧单笔version均保当前编辑与删除', async () => {
+  for (const deleted of [false, true]) {
+    for (const nextRevision of ['10', '11']) {
+      let revision = '10', version = 2, amount = '0.31'
+      const scene = setup({ request: async () => ({ revision, nextAfter: null, records: [{ record: { ...value, amount, version },
+        ...(deleted && version === 2 ? { deletedAt: '2026-10-04T01:00:00Z' } : {}) }] }) })
+      try {
+        await scene.store.refresh(); const original = scene.store.allRecords.value
+        revision = nextRevision; version = 1; amount = '0.29'
+        for (const force of [false, true]) {
+          assert.equal(await scene.store.refresh(force), false)
+          assert.strictEqual(scene.store.allRecords.value, original)
+          assert.match(scene.store.storageError.value, /账单版本.*倒退/)
+          assert.equal(scene.store.recordsByIds([id])[0].amount, 0.31)
+          assert.equal(scene.store.records.value.length, deleted ? 0 : 1)
+        }
+        revision = '11'; version = 2; amount = '0.31'
+        assert.equal(await scene.store.refresh(true), true)
+        assert.equal(scene.store.recordsByIds([id])[0].version, 2)
+      } finally { scene.dispose() }
+    }
+  }
+})
+
+test('本页编辑后更高revision不能带回旧单笔version', async () => {
+  let revision = '10'
+  const scene = setup({ request: async (method, path, options) => method === 'PUT'
+    ? { ...value, ...options.body.record, version: 1 }
+    : { revision, nextAfter: null, records: [{ record: value }] } })
+  try {
+    await scene.store.refresh(); await scene.store.updateRecord(id, { ...input, amount: '0.35' })
+    const original = scene.store.allRecords.value; revision = '11'
+    assert.equal(await scene.store.refresh(), false)
+    assert.strictEqual(scene.store.allRecords.value, original)
+    assert.equal(scene.store.records.value[0].amount, 0.35)
+  } finally { scene.dispose() }
+})
+
 test('分页读取超过5000条也完整替换且保留删除事实', async () => {
   const entries = Array.from({ length: 5001 }, (_, index) => ({ record: { ...value,
     id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}` }, deletedAt: index === 0 ? '2026-10-03T01:00:00Z' : null }))
