@@ -1353,3 +1353,11 @@ Profile完全合成退出两条链4检查/28次API拦截通过：logout503及前
 browser-chat-ai-errors-result.json/脚本/日志留现有E盘忽略目录，无业务缺陷或源码改动；469前端/同源码两构建保持，不重复全量。累计新增17组117项合成浏览器/446API/55截图/3JSON备份，较早24场景/18截图/121CSV另算。退出记录69635f7a4b43582817a89a8971109983848ac9a0已按官方同SHA/force:false同步并核完整远端一致，普通Push低速失败logout-push.log保留，私有/无Pages/0 workflows/0 deployments。当前聊天第1次实际compact已告知并STATE=1，原每小时静音automation保持；无新增用户依赖，真实账号/真机/系统剪贴板/实际隔夜/人工验收仍未验。
 
 下一项完全合成Chat AI追问→刷新→跨日补充的参考日期/候选/禁止提前确认及失败重试浏览器链，禁止真实AI或账本写入；继续独立验证。
+
+## AI追问刷新与跨日补充浏览器验证（2026-10-04）
+
+完全合成server浏览器8检查/16次API拦截通过：首次空候选追问可刷新恢复，按钮与文字确认均拒绝提前入账；Playwright setFixedTime/Asia Tokyo模拟10月4/5/6日，原追问跨日补充仍用原参考日期/原文/问题，503保pending，相同显式重试复用完整上下文。新追加追问采用追加当天日期、保旧候选/创建日；追问中编辑26元/备注保pending及未知time，刷新保持。再跨日补充携最新候选context并省略未知time，成功才转ready，保原组/第一笔ID。取消不发AI、清旧pending，后续新组采用当日/空context，无旧问题迁移。1条预设503单列，意外错误/未知请求0，原合成账本不变，真实账号/AI/认证/账本/照片/邮件请求0；2截图E盘保存并抽检。Clock模拟不能代替真实隔夜或人工验收。
+
+browser-chat-ai-clarification-result.json/脚本/日志留既有忽略目录，无业务缺陷或源码改动，469前端/同源码两构建保持。累计新增18组125项合成浏览器/462API/57截图/3JSON备份，较早24场景/18截图/121CSV另算。AI失败记录993e02c786f7b4c72a53b6342997a7b56bb6ed51已官方同SHA/force:false上传并完整远端核一致，私有/无Pages/0 workflows/0 deployments，普通Git失败原文保持。compact=1，原静音每小时automation保持，无新增用户依赖。
+
+下一项完全合成AI等待15秒慢响应提示/65秒超时与显式重试Clock浏览器链，保原草稿/未发送输入、禁止真实AI/账本请求。
