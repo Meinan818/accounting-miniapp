@@ -1497,3 +1497,12 @@ first/second/third/fourth/final日志保留：second等待有限动画仍left0�
 browser-bills-filter-*脚本/结果/4CSV留既有E盘忽略目录，无缺陷/业务源码改动，475前端与两构建保持上节点同源码证据，本轮未重跑。累计新增32组226浏览器/602API/84截图/7JSON备份；本窗口累计5实际CSV另计，较早121CSV保持独立统计。前节点c769ff5c9b1c04edcbf5659f90416d8d0902658e普通Push成功且官方完整远端一致已核，私有/无Pages/0 workflows/0 deployments保持。
 
 compact=1、原静音每小时automation与本机服务保持，无新用户依赖；真机/实际隔夜/人工验收未验。下一项Bills原生dialog键盘Tab/ShiftTab/Escape及删除确认返回/关闭输入保护合成链，禁止真实写入。
+
+
+## 原生编辑窗口键盘与取消删除验证（2026-10-04）
+
+实际server6浏览器检查/2合成API/2截图通过：账单Enter打开原生:modal与body锁；36Tab/36ShiftTab金额/备注/关闭可达，背景账单/导航未获焦点（Chrome自身边界body焦点另记）。删除确认显示原保存12元，Escape只返回编辑并聚焦删除按钮；按钮返回/右上关闭删除确认均保13.24元、未保存备注及未知时间空。编辑态Escape关闭恢复触发账单焦点与body滚动；Space重开原12元/原备注，取消仍恢复。源账本不变，全链0追加API/保存/删除/AI，真实请求/意外错误/未知请求0，2截图已抽检。
+
+browser-editor-keyboard-*脚本/结果/截图留既有E盘忽略目录，无业务缺陷/源码改动，475前端/两构建为上节点同源码证据，本轮未重跑。累计新增33组232浏览器/604API/86截图/7JSON备份，另本窗口5实际CSV。5a108114d3169308e3f5b09742417a5f7b17be5c普通Push成功且官方完整远端一致，私有/无Pages/0 workflows/0 deployments保持。
+
+compact=1、原静音每小时automation与本机服务保持，无新用户依赖；真机/实际隔夜/人工验收未验。下一项Home原生日历键盘选日/切月/今日返回/有效与已删除日小计合成链，禁止真实请求。
