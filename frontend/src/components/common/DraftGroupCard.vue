@@ -18,7 +18,10 @@ const statusLabel = computed(() => status.value === 'saved' && deletedCount.valu
   : ({ needs_input: '待补充', ready: '待确认', saved: '已记账', cancelled: '已取消' })[status.value] || '保存中')
 const totals = computed(() => ({ expense: items.value.filter(i => !i.deleted && i.type === 'expense').reduce((n, i) => n + (i.amountCents || 0), 0), income: items.value.filter(i => !i.deleted && i.type === 'income').reduce((n, i) => n + (i.amountCents || 0), 0) }))
 const editRecord = computed(() => { const i = props.group.items.find(i => i.id === editing.value); return i ? { ...i, amount: i.amountCents == null ? '' : centsText(i.amountCents) } : null })
-function update(record) { emit('update', { itemId: editing.value, record }); editing.value = null }
+function update(record) {
+  if (props.busy || !editRecord.value || ['saved', 'cancelled'].includes(status.value)) return
+  emit('update', { itemId: editing.value, record }); editing.value = null
+}
 </script>
 <template>
   <article class="miao-record draft-group-card" :data-group-id="group.id" :data-state="status">
@@ -36,7 +39,7 @@ function update(record) { emit('update', { itemId: editing.value, record }); edi
     <p v-if="error" role="alert" class="draft-error">{{ error }}</p>
     <div v-if="!['saved', 'cancelled'].includes(status)" class="draft-actions"><button type="button" :disabled="busy" @click="emit('cancel')">取消这组</button><button type="button" class="draft-confirm bg-primary-400" :disabled="busy || status !== 'ready'" @click="emit('confirm')">{{ busy ? '正在保存…' : '确认记下' + items.length + '笔' }}</button></div>
     <p v-else-if="status === 'saved'" class="saved-note">此卡片读取最新账单（含删除状态）；<router-link :to="{ path: '/bills', query: { month: (items.find(i => !i.deleted) || items[0])?.date?.slice(0, 7) } }">到明细修改</router-link>。历史聊天回复只是当时的记录。</p>
-    <RecordEditor v-if="editRecord" :key="editing" :record="editRecord" @save="update" @close="editing = null" />
+    <RecordEditor v-if="editRecord && !['saved', 'cancelled'].includes(status)" :key="editing" :record="editRecord" :saving="busy" draft @save="update" @close="editing = null" />
   </article>
 </template>
 <style scoped>

@@ -339,3 +339,7 @@
 
 ## 2026-10-04 · 草稿编辑虚补未知时间
 - DraftGroupCard editRecord默认00:00使AI未知时间在编辑时变成午夜；去除默认又暴露Chat.editDraft强制time的断链。draft-time-before53项51通过2失败保留。卡片保持原字段、Chat仅允许原AI未知时间省略后71项针对/442全量/两构建通过；明确午夜/其他时间可保留或补充，已知时间不能静默清空。以后可选业务时间从卡片到表单、页更新与对外输出全链核验，不以内部校验占位当真实业务时间。GUI仍未验。
+
+## 2026-10-04 · 草稿窗口未继承忙碌及保存语义
+- DraftGroupCard未传busy，父update无校验，等待中可发事件并关闭输入；保存/取消后旧窗口仍可更新。复用Editor提示误称草稿更新同步账本。draft-editor-before31项28通过3失败保留。busy/结束守卫与draft文案后63项针对/445全量/两构建通过。以后复用编辑组件明确草稿/已保存语义、busy和结束态，不能仅禁用外层按钮。
+- 首修harness的Editor props使用数组，模板空属性draft变成空字符串，未像实际Boolean prop转true，导致63项62通过1失败与全量445项444通过1失败。两份原文已另存draft-editor-after/all-boolean-harness-failure；补齐实际Boolean props后原断言通过。以后编译组件模拟保留props类型/默认值。GUI仍未验。

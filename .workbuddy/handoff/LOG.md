@@ -1139,3 +1139,8 @@
 
 - AI草稿编辑不再把未指定时间填成00:00；Chat接受原AI未知时间的金额/备注编辑，显式午夜和其他时间保持，已有时间不可默默清空。实际DraftGroupCard→RecordEditor→RecordForm合成挂载及Chat链验证，draft-time-before53项51通过2失败保留，71项针对/442项前端/demo与server两构建通过，真实业务/AI/账号/照片/邮件请求0。b98d2a712eee7afe6c3e1737afdd96e867f9230e完整远端一致已核（chat-owner-sync）。compact=1、原生每小时静音续办保持；GUI/真机/实际剪贴板/下载/隔夜未验。下一项草稿编辑窗口忙碌输入保护及保存语义取证。
 - 根因是卡片editRecord默认00:00让Form unknownTime失效；去掉默认后Chat validateRecord又要求time，现仅原AI未知时间且未填写时用内部校验占位后删除该字段，原稿与对外编辑结果保留未知。没有批量迁移历史账本，普通演示和已有时间校验不改变。实际editor/form脚本与Editor模板、卡片模板在合成renderer运行，无浏览器GUI验收。
+
+## 2026-10-04 · 草稿编辑窗口保护与语义
+
+- 草稿编辑窗口接入busy，忙碌时不提交或关闭且保留输入；已保存/取消后撤下旧窗口，旧更新回调不发事件。新增draft上下文，标题“编辑这笔草稿”、提示确认整组后才入账、按钮“更新草稿”；既有账单窗口同步说明保持。draft-editor-before31项28通过3失败保留，63项针对/445项前端/demo与server两构建通过。初修harness Boolean prop错误导致1项假失败原文另存，已修harness且无删除断言。61e826352eb0443a54779d2d86ecb18459dd4375完整远端一致已核（draft-time-sync），compact=1、原生每小时静音续办保持。无真实业务/账号/AI/照片/邮件请求；GUI/真机/实际剪贴板/下载/隔夜未验。下一项统计页面guard与mounted是否重复账本读取的离线链取证。
+- 卡片未把busy传入Editor，父update也无锁且可能发null itemId，结束组仍保留旧窗口。现在Editor/Form继承busy，父update核busy/有效item/组状态；状态结束只撤显示，未主动清原输入快照或修改账本。完整Editor/Card模板加真实Form脚本离线挂载，原正常更新、取消与Bills删除确认保持，不冒称浏览器GUI。

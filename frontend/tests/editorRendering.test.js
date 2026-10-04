@@ -52,7 +52,7 @@ function editorComponent(forms) {
     forms.push(values)
     return () => Vue.h('form', { class: 'record-form' }, values.form.value.amount)
   } }
-  const Editor = { props: ['record', 'saving', 'error', 'allowDelete', 'conflict'], components: { RecordForm }, setup(props, context) {
+  const Editor = { props: { record: Object, saving: Boolean, error: String, allowDelete: Boolean, conflict: Object, draft: Boolean }, components: { RecordForm }, setup(props, context) {
     return evaluate(editorSource.script, { ...Vue, defineProps: () => props, defineEmits: () => context.emit,
       formatCurrency: amount => Number(amount).toFixed(2) },
     'props, emit, dialog, confirmingDelete, deleteTrigger, cancelDeleteButton, startDelete, cancelDelete, close, formatCurrency')
@@ -580,9 +580,9 @@ function mountDraftGroup(group) {
       return values
     }, render: new Function('Vue', compile(draft.template, { mode: 'function' }).code)(Vue) }
   Group.render._rc = true
-  const app = renderer.createApp({ render: () => Vue.h(Group, { ...props, onUpdate: value => events.push(value) }) })
-  app.mount(node('root'))
-  return { props, values, forms, events, dispose() { app.unmount(); globalThis.document = previousDocument } }
+  const app = renderer.createApp({ render: () => Vue.h(Group, { ...props, onUpdate: value => events.push(value) }) }), root = node('root')
+  app.mount(root)
+  return { props, values, forms, events, root, dispose() { app.unmount(); globalThis.document = previousDocument } }
 }
 
 test('实际AI草稿卡→Editor→Form仅改金额时保留未知时间，显式午夜/其他时间仍原样提交', async () => {
@@ -600,6 +600,58 @@ test('实际AI草稿卡→Editor→Form仅改金额时保留未知时间，显�
       assert.equal(state.events[0].record.amount, 16)
       assert.equal(state.events[0].record.time, time)
       assert.equal(JSON.stringify(group), snapshot)
+    } finally { state.dispose() }
+  }
+})
+
+async function syntheticAiGroup() {
+  return (await createAiDraftApi({ request: async () => ({ model: 'glm-4-flash-250414', status: 'ready', question: '',
+    records: [{ type: 'expense', amount: '25.00', date: '2026-10-04', category: '餐饮', note: '合成午饭' }] }) })
+    .parse('午饭25', { date: '2026-10-04' })).group
+}
+
+test('草稿卡忙碌时已打开的表单与旧更新回调均不提交或关闭，结束后保留输入可更新', async () => {
+  const group = await syntheticAiGroup(), state = mountDraftGroup(group)
+  try {
+    state.values.editing.value = group.items[0].id; await Vue.nextTick()
+    const form = state.forms[0]; form.form.value.amount = '16.00'; form.form.value.remark = '尚未更新草稿'
+    state.props.busy = true; await Vue.nextTick()
+    form.save(); state.values.update({ ...original, amount: 18 })
+    assert.deepEqual(state.events, [])
+    assert.equal(state.values.editing.value, group.items[0].id)
+    assert.equal(form.form.value.amount, '16.00'); assert.equal(form.form.value.remark, '尚未更新草稿')
+    state.props.busy = false; await Vue.nextTick(); form.save()
+    assert.equal(state.events.length, 1); assert.equal(state.events[0].record.amount, 16)
+    assert.equal(state.events[0].record.remark, '尚未更新草稿')
+  } finally { state.dispose() }
+})
+
+test('实际草稿编辑窗口明确只更新草稿，已保存账单窗口保持同步说明', async () => {
+  const group = await syntheticAiGroup(), state = mountDraftGroup(group)
+  const textTree = root => root.text + root.children.map(textTree).join('')
+  try {
+    state.values.editing.value = group.items[0].id; await Vue.nextTick()
+    const text = textTree(state.root)
+    assert.match(text, /编辑这笔草稿/)
+    assert.match(text, /确认整组后才会入账/)
+    assert.doesNotMatch(text, /保存后，明细、首页和聊天查询都会使用最新数据/)
+  } finally { state.dispose() }
+  const existing = mountEditor()
+  try { assert.match(textTree(existing.root), /保存后，明细、首页和聊天查询都会使用最新数据/) }
+  finally { existing.dispose() }
+})
+
+test('草稿已保存或取消时撤下旧编辑窗口，旧回调不更新或改变原输入快照', async () => {
+  for (const status of ['saved', 'cancelled']) {
+    const group = await syntheticAiGroup(), state = mountDraftGroup(group)
+    try {
+      state.values.editing.value = group.items[0].id; await Vue.nextTick()
+      const form = state.forms[0]; form.form.value.amount = '16.00'
+      state.props.group = { ...group, status }; await Vue.nextTick()
+      const visible = hasClass(state.root, 'bill-editor')
+      state.values.update({ ...original, amount: 18 })
+      assert.equal(visible, false); assert.deepEqual(state.events, [])
+      assert.equal(form.form.value.amount, '16.00')
     } finally { state.dispose() }
   }
 })
