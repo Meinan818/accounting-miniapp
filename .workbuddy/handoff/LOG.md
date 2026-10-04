@@ -1187,3 +1187,7 @@ Vue3/Pinia/Router前端与Java21/Spring/MySQL后端沿用；相关入口frontend
 本聊天actual compact=0，交接核验与原生每小时ACTIVE/failed_runs_only保持。Bills已打开编辑窗口时拒绝重复或其他账单旧编辑入口，保留当前目标/版本/错误；保存后仍可编辑另一笔。同笔冲突版本采用、删除确认返回、金额/备注/未知时间保留已在真实Editor/Form离线挂载复验，没有组件缺陷就不改Editor。editor-target-before33项32通过1失败保留；53项针对/461项前端和demo/server两构建通过。无真实账号/账本/照片/AI/邮件请求或服务重启，GUI/真机/系统剪贴板/下载落盘/隔夜仍未验。
 
 Home完整c9901cf80e382dec007550789e0293d9134bf301已核远端一致，Stats0dd6e4b和router3410b9d已上传，私有/无Pages/0 workflows/0 deployments保持。明细节点核差异后自主上传，实际结果另记。下一项：真实Bills模板联同Editor/Form的关闭再开与账单切换生命周期取证；目前只是待验证路径，不能当已复现缺陷，不追加真实请求，不提问或委派。
+
+## 2026-10-04 · 编辑目标完整组件链验证
+
+完整Bills→Editor→Form新链34项通过，关闭再开不同id（含同tick）靠现有:key正确重建，原输入保留、新午夜时间/金额及新id保存正确，无缺陷不改业务源码。全量462项通过，两构建沿用同源码上一节点证据；新增实际组件链回归保存。明细a43ce7837441d58fa2c7ed7f9ab252a9d8415f60已由editor-target-sync核远端一致。下一项使用已有Chrome/Playwright、E盘缓存和独立演示构建合成账单做浏览器验收，不访问真实账号/API或外部请求。

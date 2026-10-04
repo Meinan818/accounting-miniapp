@@ -133,7 +133,7 @@ test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚�
   } finally { if (state.view) state.dispose() }
 })
 
-function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false, clipboard = {}, template = false } = {}) {
+function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false, clipboard = {}, template = false, realEditor = false } = {}) {
   const bills = source('views/Bills.vue'), calls = []
   const route = Vue.reactive({ query: { month: '2026-10' } })
   const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), downloads = []
@@ -142,9 +142,9 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
     updateRecord: (...args) => { calls.push(['update', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) },
     deleteRecord: (...args) => { calls.push(['delete', ...args]); return new Promise((resolve, reject) => { finish = resolve; fail = reject }) } })
   const focusTarget = node('notice')
-  const stub = { render: () => Vue.h('span') }
+  const stub = { render: () => Vue.h('span') }, forms = []
   const Bills = { components: { CategoryIcon: stub, ManualEntry: stub, NotebookBack: stub, ChevronLeft: stub, ChevronRight: stub, BottomNav: stub,
-    RecordEditor: { props: ['record'], render() { return Vue.h('section', { class: 'synthetic-editor' }, this.record.remark) } } }, setup() {
+    RecordEditor: realEditor ? editorComponent(forms) : { props: ['record'], render() { return Vue.h('section', { class: 'synthetic-editor' }, this.record.remark) } } }, setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
       createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, CATEGORY_OPTIONS,
@@ -158,8 +158,36 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
   if (template) { Bills.render = new Function('Vue', compile(bills.template, { mode: 'function' }).code)(Vue); Bills.render._rc = true }
   const app = renderer.createApp(Bills), root = node('root')
   app.mount(root); values.edit(original)
-  return { values, calls, route, store, auth, downloads, focusTarget, root, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
+  return { values, calls, route, store, auth, downloads, focusTarget, root, forms, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
 }
+
+test('真实Bills→Editor→Form关闭再开另一笔，即使同tick也使用新账单输入和时间语义', async () => {
+  const previous = { document: globalThis.document, Document: globalThis.Document, ShadowRoot: globalThis.ShadowRoot }
+  globalThis.document = { activeElement: null, body: { style: { overflow: 'scroll' } }, addEventListener() {}, removeEventListener() {} }
+  globalThis.Document = class {}; globalThis.ShadowRoot = class {}
+  try {
+    for (const sameTick of [false, true]) {
+      const state = mountBills({ server: true, template: true, realEditor: true })
+      try {
+        await Vue.nextTick()
+        const oldForm = state.forms[0]; oldForm.form.value.amount = '12.34'; oldForm.form.value.remark = '上一笔未保存'
+        const next = { ...original, id: 'next', amount: '8.50', time: '00:00', remark: '下一笔' }
+        state.values.editingRecord.value = null
+        if (!sameTick) await Vue.nextTick()
+        state.values.edit(next); await Vue.nextTick()
+        const current = state.forms.at(-1)
+        assert.notEqual(current, oldForm)
+        assert.equal(current.form.value.amount, '8.50'); assert.equal(current.form.value.remark, '下一笔')
+        assert.equal(current.form.value.time, '00:00')
+        assert.equal(oldForm.form.value.amount, '12.34'); assert.deepEqual(state.calls, [])
+        current.save()
+        assert.equal(state.calls[0][1], 'next'); assert.equal(state.calls[0][2].amount, 8.50)
+        assert.equal(state.calls[0][2].time, '00:00')
+        state.finish({ ...next, amount: 8.50 }); await Vue.nextTick(); await Vue.nextTick()
+      } finally { state.dispose() }
+    }
+  } finally { Object.assign(globalThis, previous) }
+})
 
 test('编辑保存拒绝重复请求，离页后成功回执不改本页月份/提示', async () => {
   const state = mountBills()
