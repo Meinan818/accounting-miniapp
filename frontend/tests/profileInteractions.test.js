@@ -2,7 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { computed, effectScope, reactive, ref, unref, watch } from 'vue'
+import { computed, effectScope, nextTick, reactive, ref, unref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { createProfileApi } from '../src/api/profile.js'
 import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile } from '../src/utils/localProfile.js'
@@ -15,18 +15,62 @@ import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 
 const original = { nickname: '合成名片', signature: '合成签名', avatar: 'cat', version: 0 }
+test('资料保存失败后显示最新完整错误，自动滚入已打开窗口但不修改输入或重复请求', async () => {
+  const env = scene(), scrolled = []
+  try {
+    env.view.profileDialog.value.open = true
+    env.view.editErrorElement.value = { getClientRects: () => [1], scrollIntoView: options => scrolled.push(options) }
+    env.view.profileForm.value.nickname = '保留未保存输入'
+    const pending = env.view.saveProfile()
+    env.requests[0].reject(Error('合成长保存错误'))
+    while (env.requests.length < 2) await new Promise(resolve => setImmediate(resolve))
+    env.requests[1].resolve(original); await pending; await nextTick(); await nextTick()
+    assert.deepEqual(scrolled, [{ block: 'start', behavior: 'instant' }])
+    assert.equal(env.view.profileForm.value.nickname, '保留未保存输入')
+    assert.equal(env.view.editError.value, '合成长保存错误')
+    assert.equal(env.requests.length, 2)
+  } finally { env.dispose() }
+})
+
+test('资料错误滚动等待DOM期间清错、关闭、离页或切换身份后旧回调失效', async () => {
+  for (const change of [env => { env.view.editError.value = '' }, env => env.view.closeProfile(),
+    env => env.dispose(), env => { env.auth.user = { id: 'other' }; env.auth.user = { id: '1' } },
+    env => { env.view.editErrorElement.value = null }]) {
+    const env = scene(), scrolled = []
+    try {
+      env.view.profileDialog.value.open = true
+      env.view.editErrorElement.value = { getClientRects: () => [1], scrollIntoView: options => scrolled.push(options) }
+      env.view.editError.value = '旧错误'
+      await nextTick(); change(env); await nextTick(); await nextTick()
+      assert.deepEqual(scrolled, [])
+      assert.equal(env.requests.length, 0)
+    } finally { env.dispose() }
+  }
+  const env = scene(), scrolled = []
+  try {
+    env.view.profileDialog.value.open = true
+    env.view.editErrorElement.value = { getClientRects: () => [1], scrollIntoView: () => scrolled.push(env.view.editError.value) }
+    env.view.editError.value = '旧错误'; await nextTick()
+    env.view.editError.value = '最新错误'; await nextTick(); await nextTick()
+    assert.deepEqual(scrolled, ['最新错误'])
+    env.view.editErrorElement.value = { getClientRects: () => [], scrollIntoView: () => scrolled.push('隐藏') }
+    env.view.editError.value = '隐藏错误'; await nextTick(); await nextTick()
+    assert.deepEqual(scrolled, ['最新错误'])
+  } finally { env.dispose() }
+})
+
 function scene({ records = [], dateClock = {}, createPhoto = () => { assert.fail('不可处理真实照片') } } = {}) {
   const requests = [], logoutRequests = [], cleanup = [], scope = effectScope()
   const auth = reactive({ user: { id: '1' }, api: { request(method, path, options) {
     return new Promise((resolve, reject) => requests.push({ method, path, options, resolve, reject }))
   } }, logout() { return new Promise((resolve, reject) => logoutRequests.push({ resolve, reject })) } })
   const script = readFileSync(new URL('../src/views/Profile.vue', import.meta.url), 'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
-  const bindings = { computed, ref, watch, dayjs, onMounted() {}, onBeforeUnmount: fn => cleanup.push(fn), SERVER_MODE: true,
+  const bindings = { computed, ref, watch, nextTick, dayjs, onMounted() {}, onBeforeUnmount: fn => cleanup.push(fn), SERVER_MODE: true,
     useRecordStore: () => ({ records, storageError: '', refresh() { assert.fail('不可自动读账单') } }),
     useAuthStore: () => auth, getMonthStatistics, getRecentDays, centsText, packageInfo: { version: 'synthetic' },
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }), useLedgerReload,
     DEFAULT_PROFILE, readLocalProfile, saveLocalProfile, createProfileApi, createProfilePhoto: createPhoto }
-  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, loadingProfile, logout, loggingOut, logoutError, profileOwnerCurrent, openingProfile }')(...Object.values(bindings)))
+  const view = scope.run(() => new Function(...Object.keys(bindings), script + '; return { month, monthTitle, statistics, recentDays, profile, profileForm, profileError, profileDialog, loadProfile, openProfile, closeProfile, choosePhoto, processingPhoto, saveProfile, savingProfile, editError, editErrorElement, loadingProfile, logout, loggingOut, logoutError, profileOwnerCurrent, openingProfile }')(...Object.values(bindings)))
   let opens = 0
   view.profileDialog.value = { open: false, showModal() { opens++; this.open = true }, close() { this.open = false } }
   return { view, requests, logoutRequests, auth, get opens() { return opens }, dispose() { cleanup.forEach(fn => fn()); scope.stop() } }

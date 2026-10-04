@@ -471,3 +471,7 @@ DOM alert存在不等于未被sticky按钮遮挡，须量化error.bottom与actio
 ## 2026-10-04 · Profile Unicode harness按钮名错误
 
 本轮把保存按钮猜为“保存到账号”，真实模板为“保存账号资料”，first定位超时保留；读取完整真实行后仅修harness名称，16检查全过。写UI脚本前先读完整模板文本，避免截断输出后凭记忆补按钮名。无业务缺陷/源码修改。
+
+## 2026-10-04 · Profile长错误换行与滚动
+
+只补换行不能保证长错误完整可读；after-wrap实际尾部874px越过dialog828px，须测几何和原始视图。post watch须在nextTick后同时核message相等/current清理/owner/窗口open/元素可见，避免清错、换错或身份切回前清理回调尚未执行时旧滚动复活。before/after-wrap/22项before2失败保留。首次functions编排对象字段拼写触发SyntaxError，整次未执行/无文件修改，修正后重发。

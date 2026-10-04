@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronRight } from 'lucide-vue-next'
 import NotebookBack from '@/components/common/NotebookBack.vue'
@@ -49,6 +49,17 @@ const profileNotice = ref('')
 const profileDialog = ref(null)
 const profileForm = ref({ ...DEFAULT_PROFILE })
 const editError = ref('')
+const editErrorElement = ref(null)
+watch(editError, async (message, previous, onCleanup) => {
+  let current = true
+  onCleanup(() => { current = false })
+  if (!message) return
+  await nextTick()
+  if (current && editError.value === message && isCurrentProfile() && profileDialog.value?.open
+    && editErrorElement.value?.getClientRects?.().length) {
+    editErrorElement.value.scrollIntoView({ block: 'start', behavior: 'instant' })
+  }
+}, { flush: 'post' })
 const profileConflict = ref(false)
 const photoInput = ref(null)
 const processingPhoto = ref(false)
@@ -215,7 +226,7 @@ onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
         <label>昵称 <span>最多20个字</span><input :disabled="savingProfile" v-model="profileForm.nickname" aria-label="昵称" autocomplete="off" required /></label>
         <label>一句签名 <span>最多60个字，可留空</span><textarea :disabled="savingProfile" v-model="profileForm.signature" aria-label="一句签名" rows="3" /></label>
         <p class="profile-editor-note">{{ SERVER_MODE ? '保存到当前登录账号；不会改变账单和对话。' : '仅保存在当前浏览器，不代表注册或登录；不会改变账单和对话。' }}</p>
-        <p v-if="editError" class="profile-error" role="alert">{{ editError }}</p>
+        <p v-if="editError" ref="editErrorElement" class="profile-error" role="alert">{{ editError }}</p>
         <div v-if="profileConflict" class="profile-error" role="status">
           <p>资料已在别处更新。你填写的内容仍保留，请对照后再保存。</p>
           <template v-if="!profileError"><p>当前昵称：{{ profile.nickname }}</p><p>当前签名：{{ profile.signature || '未填写' }}</p><p>当前头像：{{ profile.avatar === 'photo' ? '照片' : avatars.find(avatar => avatar.key === profile.avatar)?.label }}</p></template>
@@ -296,7 +307,7 @@ onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
 .profile-help-card ul { padding-left: 17px; margin-top: 10px; list-style: disc; color: var(--zz-home-ink-soft); font-size: 12px; line-height: 2; }
 .profile-about { margin: 24px 0 5px; text-align: center; font-size: 12px; line-height: 1.9; color: var(--zz-home-ink-soft); }
 .profile-about span { font-size: 11px; }
-.profile-error { margin-top: 12px; font-size: 12px; line-height: 1.9; color: var(--zz-home-pink); }
+.profile-error { margin-top: 12px; font-size: 12px; line-height: 1.9; color: var(--zz-home-pink); overflow-wrap: anywhere; }
 .profile-error button { min-height: 44px; margin-top: 8px; padding: 7px 12px; border: 1px solid var(--zz-home-line); border-radius: 12px; background: var(--zz-home-title-brush); color: var(--zz-home-ink); }
 .profile-entry:focus-visible, .profile-back:focus-visible, .profile-error button:focus-visible { outline: 2px solid var(--zz-home-ink); outline-offset: 4px; }
 @media (max-width: 359px) { .profile-avatar { width: 69px; height: 74px; } .profile-identity { gap: 10px; padding-inline: 0; } .profile-identity h2 { font-size: 15px; } .profile-record-count > span { width: 100%; margin-left: 0; } }

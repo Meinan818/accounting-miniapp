@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- Profile长503错误横溢出/换行后尾部不可见已截图几何复现，换行及受owner/最新错误/窗口保护的post滚动修复；114相关/499前端/两构建与三宽6浏览器33API3截图、Unicode16/照片4回归通过。累计428浏览器1370API178截图7JSON/源5CSV。98c9b2d同SHA/force:false远端一致已核，compact=0/原静音automation保持，下一项合法连续英文资料名片窄屏取证，真实请求0。
+
 - Profile原生Unicode输入6场景16检查63API3截图通过，超限/空白/required空值0PUT，合法20/60emoji显式保存刷新保持。累计422浏览器1337API175截图7JSON/源5CSV；112相关/497前端/两构建同源码保持，eacd3c1普通Push完整远端一致。compact=0/原静音automation保持，下一项Profile长保存错误三宽可读性取证，真实请求0。
 
 - 新窗口01a10649交接/原automation已核，compact=0。Profile读取3场景6检查18API3截图与资料照片三链回归通过，112相关/497前端/两构建通过。原strict诊断实测dialog.open=false/不可见，关闭dialog DOM导致定位歧义，仅修harness/保原断言无新窗口业务修复。累计406浏览器1274API172截图7JSON/源5CSV，51账本/12Profile H2独立保持。下一项实际Unicode输入边界与非法输入0写请求合成链，真实请求0。
