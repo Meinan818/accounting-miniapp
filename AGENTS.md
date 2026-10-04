@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 本次原生gpt-6.1-sol/high新聊天01a1049d-eea8-7b23-811f-6afe194bff0f已创建，automation原生转移/view及toml逐字段保持已核，仅目标及更新时间变化。初始本地提交698f305完成，源尾提交与最终success以compaction-transfer-result-01a1043a.json为准；success前目标只读。源实际compact=2保留、最终回执后停止共享写入，目标核完新窗口0并直接接续router身份时序。此次交接不Push、不重跑测试、不重复建automation。
+
 - 源01a1043a-8b46-7423-b6dd-5c26009b5280第2次实际compact已告知，STATE=2，停止业务代码并本地commit交接，不Push；448项前端/两构建是已验证统计去重节点。本次专用回执compaction-transfer-result-01a1043a.json，status=success及源停止共享写入/finalCommit核完前目标只读。原生gpt-6.1-sol/high新聊天及现有automation转移按实际结果记录；成功后新窗口0，下一项router瞬时身份切回旧导航合成取证。下方compact=1仅历史。
 
 - 正式Stats挂载复用受保护router guard的账本读取，去掉同次进入的第二次refresh；guard失败保留错误和显式重读，演示mounted读取保持。实际内存router+session+Stats setup链stats-duplicate-before8项6通过2失败原文保留，28项针对/448项前端/demo与server两构建通过，无真实账号/账本/AI/照片/邮件请求。草稿窗口0db997d001b3bdc6fc2b3628cb3ba1599e8f80c6完整远端一致已核（draft-editor-sync）。compact=1、原生每小时静音续办保持，GUI/真机/实际剪贴板/下载/隔夜未验。下一项router账本await期间瞬时身份变化再切回的旧导航取证。

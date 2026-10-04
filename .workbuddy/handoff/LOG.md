@@ -1159,3 +1159,7 @@
 下一项：真实内存router+session合成验证账本await期间身份首次变化再切回是否放行旧导航；当前仅比较id，属于待取证假设，尚未改业务/新增该任务测试。先写失败取证，再最小修复并核临时watch释放，保持并发导航与登录返回。不发真实账号/账本/照片/AI/邮件请求，继续免费模型与本机路线。
 
 Vue3/Pinia/Router前端与Java21/Spring/MySQL后端沿用；相关入口frontend/src/router/index.js、frontend/tests/routerAuth.test.js、frontend/src/views/Stats.vue。复用D:/nodejs和已有依赖，TEMP/TMP及npm cache用E:/CODEX/.cache。Java19940/Vite20820仍仅127.0.0.1:8080/5174，未重启。GUI/窄屏/真机/系统剪贴板/下载落盘/隔夜未验，既有PENDING暂缓范围保持。具体踩坑与防错见MISTAKES：真实Boolean prop、合成DOM接口、永久身份守卫和路由/挂载完整链须独立验证；原失败不得删除。
+
+## 本次原生交接已执行（2026-10-04）
+
+统计去重与第二次压缩交接初始本地提交698f30569a3be4dd9b951d71afd492cd46fc06cd成功，新聊天01a1049d-eea8-7b23-811f-6afe194bff0f按gpt-6.1-sol/high原生创建。automation已原生转移到该聊天，view及toml核仅target_thread_id/updated_at变化，其余字段逐行保持：每小时、ACTIVE、failed_runs_only及提示不变。源保存此文档最终提交后写本次专用compaction-transfer-result-01a1043a.json；success前目标只读等待，源最终回执后停止共享写入，源compact=2保留，目标核完才设新窗口0。448项前端/两构建是已完成节点证据，交接未重跑、不Push。下一项router账本await身份瞬时变换再切回的旧导航合成取证，不需用户外部操作。
