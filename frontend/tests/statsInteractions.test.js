@@ -2,7 +2,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
-import { computed, effectScope, nextTick, reactive, ref, watch } from 'vue'
+import { computed, effectScope, nextTick, onScopeDispose, reactive, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { centsText } from '../src/utils/money.js'
 import { getMonthReview } from '../src/utils/monthReview.js'
@@ -19,12 +19,12 @@ function scene(query = {}, dateClock = {}) {
   const scope = effectScope(), route = reactive({ query }), scrolls = [], calls = []
   const store = reactive({ records: structuredClone(records), storageError: '', refresh: async () => { calls.push('refresh'); return true } })
   const router = { replace: async ({ query }) => { route.query = query } }
-  const bindings = { computed, nextTick, ref, watch, dayjs, centsText, getMonthReview, useStatsMonthNavigation, useLedgerReload,
-    onMounted() {}, useRecordStore: () => store, useRoute: () => route, useRouter: () => router,
+  const bindings = { computed, nextTick, onScopeDispose, ref, watch, dayjs, centsText, getMonthReview, useStatsMonthNavigation, useLedgerReload,
+    onMounted() {}, matchMedia: () => ({ matches: true }), useRecordStore: () => store, useRoute: () => route, useRouter: () => router,
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth}')(...Object.values(bindings)))
-  view.dayChart.value = { clientWidth: 200, set scrollLeft(value) { scrolls.push(value) } }
+    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition}')(...Object.values(bindings)))
+  view.dayChart.value = { clientWidth: 200, set scrollLeft(value) { scrolls.push(value) }, scrollBy: options => calls.push(options) }
   return { view, store, route, calls, scrolls, dispose: () => scope.stop() }
 }
 
@@ -85,5 +85,50 @@ test('统计图表等待渲染时用户选日，旧自动峰值定位不覆盖�
     await nextTick()
     assert.deepEqual(env.scrolls, [])
     assert.equal(env.view.selectedDay.value, '2026-10-10')
+  } finally { env.dispose() }
+})
+
+test('统计自动峰值定位保持正常，但等待期间手动翻动不被旧定位覆盖', async () => {
+  const env = scene({ month: '2026-10' })
+  try {
+    env.store.records.push({ ...records[0], id: 'new', date: '2026-10-15', amount: 1 })
+    await nextTick(); await nextTick()
+    assert.deepEqual(env.scrolls, [608]); env.scrolls.length = 0
+    env.store.records.push({ ...records[0], id: 'new2', date: '2026-10-16', amount: 2 })
+    await nextTick(() => env.view.slideDays(1)); await nextTick()
+    assert.deepEqual(env.calls, [{ left: 343, behavior: 'auto' }])
+    assert.deepEqual(env.scrolls, [])
+  } finally { env.dispose() }
+})
+
+test('统计图表等待期间离页不滚动，旧翻动入口也不操作保留的图表引用', async () => {
+  const env = scene({ month: '2026-10' })
+  env.store.records.push({ ...records[0], id: 'new', date: '2026-10-15', amount: 1 })
+  await nextTick(() => env.dispose()); await nextTick()
+  env.view.slideDays(1)
+  assert.deepEqual(env.scrolls, []); assert.deepEqual(env.calls, [])
+})
+
+test('统计定位等待期间切月，仅最新月份滚动一次', async () => {
+  const env = scene({ month: '2026-10' })
+  try {
+    env.store.records.push({ ...records[0], id: 'new', date: '2026-10-15', amount: 1 })
+    await nextTick(() => { env.route.query = { month: '2026-11' } })
+    await nextTick(); await nextTick()
+    assert.equal(env.view.selectedMonth.value, '2026-11')
+    assert.deepEqual(env.scrolls, [0])
+  } finally { env.dispose() }
+})
+
+test('手动触摸/滚轮查看后同月更新保持位置，切月恢复自动峰值定位', async () => {
+  const env = scene({ month: '2026-10' })
+  try {
+    env.view.keepChartPosition()
+    env.store.records.push({ ...records[0], id: 'new', date: '2026-10-15', amount: 1 })
+    await nextTick(); await nextTick()
+    assert.deepEqual(env.scrolls, [])
+    env.route.query = { month: '2026-11' }
+    await nextTick(); await nextTick()
+    assert.deepEqual(env.scrolls, [0]); assert.deepEqual(env.calls, [])
   } finally { env.dispose() }
 })
