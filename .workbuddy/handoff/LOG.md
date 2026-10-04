@@ -1361,3 +1361,13 @@ browser-chat-ai-errors-result.json/脚本/日志留现有E盘忽略目录，无�
 browser-chat-ai-clarification-result.json/脚本/日志留既有忽略目录，无业务缺陷或源码改动，469前端/同源码两构建保持。累计新增18组125项合成浏览器/462API/57截图/3JSON备份，较早24场景/18截图/121CSV另算。AI失败记录993e02c786f7b4c72a53b6342997a7b56bb6ed51已官方同SHA/force:false上传并完整远端核一致，私有/无Pages/0 workflows/0 deployments，普通Git失败原文保持。compact=1，原静音每小时automation保持，无新增用户依赖。
 
 下一项完全合成AI等待15秒慢响应提示/65秒超时与显式重试Clock浏览器链，保原草稿/未发送输入、禁止真实AI/账本请求。
+
+## AI计时边界与草稿进度文案修复（2026-10-04）
+
+完全合成server Clock浏览器5检查/6API/2截图通过：14.999秒普通等待、15秒慢响应提示，64.999秒仍等待且禁重复/确认，65秒真实client超时中止并清计时/解锁、保草稿及未发送输入、无自动重试。显式新请求计时归0，迟到999元旧回执不覆盖或解锁，新请求成功更新同组50元；再模拟100秒无旧超时/追加消息。原合成账本不变、真实账号/认证/AI/账本/照片/邮件请求0，意外错误/未知请求0；Clock模拟不冒称真实模型耗时/隔夜。
+
+计时截图实际暴露草稿卡AI整理中显示“正在保存…”而无入账请求。根因DraftGroupCard把共用busy当保存进度。新增saving由Chat按当前savingGroup传入，处理中只禁操作/显示“处理中…”，真实入账才显示“正在保存…”；saving单独为true仍锁确认/取消/编辑与旧更新回调。原草稿/确认/编辑语义保持。63项before61通过2失败原文chat-busy-label-before-node.log/旧截图保留；81相关、471全量前端及demo/server两构建通过，无新增依赖或backend改动。修复后同5项Clock重验按钮文案，原整组确认/两种失败重试8项/35API另复跑通过，核真实确认仍显示保存/双击锁，复跑不重复累计。
+
+首次Clock脚本生成正则转义丢失而语法失败，first.log保留、改字符串前缀校验；下一轮fastForward跳过interval重复回调使15秒仍14，skipped-interval-before结果/截图/second.log原文保留。按本机官方类型文档改install/pauseAt/runFor逐次回调，未删断言或改业务适配计时。2最终截图E盘已抽检新处理中/超时输入。
+
+累计新增19组130项合成浏览器/468API/59截图/3JSON备份，较早24场景/18截图/121CSV及整组复跑另算。追问记录a9cefe17e532c358c68cc7b5fff1334ca25deb6b完整远端一致已核，私有/无Pages/0 workflows/0 deployments；compact=1与原每小时静音automation保持。无新增用户依赖，真实账号/真机/实际隔夜/人工验收仍未验。下一项合成Chat单笔改价/歧义编号/数量确认/五笔限制浏览器链，复杂纠正仅合成模型，禁止真实AI/账本请求。

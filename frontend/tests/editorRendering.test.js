@@ -670,9 +670,9 @@ function mountDraftGroup(group) {
   const previousDocument = globalThis.document
   globalThis.document = { body: { style: { overflow: 'scroll' } } }
   const forms = [], events = [], draft = source('components/common/DraftGroupCard.vue')
-  const props = Vue.reactive({ group, savedRecords: [], busy: false, error: '' })
+  const props = Vue.reactive({ group, savedRecords: [], busy: false, saving: false, error: '' })
   let values
-  const Group = { props: ['group', 'savedRecords', 'busy', 'error'], components: { RecordEditor: editorComponent(forms),
+  const Group = { props: ['group', 'savedRecords', 'busy', 'saving', 'error'], components: { RecordEditor: editorComponent(forms),
     CategoryIcon: { render: () => Vue.h('span') }, RouterLink: { render: () => Vue.h('span') } },
     setup(componentProps, context) {
       values = evaluate(draft.script, { ...Vue, centsText, legacyCents, defineProps: () => componentProps, defineEmits: () => context.emit },
@@ -709,6 +709,25 @@ async function syntheticAiGroup() {
     records: [{ type: 'expense', amount: '25.00', date: '2026-10-04', category: '餐饮', note: '合成午饭' }] }) })
     .parse('午饭25', { date: '2026-10-04' })).group
 }
+
+test('草稿整理或重读只显示处理中，真实入账才显示保存，所有等待均禁确认/取消/编辑', async () => {
+  const state = mountDraftGroup(await syntheticAiGroup())
+  const textTree = root => root.text + root.children.map(textTree).join('')
+  const buttons = root => [ ...(root.tag === 'button' ? [root] : []), ...root.children.flatMap(buttons) ]
+  try {
+    state.props.busy = true; await Vue.nextTick()
+    assert.match(textTree(state.root), /处理中…/); assert.doesNotMatch(textTree(state.root), /正在保存/)
+    assert.equal(buttons(state.root).every(button => button.props.disabled), true)
+    state.props.saving = true; await Vue.nextTick()
+    assert.match(textTree(state.root), /正在保存…/)
+    state.props.busy = false; await Vue.nextTick()
+    assert.equal(buttons(state.root).every(button => button.props.disabled), true)
+    assert.match(textTree(state.root), /正在保存…/)
+    state.props.saving = false; await Vue.nextTick()
+    assert.match(textTree(state.root), /确认记下1笔/)
+    assert.equal(buttons(state.root).some(button => button.props.disabled), false)
+  } finally { state.dispose() }
+})
 
 test('草稿卡忙碌时已打开的表单与旧更新回调均不提交或关闭，结束后保留输入可更新', async () => {
   const group = await syntheticAiGroup(), state = mountDraftGroup(group)

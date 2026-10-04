@@ -369,6 +369,7 @@ onBeforeUnmount(() => {
             :group="message.group"
             :saved-records="savedRecords(message.group)"
             :busy="savingGroup === message.id || conversationStore.isThinking || retryingPersistence"
+            :saving="savingGroup === message.id"
             :error="actionErrors[message.id]"
             @confirm="saveDraft(message.id)"
             @cancel="cancelDraft(message.id)"

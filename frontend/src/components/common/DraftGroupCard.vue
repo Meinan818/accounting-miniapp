@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { centsText, legacyCents } from '@/utils/money'
 import RecordEditor from '@/components/record/RecordEditor.vue'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
-const props = defineProps({ group: { type: Object, required: true }, savedRecords: { type: Array, default: () => [] }, busy: Boolean, error: String })
+const props = defineProps({ group: { type: Object, required: true }, savedRecords: { type: Array, default: () => [] }, busy: Boolean, saving: Boolean, error: String })
 const emit = defineEmits(['confirm', 'cancel', 'update'])
 const editing = ref(null)
 const saved = computed(() => props.group.items.length > 0 && props.savedRecords.length === props.group.items.length && props.group.items.every(i => props.savedRecords.some(r => r.draftItemId === i.id)))
@@ -19,7 +19,7 @@ const statusLabel = computed(() => status.value === 'saved' && deletedCount.valu
 const totals = computed(() => ({ expense: items.value.filter(i => !i.deleted && i.type === 'expense').reduce((n, i) => n + (i.amountCents || 0), 0), income: items.value.filter(i => !i.deleted && i.type === 'income').reduce((n, i) => n + (i.amountCents || 0), 0) }))
 const editRecord = computed(() => { const i = props.group.items.find(i => i.id === editing.value); return i ? { ...i, amount: i.amountCents == null ? '' : centsText(i.amountCents) } : null })
 function update(record) {
-  if (props.busy || !editRecord.value || ['saved', 'cancelled'].includes(status.value)) return
+  if (props.busy || props.saving || !editRecord.value || ['saved', 'cancelled'].includes(status.value)) return
   emit('update', { itemId: editing.value, record }); editing.value = null
 }
 </script>
@@ -32,14 +32,14 @@ function update(record) {
         <div class="draft-item-top"><span class="draft-item-copy"><CategoryIcon v-if="['income','expense'].includes(item.type)" :category="item.category" :type="item.type" /><span>{{ index + 1 }}. {{ item.description }}</span></span><strong :class="item.type">{{ item.deleted ? '已删除' : item.amountCents == null ? '待补金额' : '¥' + centsText(item.amountCents) }}</strong></div>
         <p v-if="!item.deleted">{{ item.type === 'income' ? '收入' : item.type === 'expense' ? '支出' : '待定收支' }} · {{ item.category }} · {{ item.date || '待补日期' }} {{ item.time || (group.origin === 'ai' ? '未指定时间' : '待补时间') }}</p>
         <p v-else>已从当前账本移除，不计入合计。</p>
-        <button v-if="!['saved', 'cancelled'].includes(status)" type="button" :disabled="busy" :aria-label="'编辑第' + (index + 1) + '笔草稿'" @click="editing = item.id">编辑这笔</button>
+        <button v-if="!['saved', 'cancelled'].includes(status)" type="button" :disabled="busy || saving" :aria-label="'编辑第' + (index + 1) + '笔草稿'" @click="editing = item.id">编辑这笔</button>
       </li>
     </ol>
     <div class="draft-totals"><p v-if="deletedCount">当前有效账单 {{ items.length - deletedCount }}笔；已删除 {{ deletedCount }}笔，不计入下方合计。</p><p v-if="totals.expense">支出{{ status === 'needs_input' ? '已知金额' : '合计' }} ¥{{ centsText(totals.expense) }}</p><p v-if="totals.income">收入{{ status === 'needs_input' ? '已知金额' : '合计' }} ¥{{ centsText(totals.income) }}</p><p v-if="status === 'needs_input'">仍有待补充或待选择的信息，补齐后才能保存。</p></div>
     <p v-if="error" role="alert" class="draft-error">{{ error }}</p>
-    <div v-if="!['saved', 'cancelled'].includes(status)" class="draft-actions"><button type="button" :disabled="busy" @click="emit('cancel')">取消这组</button><button type="button" class="draft-confirm bg-primary-400" :disabled="busy || status !== 'ready'" @click="emit('confirm')">{{ busy ? '正在保存…' : '确认记下' + items.length + '笔' }}</button></div>
+    <div v-if="!['saved', 'cancelled'].includes(status)" class="draft-actions"><button type="button" :disabled="busy || saving" @click="emit('cancel')">取消这组</button><button type="button" class="draft-confirm bg-primary-400" :disabled="busy || saving || status !== 'ready'" @click="emit('confirm')">{{ saving ? '正在保存…' : busy ? '处理中…' : '确认记下' + items.length + '笔' }}</button></div>
     <p v-else-if="status === 'saved'" class="saved-note">此卡片读取最新账单（含删除状态）；<router-link :to="{ path: '/bills', query: { month: (items.find(i => !i.deleted) || items[0])?.date?.slice(0, 7) } }">到明细修改</router-link>。历史聊天回复只是当时的记录。</p>
-    <RecordEditor v-if="editRecord && !['saved', 'cancelled'].includes(status)" :key="editing" :record="editRecord" :saving="busy" draft @save="update" @close="editing = null" />
+    <RecordEditor v-if="editRecord && !['saved', 'cancelled'].includes(status)" :key="editing" :record="editRecord" :saving="busy || saving" draft @save="update" @close="editing = null" />
   </article>
 </template>
 <style scoped>

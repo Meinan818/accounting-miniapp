@@ -418,6 +418,28 @@ test('实际Chat模板身份变化隐藏原对话/输入/备份，切回不复�
   } finally { env.dispose() }
 })
 
+test('实际Chat模板仅传当前组入账进度，整理/重读仅阻止操作', async () => {
+  const env = scene(); addDraft(env)
+  const template = readFileSync(new URL('../src/views/Chat.vue', import.meta.url), 'utf8').split('<template>')[1].split('</template>')[0]
+  const stub = { render: () => Vue.h('span') }
+  const Chat = { components: Object.fromEntries(['ManualEntry', 'NotebookBack', 'JournalSticker', 'CatNavIcon', 'ChatInput', 'ConfirmCard', 'ChatBubble'].map(name => [name, stub])),
+    setup: () => ({ ...env.view, SERVER_MODE: true, miaoAvatar: 'synthetic', miaoThinking: 'synthetic' }),
+    render: new Function('Vue', compile(template, { mode: 'function' }).code)(Vue) }
+  Chat.components.DraftGroupCard = { props: ['busy', 'saving'], render() { return Vue.h('p', `busy=${Boolean(this.busy)} saving=${Boolean(this.saving)}`) } }
+  Chat.render._rc = true
+  try {
+    env.conversation.isThinking = true
+    assert.match(await renderToString(Vue.createSSRApp(Chat)), /busy=true saving=false/)
+    env.conversation.isThinking = false; env.view.retryingPersistence.value = true
+    assert.match(await renderToString(Vue.createSSRApp(Chat)), /busy=true saving=false/)
+    env.view.retryingPersistence.value = false
+    const save = env.view.saveDraft('draft')
+    assert.match(await renderToString(Vue.createSSRApp(Chat)), /busy=true saving=true/)
+    env.writes[0].reject(Error('合成保存失败')); await save
+    assert.match(await renderToString(Vue.createSSRApp(Chat)), /busy=false saving=false/)
+  } finally { env.dispose() }
+})
+
 test('Chat接收AI草稿编辑的缺省时间保持未知；显式时间可补充，已知时间不可默默清空', async () => {
   const env = scene()
   try {
