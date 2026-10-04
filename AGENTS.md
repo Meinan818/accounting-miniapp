@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 双标签外部删除/坏JSON/clear key=null/恢复合成7浏览器/6API/2截图/2实际备份通过；累计171新增浏览器/532API/71截图/7JSON备份。无未保存变化显式可恢复，有未保存26元则拒覆盖修复后25元；473前端/两构建同源码保持、compact=0。下一项Profile头像文件失败/再选/取消保护合成链，真实请求0。
+
 - 当前新窗口01a10553已核本次专用success/finalCommit 19a7232及源停止共享写入、原automation字段保持，compact=0。双标签Chat受信任storage冲突/显式重读/未保存26元与存储28元/离页返回/2实际备份7浏览器/8API/2截图通过；累计164新增浏览器/526API/69截图/5JSON备份，473前端/两构建同源码保持。下一项外部删除/损坏/恢复storage事件合成链，真实请求0。
 
 - 本次原生gpt-6.1-sol/high目标01a10553-9d76-73d3-a70c-19641bc889e9已创建并只读核交接，初始本地f497603；原automation原生update/view及TOML逐字段核仅目标/更新时间改变，其他字段保持。源01a104fa计数2保留，尾提交与success/finalCommit以compaction-transfer-result-01a104fa.json为准；sourceWillModifySharedFiles=false及finalCommit核完前目标只读，核完新窗口0直接接续双标签对话冲突。此交接不Push、不重跑、不重复automation。
