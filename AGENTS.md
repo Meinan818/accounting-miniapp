@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- Profile原生Unicode输入6场景16检查63API3截图通过，超限/空白/required空值0PUT，合法20/60emoji显式保存刷新保持。累计422浏览器1337API175截图7JSON/源5CSV；112相关/497前端/两构建同源码保持，eacd3c1普通Push完整远端一致。compact=0/原静音automation保持，下一项Profile长保存错误三宽可读性取证，真实请求0。
+
 - 新窗口01a10649交接/原automation已核，compact=0。Profile读取3场景6检查18API3截图与资料照片三链回归通过，112相关/497前端/两构建通过。原strict诊断实测dialog.open=false/不可见，关闭dialog DOM导致定位歧义，仅修harness/保原断言无新窗口业务修复。累计406浏览器1274API172截图7JSON/源5CSV，51账本/12Profile H2独立保持。下一项实际Unicode输入边界与非法输入0写请求合成链，真实请求0。
 
 - 原生目标01a10649-1a5f-77b0-bc50-e8334ce6e784/gpt-6.1-sol/high已创建，fc5bd39待续本地提交；原automation迁移/view/TOML核仅目标/更新时间改变。本次01a105cf专用success/finalCommit及源停止共享写入核完前目标只读，核完新窗口0续办；源2保持、不Push。

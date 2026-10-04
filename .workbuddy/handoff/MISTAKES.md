@@ -467,3 +467,7 @@ DOM alert存在不等于未被sticky按钮遮挡，须量化error.bottom与actio
 ## 2026-10-04 · 资料读取strict定位复验
 
 原诊断实际dialog.open=false/getClientRects空且窗口内错误不可见，关闭dialog仍有DOM导致.profile-error strict两匹配。按页面role=alert和重读资料按钮定位，保原getByRole(dialog).count=0并补原生open/可见性，6检查全过；不得以元素数量推断窗口打开或用.first()/删除断言掩盖。新增diagnostic失败与源before/after独立保留。
+
+## 2026-10-04 · Profile Unicode harness按钮名错误
+
+本轮把保存按钮猜为“保存到账号”，真实模板为“保存账号资料”，first定位超时保留；读取完整真实行后仅修harness名称，16检查全过。写UI脚本前先读完整模板文本，避免截断输出后凭记忆补按钮名。无业务缺陷/源码修改。
