@@ -1395,3 +1395,11 @@ server合成浏览器复现“全部历史总支出”被送入AI、替换待确
 第一轮harness把deletedAt放record内，而真实SnapshotRecord是record/deletedAt同层，未按后端合同模拟删除导致合成100元计入；fixture-before结果/截图/first.log保留。按Java SnapshotRecord与remoteLedger现场合同修正fixture，不改业务或删除断言；修正后复现上述真实范围问题。已记MISTAKES。
 
 累计新增22组151项合成浏览器/500API/65截图/3JSON备份，较早24场景/18截图/121CSV及重跑另算。长历史7e3e1bf8025d51981595f711fe3240b3b969e86b完整远端一致已核；compact=1、原每小时静音automation保持，无新增用户依赖。下一项server双标签页手动保存Web Locks与原操作恢复的完全合成浏览器链，保护隔离合成写意图与账本，禁止真实请求。
+
+## 双标签手动保存原生锁浏览器验证（2026-10-04）
+
+同一独立Chrome context的两个实际标签页合成验证6检查/18API/2截图通过：A保存期间navigator.locks.query核账号写锁持有，B实际storage事件显示A原操作/9.50且保自己未提交7.50输入；B恢复/核实取消均明确拒绝，0追加PUT/confirm/GET/cancel。A503释放锁，B显式恢复复用原requestId/版本/内容，B持锁时A恢复拒绝不重复发。B成功恰好一笔9.50，完成标识实际storage事件撤A恢复区且A原输入保持；A原提交再次保存仍复用同requestId、幂等仍一笔，无新意图或锁泄露。B刷新明细仍9.50。全部API合成，真实账号/认证/AI/账本/照片/邮件请求0，1预设503单列，意外错误/未知请求0。2截图E盘抽检互斥说明与单笔明细；仅验证当前Chrome原生锁，不冒称其他浏览器/真机/真实服务并发。
+
+首轮harness点击核实取消后立即读错误，原生锁异步回调未结束时仍正在恢复，断言失败；first.log与await-before结果/截图保留。改等本次明确alert终态，未删断言或改业务，最终成功。browser-manual-tabs-result.json/脚本留既有忽略目录，无业务缺陷/源码改动，473前端/同源码两构建保持。累计新增23组157项合成浏览器/518API/67截图/3JSON备份，较早24场景/18截图/121CSV与回归重跑另算。
+
+查询修复da22f88920377d0f8270e672c46ac4cc1365379e完整远端一致已核，私有/无Pages/0 workflows/0 deployments；compact=1及原每小时ACTIVE/failed_runs_only automation保持。本机Java19940/Vite20820现场仍仅127.0.0.1:8080/5174，未重启，无新增依赖或部署。真实账号/真机/实际隔夜/人工验收仍未验，无新增用户依赖。下一项两个合成标签页对话storage外部冲突/重读/本页未保存草稿及备份浏览器链，禁止真实请求，原生每小时续办沿用。

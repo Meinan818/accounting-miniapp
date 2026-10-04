@@ -404,3 +404,7 @@ Editor曾把conflict并入saving，实际请求结束仍显示正在保存并禁
 
 - SnapshotRecord删除时间与record同层；首轮fixture错塞record.deletedAt导致100元被视为有效，fixture-before/first.log保留。以后先核当前Java DTO与前端映射，不从本地Store字段猜服务合同。
 - isQuery范围只剥一次使全部历史汇总漏判并调AI；实际browser及55项2失败保留。组合已知范围现走安全查询/范围说明，473项/两构建/安全查询及确定控制browser通过，商品/书名负例保持。
+
+## 2026-10-04 · 原生锁回调终态等待
+
+- 两标签核实取消点击后，harness立即读取错误而原生锁回调尚未结束，实际仍正在恢复；first.log/await-before结果截图保留。改等本次错误alert再核API计数，6项通过。每次动作都等该次终态，不能用前次错误出现过替代本次完成。
