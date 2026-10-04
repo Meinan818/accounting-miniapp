@@ -38,6 +38,7 @@ const operation = { batchId: 'manual-original', record: { id: 'single', type: 'e
 
 function mount(pending = false) {
   const instances = [], add = source('views/Add.vue'), formSource = source('components/record/RecordForm.vue')
+  const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), navigations = []
   let finish
   const store = Vue.reactive({ storageError: '', manualRecovery: { operations: pending ? [operation] : [], error: '' },
     cancelManualOperation: () => new Promise(done => { finish = () => { store.manualRecovery = { operations: [], error: '' }; done() } }),
@@ -50,13 +51,14 @@ function mount(pending = false) {
   } }
   const stub = { render: () => Vue.h('span') }
   const Add = { components: { RecordForm, NotebookBack: stub, RouterLink: stub }, setup() {
-    return evaluate(add.script, { computed: Vue.computed, ref: Vue.ref, watch: Vue.watch, useRouter: () => ({ push: async () => undefined }),
+    return evaluate(add.script, { computed: Vue.computed, ref: Vue.ref, watch: Vue.watch, useAuthStore: () => auth,
+      useRouter: () => ({ push: async target => { navigations.push(target) } }),
       useRecordStore: () => store, createId: () => 'manual-new', SERVER_MODE: true, useManualRecordSave, miaoWriting: 'synthetic' },
-    'store, router, recovery, saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, miaoWriting, SERVER_MODE, manualForm: typeof manualForm === "undefined" ? null : manualForm')
+    'store, router, recovery, saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, ownerCurrent, miaoWriting, SERVER_MODE, manualForm: typeof manualForm === "undefined" ? null : manualForm')
   }, render: new Function('Vue', compile(add.template, { mode: 'function' }).code)(Vue) }
   Add.render._rc = true
   const root = node('root'), app = renderer.createApp(Add), view = app.mount(root)
-  return { store, view, root, instances, finish: () => finish(), dispose: () => app.unmount() }
+  return { store, auth, navigations, view, root, instances, finish: () => finish(), dispose: () => app.unmount() }
 }
 
 test('实际Vue挂载：取消未入账操作后原日期/金额/备注进入表单初值', async () => {
@@ -97,4 +99,66 @@ test('另一页待恢复草稿明确取消后仍保留当前用户未提交输�
     assert.equal(state.instances.at(-1).form.value.remark, '当前未提交输入')
     assert.match(state.view.notice, /当前填写的内容已保留/)
   } finally { state.dispose() }
+})
+
+test('手动页身份首次变化再切回，旧保存和取消入口不能操作新身份Store', async () => {
+  const state = mount(true); let writes = 0, cancellations = 0
+  try {
+    state.store.addRecord = async () => { writes++; return { id: 'synthetic', date: '2026-10-04' } }
+    state.store.cancelManualOperation = async () => { cancellations++ }
+    state.auth.user = { id: 'other' }; state.auth.user = { id: 'synthetic-owner' }
+    const results = [await state.view.save(operation.record, operation.batchId), await state.view.cancelPending(operation)]
+    assert.deepEqual([writes, cancellations, state.navigations.length], [0, 0, 0])
+    assert.deepEqual(results, [false, false])
+  } finally { state.dispose() }
+})
+
+test('手动保存等待身份变化再切回，迟到成功不跳转，失败不回填旧错误', async () => {
+  for (const rejected of [false, true]) {
+    const state = mount(); let finish, fail
+    try {
+      state.store.addRecord = () => new Promise((resolve, reject) => { finish = resolve; fail = reject })
+      const pending = state.view.save(operation.record)
+      state.auth.user = { id: 'other' }; state.auth.user = { id: 'synthetic-owner' }
+      if (rejected) fail(Error('合成旧保存失败')); else finish({ id: 'synthetic', date: '2026-10-04' })
+      const result = await pending
+      assert.equal(state.view.savedRecord, null); assert.equal(state.view.error, '')
+      assert.equal(result, false); assert.equal(state.navigations.length, 0)
+    } finally { state.dispose() }
+  }
+})
+
+test('手动取消等待身份变化再切回，迟到回执不恢复旧草稿或回填错误', async () => {
+  for (const rejected of [false, true]) {
+    const state = mount(true); let finish, fail
+    try {
+      state.store.cancelManualOperation = () => new Promise((resolve, reject) => { finish = resolve; fail = reject })
+      const pending = state.view.cancelPending(operation)
+      state.auth.user = { id: 'other' }; state.auth.user = { id: 'synthetic-owner' }
+      if (rejected) fail(Error('合成旧取消失败')); else finish()
+      assert.equal(await pending, false)
+      assert.deepEqual(state.view.restoredRecord, {}); assert.equal(state.view.notice, ''); assert.equal(state.view.error, '')
+    } finally { state.dispose() }
+  }
+})
+
+function hasTag(root, tag) { return root.tag === tag || root.children.some(child => hasTag(child, tag)) }
+function hasClass(root, value) { return root.props.class?.split(' ').includes(value) || root.children.some(child => hasClass(child, value)) }
+
+test('实际Add模板身份变化撤下原输入和未收尾草稿，切回不复活且不清旧输入快照', async () => {
+  for (const pending of [false, true]) {
+    const state = mount(pending)
+    try {
+      const form = state.instances[0]
+      form.form.value.amount = '12.34'; form.form.value.remark = '私有未提交输入'
+      assert.equal(hasClass(state.root, 'manual-card'), true)
+      state.auth.user = null; await Vue.nextTick()
+      const beforeReturn = hasClass(state.root, 'manual-card')
+      state.auth.user = { id: 'synthetic-owner' }; await Vue.nextTick()
+      assert.equal(beforeReturn, false); assert.equal(hasClass(state.root, 'manual-card'), false)
+      assert.equal(hasTag(state.root, 'form'), false)
+      assert.equal(form.form.value.amount, '12.34'); assert.equal(form.form.value.remark, '私有未提交输入')
+      assert.equal(state.store.manualRecovery.operations.length, pending ? 1 : 0)
+    } finally { state.dispose() }
+  }
 })

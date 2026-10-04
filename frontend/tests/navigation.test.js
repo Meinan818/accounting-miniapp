@@ -209,6 +209,20 @@ test('离开手动页后保存迟到成功不把用户拉回明细', async () =>
   assert.equal(navigations, 0)
 })
 
+test('已保存导航等待期间身份首次变化，旧失败不填错误或解锁，切回旧入口不再次导航', async () => {
+  const auth = reactive({ user: { id: 'synthetic-owner' } }), scope = effectScope()
+  let fail, navigations = 0, writes = 0
+  const saver = scope.run(() => useManualRecordSave({ addRecord: async () => { writes++; return { id: 'synthetic', date: '2026-10-04' } } },
+    { push: () => { navigations++; return new Promise((resolve, reject) => { fail = reject }) } }, 'manual-synthetic', { owner: () => auth.user?.id }))
+  try {
+    const pending = saver.save({}); await new Promise(resolve => setImmediate(resolve))
+    auth.user = null; auth.user = { id: 'synthetic-owner' }
+    fail(Error('合成旧导航失败')); assert.equal(await pending, false)
+    assert.equal(saver.error.value, '')
+    assert.equal(await saver.save(), false); assert.equal(navigations, 1); assert.equal(writes, 1)
+  } finally { scope.stop() }
+})
+
 async function setupMonth(month = '2026-10') {
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/stats', component: {} }] })
   await router.push({ path: '/stats', query: { month, q: '保留筛选' } })

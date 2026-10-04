@@ -5,16 +5,20 @@ import NotebookBack from '@/components/common/NotebookBack.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import RecordForm from '@/components/record/RecordForm.vue'
 import { useRecordStore } from '@/stores/recordStore'
+import { useAuthStore } from '@/stores/authStore'
 import { createId } from '@/utils/ledger'
 import { SERVER_MODE } from '@/api/mode'
 import { useManualRecordSave } from '@/utils/navigation'
 const router = useRouter()
 const store = useRecordStore()
+const auth = SERVER_MODE ? useAuthStore() : null
 const batchId = createId('manual')
-const { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling } = useManualRecordSave(store, router, batchId)
+const { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, ownerCurrent } = useManualRecordSave(
+  store, router, batchId, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const recovery = computed(() => store.manualRecovery || { operations: [], error: '' })
 const manualForm = ref(null)
 watch(restoredRecord, record => {
+  if (!ownerCurrent.value) return
   if (manualForm.value?.restorePristine(record) === false) notice.value = '草稿已取消且未入账，你当前填写的内容已保留。'
 }, { flush: 'post' })
 </script>
@@ -24,7 +28,7 @@ watch(restoredRecord, record => {
       <header><NotebookBack to="/bills" label="返回账单明细" /><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
       <router-link to="/chat" class="chat-link">更想说一说？和小宝聊着记 →</router-link>
       <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
-      <article class="manual-card">
+      <article v-if="ownerCurrent" class="manual-card">
         <p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p>
         <p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p>
         <p v-if="recovery.error" role="alert" class="warning">{{ recovery.error }}</p>
@@ -42,6 +46,7 @@ watch(restoredRecord, record => {
         <RecordForm v-if="!savedRecord" v-show="!cancelling && !recovery.error && !recovery.operations.length" ref="manualForm" :record="restoredRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push('/bills')" />
         <div v-if="savedRecord" class="saved-recovery" role="status"><p>这笔账单已经保存，可以打开明细查看。</p><p v-if="error" role="alert" class="warning">{{ error }}</p><button type="button" :disabled="saving" @click="save()">{{ saving ? '正在打开明细…' : '打开已保存账单' }}</button></div>
       </article>
+      <p v-else class="warning" role="status">登录身份已变化，请重新打开手动记账页。</p>
       <p class="local-note">{{ SERVER_MODE ? '正式账单保存到当前账号，不调用AI。' : '本地演示：账单保存在当前浏览器，不调用AI。' }}</p>
     </section>
   </main>

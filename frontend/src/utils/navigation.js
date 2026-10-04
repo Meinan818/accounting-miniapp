@@ -33,46 +33,53 @@ export function useBillQuery(route, currentMonth = () => dayjs().format('YYYY-MM
   return { selectedMonth, searchText, selectedType, selectedCategory, changeMonth }
 }
 
-export function useManualRecordSave(store, router, batchId) {
+export function useManualRecordSave(store, router, batchId, { owner } = {}) {
   const saving = ref(false), error = ref(''), savedRecord = ref(null)
   const restoredRecord = ref({}), notice = ref(''), cancelling = ref(false)
   let active = true
   onScopeDispose(() => { active = false })
+  const initialOwner = owner?.()
+  const ownerCurrent = ref(!owner || Boolean(initialOwner))
+  if (owner) watch(owner, value => {
+    if (value !== initialOwner) ownerCurrent.value = false
+  }, { flush: 'sync' })
+  const isCurrent = () => active && ownerCurrent.value
   async function navigateSaved() {
+    if (!isCurrent()) return false
     const saved = savedRecord.value
     const failure = await router.push({ path: '/bills', query: { month: saved.date.slice(0, 7), added: saved.id } })
-    if (!active) return false
+    if (!isCurrent()) return false
     if (failure) throw new Error('账单已保存，暂时未能打开明细，请重试打开；无需再次入账。')
     return true
   }
   async function save(record, originalBatchId = batchId) {
-    if (!active || saving.value) return false
+    if (!isCurrent() || saving.value) return false
     saving.value = true; error.value = ''; notice.value = ''
     try {
       if (!savedRecord.value) {
         const saved = await store.addRecord(record, { batchId: originalBatchId, source: 'manual' })
-        if (!active) return false
+        if (!isCurrent()) return false
         savedRecord.value = saved
       }
       return await navigateSaved()
     } catch (failure) {
-      if (active) error.value = savedRecord.value ? '账单已保存，暂时未能打开明细，请重试打开；无需再次入账。' : failure.message
+      if (isCurrent()) error.value = savedRecord.value ? '账单已保存，暂时未能打开明细，请重试打开；无需再次入账。' : failure.message
       return false
-    } finally { if (active) saving.value = false }
+    } finally { if (isCurrent()) saving.value = false }
   }
   async function cancelPending(operation) {
-    if (!active || saving.value || savedRecord.value) return false
+    if (!isCurrent() || saving.value || savedRecord.value) return false
     saving.value = true; cancelling.value = true; error.value = ''; notice.value = ''
     try {
       await store.cancelManualOperation(operation.batchId)
-      if (!active) return false
+      if (!isCurrent()) return false
       restoredRecord.value = { ...operation.record, id: undefined }
       notice.value = '这笔草稿已取消且未入账。内容已保留，请核对后再保存。'
       return true
-    } catch (failure) { if (active) error.value = failure.message; return false }
-    finally { if (active) { saving.value = false; cancelling.value = false } }
+    } catch (failure) { if (isCurrent()) error.value = failure.message; return false }
+    finally { if (isCurrent()) { saving.value = false; cancelling.value = false } }
   }
-  return { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling }
+  return { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, ownerCurrent }
 }
 
 export function useLedgerReload(store) {
