@@ -2,6 +2,9 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 本次原生gpt-6.1-sol/high目标01a105cf-1051-7223-8ade-29ce5f7a802e已创建只读核交接，初始本地50687d6。原automation迁移/view/TOML逐字段仅目标/更新时间改变、静音与每小时字段保持。源compact=2保留，专用compaction-transfer-result-01a10553.json最终success/源停止共享写入/finalCommit核完前目标只读；核完新窗口0接续分页元数据。本次不Push不重跑，真实请求0。
+
+
 - 当前源01a10553第2次实际compact已告知并STATE=2，业务停止/仅本地commit不Push。476前端/两构建/累计284浏览器729API104截图7JSON另5CSV保持。本次专用compaction-transfer-result-01a10553.json的success、源停止共享写入及finalCommit核完前新聊天只读；新窗口gpt-6.1-sol/high及原automation迁移按实况记，核完设0直接接续分页deletedAt/空记录/空页元数据取证。
 
 

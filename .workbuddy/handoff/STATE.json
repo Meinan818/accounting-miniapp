@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "当前聊天第2次实际压缩，停止业务；保存已验证分页结构修复并准备原生新聊天交接，不Push",
+  "currentTask": "源第二次实际compact=2，分页结构修复本地保存；原生目标已创建/automation迁移字段已核，待专用尾提交回执",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
@@ -19,8 +19,8 @@
     "status": "ACTIVE",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
-    "targetThreadId": "01a10553-9d76-73d3-a70c-19641bc889e9",
-    "transferStatus": "第二次实际压缩：待原生创建新聊天及迁移，专用回执compaction-transfer-result-01a10553.json，当前尚未成功",
+    "targetThreadId": "01a105cf-1051-7223-8ade-29ce5f7a802e",
+    "transferStatus": "原生update/view及TOML逐字段已核：仅目标/更新时间改变；源尾提交及success/finalCommit以compaction-transfer-result-01a10553.json为准",
     "scheduledRunVerified": false
   }
 }

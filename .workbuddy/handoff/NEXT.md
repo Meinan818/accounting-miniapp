@@ -1,3 +1,9 @@
+## 本次原生目标与自动化迁移已核（2026-10-04）
+
+本次gpt-6.1-sol/high目标聊天01a105cf-1051-7223-8ade-29ce5f7a802e已原生创建，启动后只读核交接。初始本地50687d6bad0a6232a94d6d3dd6c77ee5b36db92e保存分页结构修复与compact=2；原automation原生update/view及TOML逐字段核仅target_thread_id/updated_at变化，每小时ACTIVE/failed_runs_only与其他字段全保持。
+
+源尾提交与最终success以本次compaction-transfer-result-01a10553.json为准，sourceWillModifySharedFiles=false与finalCommit核完前目标只读；源compact=2不归零。本次不Push、不重跑测试、不重复automation，最终回执写入后源停止共享写入。目标核成功后自身窗口0、直接接续分页deletedAt/空记录/空页元数据合成取证，不等待用户。476前端/两构建及284新增浏览器729API104截图7JSON/另5CSV保持；用户人工验收未验。
+
 ## 当前聊天第二次实际压缩交接（2026-10-04）
 
 源01a10553-9d76-73d3-a70c-19641bc889e9已识别告知第2次实际compact，STATE=2，停止业务代码，仅本地commit、不Push、不重跑测试。已验证分页结构缺失中文错误修复：74相关/476前端/两构建，累计42组284浏览器/729合成API/104截图/7JSON，另本窗口5CSV；真实请求0，未声称人工验收。
