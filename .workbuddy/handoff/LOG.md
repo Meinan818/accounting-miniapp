@@ -1415,3 +1415,13 @@ server合成浏览器复现“全部历史总支出”被送入AI、替换待确
 初始本地交接提交f4976032932a30750e8b743485cc439645f4d36c，7文件仅交接文档，diff/JSON/敏感模式核查通过，工作区曾干净。源已改名总结，原生create_thread显式gpt-6.1-sol/high/local成功返回01a10553-9d76-73d3-a70c-19641bc889e9；compact仍源2，未替目标归零。原automation update成功转到目标，原生view及before/TOML逐字段核仅target_thread_id/updated_at变化，其余字段包括名称/提示/rrule/ACTIVE/failed_runs_only/created_at保持，不重复建立或手改配置。wait_threads零等待快照已核目标active且明确只读核交接；源正在保存此尾记录，最终以本次专用compaction-transfer-result-01a104fa.json的success/finalCommit为准。
 
 本次无业务改动、新QA、重跑测试、Push、服务重启或真实请求；473前端/两构建及157新增合成浏览器/518API/67截图/3JSON备份保持既有证据。目标核最终回执后设新窗口0，直接接续双标签对话外部冲突/未保存草稿/实际JSON备份链；源最终回执后停止共享文件写入，不与目标并行推进。
+
+## 双标签对话存储冲突验证与接管（2026-10-04）
+
+新窗口01a10553-9d76-73d3-a70c-19641bc889e9核本次01a104fa专用success、目标匹配、finalCommit 19a723287cde75ca6dd7c6adbe3f79392d848403在Git历史及源停止共享写入；原automation原生view/TOML逐字段保持，仅目标/更新时间迁移，compact新窗口0。交接两提交普通Push并官方只读核完整远端一致，私有/无Pages/0 workflows/0 deployments，本机服务未重启。
+
+同fresh Chrome context双标签server生产构建7检查/8API/2截图/2实际JSON备份通过：A草稿触发B受信任storage事件，B只标冲突保原欢迎快照，未保存变化为false；显式重读才采用A完整组，无存储写入/请求。A改27元后B冲突编辑26元保原ID/未知time/备注，A再改28元仍不覆盖B；B显式重读明确拒绝丢失本页草稿。备份messages逐条保B26元，storedHistory.raw逐字保A28元，备份0写入/请求。站内离页返回保内存快照/冲突/未保存标记、再备份仍两份独立；不宣称完整刷新保内存。服务器草稿/账本写0，真实账号/认证/AI/账本/照片/邮件请求0，意外错误/未知请求0。
+
+browser-chat-tabs-qa.cjs/result.json及E盘备份在既有忽略目录，无业务缺陷/源码改动。首轮390x844截图仅露提示未露卡，扩大390x1500并复跑同7项抽检完整提示与26元卡，不重复累计。累计新增24组164浏览器/526API/69截图/5JSON备份，较早24场景/18截图/121CSV及回归另算；473前端/demo与server两构建是既有同源码证据，本节点未重跑。真实账号/真机/实际隔夜/人工验收仍未验，无新用户依赖。
+
+下一项：双标签Chat外部删除/损坏/恢复的真实storage事件与显式重读合成浏览器链，验证无未保存变化可安全恢复、有未保存草稿时保护两份内容；仅操作独立合成context，未知/外部请求阻断，不操作真实存储。
