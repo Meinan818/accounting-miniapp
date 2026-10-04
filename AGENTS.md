@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- 源01a105cf第2次实际compact已告知并STATE=2，停止业务、仅本地待续commit不Push。Profile读取空白昵称及20/60 Unicode码点校验101相关/497前端/两构建通过，但browser-profile-read-after因.profile-error匹配2元素失败，尚未完成。只读核源码openProfile已在loadProfile失败时返回，不能据元素数量断言窗口打开；目标先核dialog.open，保留“不打开窗口”断言与原失败。累计58组400浏览器1256API169截图7JSON、源5CSV保持，51账本/12Profile H2独立保持。核本次专用compaction-transfer-result-01a105cf.json的success/源停止共享写入/finalCommit前新聊天只读，核完新窗口计数0直接续办；指定gpt-6.1-sol/high及原automation迁移，不重复创建。
+
 - Profile资料/照片回执下一version与内容校验、Unicode空白规范化修复，100相关/496前端/两构建、16浏览器61API12截图及照片4项回归/12服务端H2通过。累计400浏览器1256API169截图7JSON，源5CSV另计；2f10cab普通Push完整远端一致。compact=1/原静音automation保持，下一项读取昵称/签名字数及空白结构合成取证，真实请求0。
 
 - 服务端UPDATE省略time存null/回执与snapshot省略/原键重放不恢复旧时间1针对/51账本H2通过。494前端/两构建与384浏览器1195API157截图7JSON/源5CSV保持；7be7407普通Push完整远端一致。compact=1/原静音automation保持，下一项Profile资料/照片回执版本内容一致性合成取证，真实请求0。

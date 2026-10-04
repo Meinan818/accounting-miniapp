@@ -1,3 +1,13 @@
+## 第2次实际compact · 资料读取校验待续交接（2026-10-04）
+
+源聊天01a105cf-1051-7223-8ade-29ce5f7a802e计数2已告知/登记，停止业务代码，只做本地待续commit、不Push。本次专用回执位于.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a105cf.json；目标须核success、sourceWillModifySharedFiles=false及finalCommit存在/HEAD一致，才登记新窗口基准0继续。原生新聊天指定gpt-6.1-sol/high，原automation每小时ACTIVE/failed_runs_only迁移且保留其他字段，不能重复创建。
+
+待续改动仅frontend/src/api/profile.js与frontend/tests/remoteLedger.test.js：拒绝空/仅Unicode White_Space昵称、昵称超过20/签名超过60码点，emoji边界与FEFF猫合法保持。48before47通过1失败、101相关/497前端/demo/server两构建通过，原照片保存回归4检查16API通过不累计。新读取3场景尚未完成：browser-profile-read-after-result.json因.profile-error匹配页面与dialog两个元素失败。交接摘要推断“读取失败仍打开窗口”尚无证据；只读源码Profile.vue:82确认已有if (!await loadProfile()) return false，visible文本未含编辑表单。新窗口先核dialog实际open/可见状态，保留“不打开窗口”断言，按页面与窗口语义精确定位，不能简单.first()或删断言；有业务证据再最小修复并保护输入/owner/迟到回执。复跑3场景与既有资料/照片链、相关/全量/两构建，验完再完成节点与核查Push。
+
+架构与运行：Vue/Pinia/Vite前端+Java/Spring/MySQL服务；合成浏览器全部API拦截/未知外部阻断，后端MockMvc隔离H2，0真实业务/账号/AI/邮件/照片请求。Node D:/nodejs，缓存/材料E盘；既有127.0.0.1 Java19940/8080及Vite20820/5174不重启。Maven复用backend/maven.ps1 -Goals数组/--offline，隔离配置/关闭AI邮件/E盘storage，禁止真实MySQL测试。
+
+累计58组400浏览器1256API169截图7JSON备份，源5CSV另计；新失败不累计。最近已完成提交5e17e1643dc800cebabeffa36acdf981668e97f2此前完整远端一致已核，496前端/两构建为已完成节点；51账本H2/12Profile H2独立统计。497与两构建是当前待续源码证据，不能冒称浏览器或人工验收通过。材料在既有E盘conversation-lifecycle-2026-10-04目录：profile-read-*.log、browser-profile-read-qa.cjs及before/after-result.json、make-profile-read-qa.cjs；原失败保留。后续遵循既有授权连续自主工作，不提问、不委派、不新增费用/部署/权限变化，真实账号/真机/系统剪贴板/实际隔夜/人工验收仍待验。
+
 ## 资料与照片保存回执一致性（2026-10-04）
 
 错误昵称200回执关闭编辑并显示合成别的昵称已浏览器复现；47before45通过2失败及wrong-name-before/时间戳截图保留。createProfileApi现核资料下一version及昵称签名头像与提交一致；照片回执须下一version/photo/原资料文本，不正确不继续PUT/不标部分保存。边缘空白按Java Unicode White_Space含U+0085及既有JS trim清理，避免合法服务端规范化误判。100相关/496前端/demo与server两构建通过，新增2有意义回归覆盖资料5畸形、照片5畸形/0后续PUT、不改原输入、合法Unicode规范化。

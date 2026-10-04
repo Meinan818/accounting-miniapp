@@ -763,6 +763,17 @@ test('资料仅使用固定私有头像地址，拒绝外部URL', () => {
   assert.equal(fromProfileView(value, '1').photo, '/api/profile/avatar?v=1&expectedAccount=1')
   assert.throws(() => fromProfileView({ ...value, avatarUrl: 'https://example.com/private' }))
 })
+test('读取资料拒绝空白昵称和超出Unicode字数的回执，合法边界保持', () => {
+  const original = { nickname: '猫', signature: '', avatar: 'cat', version: 0 }
+  for (const wrong of [{ ...original, nickname: '' }, { ...original, nickname: ' \u0085\u3000 ' },
+    { ...original, nickname: '猫'.repeat(21) }, { ...original, nickname: '🐱'.repeat(21) },
+    { ...original, signature: '签'.repeat(61) }, { ...original, signature: '🐱'.repeat(61) }]) {
+    assert.throws(() => fromProfileView(wrong), /账号资料格式不正确/)
+  }
+  assert.equal(fromProfileView({ ...original, nickname: '🐱'.repeat(20), signature: '🐱'.repeat(60) }).nickname, '🐱'.repeat(20))
+  assert.equal(fromProfileView({ ...original, nickname: '\uFEFF猫' }).nickname, '\uFEFF猫')
+})
+
 test('新照片保存时才上传并使用返回版本更新资料，部分失败如实提示', async () => {
   const calls = [], profile = { nickname: '猫', signature: '', avatar: 'cat', version: 0 }
   const api = createProfileApi({ request: async (...args) => {

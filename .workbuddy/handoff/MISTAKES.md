@@ -459,3 +459,7 @@ Date.parse宽松接受0与规范化无效日期，不能单凭有限毫秒证明
 ## 2026-10-04 · 错误提示可见性与post watch竞态
 
 DOM alert存在不等于未被sticky按钮遮挡，须量化error.bottom与actions.top并截图。watch cleanup在flush post前尚未执行时nextTick旧回调会滚动已撤错误；45项首轮失败保留，加入即时message相等复核。80px滚动余量还留下390px小数像素0.39交叉，after几何失败保留；96px三宽完整通过。旧RecordForm离线manual harness需补实际Vue watch/nextTick绑定，不能删测试避错。
+
+## 2026-10-04 · 关闭dialog内DOM与locator strict歧义
+
+.profile-error匹配页面与dialog两个元素不能证明dialog打开；当前Profile.vue openProfile已有loadProfile失败return false，visible文本也不含编辑表单。接手摘要的业务根因推断须更正为未验证，目标先核dialog.open与可见状态，保留不打开窗口断言及失败证据，不用.first()或删断言掩盖缺陷。官方Codex自动化文档本次读取403，未据此改变工具合同或虚报核实；交接按当前原生工具schema执行。

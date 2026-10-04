@@ -1,3 +1,7 @@
+## 最新接续：源01a105cf第2次compact待续交接（2026-10-04）
+
+先只读核本次专用compaction-transfer-result-01a105cf.json的success、sourceWillModifySharedFiles=false及finalCommit；核完新窗口设0，源本聊天计数2不得归零。Profile空白/超长Unicode资料读取校验101相关/497全量/两构建通过但3场景浏览器未完成，源仅本地待续提交、不Push。先核dialog实际open状态：openProfile源码已有读取失败return false，.profile-error匹配2元素可能因关闭dialog仍有DOM，摘要“仍打开窗口”不是已证实根因。保留不打开窗口与旧资料保持断言，按语义定位页面/窗口，不能用.first()掩盖问题；有实际业务失败才最小修复。复跑读取3场景、资料/照片保存回归与适当测试，再完成节点commit/核查Push并连续下一项。累计58组400浏览器1256API169截图7JSON/源5CSV保持，51账本H2/12Profile H2独立保持；本次不重跑、不计失败为通过。
+
 ## 资料与照片保存回执一致性（2026-10-04）
 
 错误昵称200回执关闭编辑并显示合成别的昵称已浏览器复现；47before45通过2失败及wrong-name-before/时间戳截图保留。createProfileApi现核资料下一version及昵称签名头像与提交一致；照片回执须下一version/photo/原资料文本，不正确不继续PUT/不标部分保存。边缘空白按Java Unicode White_Space含U+0085及既有JS trim清理，避免合法服务端规范化误判。100相关/496前端/demo与server两构建通过，新增2有意义回归覆盖资料5畸形、照片5畸形/0后续PUT、不改原输入、合法Unicode规范化。

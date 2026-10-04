@@ -1754,3 +1754,7 @@ global版本倒退/大整数/Long溢出四链8浏览器21API8截图同源码回�
 原照片成功/资料503/显式原版重试只PUT4浏览器16API2截图回归通过，不重复累计。服务端ProfileIntegrationTest12项隔离H2/UUID独立E盘照片目录/离线Maven通过，无真实照片或账号/MySQL/AI/邮件请求；账本51H2保持此前节点证据。全部浏览器API拦截/未知外部阻断/意外错误0，资料3预期账本503、照片异常0预期HTTP错误，合成POST仅1。错误与原未保存文本/绿色预览截图已抽检，材料在既有E盘忽略目录。
 
 累计58组400浏览器1256API169截图7JSON，源5CSV另计。2f10cab3883a8fa29163ace6a4a0e744e7edb2d5普通Push及官方inspect完整远端一致已核，私有/无Pages/0workflows/0deployments保持。函数编排初次生成script中scene字符串转义错误，未运行/改文件，重发正确patch后生成；第一次API patch锚点不匹配未写入，核原模板再patch。compact=1/原静音automation与本机服务保持，真实账号/真机/系统剪贴板/实际隔夜/人工验收未验。下一项Profile读取昵称/签名字数与空白结构合成合同取证。
+
+## 源01a105cf第2次实际compact待续交接（2026-10-04）
+
+已告知/STATE=2/停止业务，仅本地待续commit不Push，改名已成功。Profile读取空白昵称/20与60 Unicode码点校验before48项47通过1失败，101相关/497前端/两构建通过；原资料照片回归4检查16API通过不累计。新读取浏览器after因.profile-error匹配2元素失败，3场景未完成/不计累计。只读源码openProfile已有读取失败return false，因此摘要“失败仍打开窗口”未证实，目标须核dialog.open及可见状态，保留不打开窗口与原失败证据；不得简单.first()或删断言。累计58组400浏览器1256API169截图7JSON/源5CSV，51账本H2/12Profile H2独立保持。专用compaction-transfer-result-01a105cf.json为准，success/源停止共享写入/finalCommit核完前目标只读；gpt-6.1-sol/high及原automation迁移，不重复创建、不重跑、不Push。

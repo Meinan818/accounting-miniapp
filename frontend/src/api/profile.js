@@ -1,5 +1,7 @@
 export function fromProfileView(value, owner) {
   if (!value || typeof value.nickname !== 'string' || typeof value.signature !== 'string'
+    || !value.nickname.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, '')
+    || [...value.nickname].length > 20 || [...value.signature].length > 60
     || !['cat', 'paw', 'flower', 'photo'].includes(value.avatar) || !Number.isSafeInteger(value.version) || value.version < 0
     || (value.avatar === 'photo' && value.avatarUrl !== '/api/profile/avatar')) throw new Error('账号资料格式不正确')
   return { nickname: value.nickname, signature: value.signature, avatar: value.avatar, version: value.version,
