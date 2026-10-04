@@ -268,6 +268,69 @@ test('畸形快照及网络失败保护最后已确认账本，不写浏览器�
     assert.equal(await test.store.refresh(), false); assert.equal(test.store.records.value.length, 1); assert.equal(test.values.size, 0)
   } finally { test.dispose() }
 })
+test('旧revision重读与force均保当前编辑和删除，超安全整数版本不丢精度且账号隔离', async () => {
+  for (const [latest, older] of [['10', '9'], ['9007199254740993', '9007199254740992']]) {
+    let revision = latest, current = true
+    const scene = setup({ request: async () => ({ revision, nextAfter: null,
+      records: [{ record: { ...value, amount: current ? '0.31' : '0.29', version: current ? 2 : 0 },
+        ...(current ? { deletedAt: '2026-10-04T01:00:00Z' } : {}) }] }) })
+    try {
+      await scene.store.refresh(); const original = scene.store.allRecords.value
+      revision = older; current = false
+      for (const force of [false, true]) {
+        assert.equal(await scene.store.refresh(force), false)
+        assert.strictEqual(scene.store.allRecords.value, original)
+        assert.equal(scene.store.records.value.length, 0)
+        assert.match(scene.store.storageError.value, /账本版本.*倒退/)
+      }
+      revision = latest; current = true
+      assert.equal(await scene.store.refresh(true), true)
+      assert.equal(scene.store.recordsByIds([id])[0].version, 2)
+      scene.owner.value = '2'; revision = '0'; current = false
+      assert.equal(await scene.store.refresh(), true)
+      assert.equal(scene.store.records.value[0].amount, 0.29)
+    } finally { scene.dispose() }
+  }
+})
+
+test('revision严格按Java非负Long字符串，非法超范围版本不替换或污染后续恢复', async () => {
+  let revision = '10'
+  const scene = setup({ request: async () => ({ revision, nextAfter: null, records: [{ record: value }] }) })
+  try {
+    await scene.store.refresh(); const original = scene.store.allRecords.value
+    for (const invalid of ['00', '01', '9223372036854775808', '9'.repeat(1000)]) {
+      revision = invalid
+      assert.equal(await scene.store.refresh(true), false)
+      assert.strictEqual(scene.store.allRecords.value, original)
+      assert.match(scene.store.storageError.value, /账本分页回执不完整/)
+      revision = '10'; assert.equal(await scene.store.refresh(), true)
+    }
+    revision = '9223372036854775807'; assert.equal(await scene.store.refresh(true), true)
+  } finally { scene.dispose() }
+})
+
+test('本页编辑删除使缓存失效后仍拒绝已知较旧revision', async () => {
+  for (const remove of [false, true]) {
+    let revision = '10'
+    const scene = setup({ request: async (method, path, options) => {
+      if (method === 'PUT') return { ...value, ...options.body.record, version: 1 }
+      if (method === 'DELETE') return null
+      return { revision, nextAfter: null, records: [{ record: value }] }
+    } })
+    try {
+      await scene.store.refresh()
+      if (remove) await scene.store.deleteRecord(id)
+      else await scene.store.updateRecord(id, { ...input, amount: '0.35' })
+      const original = scene.store.allRecords.value; revision = '9'
+      assert.equal(await scene.store.refresh(true), false)
+      assert.strictEqual(scene.store.allRecords.value, original)
+      assert.equal(scene.store.recordsByIds([id])[0].version, 1)
+      assert.equal(scene.store.records.value.length, remove ? 0 : 1)
+      if (!remove) assert.equal(scene.store.records.value[0].amount, 0.35)
+    } finally { scene.dispose() }
+  }
+})
+
 test('分页读取超过5000条也完整替换且保留删除事实', async () => {
   const entries = Array.from({ length: 5001 }, (_, index) => ({ record: { ...value,
     id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}` }, deletedAt: index === 0 ? '2026-10-03T01:00:00Z' : null }))

@@ -1696,3 +1696,11 @@ API回归覆盖金额/版本/日期/收支分类/备注/时间/错序，新API�
 累计52组359浏览器1127API134截图7JSON，源窗口5CSV另计。原503后最新编辑/删除回放9浏览器39API6截图回归通过，不重复累计。截图已抽检手动恢复中文错误/未完成状态及删除午饭合计18元卡片。所有before/after脚本日志结果留E盘既有忽略目录，未新增依赖或重启服务，真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。
 
 前节点cc9fb7b8ec14effa3c08cd93d0d56e869df134b7普通Push连接重置原文保batch-content-push.log；现有官方GitHub Git database适配器逐对象SHA相同及force:false上传1提交6blob，完整远端一致已核，无权限或可见性变化，私有/无Pages/0workflows/0deployments保持。本聊天compact=1，automation原生view及现场TOML每小时ACTIVE/failed_runs_only/当前目标保持。下一项snapshot revision倒退只读合同核查与合成取证，无证据不改业务。
+
+## 快照版本单调与Long合同（2026-10-04）
+
+旧revision完整快照把最新31元改回16元并恢复已删除咖啡18元，统计变成34元已浏览器复现。remoteLedger独立记已读latestRevision，本页写入使分页缓存失效后也保版本下限，账号变化清下限；BigInt精确比較，拒绝较旧revision。revision格式同时限定Java非负Long标准字符串/最大9223372036854775807，避免前导零/超范围污染恢复。40before38通过2失败及范围41before40通过1失败独立保留；101相关/490前端/demo与server两构建通过。
+
+四条浏览器链8检查21合成API8截图通过：普通重读、503后显式force、9007199254740993到9007199254740992、Long溢出字符串。Stats/Bills明确中文错误，原31元最新小票/咖啡删除事实保持，禁搜索导出；合法版本恢复后完整重读31元/一有效笔，编辑取消0写入，不被超大非法版本锁住。全部API拦截/未知外部阻断，预期503仅1，意外错误/真实业务认证AI邮件照片0。六条原分页编号/顺序/游标/revision/cache链7浏览器48API2截图最终源码回归通过，不重复累计。
+
+累计53组367浏览器1148API142截图7JSON，源窗口5CSV另计；截图已抽检错误卡与Long溢出后恢复31元一笔。前节点e1b97e16efb64052e9aa9f0192a04dd318572624普通Push连接重置保batch-snapshot-push.log，官方Git database同SHA/force:false上传1提交5blob、完整远端一致已核，私有/无Pages/0workflows/0deployments保持。本聊天compact=1/原静音automation及本机服务保持，无新用户依赖；真机/系统剪贴板/实际隔夜/真实账号/人工验收未验。下一项新global revision夹带旧单笔version合成取证，不提问或委派。

@@ -40,6 +40,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   let generation = 0
   let localChanges = 0
   let snapshotRevision = null
+  let latestRevision = null
   let refreshing = null
   let ledger = null
   let links = new Map()
@@ -47,7 +48,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
   onScopeDispose(() => { generation++; ledger = null; refreshing = null })
   const manualEpoch = ref(0)
   watch(owner, value => {
-    generation++; localChanges++; snapshotRevision = null; allRecords.value = []; refreshing = null; links = new Map()
+    generation++; localChanges++; snapshotRevision = null; latestRevision = null; allRecords.value = []; refreshing = null; links = new Map()
     storageError.value = value ? '正在读取正式账本…' : '请先登录正式账号。'
     const current = generation
     ledger = value ? createLedgerApi(client, { storage, owner: value, isCurrent: () => current === generation }) : null
@@ -88,11 +89,15 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
           const page = await client.request('GET', `/api/records/snapshot/page?${query}`)
           ensureSnapshotCurrent()
           if (!Array.isArray(page?.records) || page.records.length > 500 || typeof page.revision !== 'string'
-            || !/^\d+$/.test(page.revision) || (revision !== null && page.revision !== revision)
+            || !/^(?:0|[1-9]\d{0,18})$/.test(page.revision) || BigInt(page.revision) > 9223372036854775807n
+            || (revision !== null && page.revision !== revision)
             || !(page.nextAfter === null || typeof page.nextAfter === 'string')) {
             throw new Error('账本分页回执不完整或版本已变化，原账本已保留。')
           }
           revision = page.revision
+          if (latestRevision !== null && BigInt(revision) < BigInt(latestRevision)) {
+            throw new Error('账本版本发生倒退，原账本已保留，请重新读取最新账单。')
+          }
           if (after !== null && page.records.length === 0) throw new Error('账本分页续页为空，原账本已保留。')
           let previousId = after
           for (const entry of page.records) {
@@ -126,7 +131,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
         if (new Set(next.map(record => record.id)).size !== next.length) throw new Error('账本回执编号重复')
         if (requiredIds.some(id => !seen.has(id))) throw new Error('最新账本缺少已确认账单，原账本已保留，请用原操作重试。')
         ensureSnapshotCurrent()
-        allRecords.value = next; snapshotRevision = revision; storageError.value = ''; return true
+        allRecords.value = next; snapshotRevision = revision; latestRevision = revision; storageError.value = ''; return true
       } catch (failure) { if (current === generation) storageError.value = failure.message; return false }
       finally { if (current === generation) refreshing = null }
     })()

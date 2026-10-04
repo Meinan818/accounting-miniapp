@@ -2,6 +2,8 @@
 
 ## 当前有效规则与现场（2026-10-04，优先于下方旧阶段记录）
 
+- snapshot revision倒退及Java非负Long格式/范围保护已修复，101相关/490前端/两构建、8浏览器21API8截图及原分页7项回归通过。累计367浏览器1148API142截图7JSON，源5CSV另计；e1b97e1同SHA/force:false完整远端一致已核。compact=1/原静音automation保持，下一项新global revision夹带旧单笔version合成取证，真实请求0。
+
 - 确认后快照缺编号已复现并修复，原子保旧账本/原组与手动恢复，合法编辑删除保持；98相关/487前端/两构建及13浏览器54API8截图通过。累计359浏览器1127API134截图7JSON，源5CSV另计；cc9fb7b同SHA/force:false完整远端一致已核。compact=1/原静音automation保持，下一项snapshot revision倒退合成取证，真实请求0。
 
 - 原始确认回执version0/字段/顺序核验修复，97相关/486前端/两构建及18浏览器75合成API9有效截图通过，后续编辑/删除重放保当前事实。累计346浏览器1073API126截图7JSON，源5CSV另计；本聊天第1次实际compact已告知并STATE=1，原静音automation保持。下一项确认后snapshot缺编号完整性合成取证，真实请求0。
