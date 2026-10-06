@@ -1960,3 +1960,11 @@ gpt-6.1-sol/high目标01a110e5-7c85-70f3-9d53-3f0d6b118869已创建，初始待�
 本次专用success/源停止写入/finalCommit169421b及原automation仅目标/更新时间变化已核，新窗口compact=0；原first超时由QA餐饮收入违反正式分类枚举造成，仅修合法其他fixture，不放宽校验或删断言。当前下一项见STATE/NEXT，用户完全委托持续开发，吉祥物仅方案已提醒一次。
 
 320px普通/大额截图已抽检，无横滚，金额单行完整。相关fixture改动后重跑94项全部通过；业务源码未再改，源536全量及两构建日志实际查验，不冒称本轮重跑。所有正式请求全拦截，未知请求/意外错误0。Push前官方API现场确认私有main/无Pages/0workflows/0deployments，remote4118dfb与origin/main一致；待上传含两交接提交，已审查相关业务草稿、合法fixture及交接状态。上传结果另记，完成后直接下一项。
+
+## 当前跨页月份上下文（2026-10-06）
+
+首页日历选定月份经底栏进入明细/统计、明细与统计互跳均保月份，真实刷新保持；默认或无效月份仍普通入口。125相关/537前端/demo与server两构建及三宽15合成浏览器36API3截图通过，真实业务请求0；累计78组673检查1872API301截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持，吉祥物仅方案已提醒。下一项首页查看当天明细，见STATE/NEXT。
+
+before实际首页九月后Enter开明细，inputValue=2026-10而预期09，原JSON/截图与断言保留。根因底栏静态/bills与/stats，目标按当前月初始化；现BottomNav可接合法month，Home/Bills/Stats按自身月传入，仅明细/统计链接带月，其他入口保持。实际模板+memory router SSR回归核默认/合法/非法月份与所有href；全部125/537及两构建本轮执行。三宽Home→Bills→真实刷新→Stats→刷新→Bills和Home→Stats共15检查36GET全拦截，未改账本，320px截图检查。
+
+上一筛选节点4c336e8普通Push低速失败原文保留，复用既有官方API同SHA/force:false同步3提交22blob，后续inspect完整remote/HEAD4c336e8一致/私有/无Pages/0workflows/0deployments再核；无强推或部署。当前节点提交上传结果随后登记，继续下一项。

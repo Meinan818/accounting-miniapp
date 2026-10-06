@@ -520,7 +520,7 @@ function getSign(record) {
 
     <main v-else class="bills-content"><NotebookBack /><h1 class="bills-title">账单明细</h1><p class="bills-storage-note" role="status">登录身份已变化，请重新打开账单明细。</p></main>
     <RecordEditor v-if="editingRecord && ownerCurrent" :key="editingRecord.id" :record="editingRecord" :saving="saving" :progress-label="repeating ? '正在打开新账单…' : ''" :error="saveError" :conflict="editConflict" allow-delete allow-repeat @repeat="repeatRecord" @recover="adoptLatestVersion" @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
-    <BottomNav active="detail" />
+    <BottomNav active="detail" :month="selectedMonth" />
   </div>
 </template>
 

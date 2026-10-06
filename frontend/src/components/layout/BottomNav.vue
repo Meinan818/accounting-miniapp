@@ -1,21 +1,25 @@
 <script setup>
 // 1. 导入
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
+import { computed } from 'vue'
+import { isValidMonth } from '@/utils/statistics'
 
 // 2. Props
-defineProps({
+const props = defineProps({
   active: {
     type: String,
     default: 'home',
   },
+  month: { type: String, default: '' },
 })
 
-const navItems = [
+const navItems = computed(() => [
   { key: 'detail', label: '明细', icon: 'receipt', to: '/bills' },
   { key: 'bill', label: '账单', icon: 'calendar', to: '/' },
   { key: 'saving', label: '统计', icon: 'chart', to: '/stats' },
   { key: 'profile', label: '我的', icon: 'profile', to: '/profile' },
-]
+].map(item => ({ ...item, to: isValidMonth(props.month) && ['detail', 'saving'].includes(item.key)
+  ? { path: item.to, query: { month: props.month } } : item.to })))
 </script>
 
 <template>

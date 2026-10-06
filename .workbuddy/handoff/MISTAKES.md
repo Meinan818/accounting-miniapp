@@ -517,3 +517,7 @@ useBillQuery当前是来源URL到refs的单向初始化/监听，重置只改ref
 目标只读核本次success回执、HEAD169421b、源停止写入及automation原生view/TOML仅目标/更新时间变化后新窗口compact=0。浏览器diagnostic页面实际alert“服务账单格式不正确，暂不替换当前账本。”，原因QA把收入分类写餐饮，fromRecordView只接受收入枚举。改为收支都合法的其他，保65笔/60显示窗口、18.85/500/空结果/取消/大额与region断言，final三宽15检查15拦截API6截图通过，0真实请求；不是新业务缺陷，不放宽正式校验。离线同名分类fixture同步合法其他。
 
 首次加诊断误用fs.promises.writeFile，而fs已从node:fs/promises导入，导致诊断catch再次TypeError；diagnostic JSON仍保有页面/alert原文，修为fs.writeFile。原first超时与本次工具错误保留，不计通过。以后先核import再补诊断，失败捕获须保证原异常也保存。
+
+## 2026-10-06 · 原生月份input定位
+
+MonthPicker的aria-label直接在input上，首版QA误写带label的后代input选择器，before30秒等待失败保持。读取实际组件后改为input[aria-label]，month-before得到真实2026-10与预期2026-09断言失败；仅这次正确定位证据用于业务根因，不能把原定位超时算业务失败。15项final同断言全部通过。

@@ -134,7 +134,7 @@ function getRecordSign(record) {
       </template>
     </main>
 
-    <BottomNav active="bill" />
+    <BottomNav active="bill" :month="calendarMonth" />
   </div>
 </template>
 

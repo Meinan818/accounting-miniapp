@@ -7,6 +7,30 @@ import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { effectScope, reactive } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import { getLoginReturnPath } from '../src/utils/loginRedirect.js'
+import { readFileSync } from 'node:fs'
+import * as Vue from 'vue'
+import { parse } from '@vue/compiler-sfc'
+import { compile } from '@vue/compiler-dom'
+import { renderToString } from '@vue/server-renderer'
+import { isValidMonth } from '../src/utils/statistics.js'
+
+test('实际底栏模板只给明细与统计携带合法月份，默认与无效月份保持普通入口', async () => {
+  const { descriptor } = parse(readFileSync(new URL('../src/components/layout/BottomNav.vue', import.meta.url), 'utf8'))
+  const script = descriptor.scriptSetup.content.replace(/^import .*$/gm, '')
+  const render = new Function('Vue', compile(descriptor.template.content, { mode: 'function' }).code)(Vue)
+  render._rc = true
+  for (const month of ['', '2026-09', '2026-13']) {
+    const view = { props: ['active', 'month'], components: { CatNavIcon: { render: () => Vue.h('span') } },
+      setup(props) { return new Function('computed', 'isValidMonth', 'defineProps', script + ';return { navItems }')(Vue.computed, isValidMonth, () => props) }, render }
+    const router = createRouter({ history: createMemoryHistory(), routes: ['/', '/bills', '/stats', '/chat', '/profile'].map(path => ({ path, component: view })) })
+    const app = Vue.createSSRApp(view, { active: 'bill', month }); app.use(router)
+    await router.push('/'); const html = await renderToString(app)
+    const suffix = month === '2026-09' ? '?month=2026-09' : ''
+    assert(html.includes(`href="/bills${suffix}"`)); assert(html.includes(`href="/stats${suffix}"`))
+    for (const path of ['/', '/chat', '/profile']) assert(html.includes(`href="${path}"`))
+    assert.equal((html.match(/month=/g) || []).length, month === '2026-09' ? 2 : 0)
+  }
+})
 
 test('筛选链接编码中文及特殊字符，重建明细和登录返回保留条件，只表达白名单', () => {
   const input = { month: '2026-09', query: '咖啡 & +/#?\n备注', type: 'expense', category: '餐饮&其他', added: 'private-id', user: 'private-owner' }

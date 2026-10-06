@@ -149,7 +149,7 @@ if (!SERVER_MODE) onMounted(reloadRecords)
       </template>
       </template>
     </main>
-    <BottomNav active="saving" />
+    <BottomNav active="saving" :month="selectedMonth" />
   </div>
 </template>
 
