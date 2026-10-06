@@ -2093,3 +2093,7 @@ RecordInput @Size(max=200)与fromRecordView200，validateRecord/RecordForm120不
 ## 2026-10-06 · 日期CSV文件名节点补验完成
 
 selectedDate || selectedMonth仅变下载名，原日期筛选实际渲染测试增加完整日期断言。接手后npm test实际exit0：555通过/0失败/0跳过；npm run build实际exit0，旧70相关/server构建与三宽3检查6全拦截GET3CSV证据核读，不重复运行或累计。任务TEMP/TMP/npm cache用E盘，未安装依赖。官方只读inspect核私有Meinan818/accounting-miniapp、无Pages/0workflow/0deployment、远端aa01b90；待上传仅两笔交接和此完成节点，无真实数据/AI请求。下一项日历选月后的原生Tab入口。
+
+## 2026-10-06 · 首页所选日补记入口
+
+日期CSV完成90c0abb普通Push成功，官方inspect核完整远端HEAD一致、私有/无Pages/0workflow/0deployment。日历选月原生Tab三宽3检查6GET通过，内部月份输入需要多次Tab才离开，非业务缺陷，无源码改动，诊断独立不累计。首页日期区新增补记这一天，复用createBillFilterPath和Add既有date一次初始化/恢复操作优先规则，返回对应日期明细，不拓宽安全返回白名单；上方普通手动记一笔仍今日。合法正式9999只读范围不提供写入口，账号失效/读取错误整个所选日区隐藏。原Home实际模板测试增加历史/空日参数、上限与错误/身份断言。62相关/555完整/demo和server构建均exit0；三宽15浏览器39全拦截GET6截图，通过Enter开链接、闰日与空日预填、填写0写、取消/刷新顶部返回、普通入口今日；成品320/390抽检无横滚，真实业务/AI0。CSV3检查6GET与本节点15检查39GET6图首次完成各计一组，累计96组959检查2329API378截图7JSON，历史5CSV/上一窗口2CSV/日期节点3CSV独立保持。

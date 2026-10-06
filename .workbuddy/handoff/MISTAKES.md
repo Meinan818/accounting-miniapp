@@ -545,3 +545,7 @@ Add已有v-show保未提交输入，待恢复时隐藏但挂载实例不为0；�
 ## 2026-10-06 · 浏览器预览依赖构建真正完成
 
 build:server返回session表示仍运行，必须write_stdin等待exit0后才启动dist QA。首轮multiline-note-final读取旧bundle失败保持，等待完成后built同断言通过，不把工具时序失误计成业务修复失败。真实模板harness新增变量/生命周期也应同步绑定，缺绑定警告不应长期忽略。
+
+## 2026-10-06 · 月份原生Tab与新链fixture核查
+
+Tab首轮只按一次就等待日期button30秒超时，实际Chrome原生month内部Tab仍在input；诊断记录三个宽度均两步仍input第三步到唯一选日，有限5步遍历后保持同日期/唯一入口/方向键断言通过，未改业务，原inspect失败保持。首页补记QA从旧日期链复制fixture而遗漏2024闰日，首轮0!=1，页面正确0笔；补合法0.01闰日fixture，保原1笔与空日0笔断言，verified15项全通过，原final失败日志/JSON保持。今后新链日期与fixture先对齐，不拿错误预期判业务缺陷。

@@ -15,7 +15,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { formatCurrency } from '@/utils/format'
 import { centsText, getRecordTotals } from '@/utils/money'
 import { SERVER_MODE } from '@/api/mode'
-import { useLedgerReload } from '@/utils/navigation'
+import { createBillFilterPath, useLedgerReload } from '@/utils/navigation'
 import { useHomeCalendar } from '@/utils/calendar'
 
 // 2. 组合式函数
@@ -41,6 +41,10 @@ const selectedRecords = computed(() => recordStore.records
   .filter((record) => record.date === selectedDate.value)
   .sort((left, right) => String(left.time).localeCompare(String(right.time))))
 const selectedTotals = computed(() => getRecordTotals(selectedRecords.value))
+const selectedDayEntryTarget = computed(() => ({ path: '/add', query: {
+  date: selectedDate.value,
+  returnTo: createBillFilterPath({ month: calendarMonth.value, date: selectedDate.value }),
+} }))
 const needsWideDayAmounts = computed(() => !selectedTotals.value.error && [selectedTotals.value.incomeCents, selectedTotals.value.expenseCents].some(value => centsText(value).length > 7))
 const dayBatchSize = 60
 const visibleDayLimit = ref(dayBatchSize), expandingDay = ref(false)
@@ -124,6 +128,7 @@ function getRecordSign(record) {
           <div class="home-ledger-tools">
             <span class="home-count">{{ selectedRecords.length }} 笔</span>
             <router-link v-if="selectedRecords.length" class="home-day-details" :to="{ path: '/bills', query: { month: selectedDate.slice(0, 7), date: selectedDate } }" :aria-label="'查看' + selectedDate + '账单明细'">查看当天明细 <span aria-hidden="true">→</span></router-link>
+            <router-link v-if="!SERVER_MODE || !selectedDate.startsWith('9999-')" class="home-day-details home-day-entry" :to="selectedDayEntryTarget" :aria-label="'为' + selectedDate + '手动记一笔'">补记这一天 <span aria-hidden="true">＋</span></router-link>
           </div>
         </div>
 
@@ -165,7 +170,8 @@ function getRecordSign(record) {
           <img :src="miaoConfused" alt="摊爪的猫猫" />
           <div>
             <p>这天还没有小账单</p>
-            <p class="home-subtitle">点下方「聊着记」，本喵陪你记一笔</p>
+            <p v-if="!SERVER_MODE || !selectedDate.startsWith('9999-')" class="home-subtitle">点「补记这一天」沿用所选日期，或点下方「聊着记」</p>
+            <p v-else class="home-subtitle">点下方「聊着记」，本喵陪你记一笔</p>
           </div>
         </div>
       </section>
