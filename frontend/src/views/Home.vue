@@ -117,6 +117,7 @@ function getRecordSign(record) {
             v-for="record in selectedRecords"
             :key="record.id"
             class="home-record"
+            :class="{ 'home-record-wide': formatCurrency(record.amount).length > 8 }"
           >
             <div class="home-record-main">
               <span class="home-record-stamp" aria-hidden="true"><CategoryIcon :category="record.category" :type="record.type" /></span>
@@ -193,6 +194,7 @@ function getRecordSign(record) {
 .home-record-stamp { display: grid; place-items: center; flex: 0 0 36px; height: 38px; border: 1px dashed var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-title-brush); }
 .home-record-text { min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
 .home-record-amount { flex-shrink: 0; max-width: 43%; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.home-record-wide { flex-wrap:wrap; }.home-record-wide .home-record-main { width:100%; }.home-record-wide .home-record-amount { width:100%; max-width:none; white-space:nowrap; }
 .home-amount-income { color: var(--zz-home-green); }
 .home-amount-expense { color: var(--zz-home-pink); }
 .home-empty { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 14px; border: 1px dashed var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); font-size: 14px; }

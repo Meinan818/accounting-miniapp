@@ -1984,3 +1984,11 @@ before实际首页九月后Enter开明细，inputValue=2026-10而预期09，原J
 复用完整selectedRecords与getRecordTotals，误差及错误提示沿既有合同；超宽小计按centsText长度单列，空日两项明确0。实际Home模板回归核当前支出19.29/历史收入7/空日0/最大1999999999.98/非法金额alert不显示dd/读取失败与身份隐藏。18相关首轮17通过1失败是错误fixture误用0.291，证据/解释见MISTAKES；最终18全过，537/两构建本轮实际执行。三宽12检查12GET全拦截，默认空日→Enter选66笔→空日→新fixture大额3笔，选日操作0新增请求/0写入，6截图抽检。仅大额小计完整；逐笔大额已有wrap仍拆符号及小数末位，列为下一任务，不扩大当前完成声明。
 
 上一e9b56b5普通Git443连接失败保留，官方API同SHA/force:false同步7blob成功，后续inspect完整remote/HEAD一致/私有/无Pages/0workflows/0deployments已核。当前节点上传结果随后登记，继续修已证实的金额读数问题。
+
+## 当前首页逐笔大额单行（2026-10-06）
+
+320px最大逐笔金额原拆三行，现大额单列金额完整，普通66笔小额布局保持；18相关/537前端/两构建及三宽12合成浏览器12API6截图通过，真实请求0。累计81组727检查1947API316截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持，下一项日历到明细后浏览器返回上下文，见STATE/NEXT。
+
+before实际Range.getClientRects每笔-¥999999999.99为3行、宽113.9375px，而普通+¥500.00一行；原JSON/截图/assert失败保持。根因.home-record-amount max-width43%并允许anywhere折行。仅Home增加格式化金额长度>8的wide类及一行金额占整行CSS，普通金额/数据/图标/备注不改；无需新增镜像单元测试，既有18相关/537全量及两构建本轮运行。final三宽最大金额Range均一行，320px宽265/390px327/桌面449；66普通小票0wide，2最大wide/1收入普通，大额小计/空日/选日0新增请求保持，6截图检查。
+
+上一7dac377普通Push成功，官方inspect完整remote/HEAD一致且私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续日历返回读数上下文取证。
