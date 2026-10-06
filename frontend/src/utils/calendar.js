@@ -52,11 +52,16 @@ export function useLocalDay({ now = () => dayjs().format('YYYY-MM-DD'), eventTar
 export function useHomeCalendar(options = {}) {
   const { today, refreshToday } = useLocalDay(options)
   const todayMonth = computed(() => today.value.slice(0, 7))
-  const calendarMonth = ref(todayMonth.value), selectedDate = ref(today.value)
+  const initialOwner = options.owner?.()
+  const history = options.rememberHistory ? (options.history ?? globalThis.window?.history) : null
+  const location = options.location ?? (options.rememberHistory ? globalThis.window?.location : null)
+  const saved = (!location || location.pathname === '/') ? history?.state?.miaojiHomeCalendarV1 : null
+  const restored = saved && saved.owner === (initialOwner ?? null) && typeof saved.followToday === 'boolean'
+    && validDate(saved.date) && isValidMonth(saved.month) && saved.date.startsWith(saved.month) && !saved.followToday
+  const calendarMonth = ref(restored ? saved.month : todayMonth.value), selectedDate = ref(restored ? saved.date : today.value)
   const weekdayLabel = computed(() => ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][dayjs(today.value).day()])
   let active = true
   onScopeDispose(() => { active = false })
-  const initialOwner = options.owner?.()
   const ownerCurrent = ref(!options.owner || Boolean(initialOwner))
   if (options.owner) watch(options.owner, value => {
     if (value !== initialOwner) ownerCurrent.value = false
@@ -67,6 +72,17 @@ export function useHomeCalendar(options = {}) {
       selectedDate.value = next; calendarMonth.value = next.slice(0, 7)
     }
   }, { flush: 'sync' })
+  // Preserve Vue Router's navigation/scroll fields in this history entry.
+  // View state is account-bound and is never copied to ledger storage.
+  watch([calendarMonth, selectedDate, today], () => {
+    if (!history?.replaceState || !isCurrent() || (location && location.pathname !== '/')
+      || !validDate(selectedDate.value) || !isValidMonth(calendarMonth.value) || !selectedDate.value.startsWith(calendarMonth.value)) return
+    try {
+      history.replaceState({ ...history.state, miaojiHomeCalendarV1: { owner: initialOwner ?? null,
+        month: calendarMonth.value, date: selectedDate.value,
+        followToday: selectedDate.value === today.value && calendarMonth.value === todayMonth.value } }, '')
+    } catch { /* History unavailable: keep normal calendar selection working. */ }
+  }, { immediate: true, flush: 'sync' })
   function returnToday() {
     if (!isCurrent()) return
     refreshToday(); calendarMonth.value = todayMonth.value; selectedDate.value = today.value

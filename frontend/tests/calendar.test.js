@@ -24,6 +24,43 @@ function scene(date = '2026-10-31', { owner } = {}) {
     dispose: () => scope.stop(), cleared: () => cleared }
 }
 
+test('日历浏览记录恢复同账号历史日期，保路由字段；默认跟随今日跨月重开不留旧今日', () => {
+  const routerState = { back: null, current: '/', forward: '/bills', position: 4, scroll: { top: 50, left: 0 } }
+  const history = { state: structuredClone(routerState), replaceState(state) { this.state = state } }
+  let now = '2026-10-31'
+  const open = () => { const scope = effectScope(); const calendar = scope.run(() => useHomeCalendar({ rememberHistory: true, history,
+    owner: () => 'account-1', now: () => now, eventTarget: null, documentTarget: null })); return { calendar, dispose: () => scope.stop() } }
+  const original = open(); original.calendar.handleDateChange('2026-09-04'); original.dispose()
+  const returned = open()
+  assert.equal(returned.calendar.calendarMonth.value, '2026-09'); assert.equal(returned.calendar.selectedDate.value, '2026-09-04')
+  for (const [key, value] of Object.entries(routerState)) assert.deepEqual(history.state[key], value)
+  returned.calendar.returnToday(); returned.dispose(); now = '2026-11-01'
+  const nextDay = open()
+  try { assert.equal(nextDay.calendar.selectedDate.value, '2026-11-01'); assert.equal(nextDay.calendar.calendarMonth.value, '2026-11') }
+  finally { nextDay.dispose() }
+})
+
+test('日历历史状态拒绝异账号/坏日期，旧身份/离页不写他页，历史不可写仍可选日', () => {
+  for (const saved of [{ owner: 'account-2', month: '2026-09', date: '2026-09-04', followToday: false },
+    { owner: 'account-1', month: '2026-09', date: '2026-09-31', followToday: false }]) {
+    const auth = reactive({ id: 'account-1' }), location = { pathname: '/' }, writes = [], scope = effectScope()
+    const history = { state: { miaojiHomeCalendarV1: saved }, replaceState(state) { writes.push(state); this.state = state } }
+    const calendar = scope.run(() => useHomeCalendar({ rememberHistory: true, history, location, owner: () => auth.id,
+      now: () => '2026-10-06', eventTarget: null, documentTarget: null }))
+    try {
+      assert.equal(calendar.selectedDate.value, '2026-10-06'); const count = writes.length
+      location.pathname = '/bills'; calendar.handleDateChange('2026-09-04'); assert.equal(writes.length, count)
+      location.pathname = '/'; auth.id = 'account-2'; auth.id = 'account-1'; calendar.handleDateChange('2026-08-04'); assert.equal(writes.length, count)
+    } finally { scope.stop() }
+    calendar.selectedDate.value = '2026-07-04'; assert.equal(writes.length, 1)
+  }
+  const scope = effectScope(), calendar = scope.run(() => useHomeCalendar({ rememberHistory: true,
+    history: { state: null, replaceState() { throw Error('synthetic history unavailable') } },
+    now: () => '2026-10-06', eventTarget: null, documentTarget: null }))
+  try { calendar.handleDateChange('2026-09-04'); assert.equal(calendar.selectedDate.value, '2026-09-04') }
+  finally { scope.stop() }
+})
+
 test('首页跨日与跨月更新今日汇总、星期及默认选择', () => {
   const state = scene()
   try {

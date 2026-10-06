@@ -24,7 +24,7 @@ const auth = SERVER_MODE ? useAuthStore() : null
 const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 
 // 3. 响应式数据
-const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange, handleDateChange, ownerCurrent } = useHomeCalendar({ owner: SERVER_MODE ? () => auth.user?.id : undefined })
+const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange, handleDateChange, ownerCurrent } = useHomeCalendar({ rememberHistory: true, owner: SERVER_MODE ? () => auth.user?.id : undefined })
 
 // 4. 计算属性
 const visibleMonthRecords = computed(() => recordStore.records.filter((record) => (

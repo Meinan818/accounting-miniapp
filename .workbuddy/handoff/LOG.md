@@ -1992,3 +1992,11 @@ before实际首页九月后Enter开明细，inputValue=2026-10而预期09，原J
 before实际Range.getClientRects每笔-¥999999999.99为3行、宽113.9375px，而普通+¥500.00一行；原JSON/截图/assert失败保持。根因.home-record-amount max-width43%并允许anywhere折行。仅Home增加格式化金额长度>8的wide类及一行金额占整行CSS，普通金额/数据/图标/备注不改；无需新增镜像单元测试，既有18相关/537全量及两构建本轮运行。final三宽最大金额Range均一行，320px宽265/390px327/桌面449；66普通小票0wide，2最大wide/1收入普通，大额小计/空日/选日0新增请求保持，6截图检查。
 
 上一7dac377普通Push成功，官方inspect完整remote/HEAD一致且私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续日历返回读数上下文取证。
+
+## 当前日历返回与刷新上下文（2026-10-06）
+
+历史日进入当天明细后，浏览器返回与真实刷新保持月份/选日/当天账单；原路由历史字段保留，账号变化/离页保护，默认今天跨月重新打开仍跟随新日期。46相关/539前端/两构建及三宽39合成浏览器78API3截图通过，另原首页Clock2检查4API2截图回归不重复累计，真实请求0。累计82组766检查2025API319截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持，下一项见STATE/NEXT。
+
+before选择2026-09-04→当天明细刷新/取消编辑→goBack实际首页2026年10月，JSON/截图与断言失败保留。根因组件remount无日历选择来源。useHomeCalendar仅Home显式rememberHistory，保存owner/date/month/followToday到当前history entry，保留全部Vue Router历史字段且不写账本存储；restore只接受同账号合法同月日期，跟随今天状态重开取最新today。定位非首页/owner变化/离页不再写当前entry，History不可写时原日历选日仍可用。2新增实际composable回归核历史恢复/跨月重开/异账号坏日期/路由字段/他页/释放/不可写；46相关539/两构建本轮执行。三宽39检查78GET全拦截，9历史/当前/收入日返回和真实reload同日一笔保持；原首页跨月轮询/focus两链clone独立输出2检查4API2截图成功，未重复累计。
+
+查证来源：MDN https://developer.mozilla.org/en-US/docs/Web/API/History/replaceState 与Vue Router https://router.vuejs.org/guide/migration/#usage-of-history-state /api/interfaces/HistoryState.html均实际200；官方明确保history.state，当前本地Vue Router4.6.4 dist/vue-router.mjs:139-145也在push前合并浏览器state。未直接覆盖路由字段/创建替代调度/增加依赖。上一05b750b普通Push成功，官方inspect完整remote/HEAD一致及私有/无Pages/0workflows/0deployments再核。当前节点上传结果随后记，继续长日阅读。
