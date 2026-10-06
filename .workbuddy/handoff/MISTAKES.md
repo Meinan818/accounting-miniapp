@@ -503,3 +503,7 @@ useBillQuery当前是来源URL到refs的单向初始化/监听，重置只改ref
 ## 2026-10-06 · QA输出命名与语法检查
 
 派生刷新QA首次只replace了一个输出前缀，导致刷新before JSON写到原focus-before-result路径；原focus失败工具原文/LOG/截图仍在，该JSON已被刷新诊断覆盖，不能虚称全部原文件保持。已另存实际刷新before JSON并用replaceAll分离后续final命名，不重造原失败证据。清搜索QA增加受控请求等待时多保留block后分号，node --check报Unexpected token else，无浏览器/请求执行；修语法后再实际运行，业务源码无相应修补。PowerShell rg含文件名通配符直接路径失败已改目录+-g查询，官方本地声明实际核到4.6.4。
+
+## 2026-10-06 · 月份导航harness契约
+
+读快照503在remoteLedger.refresh中返回false，路由守卫不把它作为导航取消；必须按实际alert/重读测读取错误，不能假设会出现导航取消文案。原failure-final timeout保留，read-error结果另存。首次混合根路径编辑与frontend测试工作目录导致ENOENT（未完成编辑），first87项84通过3失败是harness未引入isValidMonth/异步契约；根目录独立执行编辑后再测86/87的剩余Promise失败是第二处旧同步断言漏await。正确await后90相关/531全量通过，保原3日志，不删除断言、不改业务迎合。今后文件编辑与frontend命令分调用并显式工作目录。

@@ -1922,3 +1922,13 @@ Profile小贴士已补选月、筛选CSV/链接和再记一笔，保聊天只支
 等待时禁搜索/分类/月份/编辑/复制/导出和重复操作，成功恢复原生搜索焦点，失败保条件并可显式重试；旧身份或离页迟到不再清输入/抢焦点。原added自动定位仍只用本地resetFilters，避免自动重置触发导航。新增6回归覆盖成功/失败/抛错/重复/新身份/离页/当前条件与其他参数；87相关/528全量本次实际执行，两构建、三宽匹配/空结果Enter/Space及原生reload37检查全部过，320px等待与刷新截图检查。Vue Router本地4.6.4官方声明replace返回Promise<NavigationFailure|void|undefined>已核，路径dist/router-CWoNjPRp.d.mts:1857，不凭记忆猜失败语义。
 
 用户明确要求持续推进，纠正上轮节点完成后结束本轮的做法；此节点commit/Push核完直接下项，不等待回复。9d0b750完整远端一致/私有/无Pages/0workflows/0deployments再核，当前节点上传结果随后记；未改automation、服务、真实账号/账本/照片/模型。
+
+fffcdab普通Push成功；后续官方API只读核ConnectTimeoutError(api.github.com:443/10000ms)原工具输出保留，随后原生git ls-remote成功核main完整fffcdab6bc4b2ca0796e60cd7c97823e0c688413一致，私有/无部署信号为Push前本次已核。继续明细月份取证，未把API暂时失败当业务阻断。月份before实际2024年3月刷新后回2024年2月，JSON/截图与断言失败保留。
+
+## 2026-10-06 · 明细月份地址与刷新
+
+明细切月/直接选月/回本月同步地址，真实reload保持月份/搜索/收支/hash，分类沿原规则清空。90相关/531前端/两构建，三宽9正常及2读取503恢复检查39API10截图通过，另18重置回归通过；真实业务请求0。累计75组637检查1800API289截图7JSON，源5CSV/本窗口2CSV另计。compact=1/原静音automation保持，吉祥物仅方案已提醒。
+
+before原生下一月后2024年3月，reload后回2024年2月，真实断言失败保留。切月复用前节点地址导航，待守卫完成才提交控制月份，待选月份明确状态；成功保当前refs搜索/收支及hash/added/其他参数，分类沿原逻辑清空，不把旧来源条件复活。原非法/编辑/身份保护保留，新增3回归覆盖等待/失败/重试/离页/旧身份；旧同步成功断言改await，原日期/输入/不写账本断言保持，仅新增合法replace请求期望。三宽下一月、直接选2024-06、回当前2026-10及真实reload9检查33API9截图通过。
+
+读取503与导航取消分开：remoteLedger.refresh读取失败返回false保旧快照，账号守卫原先允许前往选定月并显示读取错误。因此实际503仍是三月，页面明确读取失败；显式重读后错误解除，刷新三月/hash保持，2检查6API1截图通过，0真实请求。router.replace返回NavigationFailure或reject的离线测试仍核原月份保持。原failure-final等待“月份暂时未能切换”30秒timeout是harness混淆读取失败与导航失败，保原JSON；按真实源码及页面取证改为检查读取alert，不改守卫或业务迎合测试。前节点官方API超时随后ls-remote及本节点Push前官方API完整fffcdab一致/私有/无Pages/0workflows/0deployments再核，未重启服务。上传结果随后记，接着跨月编辑保存，不结束等回复。

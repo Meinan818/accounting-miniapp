@@ -6,6 +6,7 @@ import * as Vue from 'vue'
 import { parse } from '@vue/compiler-sfc'
 import { compile } from '@vue/compiler-dom'
 import dayjs from 'dayjs'
+import { isValidMonth } from '../src/utils/statistics.js'
 import { CATEGORY_OPTIONS } from '../src/utils/categories.js'
 import { validateRecord } from '../src/utils/ledger.js'
 import { createBillFilterPath, useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
@@ -239,13 +240,13 @@ function mountBills({ records = [{ ...original }], navigate = async () => false,
         return failure
       } }),
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
-      createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, centsText, CATEGORY_OPTIONS,
+      createBillFilterPath, useBillQuery, useLedgerReload, isValidMonth, filterRecords, windowRecordGroups, getRecordTotals, centsText, CATEGORY_OPTIONS,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
-    return template ? { ...values, SERVER_MODE: server, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
+    return template ? { ...values, SERVER_MODE: server, dayjs, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
   if (template) { Bills.render = new Function('Vue', compile(bills.template, { mode: 'function' }).code)(Vue); Bills.render._rc = true }
   const app = renderer.createApp(Bills), root = node('root')
@@ -297,7 +298,7 @@ test('再记导航等待锁住重复入口，失败保编辑窗口，身份切�
   }
 })
 
-test('明细直接选择跨年月份保搜索收支，非法选择和编辑/旧身份不覆盖状态', () => {
+test('明细直接选择跨年月份保搜索收支，非法选择和编辑/旧身份不覆盖状态', async () => {
   const state = mountBills({ server: true, dateClock: { now: () => '2026-10-06' } })
   try {
     assert.equal(state.values.chooseMonth('2024-02'), false)
@@ -305,13 +306,13 @@ test('明细直接选择跨年月份保搜索收支，非法选择和编辑/旧�
     state.route.query = { month: '2026-10', q: '保留备注', type: 'income', category: '工资' }
     for (const month of ['', null, '0999-12', '10000-01', '2026-13', ['2024-02'], '2026-10']) assert.equal(state.values.chooseMonth(month), false)
     assert.equal(state.values.selectedCategory.value, '工资')
-    assert.equal(state.values.chooseMonth('2024-02'), true)
+    assert.equal(await state.values.chooseMonth('2024-02'), true)
     assert.equal(state.values.selectedMonth.value, '2024-02')
     assert.equal(state.values.searchText.value, '保留备注'); assert.equal(state.values.selectedType.value, 'income')
     assert.equal(state.values.selectedCategory.value, '')
     state.auth.user = null; state.auth.user = { id: 'synthetic-owner' }
     assert.equal(state.values.chooseMonth('2025-01'), false)
-    assert.equal(state.values.selectedMonth.value, '2024-02'); assert.deepEqual(state.calls, [])
+    assert.equal(state.values.selectedMonth.value, '2024-02'); assert.equal(state.calls.length, 1); assert.equal(state.calls[0][0], 'replace')
   } finally { state.dispose() }
 })
 
@@ -322,14 +323,14 @@ test('明细回本月保留搜索/收支，沿用切月重置分类，不写账�
     state.route.query = { month: '2026-09', q: '保留备注', type: 'income', category: '工资' }
     state.values.notice.value = '旧月份提示'
     assert.equal(state.values.canReturnToCurrentMonth.value, true)
-    assert.equal(state.values.returnToCurrentMonth(), true)
+    assert.equal(await state.values.returnToCurrentMonth(), true)
     assert.equal(state.values.selectedMonth.value, '2026-10')
     assert.equal(state.values.searchText.value, '保留备注')
     assert.equal(state.values.selectedType.value, 'income')
     assert.equal(state.values.selectedCategory.value, '')
     assert.equal(state.values.notice.value, '')
     assert.equal(state.values.returnToCurrentMonth(), false)
-    assert.deepEqual(state.calls, []); assert.deepEqual(state.store.records, [original])
+    assert.equal(state.calls.length, 1); assert.equal(state.calls[0][0], 'replace'); assert.deepEqual(state.store.records, [original])
   } finally { state.dispose() }
 })
 
@@ -352,7 +353,7 @@ test('明细编辑/保存/身份切回及离页后的回本月入口不覆盖原
   assert.equal(disposed.values.selectedMonth.value, '2026-09')
 })
 
-test('明细跨月保持历史筛选，再回本月使用最新月份且不修改账本', () => {
+test('明细跨月保持历史筛选，再回本月使用最新月份且不修改账本', async () => {
   let day = '2026-10-31', tick
   const state = mountBills({ dateClock: { now: () => day, documentTarget: null,
     eventTarget: { addEventListener() {}, removeEventListener() {} },
@@ -362,11 +363,63 @@ test('明细跨月保持历史筛选，再回本月使用最新月份且不修�
     state.values.searchText.value = '旧条件'
     day = '2026-11-01'; tick()
     assert.equal(state.values.selectedMonth.value, '2026-09')
-    assert.equal(state.values.returnToCurrentMonth(), true)
+    assert.equal(await state.values.returnToCurrentMonth(), true)
     assert.equal(state.values.selectedMonth.value, '2026-11')
     assert.equal(state.values.searchText.value, '旧条件')
-    assert.deepEqual(state.calls, [])
+    assert.equal(state.calls.length, 1); assert.equal(state.calls[0][0], 'replace'); assert.deepEqual(state.store.records, [original])
   } finally { state.dispose() }
+})
+
+test('明细切月等待原月份不提前改变，拒重复并保refs搜索/收支/hash/added，分类只在成功清空', async () => {
+  let finish
+  const state = mountBills({ replace: () => new Promise(resolve => { finish = resolve }) })
+  try {
+    state.values.editingRecord.value = null
+    state.route.query = { month: '2024-02', q: '旧关键词', type: 'expense', category: '餐饮', added: 'keep-highlight' }
+    state.route.hash = '#month'; state.values.searchText.value = '当前关键词'; state.values.selectedType.value = 'income'
+    const pending = state.values.changeMonth(1)
+    assert.equal(state.values.pendingMonth.value, '2024-03'); assert.equal(state.values.selectedMonth.value, '2024-02')
+    assert.equal(state.values.selectedCategory.value, '餐饮'); assert.equal(state.values.resettingFilters.value, true)
+    assert.equal(state.values.chooseMonth('2024-04'), false); assert.equal(await state.values.resetFilterAddress(), false)
+    assert.deepEqual(state.calls, [['replace', { path: '/bills', query: { month: '2024-03', q: '当前关键词', type: 'income', added: 'keep-highlight' }, hash: '#month' }]])
+    finish(undefined); assert.equal(await pending, true)
+    assert.equal(state.values.selectedMonth.value, '2024-03'); assert.equal(state.values.selectedCategory.value, '')
+    assert.equal(state.values.searchText.value, '当前关键词'); assert.equal(state.values.selectedType.value, 'income')
+    assert.equal(state.values.pendingMonth.value, ''); assert.deepEqual(state.store.records, [original])
+  } finally { state.dispose() }
+})
+
+test('明细月份导航返回失败或抛错保持旧月份/筛选，释放等待后可重试', async () => {
+  for (const rejects of [false, true]) {
+    let failing = true
+    const state = mountBills({ replace: async () => { if (failing) { if (rejects) throw Error('合成读取失败'); return { type: 4 } } } })
+    try {
+      state.values.editingRecord.value = null
+      state.route.query = { month: '2024-02', q: '原关键词', type: 'expense', category: '餐饮' }
+      assert.equal(await state.values.chooseMonth('2024-03'), false)
+      assert.equal(state.values.selectedMonth.value, '2024-02'); assert.equal(state.values.selectedCategory.value, '餐饮')
+      assert.equal(state.values.searchText.value, '原关键词'); assert.equal(state.values.pendingMonth.value, '')
+      assert.match(state.values.notice.value, /仍显示原月份/); assert.equal(state.values.resettingFilters.value, false)
+      failing = false; assert.equal(await state.values.chooseMonth('2024-03'), true)
+      assert.equal(state.values.notice.value, ''); assert.equal(state.values.selectedMonth.value, '2024-03')
+      assert.equal(state.calls.length, 2); assert(state.calls.every(call => call[0] === 'replace'))
+      assert.deepEqual(state.store.records, [original])
+    } finally { state.dispose() }
+  }
+})
+
+test('明细月份导航离页或身份切换后不追加提示/清新输入/启动后续请求', async () => {
+  for (const change of [state => state.dispose(), state => { state.auth.user = { id: 'other-owner' } }]) {
+    let finish
+    const state = mountBills({ server: true, replace: () => new Promise(resolve => { finish = resolve }) })
+    try {
+      state.values.editingRecord.value = null
+      const pending = state.values.chooseMonth('2024-03'); change(state); state.values.searchText.value = '新输入'
+      finish({ type: 8 }); assert.equal(await pending, false)
+      assert.equal(state.values.searchText.value, '新输入'); assert.equal(state.values.notice.value, '')
+      assert.equal(state.calls.length, 1); assert.equal(state.values.selectedMonth.value, '2026-10')
+    } finally { state.dispose() }
+  }
 })
 
 test('真实Bills→Editor→Form关闭再开另一笔，即使同tick也使用新账单输入和时间语义', async () => {
