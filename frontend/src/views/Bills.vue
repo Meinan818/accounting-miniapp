@@ -38,6 +38,7 @@ const router = useRouter()
 const { selectedMonth, searchText, selectedType, selectedCategory, changeMonth: changeQueryMonth, selectMonth: selectQueryMonth } = useBillQuery(route)
 const editingRecord = ref(null)
 const saving = ref(false)
+const resettingFilters = ref(false)
 const repeating = ref(false)
 const saveError = ref('')
 const editConflict = ref(null)
@@ -51,13 +52,13 @@ const ownerCurrent = ref(!SERVER_MODE || Boolean(owner))
 if (SERVER_MODE) watch(() => auth.user?.id, value => {
   if (value !== owner) ownerCurrent.value = false
 }, { flush: 'sync' })
-const canReturnToCurrentMonth = computed(() => ownerCurrent.value && !saving.value && !editingRecord.value && selectedMonth.value !== currentMonth.value)
+const canReturnToCurrentMonth = computed(() => ownerCurrent.value && !saving.value && !resettingFilters.value && !editingRecord.value && selectedMonth.value !== currentMonth.value)
 const exportError = ref('')
 const copyingLink = ref(false)
 const filterLinkText = ref('')
 const filterLinkMessage = ref('')
 let filterLinkGeneration = 0
-const copyLinkUnavailable = computed(() => !active || !ownerCurrent.value || copyingLink.value || saving.value || Boolean(editingRecord.value))
+const copyLinkUnavailable = computed(() => !active || !ownerCurrent.value || copyingLink.value || saving.value || resettingFilters.value || Boolean(editingRecord.value))
 watch([selectedMonth, searchText, selectedType, selectedCategory, editingRecord, ownerCurrent], () => {
   filterLinkGeneration++
   filterLinkText.value = ''; filterLinkMessage.value = ''
@@ -105,7 +106,7 @@ const needsWideAmounts = computed(() => !monthTotals.value.error && [monthTotals
 const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
 const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
 const exportUnavailable = computed(() => !active || !ownerCurrent.value || Boolean(recordStore.storageError || reloadError.value) ||
-  reloading.value || saving.value || Boolean(editingRecord.value) || !listedRecords.value.length)
+  reloading.value || saving.value || resettingFilters.value || Boolean(editingRecord.value) || !listedRecords.value.length)
 watch([selectedMonth, searchText, selectedType, selectedCategory], () => { exportError.value = '' })
 function exportBills() {
   if (exportUnavailable.value || !active) return
@@ -128,16 +129,48 @@ const filterCategories = computed(() => {
   const options = Object.values(CATEGORY_OPTIONS).flat().map(item => item.label)
   return [...counts.values()].sort((a,b) => options.indexOf(a.category) - options.indexOf(b.category))
 })
-function chooseType(type) { selectedType.value = type; selectedCategory.value = '' }
+function chooseType(type) { if (resettingFilters.value) return; selectedType.value = type; selectedCategory.value = '' }
 function chooseCategory(item) {
+  if (resettingFilters.value) return
   const alreadyChosen = selectedType.value === item.type && selectedCategory.value === item.category
   selectedType.value = item.type
   selectedCategory.value = alreadyChosen ? '' : item.category
 }
 async function resetFilters() {
-  if (!active || !ownerCurrent.value || saving.value || editingRecord.value) return
+  if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value) return
   selectedType.value = 'all'; selectedCategory.value = ''
   await clearSearch()
+}
+function resetFilterAddress() { return clearFilterAddress(true) }
+function clearSearchAddress() { return clearFilterAddress(false) }
+async function clearFilterAddress(clearAll) {
+  if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value) return false
+  notice.value = ''
+  const query = { ...route.query, month: selectedMonth.value }
+  delete query.q
+  if (clearAll || selectedType.value === 'all') delete query.type
+  else query.type = selectedType.value
+  if (clearAll || !selectedCategory.value) delete query.category
+  else query.category = selectedCategory.value
+  const keys = ['month', 'q', 'type', 'category']
+  const needsNavigation = keys.some(key => route.query[key] !== query[key] || (key in route.query) !== (key in query))
+  const clearLocal = () => clearAll ? resetFilters() : clearSearch()
+  if (!needsNavigation) { await clearLocal(); return true }
+  resettingFilters.value = true
+  let completed = false
+  try {
+    const failure = await router.replace({ path: '/bills', query, hash: route.hash || '' })
+    if (!active || !ownerCurrent.value) return false
+    if (failure) throw new Error('navigation failed')
+    if (route.path !== '/bills' || keys.some(key => route.query[key] !== query[key] || (key in route.query) !== (key in query))) return false
+    completed = true
+  } catch {
+    if (active && ownerCurrent.value) notice.value = '筛选暂时未能重置，原条件已保留，请重试。'
+  } finally {
+    if (active && ownerCurrent.value) resettingFilters.value = false
+  }
+  if (completed) await clearLocal()
+  return completed
 }
 const groupedRecords = computed(() => {
   const groups = new Map()
@@ -192,7 +225,7 @@ watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => rec
 }, { immediate: true })
 
 function edit(record) {
-  if (!active || !ownerCurrent.value || saving.value || editingRecord.value) return
+  if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value) return
   editingRecord.value = { ...record }; saveError.value = ''; editConflict.value = null; notice.value = ''
 }
 async function repeatRecord() {
@@ -254,15 +287,16 @@ watch([selectedMonth, searchText, selectedType, selectedCategory, editingRecord]
   searchFocusGeneration++
 }, { flush: 'sync' })
 async function clearSearch() {
-  if (!active || !ownerCurrent.value || editingRecord.value) return
+  if (!active || !ownerCurrent.value || resettingFilters.value || editingRecord.value) return
   searchText.value = ''
   const current = ++searchFocusGeneration
   await nextTick()
-  if (!active || !ownerCurrent.value || editingRecord.value || current !== searchFocusGeneration) return
+  if (!active || !ownerCurrent.value || resettingFilters.value || editingRecord.value || current !== searchFocusGeneration) return
   searchInput.value?.focus()
 }
 
 function changeMonth(offset) {
+  if (resettingFilters.value) return
   if (changeQueryMonth(offset)) notice.value = ''
 }
 
@@ -272,6 +306,7 @@ function returnToCurrentMonth() {
 }
 
 function chooseMonth(month) {
+  if (resettingFilters.value) return false
   if (!active || !ownerCurrent.value || saving.value || editingRecord.value || !selectQueryMonth(month)) return false
   notice.value = ''
   return true
@@ -319,7 +354,7 @@ function getSign(record) {
             type="button"
             class="bills-month-button active:scale-95"
             aria-label="上个月"
-            :disabled="selectedMonth === '1000-01'"
+            :disabled="resettingFilters || selectedMonth === '1000-01'"
             @click="changeMonth(-1)"
           >
             <ChevronLeft :size="22" :stroke-width="1.5" />
@@ -329,13 +364,13 @@ function getSign(record) {
             type="button"
             class="bills-month-button active:scale-95"
             aria-label="下个月"
-            :disabled="selectedMonth === '9999-12'"
+            :disabled="resettingFilters || selectedMonth === '9999-12'"
             @click="changeMonth(1)"
           >
             <ChevronRight :size="22" :stroke-width="1.5" />
           </button>
         </div>
-        <div class="bills-month-shortcuts"><MonthPicker :month="selectedMonth" :disabled="!ownerCurrent || saving || Boolean(editingRecord)" label="选择明细月份" @select="chooseMonth" /><button type="button" class="bills-month-button bills-current-month" aria-label="回到本月" :disabled="!canReturnToCurrentMonth" @click="returnToCurrentMonth">{{ selectedMonth === currentMonth ? '已在本月' : '回到本月' }}</button></div>
+        <div class="bills-month-shortcuts"><MonthPicker :month="selectedMonth" :disabled="!ownerCurrent || saving || resettingFilters || Boolean(editingRecord)" label="选择明细月份" @select="chooseMonth" /><button type="button" class="bills-month-button bills-current-month" aria-label="回到本月" :disabled="!canReturnToCurrentMonth" @click="returnToCurrentMonth">{{ selectedMonth === currentMonth ? '已在本月' : '回到本月' }}</button></div>
 
         <p v-if="!recordStore.storageError && monthTotals.error" class="bills-storage-note" role="alert">{{ monthTotals.error }}</p>
         <dl v-else-if="!recordStore.storageError" class="bills-totals" :class="{ 'bills-totals-wide': needsWideAmounts }">
@@ -354,12 +389,12 @@ function getSign(record) {
         </dl>
       </section>
 
-      <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input ref="searchInput" id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" @click="clearSearch">清除</button></div></section>
+      <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input ref="searchInput" id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="resettingFilters || Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="clearSearchAddress">清除</button></div></section>
       <section v-if="!recordStore.storageError && monthRecords.length" class="bills-filter-shelf" aria-label="按收支和分类筛选">
-        <div class="bills-filter-heading"><span>挑一张分类贴纸</span><div class="bills-type-tabs" aria-label="筛选收支"><button v-for="type in ['all','expense','income']" :key="type" type="button" :aria-pressed="selectedType === type" :class="{ selected:selectedType === type }" @click="chooseType(type)">{{ type === 'all' ? '全部' : type === 'income' ? '收入' : '支出' }}</button></div></div>
-        <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
+        <div class="bills-filter-heading"><span>挑一张分类贴纸</span><div class="bills-type-tabs" aria-label="筛选收支"><button v-for="type in ['all','expense','income']" :key="type" type="button" :disabled="resettingFilters" :aria-pressed="selectedType === type" :class="{ selected:selectedType === type }" @click="chooseType(type)">{{ type === 'all' ? '全部' : type === 'income' ? '收入' : '支出' }}</button></div></div>
+        <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :disabled="resettingFilters" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
       </section>
-      <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" @click="resetFilters">查看全部</button></div>
+      <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="resetFilterAddress">{{ resettingFilters ? '正在重置…' : '查看全部' }}</button></div>
       <div class="bills-export">
         <button type="button" :disabled="exportUnavailable" @click="exportBills">{{ filtering ? '导出筛选账单' : '导出本月账单' }} · CSV</button>
         <button type="button" :disabled="copyLinkUnavailable" :aria-busy="copyingLink" @click="copyFilterLink">{{ copyingLink ? '正在复制…' : '复制当前筛选链接' }}</button>

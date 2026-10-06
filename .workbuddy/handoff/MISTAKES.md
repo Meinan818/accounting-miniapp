@@ -499,3 +499,7 @@ Chat实际没有BottomNav，必须按NotebookBack到Home再走明细；first假�
 ## 2026-10-06 · 筛选地址与工作目录
 
 useBillQuery当前是来源URL到refs的单向初始化/监听，重置只改refs；原生焦点QA应核界面筛选及来源月份/hash保留，不能误假设重置自动删URL参数。该URL假设在执行after前由源码纠正，原focus-before真实失败独立保持；地址刷新一致性留下一独立节点。首次编辑ignored QA时错误在frontend工作目录引用根.workbuddy而ENOENT，未写文件；恢复根路径后实际完成，相关81通过独立有效。
+
+## 2026-10-06 · QA输出命名与语法检查
+
+派生刷新QA首次只replace了一个输出前缀，导致刷新before JSON写到原focus-before-result路径；原focus失败工具原文/LOG/截图仍在，该JSON已被刷新诊断覆盖，不能虚称全部原文件保持。已另存实际刷新before JSON并用replaceAll分离后续final命名，不重造原失败证据。清搜索QA增加受控请求等待时多保留block后分号，node --check报Unexpected token else，无浏览器/请求执行；修语法后再实际运行，业务源码无相应修补。PowerShell rg含文件名通配符直接路径失败已改目录+-g查询，官方本地声明实际核到4.6.4。

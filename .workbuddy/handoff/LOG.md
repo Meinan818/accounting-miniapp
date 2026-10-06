@@ -1912,3 +1912,13 @@ Profile小贴士已补选月、筛选CSV/链接和再记一笔，保聊天只支
 41b2ced普通Push/官方完整远端SHA一致已核，私有/无Pages/0workflows/0deployments。当前节点上传结果随后登记，不把本地commit当Push。
 
 5a578cf2832a160e61d5acc26470fc0bd15612ab普通Push成功，官方API完整远端SHA与HEAD一致/私有/无Pages/0workflows/0deployments再核。敏感检查1提交8blob无发现，业务差异仅resetFilters及3回归，工作区原本干净；仅更新本次上传回执，未重跑源码/测试或修改原automation。当前实际compact=1。
+
+## 2026-10-06 · 清筛选地址与刷新一致性
+
+明细查看全部/清除搜索同步清来源地址，刷新不恢复旧关键词；单清搜索保当前收支分类。87相关/528前端/demo与server两构建及三宽37合成浏览器60API25截图通过，真实业务请求0。累计73组626检查1761API279截图7JSON，源5CSV/本窗口2CSV另计。compact=1/原静音automation保持；吉祥物已提醒一次、仅方案。
+
+实际before：从2024-02/合成/expense/餐饮/#reset-source进入，查看全部后2笔，真实reload又恢复“合成”/1笔。根因useBillQuery单向初始化，refs重置不改URL。显式重置/清搜索调用既有router.replace，保当前月/hash/added及其他参数；单清搜索以当前refs保收支分类，不恢复旧链接条件。仅来源地址实际不同才导航，普通本页清除不新增读取。既有账号路由守卫在导航时仍GET核快照，因此60拦截API如实计入，0真实业务/写请求。
+
+等待时禁搜索/分类/月份/编辑/复制/导出和重复操作，成功恢复原生搜索焦点，失败保条件并可显式重试；旧身份或离页迟到不再清输入/抢焦点。原added自动定位仍只用本地resetFilters，避免自动重置触发导航。新增6回归覆盖成功/失败/抛错/重复/新身份/离页/当前条件与其他参数；87相关/528全量本次实际执行，两构建、三宽匹配/空结果Enter/Space及原生reload37检查全部过，320px等待与刷新截图检查。Vue Router本地4.6.4官方声明replace返回Promise<NavigationFailure|void|undefined>已核，路径dist/router-CWoNjPRp.d.mts:1857，不凭记忆猜失败语义。
+
+用户明确要求持续推进，纠正上轮节点完成后结束本轮的做法；此节点commit/Push核完直接下项，不等待回复。9d0b750完整远端一致/私有/无Pages/0workflows/0deployments再核，当前节点上传结果随后记；未改automation、服务、真实账号/账本/照片/模型。

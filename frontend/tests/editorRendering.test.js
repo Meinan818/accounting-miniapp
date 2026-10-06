@@ -220,9 +220,9 @@ test('再记一笔仅在原表单未修改时可用，忙碌/冲突/删除确认
   } finally { state.dispose() }
 })
 
-function mountBills({ records = [{ ...original }], navigate = async () => false, dateClock = {}, server = false, downloadFailure = false, clipboard = {}, template = false, realEditor = false } = {}) {
+function mountBills({ records = [{ ...original }], navigate = async () => false, replace = async () => undefined, dateClock = {}, server = false, downloadFailure = false, clipboard = {}, template = false, realEditor = false } = {}) {
   const bills = source('views/Bills.vue'), calls = []
-  const route = Vue.reactive({ query: { month: '2026-10' } })
+  const route = Vue.reactive({ path: '/bills', hash: '', query: { month: '2026-10' } })
   const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), downloads = []
   let finish, fail, values
   const store = Vue.reactive({ records, storageError: '', refresh: async () => true,
@@ -233,13 +233,17 @@ function mountBills({ records = [{ ...original }], navigate = async () => false,
   const Bills = { components: { CategoryIcon: stub, ManualEntry: stub, NotebookBack: stub, MonthPicker: stub, ChevronLeft: stub, ChevronRight: stub, BottomNav: stub,
     RecordEditor: realEditor ? editorComponent(forms) : { props: ['record'], render() { return Vue.h('section', { class: 'synthetic-editor' }, this.record.remark) } } }, setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
-      useRouter: () => ({ push: async target => { calls.push(['navigate', target]); return navigate(target) } }),
+      useRouter: () => ({ push: async target => { calls.push(['navigate', target]); return navigate(target) }, replace: async target => {
+        calls.push(['replace', target]); const failure = await replace(target)
+        if (!failure) { route.path = target.path; route.query = target.query; route.hash = target.hash }
+        return failure
+      } }),
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
       createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, centsText, CATEGORY_OPTIONS,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -592,6 +596,109 @@ test('CSV字段错误与下载失败明确提示未完成，不能出现已保�
       assert.equal(state.calls.length, 0)
     } finally { state.dispose() }
   }
+})
+
+test('查看全部同步清来源地址筛选，保当前月份/hash/added和其他参数，成功后才恢复搜索焦点', async () => {
+  let finish
+  const state = mountBills({ replace: () => new Promise(resolve => { finish = resolve }) }), input = node('search')
+  try {
+    state.values.editingRecord.value = null; state.values.searchInput.value = input
+    state.route.query = { month: '2024-02', q: '合成', type: 'expense', category: '餐饮', added: 'keep-highlight', extra: ['a', 'b'] }
+    state.route.hash = '#source'; state.values.selectedMonth.value = '2024-03'
+    const before = JSON.stringify(state.store.records), pending = state.values.resetFilterAddress()
+    assert.equal(state.values.resettingFilters.value, true); assert.equal(input.focusCount, 0)
+    assert.equal(state.values.searchText.value, '合成')
+    assert.equal(await state.values.resetFilterAddress(), false)
+    state.values.chooseType('income'); state.values.chooseCategory({ type: 'income', category: '工资' })
+    state.values.changeMonth(1); state.values.chooseMonth('2024-05'); state.values.edit(original)
+    await state.values.clearSearch()
+    assert.equal(state.values.selectedType.value, 'expense'); assert.equal(state.values.selectedMonth.value, '2024-03')
+    assert.equal(state.values.editingRecord.value, null); assert.equal(state.values.copyLinkUnavailable.value, true)
+    assert.equal(state.values.exportUnavailable.value, true); assert.equal(state.calls.length, 1)
+    assert.deepEqual(state.calls[0], ['replace', { path: '/bills', query: { month: '2024-03', added: 'keep-highlight', extra: ['a', 'b'] }, hash: '#source' }])
+    finish(undefined); assert.equal(await pending, true)
+    assert.equal(state.values.resettingFilters.value, false); assert.equal(input.focusCount, 1)
+    assert.equal(state.values.searchText.value, ''); assert.equal(state.values.selectedType.value, 'all')
+    assert.equal(state.values.selectedCategory.value, ''); assert.equal(state.route.query.month, '2024-03')
+    assert.equal(JSON.stringify(state.store.records), before)
+  } finally { state.dispose() }
+})
+
+test('重置地址失败保旧筛选且可显式重试，不抛未处理拒绝或写账本', async () => {
+  for (const rejection of [false, true]) {
+    let failing = true
+    const state = mountBills({ replace: async () => { if (failing) { if (rejection) throw Error('合成守卫失败'); return { type: 4 } } } }), input = node('search')
+    try {
+      state.values.editingRecord.value = null; state.values.searchInput.value = input
+      state.route.query = { month: '2024-02', q: '原关键词', type: 'income', category: '工资' }
+      assert.equal(await state.values.resetFilterAddress(), false)
+      assert.equal(state.values.searchText.value, '原关键词'); assert.equal(state.values.selectedType.value, 'income')
+      assert.equal(state.values.selectedCategory.value, '工资'); assert.equal(input.focusCount, 0)
+      assert.match(state.values.notice.value, /原条件已保留/); assert.equal(state.values.resettingFilters.value, false)
+      failing = false; assert.equal(await state.values.resetFilterAddress(), true)
+      assert.equal(state.values.searchText.value, ''); assert.equal(input.focusCount, 1)
+      assert.equal(state.calls.length, 2); assert(state.calls.every(call => call[0] === 'replace'))
+    } finally { state.dispose() }
+  }
+})
+
+test('重置地址等待中身份切换/离页不恢复旧焦点或清新输入，入口阻断时0导航', async () => {
+  for (const change of [state => { state.auth.user = { id: 'other-owner' } }, state => state.dispose()]) {
+    let finish
+    const state = mountBills({ server: true, replace: () => new Promise(resolve => { finish = resolve }) }), input = node('search')
+    try {
+      state.values.editingRecord.value = null; state.values.searchInput.value = input
+      state.route.query = { month: '2024-02', q: '合成' }
+      const pending = state.values.resetFilterAddress(); change(state); state.values.searchText.value = '新输入'
+      finish({ type: 8 }); assert.equal(await pending, false)
+      assert.equal(input.focusCount, 0); assert.equal(state.values.searchText.value, '新输入')
+      assert.equal(state.values.notice.value, '')
+    } finally { state.dispose() }
+  }
+  const state = mountBills({ server: true })
+  try {
+    assert.equal(await state.values.resetFilterAddress(), false); assert.equal(state.calls.length, 0)
+    state.values.editingRecord.value = null; state.auth.user = { id: 'other' }
+    assert.equal(await state.values.resetFilterAddress(), false); assert.equal(state.calls.length, 0)
+  } finally { state.dispose() }
+})
+
+test('只清搜索地址保当前收支分类而非旧链接条件，拒重复且不写账本', async () => {
+  const state = mountBills(), input = node('search')
+  try {
+    state.values.editingRecord.value = null; state.values.searchInput.value = input
+    state.route.query = { month: '2024-02', q: '旧关键词', type: 'expense', category: '餐饮', added: 'keep-highlight' }
+    state.route.hash = '#search'; state.values.chooseCategory({ type: 'income', category: '工资' })
+    const pending = state.values.clearSearchAddress()
+    assert.equal(await state.values.clearSearchAddress(), false)
+    assert.equal(await pending, true)
+    assert.equal(state.values.searchText.value, ''); assert.equal(state.values.selectedType.value, 'income')
+    assert.equal(state.values.selectedCategory.value, '工资'); assert.equal(input.focusCount, 1)
+    assert.deepEqual(state.route.query, { month: '2024-02', type: 'income', category: '工资', added: 'keep-highlight' })
+    assert.equal(state.route.hash, '#search'); assert.equal(state.calls.length, 1)
+  } finally { state.dispose() }
+})
+
+test('只清搜索地址失败保输入及分类，不自动重发或旧焦点抢占', async () => {
+  const state = mountBills({ replace: async () => ({ type: 4 }) }), input = node('search')
+  try {
+    state.values.editingRecord.value = null; state.values.searchInput.value = input
+    state.route.query = { month: '2024-02', q: '原关键词', type: 'income', category: '工资' }
+    assert.equal(await state.values.clearSearchAddress(), false)
+    assert.equal(state.values.searchText.value, '原关键词'); assert.equal(state.values.selectedCategory.value, '工资')
+    assert.equal(input.focusCount, 0); assert.equal(state.calls.length, 1)
+  } finally { state.dispose() }
+})
+
+test('来源地址没有筛选时查看全部仅清本地条件，不导航、不读写账本', async () => {
+  const state = mountBills(), input = node('search')
+  try {
+    state.values.editingRecord.value = null; state.values.searchInput.value = input
+    state.values.searchText.value = '本页关键词'
+    assert.equal(await state.values.resetFilterAddress(), true)
+    assert.equal(state.values.searchText.value, ''); assert.equal(input.focusCount, 1)
+    assert.equal(state.calls.length, 0)
+  } finally { state.dispose() }
 })
 
 test('查看全部清三种筛选并保月份，重复操作仅最新回调聚焦搜索，无账本请求', async () => {
