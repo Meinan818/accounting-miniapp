@@ -204,9 +204,26 @@ function component(props, emit) {
   const file = readFileSync(new URL('../src/components/calendar/CalendarCard.vue', import.meta.url), 'utf8')
   const script = file.split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
   const names = ['computed', 'dayjs', 'defineProps', 'defineEmits', 'validDate', ...Object.keys(calendarUtils)]
-  return new Function(...names, script + '; return { selectDate, changeMonth, calendarCells }')(
+  return new Function(...names, script + '; return { selectDate, selectMonth, changeMonth, calendarCells }')(
     computed, dayjs, () => props, () => emit, validDate, ...Object.values(calendarUtils))
 }
+
+test('日历直接选月沿首页选日规则，合法两端与闰月可选，无效和同月不发事件', () => {
+  const state = scene('2026-10-31'), events = [], props = reactive({ month: '2026-10', selectedDate: '2026-10-31', records: [] })
+  const card = component(props, (name, value) => {
+    events.push([name, value]); state.calendar.handleMonthChange(value)
+    props.month = state.calendar.calendarMonth.value; props.selectedDate = state.calendar.selectedDate.value
+  })
+  try {
+    for (const month of ['2024-02', '1000-01', '9999-12']) {
+      card.selectMonth(month); assert.equal(state.calendar.calendarMonth.value, month); assert.equal(state.calendar.selectedDate.value, month + '-01')
+    }
+    card.selectMonth('2026-10'); assert.equal(state.calendar.selectedDate.value, '2026-10-31')
+    const count = events.length
+    for (const month of ['', '0999-12', '10000-01', '2026-13', ['2024-02'], null, '2026-10']) card.selectMonth(month)
+    assert.equal(events.length, count)
+  } finally { state.dispose() }
+})
 
 test('实际日历脚本选相邻月份后保留点击日期，边界切月不发出越界事件', () => {
   const state = scene(), events = []

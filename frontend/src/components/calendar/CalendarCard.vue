@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { getCalendarCells, shiftCalendarMonth } from '@/utils/calendar'
 import { validDate } from '@/utils/ledger'
 import { centsText, legacyCents } from '@/utils/money'
+import MonthPicker from '@/components/common/MonthPicker.vue'
 
 // 2. Props
 const props = defineProps({
@@ -36,6 +37,10 @@ const calendarCells = computed(() => getCalendarCells(props.month, props.selecte
 function changeMonth(offset) {
   const next = shiftCalendarMonth(props.month, offset)
   if (next) emit('update:month', next)
+}
+
+function selectMonth(month) {
+  if (typeof month === 'string' && month !== props.month && validDate(month + '-01')) emit('update:month', month)
 }
 
 function selectDate(cell) {
@@ -103,6 +108,8 @@ function getDayNumberClass(cell) {
       </button>
     </div>
 
+    <div class="calendar-month-picker"><MonthPicker :month="month" label="选择日历月份" @select="selectMonth" /></div>
+
     <p v-if="summaryError" class="calendar-totals text-sm" role="alert">{{ summaryError }}</p>
     <div v-else class="calendar-totals">
       <div class="calendar-summary-grid grid grid-cols-2 gap-2" :class="{ 'calendar-summary-grid-wide': wideAmounts }">
@@ -156,6 +163,7 @@ function getDayNumberClass(cell) {
 </template>
 
 <style scoped>
+.calendar-month-picker { display:flex; justify-content:center; margin:3px 0 12px; }
 .journal-calendar {
   width: 100%;
   min-width: 0;

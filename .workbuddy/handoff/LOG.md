@@ -2008,3 +2008,11 @@ before选择2026-09-04→当天明细刷新/取消编辑→goBack实际首页202
 Home完整selectedRecords仅渲染displayedDayRecords，显示60步进/余量按钮，笔数/小计/当天明细链接继续完整数据。展开nextTick后按active/owner/date/generation复核，设置首张新小票focus/nearest，DOM Map按ref收放，逻辑滚动余量为底栏86+12px；选日世代变化即撤旧回调，等待禁重复。既有实际Home模板回归增加121笔/60DOM/35.09/120+1余量/全部后撤按钮/重复阻断/日期切回保护，原金额/身份/数据断言保持。46相关539全量/两构建本轮实际执行。三宽18检查12GET全拦截，60→120/121两次原生Enter首新61/121可见、金额及请求不变；切空日、重选重置、完整121日期明细35.09、浏览器返回原日/60，6截图抽检。未改账本或原history字段。
 
 上一414ac18普通Push成功，官方inspect完整remote/HEAD一致及私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续日历远历史直达入口。
+
+## 当前首页日历直接选月（2026-10-06）
+
+日历复用MonthPicker直达月份，原生空值/范围恢复原选月选日，2024闰日/reload/1000及9999两端/回今天/旧前月按钮同步正确。55相关/540前端/两构建及三宽21合成浏览器12API3截图通过，真实请求0；累计84组805检查2049API328截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持，下一项键盘方向选日，见STATE/NEXT。
+
+CalendarCard新增共用MonthPicker并selectMonth只接受不同/字符串合法月份，沿Home.handleMonthChange选首日或本月今天；Home日期历史/窗口/金额/原生按钮逻辑不改。现有实际Calendar脚本回归新增直达闰月/范围两端/本月今日/空/非法/数组/同月0事件；金额SSR harness补MonthPicker替身与selectMonth绑定，保原大额/错误断言。55相关540全量/两构建本轮执行。三宽21检查12GET全拦截：原生fill跳2024-02整月7/9.01并首日→Enter闰日0.01与真实reload保持→DOM change空/越界原生validity恢复原月份日期→范围两端42格且前后禁用→回今天→旧上月输入同步；所有选月/日操作0新增API/0写，3截图检查。原生invalidity注入与实际fill/键盘分开，不冒称真机输入。
+
+上一3bc9e9b普通Push成功，官方inspect完整remote/HEAD一致/私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续日历键盘效率。

@@ -52,10 +52,10 @@ async function renderCalendar(totals) {
   const script = descriptor.scriptSetup.content.replace(/^import .*$/gm, '')
   const stub = { render: () => Vue.h('svg') }
   const component = { props: ['month', 'selectedDate', 'today', 'records', 'income', 'expense', 'incomeCents', 'expenseCents', 'summaryError'],
-    components: { ChevronLeft: stub, ChevronRight: stub }, setup(props) {
+    components: { ChevronLeft: stub, ChevronRight: stub, MonthPicker: stub }, setup(props) {
       const bindings = { computed: Vue.computed, dayjs, getCalendarCells, shiftCalendarMonth, validDate, centsText, legacyCents,
         defineProps: () => props, defineEmits: () => () => {} }
-      return new Function(...Object.keys(bindings), script + '; return { shiftCalendarMonth, incomeText, expenseText, wideAmounts, weekdays, monthTitle, calendarCells, changeMonth, selectDate, getDayClass, getDayNumberClass }')(...Object.values(bindings))
+      return new Function(...Object.keys(bindings), script + '; return { shiftCalendarMonth, incomeText, expenseText, wideAmounts, weekdays, monthTitle, calendarCells, changeMonth, selectMonth, selectDate, getDayClass, getDayNumberClass }')(...Object.values(bindings))
     }, render: new Function('Vue', compile(descriptor.template.content, { mode: 'function' }).code)(Vue) }
   component.render._rc = true
   return renderToString(Vue.createSSRApp(component, { month: '2026-10', selectedDate: '2026-10-04', today: '2026-10-04', records: [], income: 0, expense: 0,
