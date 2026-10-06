@@ -74,7 +74,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
     if (refreshing) { const result = await refreshing; return force === true ? refresh(true, requiredIds) : result }
     const current = generation
     const changesAtStart = localChanges
-    const previous = new Map(allRecords.value.map(record => [record.id, record]))
+    const previous = new Map(allRecords.value.map(record => [record.id.toLowerCase(), record]))
     function ensureSnapshotCurrent() {
       ensure(current)
       if (changesAtStart !== localChanges) throw new Error('读取期间账本已更新，已保留最新改动，请重新读取账本。')
@@ -100,13 +100,16 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
             throw new Error('账本版本发生倒退，原账本已保留，请重新读取最新账单。')
           }
           if (after !== null && page.records.length === 0) throw new Error('账本分页续页为空，原账本已保留。')
-          let previousId = after
+          let previousId = after?.toLowerCase() ?? null
           for (const entry of page.records) {
             if (!entry || typeof entry !== 'object' || Array.isArray(entry) || !entry.record ||
                 typeof entry.record !== 'object' || Array.isArray(entry.record)) {
               throw new Error('账本分页记录格式不完整，原账本已保留。')
             }
-            const id = entry.record?.id
+            // UUID casing does not create a new identity; all snapshot guards
+            // and local associations must use the same validated identifier.
+            const normalizedRecord = fromRecordView(entry.record)
+            const id = normalizedRecord.id
             if (seen.has(id)) throw new Error('账本分页编号重复，原账本已保留。')
             if (typeof id !== 'string' || (previousId !== null && id <= previousId)) throw new Error('账本分页顺序或位置不合法，原账本已保留。')
             if (Number.isSafeInteger(entry.record.version) && previous.has(id) && entry.record.version < previous.get(id).version) {
@@ -115,14 +118,13 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
             if (previous.get(id)?.deletedAt && entry.deletedAt == null) {
               throw new Error('已删除账单的状态与最新回执不一致，原账本已保留，请重新读取。')
             }
-            seen.add(id); entries.push(entry); previousId = id
+            seen.add(id); entries.push({ ...entry, normalizedRecord }); previousId = id
           }
-          if (page.nextAfter !== null && (page.records.length === 0 || page.nextAfter !== page.records.at(-1).record?.id
-            || (after !== null && page.nextAfter <= after))) throw new Error('账本分页位置不合法，原账本已保留。')
+          if (page.nextAfter !== null && (page.records.length === 0 || page.nextAfter.toLowerCase() !== previousId
+            || (after !== null && page.nextAfter.toLowerCase() <= after.toLowerCase()))) throw new Error('账本分页位置不合法，原账本已保留。')
           // 仍请求首页核服务器版本；相同已完整加载版本省去剩余分页与整本替换。
           if (after === null && force !== true && snapshotRevision === revision) {
             for (const entry of page.records) {
-              fromRecordView(entry.record)
               validateDeletedAt(entry.deletedAt)
             }
             storageError.value = ''; return true
@@ -131,7 +133,7 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
         } while (after !== null)
         const next = entries.map(value => {
           validateDeletedAt(value.deletedAt)
-          return { ...previous.get(value.record?.id), ...links.get(value.record?.id), ...fromRecordView(value.record), time: value.record.time ?? undefined,
+          return { ...previous.get(value.normalizedRecord.id), ...links.get(value.normalizedRecord.id), ...value.normalizedRecord, time: value.record.time ?? undefined,
             ...(value.deletedAt ? { deletedAt: value.deletedAt } : { deletedAt: undefined }) }
         })
         if (new Set(next.map(record => record.id)).size !== next.length) throw new Error('账本回执编号重复')
@@ -198,7 +200,10 @@ export function createRemoteLedger(client, owner, { storage, eventTarget = globa
     storageError.value = ''; return removed
   }
   function batchRecords(id) { return allRecords.value.filter(record => record.draftGroupId === id) }
-  function recordsByIds(ids = []) { return allRecords.value.filter(record => ids.includes(record.id)) }
+  function recordsByIds(ids = []) {
+    const requested = new Set(ids.filter(id => typeof id === 'string').map(id => id.toLowerCase()))
+    return allRecords.value.filter(record => requested.has(record.id.toLowerCase()))
+  }
   function clearRecords() { throw new Error('正式账本不提供清空操作。') }
   return { allRecords, records, storageError, summaryError, monthRecords, monthExpense, monthExpenseCents, monthIncome, categoryExpenses, categoryIncome,
     refresh, addRecords, addRecord, updateRecord, deleteRecord, batchRecords, recordsByIds, clearRecords, manualRecovery, cancelManualOperation }

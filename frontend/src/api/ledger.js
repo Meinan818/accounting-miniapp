@@ -19,7 +19,7 @@ export function fromRecordView(value) {
     throw new Error('服务账单格式不正确，暂不替换当前账本。')
   }
   const amount = parseCents(value.amount) / 100
-  return { id: value.id, type: value.type, amount, date: value.date, ...(value.time ? { time: value.time } : {}),
+  return { id: value.id.toLowerCase(), type: value.type, amount, date: value.date, ...(value.time ? { time: value.time } : {}),
     category: value.category, icon: getCategoryMeta(value.category, value.type).icon,
     remark: value.note || '', description: value.note || value.category, version: value.version }
 }

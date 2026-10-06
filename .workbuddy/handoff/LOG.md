@@ -2024,3 +2024,14 @@ CalendarCard新增共用MonthPicker并selectMonth只接受不同/字符串合法
 before2024-02-28原生ArrowRight后29日aria-pressed仍false，原JSON/截图/断言保持。新增四方向键1/7日步进，复用selectDate/原月外事件，默认滚动prevent仅未修饰方向键；nextTick复核active/generation/props.selectedDate与当前焦点，原source/body之外新焦点不抢，合法目目标按钮聚焦并nearest滚动，底栏余量98px。date按钮roving tabindex0仅选中日，仍原生button/aria-pressed，不伪加缺row的ARIA grid。1实际脚本回归核闰日跨月/周/修饰键/范围/新选择/释放，金额SSR/harness补真实Vue lifecycle/nextTick/refs绑定，56相关541全量两构建本轮执行。三宽24检查6GET全拦截，Right闰日0.01→跨三月空日→Left返回→Up/Down22↔29→Ctrl保护→从month Tab到选中日→1000/9999两端不越界，焦点每步未被底栏挡/无横滚，3截图检查。
 
 W3C WAI日期示例 https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/datepicker-dialog/ 本轮实际200核四方向移动及单一Tab入口；这里是非弹窗即时浏览，不冒称完整APG dialog实现。上一4570946普通Push成功，官方inspect完整remote/HEAD一致及私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续正式快照编号语义。
+
+## 2026-10-06 · 本聊天第一次实际压缩
+
+01a110e5第一次实际compact已识别及告知，恢复后STATE登记1；同聊天不归零。继续UUID大小写合成取证，尚未改业务源码。
+
+
+## 2026-10-06 · UUID统一身份与旧聊天关联
+
+原53项48通过5失败，实证同页/跨页大小写重复、旧version逃过、删除状态丢失复活及合法游标大小写拒读；fromRecordView统一小写，分页seen/previous/order/links用规范身份，原nextAfter透传服务器且比较规范身份。旧保存聊天uppercase recordIds合成回归0关联再次复现，正式recordsByIds及groupRecords规范UUID，普通demo编号仍区分，不改原存储或真实数据。最終87相关547完整/两构建通过。390px四异常拒读Stats/Bills中文保原31元与删除18元、禁止搜索导出，合法大写显式重读恢复/编辑取消；旧uppercase聊天当前编辑31元与删除18元刷新保持原存储，10检查25全拦截API5截图，真实0。累计86组839检查2080API336截图7JSON，截图抽检；用户人工验收/真机另待。
+
+原uuid-case-related.log最后2失败仅JSON克隆丢deletedAt:undefined造成测试比较不对称，改严格同一数组引用核原账本不替换，业务断言保持；旧聊天QA两次导航定位误用可见名，实际BottomNav aria-label=打开 AI 记账，改getByRole名后全部通过，原失败日志保留且不计通过。源ce16376普通Push已执行；本轮官方inspect完整remote/HEAD ce1637639b5c418535ae01dc758c2958be904105一致，私有/无Pages/0workflows/0deployments。前两次连接失败保留，当前网络已恢复，本节点随后保存上传。compact=1，原automation保持。

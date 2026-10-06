@@ -525,3 +525,7 @@ MonthPicker的aria-label直接在input上，首版QA误写带label的后代input
 ## 2026-10-06 · 选日小计错误fixture须匹配既有兼容合同
 
 首轮18相关17通过1失败，测试用0.291误认为汇总非法；实际sumCents复用legacyCents，对旧已存金额允许舍入到分（正式API新金额仍严格）。0.291合计1000000000.28不是本次业务缺陷。错误fixture改为不可数值化not-a-number，保原role=alert/不显示dd断言，不修改既有金额兼容逻辑迎合测试；18相关最终全通过，首轮log保留。
+
+## 2026-10-06 · UUID回归fixture和导航定位
+
+JSON复制会丢undefined属性，uuid-case-related.log两项深比较因此失败；拒读保整本应strictEqual原数组引用，不对称克隆不用于业务判定。新增旧聊天QA先后猜可见聊着记/聊喵记为accessible name超时，BottomNav实际aria-label=打开 AI 记账；读取真实模板后定位，保全部原关联/刷新/不改存储断言，失败材料独立保留。

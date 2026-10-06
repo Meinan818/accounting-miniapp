@@ -9,6 +9,90 @@ const id = '9abf606b-a0d5-4053-98fb-194505f3d10c'
 const value = { id, type: 'expense', amount: '0.29', date: '2026-10-03', time: '09:15', category: '餐饮', note: '合成午饭', version: 0 }
 const input = { id: 'item1', type: value.type, amount: value.amount, date: value.date, time: value.time, category: value.category, remark: value.note }
 
+for (const split of [false, true]) {
+  test(`同一UUID的大小写别名不能在${split ? '跨页' : '同页'}重复计入，拒读保完整旧账本`, async () => {
+    let bad = false
+    const scene = setup({ request: async (_method, path) => {
+      if (!bad) return { revision: '0', nextAfter: null, records: [{ record: value }] }
+      const upper = { record: { ...value, id: id.toUpperCase() } }
+      if (!split) return { revision: '1', nextAfter: null, records: [upper, { record: value }] }
+      return new URL(path, 'http://localhost').searchParams.has('after')
+        ? { revision: '1', nextAfter: null, records: [{ record: value }] }
+        : { revision: '1', nextAfter: id.toUpperCase(), records: [upper] }
+    } })
+    try {
+      assert.equal(await scene.store.refresh(), true)
+      const original = scene.store.allRecords.value
+      bad = true
+      assert.equal(await scene.store.refresh(true), false)
+      assert.match(scene.store.storageError.value, /重复/)
+      assert.strictEqual(scene.store.allRecords.value, original)
+    } finally { scene.dispose() }
+  })
+}
+
+for (const deleted of [false, true]) {
+  test(`UUID换大小写仍拒绝${deleted ? '删除终态丢失' : '单笔版本倒退'}`, async () => {
+    let changed = false
+    const scene = setup({ request: async () => ({ revision: changed ? '3' : '2', nextAfter: null,
+      records: [{ record: { ...value, id: changed ? id.toUpperCase() : id, version: changed && !deleted ? 1 : 2 },
+        deletedAt: deleted && !changed ? '2026-10-04T00:00:00Z' : null }] }) })
+    try {
+      assert.equal(await scene.store.refresh(), true)
+      const original = JSON.parse(JSON.stringify(scene.store.allRecords.value))
+      changed = true
+      assert.equal(await scene.store.refresh(true), false)
+      assert.match(scene.store.storageError.value, deleted ? /已删除账单.*不一致/ : /账单版本.*倒退/)
+      assert.deepEqual(JSON.parse(JSON.stringify(scene.store.allRecords.value)), original)
+    } finally { scene.dispose() }
+  })
+}
+
+test('旧已保存聊天的大小写UUID仍按原顺序关联当前编辑和删除事实，演示编号保持区分', async () => {
+  const secondId = 'aabf606b-a0d5-4053-98fb-194505f3d10c'
+  const scene = setup({ request: async () => ({ revision: '1', nextAfter: null,
+    records: [{ record: { ...value, amount: '0.31', version: 1 } },
+      { record: { ...value, id: secondId, version: 1 }, deletedAt: '2026-10-04T00:00:00Z' }] }) })
+  try {
+    assert.equal(await scene.store.refresh(), true)
+    const group = { id: 'saved-case', recordIds: [secondId.toUpperCase(), id.toUpperCase()], items: [{ id: 'item2' }, { id: 'item1' }] }
+    const linked = linkGroupRecords(group, scene.store.recordsByIds(group.recordIds))
+    assert.equal(linked.length, 2)
+    assert.equal(linked[0].id, secondId); assert.ok(linked[0].deletedAt); assert.equal(linked[0].draftItemId, 'item2')
+    assert.equal(linked[1].id, id); assert.equal(linked[1].amount, 0.31); assert.equal(linked[1].draftItemId, 'item1')
+    assert.equal(linkGroupRecords({ id: 'demo', recordIds: ['A', 'a'], items: [{ id: 'one' }, { id: 'two' }] },
+      [{ id: 'A', amount: 1 }, { id: 'a', amount: 2 }])[0].amount, 1)
+  } finally { scene.dispose() }
+})
+
+test('合法大小写回执和分页游标指向同笔，刷新及编辑保草稿关联', async () => {
+  let uppercase = true, revision = '1'
+  const secondId = 'aabf606b-a0d5-4053-98fb-194505f3d10c'
+  const reads = []
+  const scene = setup({ request: async (method, path, options) => {
+    if (method === 'PUT' && path.startsWith('/api/drafts/')) return { id: path.split('/').at(-1), version: 0, status: 'OPEN', records: options.body.records }
+    if (method === 'POST') return { records: [{ ...value, id: id.toUpperCase() }] }
+    if (method === 'PUT') return { ...value, ...options.body.record, id: id.toUpperCase(), version: 1 }
+    const after = new URL(path, 'http://localhost').searchParams.get('after')
+    reads.push(after)
+    return after ? { revision, nextAfter: null, records: [{ record: { ...value, id: secondId.toUpperCase() } }] }
+      : { revision, nextAfter: id, records: [{ record: { ...value, id: uppercase ? id.toUpperCase() : id } }] }
+  } })
+  try {
+    const saved = await scene.store.addRecords([input], { batchId: 'case-group' })
+    assert.equal(saved[0].id, id)
+    assert.deepEqual(reads, [null, id])
+    assert.equal(scene.store.batchRecords('case-group')[0].draftItemId, 'item1')
+    uppercase = false; revision = '2'
+    assert.equal(await scene.store.refresh(true), true)
+    const record = scene.store.batchRecords('case-group')[0]
+    assert.equal(record.id, id); assert.equal(record.source, 'chat'); assert.equal(record.draftItemId, 'item1')
+    const updated = await scene.store.updateRecord(id, { ...input, amount: '0.31' })
+    assert.equal(updated.id, id); assert.equal(updated.amount, 0.31)
+    assert.equal(updated.draftGroupId, 'case-group'); assert.equal(updated.draftItemId, 'item1')
+  } finally { scene.dispose() }
+})
+
 test('明细版本冲突读取最新账单供对照，旧编辑版本和输入仍由调用者保持', async () => {
   let amount = '0.29', version = 0
   const scene = setup({ request: async (method, path, options) => {
