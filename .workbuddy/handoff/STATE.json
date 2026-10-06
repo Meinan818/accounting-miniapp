@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "第二次实际压缩：日期CSV文件名待续交接",
+  "currentTask": "日期CSV文件名节点验证完成，准备保存上传",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "原生gpt-6.1-sol/high接续聊天先只读核本次success回执、target身份、源停止共享写入、HEAD=finalCommit及原automation字段保持，再完成日期CSV全量/demo剩余验证及节点提交上传。",
-  "nextStepReason": "日期CSV已70相关/server构建/三宽3下载通过，但未重跑全量或demo；第二次压缩源停止业务，仅本地待续commit不Push。",
+  "nextStep": "核首页日历选月后Tab能否进入日期区，先取证，有缺陷才最小修复。",
+  "nextStepReason": "补齐555完整前端与demo构建，既有70相关/server构建及三宽下载通过；继续实际键盘体验，避免重复已有方向键测试。",
   "pendingUserDecision": "依赖集中PENDING，普通开发自主推进，不主动提问。",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-06",
-  "observedCompactionCount": 2,
-  "compactionCountBasis": "本聊天01a110e5第二次实际compact已识别并告知，登记2；仅交接收尾，不再业务代码/测试/Push。源窗口2保留，目标成功核本次回执后才新窗口0。",
+  "observedCompactionCount": 0,
+  "compactionCountBasis": "新聊天01a1115a只读核本次success回执、target为自己、源停止写入、finalCommit b34001b与HEAD一致及automation仅target/updated_at变化后登记0；历史源2不计入。",
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
@@ -20,20 +20,18 @@
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a1115a-8c43-7073-963a-fbff7c4026cd",
-    "transferStatus": "同一automation原生update/view及TOML逐字段核，仅target_thread_id/updated_at改变；每小时ACTIVE/failed_runs_only/提示和其他字段保持，定时运行未另验",
+    "transferStatus": "本次接续原生view/TOML逐字段核：仅target_thread_id/updated_at变化，其他字段保持；未来定时执行未验证",
     "scheduledRunVerified": false,
     "lastHeartbeatReceivedAt": "2026-10-06T09:36:31.849Z",
     "executionEvidence": "本次原生heartbeat已实际收到并执行核心流程验证；scheduler终态尚未另核，不把配置当运行成功"
   },
-  "status": "handoff_awaiting_final_receipt",
+  "status": "in_progress",
   "developmentPaused": false,
   "pausedAt": "2026-10-04",
   "pauseReason": "",
   "lastVerifiedCodeCommit": "aa01b90f0caeb6524a53345ac5f9f5b8638c8dca",
   "lastPushedCommit": "aa01b90f0caeb6524a53345ac5f9f5b8638c8dca",
-  "unverifiedChanges": [
-    "Bills日期CSV文件名及原测试一条断言；70相关/server构建/3浏览器6合成GET3CSV通过，改动后全量及demo未验，节点未完成"
-  ],
+  "unverifiedChanges": [],
   "resumedAt": "2026-10-06",
   "validation": {
     "frontendTests": 555,
@@ -41,11 +39,16 @@
       "demo",
       "server"
     ],
-    "syntheticBrowserChecks": 9,
-    "syntheticApiRequests": 18,
-    "screenshots": 9,
+    "syntheticBrowserChecks": 3,
+    "syntheticApiRequests": 6,
+    "screenshots": 0,
+    "csvDownloads": 3,
     "realBusinessRequests": 0,
-    "realAiRequests": 0
+    "realAiRequests": 0,
+    "evidence": ".workbuddy/memory/conversation-lifecycle-2026-10-04/browser-date-csv-final-result.json",
+    "fullSuiteEvidence": ".workbuddy/memory/conversation-lifecycle-2026-10-04/date-csv-full-target.log",
+    "demoBuildEvidence": ".workbuddy/memory/conversation-lifecycle-2026-10-04/date-csv-build-demo-target.log",
+    "serverBuildEvidence": ".workbuddy/memory/conversation-lifecycle-2026-10-04/date-csv-build-server.log"
   },
   "localServices": {
     "checkedAt": "2026-10-06T13:11:16.678Z",
@@ -59,9 +62,9 @@
   "handoff": {
     "sourceThreadId": "01a110e5-7c85-70f3-9d53-3f0d6b118869",
     "targetThreadId": "01a1115a-8c43-7073-963a-fbff7c4026cd",
-    "status": "native_target_created_automation_verified_receipt_pending",
+    "status": "success_verified_by_target",
     "receiptPath": ".workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a110e5.json",
-    "sourceWillModifySharedFiles": true,
+    "sourceWillModifySharedFiles": false,
     "model": "gpt-6.1-sol",
     "thinking": "high",
     "finalReceiptRequired": true,
@@ -107,22 +110,5 @@
     "realAiRequests": 0,
     "countedInCumulative": false,
     "evidence": ".workbuddy/memory/conversation-lifecycle-2026-10-04/browser-core-flow-date-note-regression-result.json"
-  },
-  "pendingNodeValidation": {
-    "relatedTests": 70,
-    "builds": [
-      "server"
-    ],
-    "notRun": [
-      "full frontend suite after CSV change",
-      "demo build after CSV change"
-    ],
-    "browserChecks": 3,
-    "syntheticApiRequests": 6,
-    "screenshots": 0,
-    "csvDownloads": 3,
-    "realBusinessRequests": 0,
-    "realAiRequests": 0,
-    "evidence": ".workbuddy/memory/conversation-lifecycle-2026-10-04/browser-date-csv-final-result.json"
   }
 }

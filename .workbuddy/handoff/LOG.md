@@ -2085,3 +2085,11 @@ RecordInput @Size(max=200)与fromRecordView200，validateRecord/RecordForm120不
 本聊天第二次实际compact已识别/告知/STATE登记2；只交接收尾，本地待续commit，不Push不重跑。源01a110e5专用回执 pending，原生gpt-6.1-sol/high目标及同一automation迁移结果随后据实登记；success/目标身份/源停止共享写入/HEAD=finalCommit/automation字段核完前目标只读。实核8080 Java20304、5174 Vite15428监听，未重启，用户授权/数据/缓存/吉祥物边界保持。
 
 原生gpt-6.1-sol/high目标01a1115a-8c43-7073-963a-fbff7c4026cd创建成功；初始本地待续f0825f72ea1dc447c2a451d35508110569eacc7e。同一个automation update/view与落盘逐字段核仅target_thread_id/updated_at变，每小时ACTIVE/failed_runs_only/完整提示/其余字段保持，未新增自动化或宣称未来运行。最终成功回执在尾commit完成及worktree核后发布；sourceWillModifySharedFiles=false后源停止共享写入，目标只读接手条件保持。
+
+## 2026-10-06 · 新聊天01a1115a只读接手成功
+
+核本次01a110e5专用success、target为当前聊天、源停止共享写入、finalCommit b34001b与HEAD一致、同一automation落盘除target_thread_id/updated_at外逐字段保持，原生view已核。新窗口实际compact=0，不计源历史2。现场main工作区原干净；127.0.0.1:8080/5174监听20304/15428，未重启。先补日期CSV剩余全量/demo，不重复已验三宽下载，不触碰真实业务或AI。
+
+## 2026-10-06 · 日期CSV文件名节点补验完成
+
+selectedDate || selectedMonth仅变下载名，原日期筛选实际渲染测试增加完整日期断言。接手后npm test实际exit0：555通过/0失败/0跳过；npm run build实际exit0，旧70相关/server构建与三宽3检查6全拦截GET3CSV证据核读，不重复运行或累计。任务TEMP/TMP/npm cache用E盘，未安装依赖。官方只读inspect核私有Meinan818/accounting-miniapp、无Pages/0workflow/0deployment、远端aa01b90；待上传仅两笔交接和此完成节点，无真实数据/AI请求。下一项日历选月后的原生Tab入口。

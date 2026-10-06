@@ -1,3 +1,7 @@
+## 当前日期CSV节点（2026-10-06，新聊天01a1115a）
+
+本次专用success/源停止写入/finalCommit b34001b及原automation逐字段已核，新窗口实际compact=0。日期筛选导出文件名含完整日期，普通月份仍用年月；555完整前端/demo补验通过，既有70相关/server构建及三宽3检查6合成GET3CSV通过，不重复浏览器累计，真实业务/AI0。下一项核首页日历选月后的原生Tab日期入口；吉祥物仍仅方案。
+
 ## 本次原生接续已创建（2026-10-06，源compact=2）
 
 gpt-6.1-sol/high目标01a1115a-8c43-7073-963a-fbff7c4026cd已原生创建，初始本地待续f0825f72ea1dc447c2a451d35508110569eacc7e；同一个automation原生update/view及TOML逐字段核，仅target_thread_id/updated_at变化，每小时ACTIVE/failed_runs_only/完整提示及其他字段保持。最终success、finalCommit及源停止共享写入以本次01a110e5专用回执为准；目标核完前只读，核完新窗口0直接完成CSV剩余验证。源本次尾提交不Push、不重跑，回执发布后停止共享写入。
