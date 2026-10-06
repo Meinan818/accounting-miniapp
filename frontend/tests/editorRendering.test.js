@@ -77,10 +77,10 @@ function editorComponent(forms) {
     forms.push(values)
     return () => Vue.h('form', { class: 'record-form' }, values.form.value.amount)
   } }
-  const Editor = { props: { record: Object, saving: Boolean, error: String, allowDelete: Boolean, conflict: Object, draft: Boolean }, components: { RecordForm }, setup(props, context) {
+  const Editor = { props: { record: Object, saving: Boolean, progressLabel: String, error: String, allowDelete: Boolean, allowRepeat: Boolean, conflict: Object, draft: Boolean }, components: { RecordForm }, setup(props, context) {
     return evaluate(editorSource.script, { ...Vue, defineProps: () => props, defineEmits: () => context.emit,
       formatCurrency: amount => Number(amount).toFixed(2) },
-    'props, emit, dialog, confirmingDelete, deleteTrigger, cancelDeleteButton, startDelete, cancelDelete, close, formatCurrency')
+    'props, emit, dialog, recordForm, repeat, confirmingDelete, deleteTrigger, cancelDeleteButton, startDelete, cancelDelete, close, formatCurrency')
   }, render: new Function('Vue', compile(editorSource.template, { mode: 'function' }).code)(Vue) }
   Editor.render._rc = true
   return Editor
@@ -92,7 +92,7 @@ function mountEditor() {
   const Editor = editorComponent(forms), root = node('root')
   let view
   const app = renderer.createApp({ render: () => Vue.h(Editor, { ...props, ref: instance => { view = instance },
-    onSave: input => events.push(['save', input]), onClose: () => events.push(['close']), onDelete: () => events.push(['delete']) }) })
+    onSave: input => events.push(['save', input]), onClose: () => events.push(['close']), onDelete: () => events.push(['delete']), onRepeat: () => events.push(['repeat']) }) })
   app.mount(root)
   return { forms, events, props, get view() { return view }, root, dispose() { app.unmount(); globalThis.document = previousDocument } }
 }
@@ -161,7 +161,7 @@ test('冲突只阻止写入，不冒称请求中；原输入保留且采用新�
 
 test('真实表单冲突模板保留保存按钮名称和可关闭入口，实际请求中才显示进度及锁定取消', async () => {
   const Form = {
-    props: { record: Object, saving: Boolean, blocked: Boolean, error: String, submitLabel: String },
+    props: { record: Object, saving: Boolean, blocked: Boolean, error: String, submitLabel: String, progressLabel: String },
     components: { CategoryIcon: { render: () => Vue.h('span') } }, template: formSource.template,
     setup(props, context) {
       return evaluate(formSource.script, { ...Vue, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,
@@ -196,7 +196,31 @@ test('删除请求期间关闭/Escape不退出窗口，离页后nextTick不聚�
   } finally { if (state.view) state.dispose() }
 })
 
-function mountBills({ records = [{ ...original }], dateClock = {}, server = false, downloadFailure = false, clipboard = {}, template = false, realEditor = false } = {}) {
+test('再记一笔仅在原表单未修改时可用，忙碌/冲突/删除确认/草稿均不丢输入或发事件', async () => {
+  const state = mountEditor()
+  try {
+    state.props.allowRepeat = true; await Vue.nextTick()
+    assert.equal(state.view.repeat(), true)
+    assert.deepEqual(state.events, [['repeat']]); state.events.length = 0
+    const form = state.forms[0].form.value
+    form.amount = '12.34'
+    assert.equal(state.view.repeat(), false)
+    assert.equal(form.amount, '12.34')
+    form.amount = String(original.amount)
+    for (const blocked of ['saving', 'conflict', 'draft']) {
+      state.props[blocked] = blocked === 'conflict' ? {} : true
+      await Vue.nextTick()
+      assert.equal(state.view.repeat(), false)
+      state.props[blocked] = blocked === 'conflict' ? null : false
+      await Vue.nextTick()
+    }
+    await state.view.startDelete()
+    assert.equal(state.view.repeat(), false)
+    assert.deepEqual(state.events, [])
+  } finally { state.dispose() }
+})
+
+function mountBills({ records = [{ ...original }], navigate = async () => false, dateClock = {}, server = false, downloadFailure = false, clipboard = {}, template = false, realEditor = false } = {}) {
   const bills = source('views/Bills.vue'), calls = []
   const route = Vue.reactive({ query: { month: '2026-10' } })
   const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), downloads = []
@@ -209,12 +233,13 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
   const Bills = { components: { CategoryIcon: stub, ManualEntry: stub, NotebookBack: stub, MonthPicker: stub, ChevronLeft: stub, ChevronRight: stub, BottomNav: stub,
     RecordEditor: realEditor ? editorComponent(forms) : { props: ['record'], render() { return Vue.h('section', { class: 'synthetic-editor' }, this.record.remark) } } }, setup() {
     values = evaluate(bills.script, { ...Vue, dayjs, useRecordStore: () => store, useRoute: () => route,
+      useRouter: () => ({ push: async target => { calls.push(['navigate', target]); return navigate(target) } }),
       useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }),
       createBillFilterPath, useBillQuery, useLedgerReload, filterRecords, windowRecordGroups, getRecordTotals, centsText, CATEGORY_OPTIONS,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -223,6 +248,50 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
   app.mount(root); values.edit(original)
   return { values, calls, route, store, auth, downloads, focusTarget, root, forms, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
 }
+
+test('明细再记一笔只导航携带账单编号，旧身份/离页/删除/冲突/忙碌禁止操作', async () => {
+  const state = mountBills({ server: true })
+  try {
+    const before = JSON.stringify(state.store.records)
+    assert.equal(await state.values.repeatRecord(), true)
+    assert.deepEqual(state.calls, [['navigate', { path: '/add', query: { repeat: original.id } }]])
+    assert.equal(JSON.stringify(state.store.records), before)
+    state.calls.length = 0
+    state.values.saving.value = true; assert.equal(await state.values.repeatRecord(), false)
+    state.values.saving.value = false; state.values.editConflict.value = {}
+    assert.equal(await state.values.repeatRecord(), false)
+    state.values.editConflict.value = null; state.store.records = []
+    assert.equal(await state.values.repeatRecord(), false)
+    state.store.records = [{ ...original }]
+    state.auth.user = { id: 'other' }; state.auth.user = { id: 'synthetic-owner' }
+    assert.equal(await state.values.repeatRecord(), false)
+    assert.deepEqual(state.calls, [])
+  } finally { state.dispose() }
+  const disposed = mountBills(); disposed.dispose()
+  assert.equal(await disposed.values.repeatRecord(), false)
+  assert.deepEqual(disposed.calls, [])
+})
+
+test('再记导航等待锁住重复入口，失败保编辑窗口，身份切回后的迟到结果不回填', async () => {
+  for (const stale of [false, true]) {
+    let finish
+    const state = mountBills({ server: true, navigate: () => new Promise(resolve => { finish = resolve }) })
+    try {
+      const pending = state.values.repeatRecord()
+      assert.equal(state.values.saving.value, true); assert.equal(state.values.repeating.value, true)
+      assert.equal(await state.values.repeatRecord(), false); assert.equal(state.calls.length, 1)
+      if (stale) { state.auth.user = { id: 'other' }; state.auth.user = { id: 'synthetic-owner' } }
+      finish({ type: 'aborted' })
+      assert.equal(await pending, false)
+      assert.equal(state.values.editingRecord.value.id, original.id)
+      assert.equal(state.values.saveError.value, stale ? '' : '暂时未能打开新账单，原账单和编辑窗口已保留，请重试。')
+      if (!stale) {
+        assert.equal(state.values.saving.value, false); assert.equal(state.values.repeating.value, false)
+      }
+      assert.deepEqual(state.store.records, [original])
+    } finally { state.dispose() }
+  }
+})
 
 test('明细直接选择跨年月份保搜索收支，非法选择和编辑/旧身份不覆盖状态', () => {
   const state = mountBills({ server: true, dateClock: { now: () => '2026-10-06' } })

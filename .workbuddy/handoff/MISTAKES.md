@@ -487,3 +487,7 @@ card.scrollWidth包含已有右侧flower贴纸超出9px，不能把这个总数�
 ## 2026-10-06 · 同页切月漏传hash
 
 Stats旧月份导航只向router.replace传query，实际浏览器地址#month切月后消失；新增实际memory router回归33项32通过1失败复现。现显式保route.hash，原query/owner/generation/失败保护保持；506全量与三宽15检查通过。浏览器final和hash-before原失败日志/时间戳截图保留，不删除断言。新月份入口需核完整地址，不能只核query。
+
+## 2026-10-06 · 再记一笔harness事件与页面过渡
+
+组件emit成功返回true不代表harness events已订阅，repeat-record-related.log的缺事件失败由新增onRepeat监听修正，保原断言；父props更新须nextTick。浏览器地址已到Add但App过渡的旧dialog短暂留DOM，first strict两金额失败保留；应等旧dialog detached，再断言新页，不能first()掩盖或把元素数量判为业务失败。

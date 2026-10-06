@@ -8,6 +8,7 @@ import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '../src/utils/categories.js'
 import { validateRecord } from '../src/utils/ledger.js'
 import { useManualRecordSave } from '../src/utils/navigation.js'
+import { createRepeatRecord } from '../src/utils/repeatRecord.js'
 
 function source(file) {
   const content = readFileSync(new URL('../src/' + file, import.meta.url), 'utf8')
@@ -36,11 +37,11 @@ const renderer = Vue.createRenderer({
 const operation = { batchId: 'manual-original', record: { id: 'single', type: 'expense', amount: '0.29',
   date: '2026-10-03', time: '09:15', category: '餐饮', remark: '合成午饭' } }
 
-function mount(pending = false) {
+function mount(pending = false, query = {}) {
   const instances = [], add = source('views/Add.vue'), formSource = source('components/record/RecordForm.vue')
   const auth = Vue.reactive({ user: { id: 'synthetic-owner' } }), navigations = []
   let finish
-  const store = Vue.reactive({ storageError: '', manualRecovery: { operations: pending ? [operation] : [], error: '' },
+  const store = Vue.reactive({ records: [{ ...operation.record }], storageError: '', manualRecovery: { operations: pending ? [operation] : [], error: '' },
     cancelManualOperation: () => new Promise(done => { finish = () => { store.manualRecovery = { operations: [], error: '' }; done() } }),
     addRecord: async () => { throw Error('测试禁止自动入账') } })
   const RecordForm = { props: ['record', 'saving', 'error'], setup(props, context) {
@@ -52,14 +53,56 @@ function mount(pending = false) {
   const stub = { render: () => Vue.h('span') }
   const Add = { components: { RecordForm, NotebookBack: stub, RouterLink: stub }, setup() {
     return evaluate(add.script, { computed: Vue.computed, ref: Vue.ref, watch: Vue.watch, useAuthStore: () => auth,
+      useRoute: () => ({ query }), createRepeatRecord,
       useRouter: () => ({ push: async target => { navigations.push(target) } }),
       useRecordStore: () => store, createId: () => 'manual-new', SERVER_MODE: true, useManualRecordSave, miaoWriting: 'synthetic' },
-    'store, router, recovery, saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, ownerCurrent, miaoWriting, SERVER_MODE, manualForm: typeof manualForm === "undefined" ? null : manualForm')
+    'store, router, recovery, saving, error, savedRecord, save, cancelPending, restoredRecord, notice, repeatNotice, cancelling, ownerCurrent, miaoWriting, SERVER_MODE, manualForm: typeof manualForm === "undefined" ? null : manualForm')
   }, render: new Function('Vue', compile(add.template, { mode: 'function' }).code)(Vue) }
   Add.render._rc = true
   const root = node('root'), app = renderer.createApp(Add), view = app.mount(root)
   return { store, auth, navigations, view, root, instances, finish: () => finish(), dispose: () => app.unmount() }
 }
+
+test('复制收入/支出只保留四项内容，使用指定新日期时间且拒绝已删除和不合法内容', () => {
+  for (const [type, category] of [['income', '工资'], ['expense', '餐饮']]) {
+    const record = { ...operation.record, type, category, version: 3, draftGroupId: 'old', deletedAt: undefined }
+    const copy = createRepeatRecord(record, dayjs('2026-11-01T00:02:00'))
+    assert.equal(copy.date, '2026-11-01'); assert.equal(copy.time, '00:02')
+    assert.equal(copy.type, type); assert.equal(copy.category, category); assert.equal(copy.amount, 0.29)
+    for (const key of ['id', 'version', 'draftGroupId', 'deletedAt']) assert.equal(Object.hasOwn(copy, key), false)
+    assert.throws(() => createRepeatRecord({ ...record, deletedAt: '2026-10-06' }))
+    assert.throws(() => createRepeatRecord({ ...record, amount: '0' }))
+  }
+})
+
+test('再记一笔仅预填新草稿，当前日期时间与原内容进入表单，不带旧ID且不自动保存', async () => {
+  const query = Vue.reactive({ repeat: operation.record.id }), state = mount(false, query)
+  try {
+    const form = state.instances[0].form.value
+    assert.equal(form.amount, '0.29'); assert.equal(form.remark, operation.record.remark)
+    assert.equal(form.date, dayjs().format('YYYY-MM-DD'))
+    assert.equal(form.time, dayjs().format('HH:mm'))
+    assert.equal(state.view.restoredRecord.id, undefined)
+    assert.equal(state.view.savedRecord, null); assert.equal(state.navigations.length, 0)
+    assert.deepEqual(state.store.records[0], operation.record)
+    form.amount = '12.34'
+    state.store.records = []; query.repeat = 'another'
+    await Vue.nextTick()
+    assert.equal(form.amount, '12.34'); assert.equal(state.instances.length, 1)
+  } finally { state.dispose() }
+})
+
+test('缺失或重复参数的再记一笔不复制账单，不触发保存且仍允许手动填写', () => {
+  for (const repeat of ['', 'missing', ['single', 'single']]) {
+    const state = mount(false, { repeat })
+    try {
+      assert.equal(state.instances[0].form.value.amount, '')
+      assert.match(state.view.repeatNotice, /未复制内容、未入账/)
+      assert.deepEqual(state.view.restoredRecord, {})
+      assert.equal(state.navigations.length, 0)
+    } finally { state.dispose() }
+  }
+})
 
 test('实际Vue挂载：取消未入账操作后原日期/金额/备注进入表单初值', async () => {
   const state = mount(true)

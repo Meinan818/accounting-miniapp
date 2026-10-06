@@ -2,17 +2,17 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "第二次实际压缩原生交接收尾；最新业务8738736已验证上传，下一项再记一笔未开始",
+  "currentTask": "再记一笔手动草稿入口完成；核差异/远端后保存上传",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "评估并小步实现明细“再记一笔”手动草稿入口：从已有账单预填金额/收支/分类/备注，明确新日期，不自动入账；保护账号、原账单及未保存输入，复用Add和现有保存链。",
-  "nextStepReason": "跨年月浏览已更方便，常见重复开销可减少重新输入，同时保持确认后保存。",
+  "nextStep": "再记一笔取消/返回时保留来源明细的月份、搜索、收支与分类，复用已有安全筛选地址，不影响保存后定位新账单。",
+  "nextStepReason": "跨月复制后取消应回到原来看的账单，减少重新找月份和筛选。",
   "pendingUserDecision": "依赖集中PENDING，普通开发自主推进，不主动提问。",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-06",
-  "observedCompactionCount": 2,
-  "compactionCountBasis": "2026-10-06识别当前聊天01a10649-1a5f-77b0-bc50-e8334ce6e784第2次实际compact并已告知；停止业务代码和测试，仅做本地待续commit及原生接续。heartbeat、普通中断和旧摘要提及不计数。",
+  "observedCompactionCount": 0,
+  "compactionCountBasis": "新聊天01a11076-7f75-7fa0-9f7f-43a76168bd72只读核专用success回执、源停止共享写入、finalCommit d11dd10与HEAD一致、原automation仅目标/更新时间改变后登记新窗口0；源2保留历史。",
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
@@ -20,10 +20,10 @@
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a11076-7f75-7fa0-9f7f-43a76168bd72",
-    "transferStatus": "2026-10-06原生迁移及view/TOML逐字段核仅target_thread_id/updated_at改变；目标核本次success回执后续办",
+    "transferStatus": "接手逐字段核仅target_thread_id/updated_at变化且原生view成功；每小时ACTIVE/failed_runs_only保持，定时执行未验证",
     "scheduledRunVerified": false
   },
-  "status": "handoff_finalizing",
+  "status": "developing",
   "developmentPaused": false,
   "pausedAt": "2026-10-04",
   "pauseReason": "",
@@ -32,14 +32,14 @@
   "unverifiedChanges": [],
   "resumedAt": "2026-10-06",
   "validation": {
-    "frontendTests": 512,
-    "relatedTests": 94,
+    "frontendTests": 518,
+    "relatedTests": 55,
     "builds": [
       "demo",
       "server"
     ],
-    "syntheticBrowserChecks": 30,
-    "syntheticApiRequests": 30,
+    "syntheticBrowserChecks": 16,
+    "syntheticApiRequests": 38,
     "screenshots": 9,
     "realBusinessRequests": 0
   },
@@ -55,10 +55,31 @@
   "handoff": {
     "sourceThreadId": "01a10649-1a5f-77b0-bc50-e8334ce6e784",
     "targetThreadId": "01a11076-7f75-7fa0-9f7f-43a76168bd72",
-    "status": "finalizing",
+    "status": "success_verified",
     "receiptPath": ".workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a10649.json",
-    "sourceWillModifySharedFiles": true,
+    "sourceWillModifySharedFiles": false,
     "model": "gpt-6.1-sol",
     "thinking": "high"
+  },
+  "mascotExperiment": {
+    "status": "idea_only",
+    "requestedAt": "2026-10-06",
+    "initialScope": [
+      "昵称",
+      "保存反馈",
+      "月度一句话小结"
+    ],
+    "materialPolicy": "仅复用已审核吉祥物素材；追加生图仍先审核",
+    "excludedFromFirstVersion": [
+      "养成",
+      "积分",
+      "连续打卡",
+      "大量动画"
+    ],
+    "remindWhen": "基本开发完成后提醒一次讨论，以当前规划和可审阅验证结果判定，不依据历史数字虚报里程碑",
+    "reminded": false,
+    "implementationBoundary": "当前任务完成后如启动试开发须另开新分支；当前只记方案和提醒，未实施",
+    "automationId": "automation",
+    "reminderSaved": true
   }
 }

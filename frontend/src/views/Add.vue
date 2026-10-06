@@ -1,5 +1,5 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { computed, ref, watch } from 'vue'
 import NotebookBack from '@/components/common/NotebookBack.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { createId } from '@/utils/ledger'
 import { SERVER_MODE } from '@/api/mode'
 import { useManualRecordSave } from '@/utils/navigation'
+import { createRepeatRecord } from '@/utils/repeatRecord'
 const router = useRouter()
 const store = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
@@ -16,9 +17,22 @@ const batchId = createId('manual')
 const { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, ownerCurrent } = useManualRecordSave(
   store, router, batchId, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const recovery = computed(() => store.manualRecovery || { operations: [], error: '' })
+const repeatId = useRoute().query.repeat
+const repeatNotice = ref('')
+// Read once on entry: later refreshes or query changes cannot replace unsaved input.
+if (repeatId !== undefined && ownerCurrent.value) {
+  try {
+    if (typeof repeatId !== 'string' || !repeatId) throw new Error('请从明细选择一笔已有账单。')
+    restoredRecord.value = createRepeatRecord(store.records.find(record => record.id === repeatId))
+    repeatNotice.value = `已沿用原账单内容，日期为 ${restoredRecord.value.date}，时间为当前时间。请核对后保存，原账单不会改变。`
+  } catch {
+    repeatNotice.value = '原账单暂不可用，未复制内容、未入账。可以重新选择账单，或手动填写新账单。'
+  }
+}
 const manualForm = ref(null)
 watch(restoredRecord, record => {
   if (!ownerCurrent.value) return
+  repeatNotice.value = ''
   if (manualForm.value?.restorePristine(record) === false) notice.value = '草稿已取消且未入账，你当前填写的内容已保留。'
 }, { flush: 'post' })
 </script>
@@ -30,6 +44,7 @@ watch(restoredRecord, record => {
       <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
       <article v-if="ownerCurrent" class="manual-card">
         <p class="intro">直接填好就能保存，和聊天记账共用同一本账。</p>
+        <p v-if="repeatNotice" role="status" class="intro">{{ repeatNotice }}</p>
         <p v-if="store.storageError" role="alert" class="warning">{{ store.storageError }}</p>
         <p v-if="recovery.error" role="alert" class="warning">{{ recovery.error }}</p>
         <p v-if="notice" role="status" class="intro">{{ notice }}</p>

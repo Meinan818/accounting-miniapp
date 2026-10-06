@@ -2,8 +2,14 @@
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import RecordForm from './RecordForm.vue'
 import { formatCurrency } from '@/utils/format'
-const props = defineProps({ record: { type: Object, required: true }, saving: Boolean, error: String, allowDelete: Boolean, conflict: Object, draft: Boolean })
-const emit = defineEmits(['save', 'close', 'delete', 'recover'])
+const props = defineProps({ record: { type: Object, required: true }, saving: Boolean, progressLabel: String, error: String, allowDelete: Boolean, allowRepeat: Boolean, conflict: Object, draft: Boolean })
+const emit = defineEmits(['save', 'close', 'delete', 'recover', 'repeat'])
+const recordForm = ref(null)
+function repeat() {
+  if (!props.allowRepeat || props.draft || props.saving || props.conflict || confirmingDelete.value || !recordForm.value?.pristine) return false
+  emit('repeat')
+  return true
+}
 const dialog = ref(null)
 const confirmingDelete = ref(false)
 const deleteTrigger = ref(null)
@@ -21,7 +27,11 @@ function close() { if (props.saving) return; if (confirmingDelete.value) cancelD
     <div class="editor-heading"><h2 id="bill-editor-title">{{ confirmingDelete ? '删除这笔账单？' : draft ? '编辑这笔草稿' : '编辑这笔账单' }}</h2><button type="button" :aria-label="confirmingDelete ? '取消删除返回编辑' : '关闭修改窗口'" :disabled="saving" @click="close">×</button></div>
     <p v-if="!confirmingDelete" class="editor-note">{{ draft ? '先更新这笔草稿，确认整组后才会入账。' : '保存后，明细、首页和聊天查询都会使用最新数据。' }}</p>
     <aside v-if="conflict" class="delete-summary" role="alert"><template v-if="conflict.current"><p>这笔账单有新修改，请先对照当前内容：</p><strong>{{ conflict.current.type === 'income' ? '+' : '-' }}{{ formatCurrency(conflict.current.amount) }}</strong><p>{{ conflict.current.category }} · {{ conflict.current.remark || '无备注' }}</p><span>{{ conflict.current.date }} {{ conflict.current.time }}</span><p>你刚才填写的内容已保留，核对后可以继续编辑。</p><button class="conflict-recover" type="button" :disabled="saving" @click="emit('recover'); confirmingDelete = false">保留输入，按最新账单继续编辑</button></template><p v-else>这笔账单已不在当前账本中，不能再保存或删除。你填写的内容仍保留在窗口中，可先查看后关闭。</p></aside>
-    <RecordForm v-show="!confirmingDelete" :record="record" :saving="saving" :blocked="Boolean(conflict)" :error="error" :submit-label="draft ? '更新草稿' : '保存修改'" @save="emit('save', $event)" @cancel="close" />
+    <RecordForm ref="recordForm" v-show="!confirmingDelete" :record="record" :saving="saving" :progress-label="progressLabel" :blocked="Boolean(conflict)" :error="error" :submit-label="draft ? '更新草稿' : '保存修改'" @save="emit('save', $event)" @cancel="close" />
+    <section v-if="allowRepeat && !draft && !confirmingDelete" class="repeat-entry">
+      <button type="button" :disabled="saving || Boolean(conflict) || !recordForm?.pristine" @click="repeat">再记一笔</button>
+      <p>{{ recordForm?.pristine ? '用这笔内容填写新账单，日期改为今天，核对后再保存。' : '有未保存修改，请先保存或取消修改，再记新账单。' }}</p>
+    </section>
     <button v-if="allowDelete && !confirmingDelete" ref="deleteTrigger" class="delete-entry" type="button" :disabled="saving || Boolean(conflict)" @click="startDelete">删除这笔账单</button>
     <section v-if="confirmingDelete" class="delete-confirmation">
       <p class="delete-summary">{{ record.category }} · {{ record.remark || '无备注' }}<strong>{{ record.type === 'income' ? '+' : '-' }}{{ formatCurrency(record.amount) }}</strong><span>{{ record.date }} {{ record.time }}</span></p>
@@ -51,6 +61,10 @@ h2 { font-size: 19px; font-weight: 400; }
 .editor-heading button { min-width: 44px; min-height: 44px; border: 1px solid #d9c5a9; border-radius: 12px; background: #fffdf8; font-size: 24px; color: inherit; }
 .editor-note { font-size: 12px; margin: 10px 0 18px; line-height: 1.7; }
 .delete-entry { display: block; width: 100%; min-height: 44px; margin-top: 16px; padding: 8px; border-top: 1px dashed #dfcdbb; color: #a36a60; font-size: 13px; }
+.repeat-entry { margin-top: 16px; padding-top: 16px; border-top: 1px dashed #dfcdbb; }
+.repeat-entry button { width: 100%; min-height: 44px; padding: 8px; border: 1px solid #d9c5a9; border-radius: 12px; background: #fff5e7; font-size: 14px; }
+.repeat-entry p { margin-top: 8px; font-size: 12px; line-height: 1.7; }
+.repeat-entry button:focus-visible { outline: 2px solid #785746; outline-offset: 3px; }
 .delete-confirmation { margin-top: 18px; }
 .delete-summary { padding: 14px; border: 1px solid #e5ccba; border-radius: 14px 11px 15px 12px; background: #fff5e7; overflow-wrap: anywhere; font-size: 14px; line-height: 1.8; }
 .delete-summary strong { display: block; color: #aa665b; font-size: 22px; font-weight: 400; font-variant-numeric: tabular-nums; }

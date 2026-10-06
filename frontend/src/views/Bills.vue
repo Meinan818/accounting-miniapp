@@ -3,7 +3,7 @@ import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
 import { computed, nextTick, onScopeDispose, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import RecordEditor from '@/components/record/RecordEditor.vue'
 import { centsText, getRecordTotals } from '@/utils/money'
 import dayjs from 'dayjs'
@@ -34,9 +34,11 @@ const currentMonth = computed(() => today.value.slice(0, 7))
 
 // 3. 响应式数据
 const route = useRoute()
+const router = useRouter()
 const { selectedMonth, searchText, selectedType, selectedCategory, changeMonth: changeQueryMonth, selectMonth: selectQueryMonth } = useBillQuery(route)
 const editingRecord = ref(null)
 const saving = ref(false)
+const repeating = ref(false)
 const saveError = ref('')
 const editConflict = ref(null)
 const notice = ref('')
@@ -188,6 +190,21 @@ watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => rec
 function edit(record) {
   if (!active || !ownerCurrent.value || saving.value || editingRecord.value) return
   editingRecord.value = { ...record }; saveError.value = ''; editConflict.value = null; notice.value = ''
+}
+async function repeatRecord() {
+  if (!active || !ownerCurrent.value || saving.value || editConflict.value || !editingRecord.value) return false
+  const id = editingRecord.value.id
+  if (!recordStore.records.some(record => record.id === id && !record.deletedAt)) return false
+  saving.value = true; repeating.value = true; saveError.value = ''
+  try {
+    const failure = await router.push({ path: '/add', query: { repeat: id } })
+    if (!active || !ownerCurrent.value) return false
+    if (failure) throw new Error('暂时未能打开新账单，原账单和编辑窗口已保留，请重试。')
+    return true
+  } catch (failure) {
+    if (active && ownerCurrent.value) saveError.value = failure.message
+    return false
+  } finally { if (active && ownerCurrent.value) { saving.value = false; repeating.value = false } }
 }
 function handleEditFailure(failure) {
   if (!active || !ownerCurrent.value) return
@@ -413,7 +430,7 @@ function getSign(record) {
     </main>
 
     <main v-else class="bills-content"><NotebookBack /><h1 class="bills-title">账单明细</h1><p class="bills-storage-note" role="status">登录身份已变化，请重新打开账单明细。</p></main>
-    <RecordEditor v-if="editingRecord && ownerCurrent" :key="editingRecord.id" :record="editingRecord" :saving="saving" :error="saveError" :conflict="editConflict" allow-delete @recover="adoptLatestVersion" @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
+    <RecordEditor v-if="editingRecord && ownerCurrent" :key="editingRecord.id" :record="editingRecord" :saving="saving" :progress-label="repeating ? '正在打开新账单…' : ''" :error="saveError" :conflict="editConflict" allow-delete allow-repeat @repeat="repeatRecord" @recover="adoptLatestVersion" @delete="deleteEdit" @save="saveEdit" @close="editingRecord = null" />
     <BottomNav active="detail" />
   </div>
 </template>

@@ -5,7 +5,7 @@ import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { validateRecord } from '@/utils/ledger'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import { SERVER_MODE } from '@/api/mode'
-const props = defineProps({ record: { type: Object, default: () => ({}) }, saving: Boolean, blocked: Boolean, error: { type: String, default: '' }, submitLabel: { type: String, default: '保存账单' } })
+const props = defineProps({ record: { type: Object, default: () => ({}) }, saving: Boolean, blocked: Boolean, error: { type: String, default: '' }, submitLabel: { type: String, default: '保存账单' }, progressLabel: String })
 const emit = defineEmits(['save', 'cancel'])
 const unknownTime = SERVER_MODE && Boolean(props.record.id) && !props.record.time
 const form = ref({ type: props.record.type || 'expense', amount: props.record.amount != null ? String(props.record.amount) : '',
@@ -22,16 +22,17 @@ watch(() => localError.value || props.error, async (message, previous, onCleanup
     errorElement.value.scrollIntoView({ block: 'nearest' })
   }
 }, { flush: 'post' })
-let initialForm = JSON.stringify(form.value)
+const initialForm = ref(JSON.stringify(form.value))
+const pristine = computed(() => JSON.stringify(form.value) === initialForm.value)
 function restorePristine(record) {
-  if (JSON.stringify(form.value) !== initialForm) return false
+  if (!pristine.value) return false
   form.value = { type: record.type || 'expense', amount: record.amount != null ? String(record.amount) : '',
     category: record.category || '餐饮', date: record.date || dayjs().format('YYYY-MM-DD'),
     time: record.time || '', remark: record.remark || '' }
-  initialForm = JSON.stringify(form.value); localError.value = ''
+  initialForm.value = JSON.stringify(form.value); localError.value = ''
   return true
 }
-defineExpose({ restorePristine })
+defineExpose({ restorePristine, pristine })
 const categories = computed(() => CATEGORY_OPTIONS[form.value.type])
 function changeType(type) { form.value.type = type; if (!categories.value.some(c => c.label === form.value.category)) form.value.category = categories.value[0].label }
 function save() {
@@ -61,7 +62,7 @@ function save() {
       <label>备注<input v-model="form.remark" aria-label="备注" type="text" maxlength="120" placeholder="这笔用在了哪里？" /></label>
     </fieldset>
     <p v-if="localError || error" ref="errorElement" class="form-error" role="alert">{{ localError || error }}</p>
-    <div class="form-actions"><button type="button" :disabled="saving" @click="emit('cancel')">取消</button><button class="primary" type="submit" :disabled="saving || blocked">{{ saving ? '正在保存…' : submitLabel }}</button></div>
+    <div class="form-actions"><button type="button" :disabled="saving" @click="emit('cancel')">取消</button><button class="primary" type="submit" :disabled="saving || blocked">{{ saving ? (progressLabel || '正在保存…') : submitLabel }}</button></div>
   </form>
 </template>
 <style scoped>
