@@ -41,6 +41,7 @@ const editingRecord = ref(null)
 const saving = ref(false)
 const resettingFilters = ref(false)
 const pendingMonth = ref('')
+const savedEditMonth = ref('')
 const repeating = ref(false)
 const saveError = ref('')
 const editConflict = ref(null)
@@ -230,6 +231,7 @@ watch([highlightedId, selectedMonth, () => monthRecords.value.some(record => rec
 
 function edit(record) {
   if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value) return
+  savedEditMonth.value = ''
   editingRecord.value = { ...record }; saveError.value = ''; editConflict.value = null; notice.value = ''
 }
 async function repeatRecord() {
@@ -262,13 +264,34 @@ function adoptLatestVersion() {
 async function saveEdit(input) {
   if (!active || !ownerCurrent.value || saving.value || editConflict.value || !editingRecord.value) return
   saving.value = true; saveError.value = ''
+  let saved = false
   try {
     const updated = await recordStore.updateRecord(editingRecord.value.id, input, { version: editingRecord.value.version })
     if (!active || !ownerCurrent.value) return
     selectedMonth.value = updated.date.slice(0, 7); editingRecord.value = null; notice.value = '已保存修改：首页、明细和聊天查询已同步。'
+    savedEditMonth.value = route.query.month === selectedMonth.value ? '' : selectedMonth.value
+    saved = true
   }
   catch (e) { if (active && ownerCurrent.value) handleEditFailure(e) }
   finally { if (active && ownerCurrent.value) saving.value = false }
+  if (saved && active && ownerCurrent.value && savedEditMonth.value) await syncSavedEditMonth()
+}
+async function syncSavedEditMonth() {
+  if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value || !savedEditMonth.value) return false
+  const month = savedEditMonth.value, query = { ...route.query, month }
+  if (searchText.value) query.q = searchText.value
+  else delete query.q
+  if (selectedType.value === 'all') delete query.type
+  else query.type = selectedType.value
+  if (selectedCategory.value) query.category = selectedCategory.value
+  else delete query.category
+  const completed = await replaceFilterAddress(query, { errorMessage: '修改已保存，月份地址暂时未能同步。请重试同步月份，无需再次保存。' })
+  if (!active || !ownerCurrent.value || month !== savedEditMonth.value) return false
+  if (completed) {
+    savedEditMonth.value = ''
+    notice.value = '已保存修改：首页、明细和聊天查询已同步。'
+  }
+  return completed
 }
 
 async function deleteEdit() {
@@ -360,6 +383,7 @@ function getSign(record) {
       <ManualEntry class="bills-manual-link" />
       <div v-if="recordStore.storageError || reloadError" class="bills-alert" role="alert" :aria-busy="reloading"><p>{{ recordStore.storageError || reloadError }}</p><button type="button" :disabled="reloading" @click="reloadRecords(true)">{{ reloading ? '正在读取…' : '重新读取账单' }}</button></div>
       <p v-if="notice" ref="noticeElement" class="bills-notice" role="status" tabindex="-1">{{ notice }}</p>
+      <div v-if="savedEditMonth" class="bills-alert"><button type="button" :disabled="saving || resettingFilters || Boolean(editingRecord)" :aria-busy="resettingFilters" @click="syncSavedEditMonth">{{ resettingFilters ? '正在同步月份…' : '同步已保存账单的月份' }}</button></div>
 
       <section class="bills-summary" aria-label="月度账单汇总">
         <div class="bills-month">
@@ -408,7 +432,7 @@ function getSign(record) {
         <div class="bills-filter-heading"><span>挑一张分类贴纸</span><div class="bills-type-tabs" aria-label="筛选收支"><button v-for="type in ['all','expense','income']" :key="type" type="button" :disabled="resettingFilters" :aria-pressed="selectedType === type" :class="{ selected:selectedType === type }" @click="chooseType(type)">{{ type === 'all' ? '全部' : type === 'income' ? '收入' : '支出' }}</button></div></div>
         <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :disabled="resettingFilters" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
       </section>
-      <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="resetFilterAddress">{{ resettingFilters ? (pendingMonth ? '正在切月…' : '正在重置…') : '查看全部' }}</button></div>
+      <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="resetFilterAddress">{{ resettingFilters ? (pendingMonth || savedEditMonth ? '请稍候…' : '正在重置…') : '查看全部' }}</button></div>
       <div class="bills-export">
         <button type="button" :disabled="exportUnavailable" @click="exportBills">{{ filtering ? '导出筛选账单' : '导出本月账单' }} · CSV</button>
         <button type="button" :disabled="copyLinkUnavailable" :aria-busy="copyingLink" @click="copyFilterLink">{{ copyingLink ? '正在复制…' : '复制当前筛选链接' }}</button>

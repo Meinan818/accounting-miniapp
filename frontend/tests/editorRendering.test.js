@@ -244,7 +244,7 @@ function mountBills({ records = [{ ...original }], navigate = async () => false,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, dayjs, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -493,6 +493,56 @@ test('仍在明细页保存成功切到新日期月份，失败冲突可采用�
     assert.equal(state.values.saving.value, false)
     assert.match(state.values.notice.value, /已保存修改/)
   } finally { state.dispose() }
+})
+
+test('跨月编辑保存成功同步新月份地址，保当前筛选/hash/其他参数，只有一次原版本写入', async () => {
+  const state = mountBills()
+  try {
+    state.route.query = { month: '2026-10', q: '原关键词', type: 'expense', category: '餐饮', extra: 'keep' }
+    state.route.hash = '#edit'; state.values.searchText.value = '当前关键词'
+    const pending = state.values.saveEdit({ amount: 12.34 })
+    state.finish({ ...original, date: '2026-11-02', amount: 12.34 }); await pending
+    assert.deepEqual(state.calls.map(call => call[0]), ['update', 'replace'])
+    assert.deepEqual(state.calls[0].at(-1), { version: original.version })
+    assert.deepEqual(state.calls[1][1], { path: '/bills', query: { month: '2026-11', q: '当前关键词', type: 'expense', category: '餐饮', extra: 'keep' }, hash: '#edit' })
+    assert.equal(state.values.savedEditMonth.value, ''); assert.equal(state.values.editingRecord.value, null)
+    assert.equal(state.values.selectedMonth.value, '2026-11'); assert.match(state.values.notice.value, /已保存修改/)
+  } finally { state.dispose() }
+})
+
+test('跨月编辑写入成功后导航失败，明确已保存并保新月；显式重试只定位不重复写入', async () => {
+  let failing = true
+  const state = mountBills({ replace: async () => { if (failing) return { type: 4 } } })
+  try {
+    const pending = state.values.saveEdit({ amount: 12.34 })
+    state.finish({ ...original, date: '2026-11-02', amount: 12.34 }); await pending
+    assert.equal(state.values.editingRecord.value, null); assert.equal(state.values.saving.value, false)
+    assert.equal(state.values.selectedMonth.value, '2026-11'); assert.equal(state.values.savedEditMonth.value, '2026-11')
+    assert.match(state.values.notice.value, /修改已保存.*无需再次保存/)
+    assert.equal(state.route.query.month, '2026-10')
+    await state.values.saveEdit({ amount: 99 })
+    failing = false; assert.equal(await state.values.syncSavedEditMonth(), true)
+    assert.equal(state.route.query.month, '2026-11'); assert.equal(state.values.savedEditMonth.value, '')
+    assert.deepEqual(state.calls.map(call => call[0]), ['update', 'replace', 'replace'])
+    assert.match(state.values.notice.value, /已保存修改/)
+  } finally { state.dispose() }
+})
+
+test('跨月编辑保存后定位等待中身份变化或离页不清新输入/发布旧成功提示/重写账单', async () => {
+  for (const change of [state => state.dispose(), state => { state.auth.user = { id: 'other-owner' } }]) {
+    let finish
+    const state = mountBills({ server: true, replace: () => new Promise(resolve => { finish = resolve }) })
+    try {
+      const pending = state.values.saveEdit({ amount: 12.34 })
+      state.finish({ ...original, date: '2026-11-02', amount: 12.34 })
+      for (let i = 0; i < 4 && !finish; i++) await Vue.nextTick()
+      assert(finish); change(state); state.values.searchText.value = '新输入'
+      finish({ type: 8 }); await pending
+      assert.equal(state.values.searchText.value, '新输入'); assert.equal(state.values.notice.value, '')
+      assert.deepEqual(state.calls.map(call => call[0]), ['update', 'replace'])
+      assert.equal(await state.values.syncSavedEditMonth(), false)
+    } finally { state.dispose() }
+  }
 })
 
 test('仍在明细页删除错误保留编辑且可重试，成功聚焦提示；离页旧入口不能再次发送', async () => {
