@@ -1855,3 +1855,6 @@ README/开发指南/后端说明修正入口旧248与GUI未验结论，保留历
 本次专用回执：.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a10649.json。默认原生gpt-6.1-sol/high及迁移同一个automation；实际结果以本回执为准。目标先只读核success、target为自己、sourceWillModifySharedFiles=false、finalCommit存在且HEAD一致、自动化目标及其余字段保持，才登记新窗口count=0并直接续办；未成功只读等待，禁止共享写入、重跑、催源或复用旧回执。原自动化每小时ACTIVE/failed_runs_only，配置不等于定时执行成功。源计数2保留，成功回执后停止共享写入。
 
 本次只读再核：8080/5174分别Java20304/Vite15428仅监听127.0.0.1，launcher25808仍在，MySQL84 Running/MySQL80 Stopped；未重启、清理或修改账号/账本/照片。源码与旧验证材料保持；旧回本月QA定位反映旧DOM，当前月份选择QA使用browser-month-picker-qa.cjs，不能凭旧定位失败判业务缺陷。Git连接重置和hash丢失等原失败留LOG/原材料，不算通过。以下所有旧compact/暂停/服务/下一项仅对应历史节点。
+
+
+原生接续目标01a11076-7f75-7fa0-9f7f-43a76168bd72（gpt-6.1-sol/high）已创建；原automation迁移并view/TOML逐字段核仅目标/更新时间改变，其他字段保持。源最终commit后发布本次专用success回执，发布前目标只读。源计数2、不Push、不重跑；下一项再记一笔未开始。
