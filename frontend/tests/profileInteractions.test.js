@@ -7,10 +7,10 @@ import dayjs from 'dayjs'
 import { createProfileApi } from '../src/api/profile.js'
 import { DEFAULT_PROFILE, readLocalProfile, saveLocalProfile } from '../src/utils/localProfile.js'
 import { getMonthStatistics } from '../src/utils/statistics.js'
-import { getRecentDays } from '../src/utils/journal.js'
+import { filterRecords, getRecentDays } from '../src/utils/journal.js'
 import { centsText } from '../src/utils/money.js'
 import { useLocalDay } from '../src/utils/calendar.js'
-import { useLedgerReload } from '../src/utils/navigation.js'
+import { useBillQuery, useLedgerReload } from '../src/utils/navigation.js'
 import { createSSRApp } from 'vue'
 import { renderToString } from '@vue/server-renderer'
 
@@ -294,6 +294,27 @@ test('个人页跨月同步月份与7天足迹，保留编辑输入且不读取�
   } finally { env?.dispose(); globalThis.Date = OriginalDate }
   assert.equal(events.size, 0)
   assert.equal(cleared, true)
+})
+
+test('个人页实际七天爪印日期链接精确匹配，排除他日备注提及日期并保跨月空日', async () => {
+  const records = [
+    { id: 'day', type: 'expense', amount: 32, date: '2026-10-04', category: '餐饮', remark: '当天小票' },
+    { id: 'mention', type: 'expense', amount: 5, date: '2026-10-05', category: '餐饮', remark: '备注提及2026-10-04但非当天' },
+  ]
+  const env = scene({ records, dateClock: { now: () => '2026-10-06' } }), scope = effectScope(), targets = []
+  const content = readFileSync(new URL('../src/views/Profile.vue', import.meta.url), 'utf8')
+  const template = content.match(/<section[^>]*class="profile-footprints"[\s\S]*?<\/section>/)[0]
+  try {
+    const app = createSSRApp({ template, setup: () => ({ recentDays: env.view.recentDays, error: '', recordedDays: 2 }),
+      components: { JournalSticker: { template: '<i />' }, RouterLink: { props: ['to'], template: '<a><slot /></a>', setup(props) { targets.push(props.to) } } } })
+    assert.match(await renderToString(app), /查看2026-10-04的1笔有效账单/)
+    const target = targets.find(target => target.query.date === '2026-10-04' || target.query.q === '2026-10-04')
+    const query = scope.run(() => useBillQuery(reactive({ query: target.query })))
+    assert.deepEqual(filterRecords(records, { query: query.searchText.value, date: query.selectedDate.value }).map(record => record.id), ['day'])
+    assert.deepEqual(target.query, { month: '2026-10', date: '2026-10-04' })
+    assert.deepEqual(targets.find(target => target.query.date === '2026-09-30')?.query, { month: '2026-09', date: '2026-09-30' })
+    assert.equal(env.requests.length, 0); assert.equal(records[1].remark, '备注提及2026-10-04但非当天')
+  } finally { scope.stop(); env.dispose() }
 })
 
 test('个人页退出重复点击只发一次合成认证操作', async () => {

@@ -2101,3 +2101,8 @@ selectedDate || selectedMonth仅变下载名，原日期筛选实际渲染测试
 ## 2026-10-06 · 统计零笔选日明细与原生Tab可见性
 
 首页节点390ae3d普通Push/官方inspect完整HEAD远端一致已核，私有无Pages0workflow0deployment。Stats实际模板先补空日入口与对应日期断言，before1项失败保持，最小将pointedDay.count条件改pointedDay，零笔给真实打开日期明细补记文案，有笔仍原文案。76相关/555全量/demo与server通过，三宽9浏览器24GET3图基本链通过。原生Tab从最后日期到链接补几何取证，320px top787.5/bottom831.5、navTop758被完全遮挡，keyboard原失败保持；为该链接增加12px及底栏高度滚动余量，修改后555全量/两构建实际exit0，visible同链9检查24合成GET3截图通过，320px701.5–745.5、390px702.4375–746.4375、1440px701.5–745.5均在758上方。截图320抽检，图表日期/收入日1笔/空日0笔/手动日期及取消保持，真实业务/AI0；只计最终一组，累计97组968检查2353API381截图7JSON。继续Profile七天爪印精确日期，源码仍q=day.date已核，先复现。
+
+## 2026-10-06 · Profile七天爪印精确日期
+
+Stats f8731bd普通Git push挂起300秒超时，原stats-empty-day-push.log保持；只停止已核本次进程树时余下remote helper仍存在，后二次终止前PID已自然退出，安全guard拒绝避免误杀。read-only inspect远端仍390ae3d，官方github-sync.mjs逐对象同SHA/force:false同步f8731bdd984a3663da2ca27b141d369702357714核成功，私有无Pages0workflow0deployment，不把挂起当上传成功。
+Profile footprint模板仍q=day.date；新增真实模板SSR+useBillQuery/filterRecords回归，before1项失败actual[day,mention]与expected[day]证实他日备注误混入。仅q键改date，普通文本搜索/数据不改；测试核跨月Sep30空日路径。81相关/556全量/demo和server构建exit0，三宽9检查48全拦截GET3截图：首页日历以外七天爪印原生Enter→10月4日仅32元排他日5元备注，整月45保持，刷新保date/noq；10月3日0笔排他日备注8元，手动预填取消保日期；9月30跨月0笔，0业务写。320截图抽检，真实业务/AI0；累计98组977检查2401API384截图7JSON，历史CSV另计。下一项原生Tab爪印焦点取证。
