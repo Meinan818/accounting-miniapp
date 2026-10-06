@@ -507,3 +507,7 @@ useBillQuery当前是来源URL到refs的单向初始化/监听，重置只改ref
 ## 2026-10-06 · 月份导航harness契约
 
 读快照503在remoteLedger.refresh中返回false，路由守卫不把它作为导航取消；必须按实际alert/重读测读取错误，不能假设会出现导航取消文案。原failure-final timeout保留，read-error结果另存。首次混合根路径编辑与frontend测试工作目录导致ENOENT（未完成编辑），first87项84通过3失败是harness未引入isValidMonth/异步契约；根目录独立执行编辑后再测86/87的剩余Promise失败是第二处旧同步断言漏await。正确await后90相关/531全量通过，保原3日志，不删除断言、不改业务迎合。今后文件编辑与frontend命令分调用并显式工作目录。
+
+## 2026-10-06 · 筛选小计测试替身与尚未定位的浏览器失败
+
+离线模板v-model需Document/ShadowRoot，首次错误被finally unmount掩盖；独立诊断证实harness缺全局，只补替身及还原全局，业务未迎合测试，70相关最终通过。原related/diagnostic失败日志保持。浏览器region不可见超时根因未确认，0检查通过，不冒称业务缺陷或验证完成，交目标取证。536全量与两构建仅证明相应范围。本次源compact=2，不重跑。

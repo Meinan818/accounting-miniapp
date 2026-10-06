@@ -244,7 +244,7 @@ function mountBills({ records = [{ ...original }], navigate = async () => false,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, filteredTotals, needsWideFilteredAmounts, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, dayjs, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -687,6 +687,48 @@ test('明细读取错误/重读/保存/编辑/空结果时禁用导出，离页�
   const disposed = mountBills()
   disposed.values.editingRecord.value = null; disposed.dispose(); disposed.values.exportBills()
   assert.equal(disposed.downloads.length, 0)
+})
+
+test('筛选小计用完整65笔而非60笔显示窗口，收支同名分类隔离、空结果和取消筛选均正确渲染', async () => {
+  const previous = { document: globalThis.document, Document: globalThis.Document, ShadowRoot: globalThis.ShadowRoot }
+  globalThis.document = { activeElement: null, body: { style: {} }, addEventListener() {}, removeEventListener() {} }
+  globalThis.Document = class {}; globalThis.ShadowRoot = class {}
+  const records = Array.from({ length: 65 }, (_, i) => ({ ...original, id: 'expense-' + i }))
+  records.push({ ...original, id: 'income', type: 'income', amount: '1.00' })
+  const state = mountBills({ records, template: true })
+  const find = (node, label) => node.props?.['aria-label'] === label ? node : node.children.map(child => find(child, label)).find(Boolean)
+  const text = node => (node.text || '') + node.children.map(text).join('')
+  try {
+    state.values.editingRecord.value = null
+    state.values.chooseCategory({ type: 'expense', category: '餐饮' }); await Vue.nextTick()
+    assert.equal(state.values.listedRecords.value.length, 65); assert.equal(state.values.displayedCount.value, 60)
+    assert.equal(state.values.filteredTotals.value.expenseCents, 1885); assert.equal(state.values.filteredTotals.value.incomeCents, 0)
+    assert.equal(state.values.monthTotals.value.incomeCents, 100)
+    assert.match(text(find(state.root, '筛选结果汇总')), /筛选收入¥0.00筛选支出¥18.85/)
+    state.values.chooseCategory({ type: 'income', category: '餐饮' }); await Vue.nextTick()
+    assert.match(text(find(state.root, '筛选结果汇总')), /筛选收入¥1.00筛选支出¥0.00/)
+    state.values.searchText.value = '不存在'; await Vue.nextTick()
+    assert.equal(state.values.listedRecords.value.length, 0)
+    assert.match(text(find(state.root, '筛选结果汇总')), /筛选收入¥0.00筛选支出¥0.00/)
+    await state.values.resetFilters(); await Vue.nextTick()
+    assert.equal(find(state.root, '筛选结果汇总'), undefined)
+    assert.equal(state.values.monthTotals.value.expenseCents, 1885); assert.deepEqual(state.calls, [])
+  } finally { state.dispose(); Object.assign(globalThis, previous) }
+})
+
+test('筛选大额小计按整数分累加，超过单笔上限仍准确并使用宽金额排版', async () => {
+  const records = [0, 1].map(i => ({ ...original, id: 'large-' + i, amount: '999999999.99' }))
+  const state = mountBills({ records, template: true })
+  const find = node => node.props?.['aria-label'] === '筛选结果汇总' ? node : node.children.map(find).find(Boolean)
+  const text = node => (node.text || '') + node.children.map(text).join('')
+  try {
+    state.values.editingRecord.value = null; state.values.chooseType('expense'); await Vue.nextTick()
+    assert.equal(state.values.filteredTotals.value.error, '')
+    assert.equal(state.values.filteredTotals.value.expenseCents, 199999999998)
+    assert.equal(state.values.needsWideFilteredAmounts.value, true)
+    assert.match(text(find(state.root)), /¥1999999999.98/)
+    assert.deepEqual(state.calls, []); assert.deepEqual(records.map(record => record.amount), ['999999999.99', '999999999.99'])
+  } finally { state.dispose() }
 })
 
 test('CSV字段错误与下载失败明确提示未完成，不能出现已保存文件的回执', () => {

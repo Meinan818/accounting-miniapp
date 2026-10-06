@@ -107,6 +107,8 @@ const monthTotals = computed(() => getRecordTotals(monthRecords.value))
 const needsWideAmounts = computed(() => !monthTotals.value.error && [monthTotals.value.incomeCents, monthTotals.value.expenseCents, monthTotals.value.balanceCents].some(value => centsText(value).length > 7))
 
 const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
+const filteredTotals = computed(() => getRecordTotals(listedRecords.value))
+const needsWideFilteredAmounts = computed(() => !filteredTotals.value.error && [filteredTotals.value.incomeCents, filteredTotals.value.expenseCents].some(value => centsText(value).length > 7))
 const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
 const exportUnavailable = computed(() => !active || !ownerCurrent.value || Boolean(recordStore.storageError || reloadError.value) ||
   reloading.value || saving.value || resettingFilters.value || Boolean(editingRecord.value) || !listedRecords.value.length)
@@ -433,6 +435,14 @@ function getSign(record) {
         <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :disabled="resettingFilters" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
       </section>
       <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="resetFilterAddress">{{ resettingFilters ? (pendingMonth || savedEditMonth ? '请稍候…' : '正在重置…') : '查看全部' }}</button></div>
+      <section v-if="filtering && !recordStore.storageError" class="bills-filter-summary" aria-label="筛选结果汇总">
+        <p class="bills-filter-summary-heading">当前筛选小计<span>包含未展开的小票</span></p>
+        <p v-if="filteredTotals.error" class="bills-storage-note" role="alert">{{ filteredTotals.error }}</p>
+        <dl v-else class="bills-filter-totals" :class="{ 'bills-filter-totals-wide': needsWideFilteredAmounts }">
+          <div><dt>筛选收入</dt><dd class="bills-income">¥{{ centsText(filteredTotals.incomeCents) }}</dd></div>
+          <div><dt>筛选支出</dt><dd class="bills-expense">¥{{ centsText(filteredTotals.expenseCents) }}</dd></div>
+        </dl>
+      </section>
       <div class="bills-export">
         <button type="button" :disabled="exportUnavailable" @click="exportBills">{{ filtering ? '导出筛选账单' : '导出本月账单' }} · CSV</button>
         <button type="button" :disabled="copyLinkUnavailable" :aria-busy="copyingLink" @click="copyFilterLink">{{ copyingLink ? '正在复制…' : '复制当前筛选链接' }}</button>
@@ -535,6 +545,12 @@ function getSign(record) {
 .bills-filter-result .bills-search-feedback { margin:0; color:#815b46; }
 .bills-filter-result .bills-search-feedback span { color:#a18470; }
 .bills-filter-result button { flex-shrink:0; min-height:44px; padding:6px 10px; border:1px solid #dfbfa7; border-radius:12px; background:#fffaf0; font-size:12px; }
+.bills-filter-summary { margin-top:9px; padding:12px; border:1px dashed var(--zz-home-line); border-radius:14px; background:var(--zz-home-paper); }
+.bills-filter-summary-heading { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 8px; color:var(--zz-home-ink-soft); font-size:11px; }
+.bills-filter-summary-heading span { font-size:10px; }
+.bills-filter-totals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:9px; }
+.bills-filter-totals > div { min-width:0; }.bills-filter-totals dt { font-size:11px; color:var(--zz-home-ink-soft); }.bills-filter-totals dd { margin-top:3px; font-size:16px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.bills-filter-totals-wide { grid-template-columns:1fr; }.bills-filter-totals-wide > div { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }.bills-filter-totals-wide dd { margin:0; }
 .bills-type-tabs button:focus-visible, .bills-category-chip:focus-visible, .bills-filter-result button:focus-visible { outline:2px solid #91664e; outline-offset:2px; }
 .bills-search-card { position: relative; margin-top: 21px; padding: 13px 13px 11px; background: #ede6f0; border: 1px solid #c8b8d0; border-radius: 9px 16px 10px 15px; }
 .bills-search-card::before { content: ''; position:absolute; width:44px; height:14px; background:#f3e3bc; opacity:.8; top:-7px; left:17px; transform:rotate(-5deg); }
