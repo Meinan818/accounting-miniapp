@@ -1,3 +1,7 @@
+## 当前下一项（2026-10-06，新窗口compact=0）
+
+核首页历史月份进入明细/统计是否保留当前月份，先合成浏览器取证，再最小修复实际缺口。筛选小计已完成，94相关/同源码536前端两构建及三宽15检查15合成API6截图通过；累计77组658检查1836API298截图7JSON，真实业务请求0。原自动化仍每小时ACTIVE/failed_runs_only，当前目标01a110e5；吉祥物仅方案且已提醒，不实施。
+
 ## 本次原生目标与自动化迁移（2026-10-06）
 
 gpt-6.1-sol/high目标01a110e5-7c85-70f3-9d53-3f0d6b118869已创建，初始待续d6ab3d9671d54d74613c983cf23b773c49472210。原automation原生update/view及落盘逐字段核仅target_thread_id/updated_at变化，每小时ACTIVE/failed_runs_only/提示及其他字段全保持，未另建或验证未来定时执行。最终success、源停止共享写入、finalCommit以本次compaction-transfer-result-01a11076.json为准；目标核完新窗口0直接继续筛选小计浏览器失败定位，不等回复。本次尾commit只本地，不Push、不重跑；源compact=2保持，成功回执发布后停止共享写入。

@@ -511,3 +511,9 @@ useBillQuery当前是来源URL到refs的单向初始化/监听，重置只改ref
 ## 2026-10-06 · 筛选小计测试替身与尚未定位的浏览器失败
 
 离线模板v-model需Document/ShadowRoot，首次错误被finally unmount掩盖；独立诊断证实harness缺全局，只补替身及还原全局，业务未迎合测试，70相关最终通过。原related/diagnostic失败日志保持。浏览器region不可见超时根因未确认，0检查通过，不冒称业务缺陷或验证完成，交目标取证。536全量与两构建仅证明相应范围。本次源compact=2，不重跑。
+
+## 2026-10-06 · 筛选小计正式fixture分类不合法
+
+目标只读核本次success回执、HEAD169421b、源停止写入及automation原生view/TOML仅目标/更新时间变化后新窗口compact=0。浏览器diagnostic页面实际alert“服务账单格式不正确，暂不替换当前账本。”，原因QA把收入分类写餐饮，fromRecordView只接受收入枚举。改为收支都合法的其他，保65笔/60显示窗口、18.85/500/空结果/取消/大额与region断言，final三宽15检查15拦截API6截图通过，0真实请求；不是新业务缺陷，不放宽正式校验。离线同名分类fixture同步合法其他。
+
+首次加诊断误用fs.promises.writeFile，而fs已从node:fs/promises导入，导致诊断catch再次TypeError；diagnostic JSON仍保有页面/alert原文，修为fs.writeFile。原first超时与本次工具错误保留，不计通过。以后先核import再补诊断，失败捕获须保证原异常也保存。

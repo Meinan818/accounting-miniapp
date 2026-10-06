@@ -693,19 +693,19 @@ test('筛选小计用完整65笔而非60笔显示窗口，收支同名分类隔�
   const previous = { document: globalThis.document, Document: globalThis.Document, ShadowRoot: globalThis.ShadowRoot }
   globalThis.document = { activeElement: null, body: { style: {} }, addEventListener() {}, removeEventListener() {} }
   globalThis.Document = class {}; globalThis.ShadowRoot = class {}
-  const records = Array.from({ length: 65 }, (_, i) => ({ ...original, id: 'expense-' + i }))
-  records.push({ ...original, id: 'income', type: 'income', amount: '1.00' })
+  const records = Array.from({ length: 65 }, (_, i) => ({ ...original, category: '其他', id: 'expense-' + i }))
+  records.push({ ...original, category: '其他', id: 'income', type: 'income', amount: '1.00' })
   const state = mountBills({ records, template: true })
   const find = (node, label) => node.props?.['aria-label'] === label ? node : node.children.map(child => find(child, label)).find(Boolean)
   const text = node => (node.text || '') + node.children.map(text).join('')
   try {
     state.values.editingRecord.value = null
-    state.values.chooseCategory({ type: 'expense', category: '餐饮' }); await Vue.nextTick()
+    state.values.chooseCategory({ type: 'expense', category: '其他' }); await Vue.nextTick()
     assert.equal(state.values.listedRecords.value.length, 65); assert.equal(state.values.displayedCount.value, 60)
     assert.equal(state.values.filteredTotals.value.expenseCents, 1885); assert.equal(state.values.filteredTotals.value.incomeCents, 0)
     assert.equal(state.values.monthTotals.value.incomeCents, 100)
     assert.match(text(find(state.root, '筛选结果汇总')), /筛选收入¥0.00筛选支出¥18.85/)
-    state.values.chooseCategory({ type: 'income', category: '餐饮' }); await Vue.nextTick()
+    state.values.chooseCategory({ type: 'income', category: '其他' }); await Vue.nextTick()
     assert.match(text(find(state.root, '筛选结果汇总')), /筛选收入¥1.00筛选支出¥0.00/)
     state.values.searchText.value = '不存在'; await Vue.nextTick()
     assert.equal(state.values.listedRecords.value.length, 0)

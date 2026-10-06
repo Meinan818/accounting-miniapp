@@ -1952,3 +1952,11 @@ f33361b普通Push低速及ls-remote443失败原日志保留；官方adapter先�
 ## 本次原生目标与自动化迁移（2026-10-06）
 
 gpt-6.1-sol/high目标01a110e5-7c85-70f3-9d53-3f0d6b118869已创建，初始待续d6ab3d9671d54d74613c983cf23b773c49472210。原automation原生update/view及落盘逐字段核仅target_thread_id/updated_at变化，每小时ACTIVE/failed_runs_only/提示及其他字段全保持，未另建或验证未来定时执行。最终success、源停止共享写入、finalCommit以本次compaction-transfer-result-01a11076.json为准；目标核完新窗口0直接继续筛选小计浏览器失败定位，不等回复。本次尾commit只本地，不Push、不重跑；源compact=2保持，成功回执发布后停止共享写入。
+
+## 当前筛选金额小计（2026-10-06，新窗口01a110e5）
+
+筛选小计已验证：完整65笔而非60笔显示窗口，收支同名其他分类隔离，空结果为零、取消撤下及1999999999.98大额单列，整月汇总口径不变。536前端/两构建为同业务源码既有证据，目标94相关及三宽15浏览器15合成API6截图通过，真实请求0；累计77组658检查1836API298截图7JSON，源5CSV/上一窗口2CSV另计。
+
+本次专用success/源停止写入/finalCommit169421b及原automation仅目标/更新时间变化已核，新窗口compact=0；原first超时由QA餐饮收入违反正式分类枚举造成，仅修合法其他fixture，不放宽校验或删断言。当前下一项见STATE/NEXT，用户完全委托持续开发，吉祥物仅方案已提醒一次。
+
+320px普通/大额截图已抽检，无横滚，金额单行完整。相关fixture改动后重跑94项全部通过；业务源码未再改，源536全量及两构建日志实际查验，不冒称本轮重跑。所有正式请求全拦截，未知请求/意外错误0。Push前官方API现场确认私有main/无Pages/0workflows/0deployments，remote4118dfb与origin/main一致；待上传含两交接提交，已审查相关业务草稿、合法fixture及交接状态。上传结果另记，完成后直接下一项。
