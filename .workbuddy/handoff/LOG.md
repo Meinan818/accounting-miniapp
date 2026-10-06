@@ -2073,3 +2073,7 @@ RecordInput @Size(max=200)与fromRecordView200，validateRecord/RecordForm120不
 服务端note含合成午饭\n合成咖啡，原text DOM实际变合成午饭合成咖啡，browser-multiline-note-before精确断言失败保持。改3行textarea/max200、resize vertical、原style/scroll余量/可见focus样式；原生Enter只插换行不submit，显式1PUT/刷新三行/取消0新增写，三宽6检查18全拦截API3截图通过。回归原生Tab320通过而390textarea705.89–802.39被actions763–823盖住，原失败保持；提高CSS margin160仍失败，回退冗余试验，用nextTick后当前activeElement/isConnected/组件active/保存blocked保护，仅实际矩形与操作区重叠才instant center，不抢新焦点或旧页。新增guard实际setup回归，112相关555完整/两构建通过，三宽Tab3与200字符/emoji9两旧链回归通过不重复累计。新增链累计93组932检查2266API363截图7JSON，真实0。
 
 首轮final浏览器在server构建仍返回session时先启动，读旧dist导致与before同失败；等待实际exit0后built链通过，原失败保存，今后构建完成是浏览器预览硬依赖。补harness遗漏的manualEntryTarget/revealNote/lifecycle绑定，消除测试模板警告，不改生产逻辑迎合测试。上一717ac6b普通Push及官方完整717ac6b73bead03d7bc3ea241f6435b8a7dacdc6远端一致/私有无Pages0workflow0deployment核实，当前后续保存上传，compact=1原automation保持。
+
+## 2026-10-06 · 小票多行备注原样展示
+
+浏览器服务端note甲\n乙，原明细Range两个字符同top，before精确行位置失败保持。仅明细/首页小票备注p及DraftGroupCard内容span white-space:pre-wrap三处CSS，保Vue安全文字/真实数据不改；三宽三页9检查18全拦截GET9截图，Range actual last>first，no横滚、0写入/真实0，截图抽检。555完整/demo/server两构建通过，不为CSS造额外镜像单元。累计94组941检查2284API372截图7JSON。上一36a6713普通Push/官方inspect完整36a671349cea169c8d35cac1198eb804ec515afc一致，私有无Pages0workflow0deployment；当前后续保存上传，compact=1原automation保持，下一项完整主线合成回归。

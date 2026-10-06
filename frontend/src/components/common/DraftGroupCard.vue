@@ -49,7 +49,7 @@ function update(record) {
 .draft-items li { padding: 12px 0; border-bottom: 1px dashed #d9c5a9; }
 .draft-item-top > span { min-width: 0; overflow-wrap: anywhere; }
 .draft-item-copy { display:flex; align-items:center; gap:7px; }
-.draft-item-copy > span { min-width:0; }
+.draft-item-copy > span { min-width:0; white-space:pre-wrap; }
 .draft-item-copy .category-icon { width:34px; height:34px; }
 .deleted-item .category-icon { opacity:.45; }
 strong { font-weight: 400; flex-shrink: 0; font-variant-numeric: tabular-nums; }

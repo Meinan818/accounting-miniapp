@@ -637,6 +637,7 @@ function getSign(record) {
 .bills-record-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .bills-record-stamp { display: grid; place-items: center; flex: 0 0 36px; height: 38px; border: 1px dashed var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-title-brush); }
 .bills-record-text { min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+.bills-record-text .bills-subtitle { white-space: pre-wrap; }
 .bills-record-amount { flex-shrink: 0; max-width: none; width: auto; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .bills-empty { margin-top: 27px; padding: 27px 16px; border: 1px dashed var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); text-align: center; font-size: 15px; }
 .bills-empty img { display: block; width: 112px; height: 112px; object-fit: contain; margin: 0 auto 13px; }

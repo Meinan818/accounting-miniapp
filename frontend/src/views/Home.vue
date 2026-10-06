@@ -219,6 +219,7 @@ function getRecordSign(record) {
 .home-record-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .home-record-stamp { display: grid; place-items: center; flex: 0 0 36px; height: 38px; border: 1px dashed var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-title-brush); }
 .home-record-text { min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
+.home-record-text .home-subtitle { white-space: pre-wrap; }
 .home-record-amount { flex-shrink: 0; max-width: 43%; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .home-record-wide { flex-wrap:wrap; }.home-record-wide .home-record-main { width:100%; }.home-record-wide .home-record-amount { width:100%; max-width:none; white-space:nowrap; }
 .home-load-more { width:100%; min-height:44px; padding:10px; border:1px dashed var(--zz-home-line); border-radius:14px; background:var(--zz-home-paper); font-size:13px; }
