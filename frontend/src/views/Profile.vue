@@ -226,7 +226,14 @@ onMounted(() => { if (!SERVER_MODE) reloadRecords(); loadProfile() })
 
       <section class="profile-help-card" aria-labelledby="profile-help-title">
         <h2 id="profile-help-title">记账小贴士</h2>
-        <ul><li>聊天是主入口，每组最多5笔，确认前不入账。</li><li>问“本月总支出”可以查汇总，目前只支持本月。</li><li>点明细里的分类贴纸可以筛选；统计中的同款贴纸能直接翻开对应小票。</li><li>手动记账是备用；改错或删除，可点明细里的整条账单。</li></ul>
+        <ul>
+          <li>聊天是主入口，每组最多5笔，确认前不入账。</li>
+          <li>问“本月总支出”可以查汇总，目前只支持本月；查看其他月份，可到明细或统计点月份直接选择。</li>
+          <li>点明细里的分类贴纸可以筛选；统计中的同款贴纸能直接翻开对应小票。</li>
+          <li>明细可导出当前筛选结果的CSV，也可复制筛选链接，方便下次查看。</li>
+          <li>手动记账是备用；改错或删除，可点明细里的整条账单。</li>
+          <li>编辑窗口的“再记一笔”会预填一张今天的新账单，核对后再保存；原账单有未保存修改时，先保存或取消修改。</li>
+        </ul>
       </section>
       <footer class="profile-about">喵叽智账 · {{ SERVER_MODE ? '账号开发版' : '前端演示' }} v{{ appVersion }}<br /><span>好好记账，也好好生活</span></footer>
     </main>
