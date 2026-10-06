@@ -103,7 +103,7 @@ test('实际Home模板当天明细保选定日期月份，空日/读取失败/�
   const bindings = { ...Vue, dayjs, centsText, getRecordTotals, formatCurrency, useLedgerReload, SERVER_MODE: true,
     useRecordStore: () => store, useAuthStore: () => auth, useHomeCalendar: options => useHomeCalendar({ ...options, now: () => '2026-10-04', eventTarget: null, documentTarget: null }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {recordStore,today,calendarMonth,selectedDate,weekdayLabel,returnToday,handleMonthChange,handleDateChange,todayRecords,todayTotals,monthTotals,selectedRecords,selectedTotals,needsWideDayAmounts,selectedDateLabel,getRecordSign,reloading,reloadError,reloadRecords,ownerCurrent: typeof ownerCurrent === "undefined" ? undefined : ownerCurrent}')(...Object.values(bindings)))
+    ';return {recordStore,today,calendarMonth,selectedDate,weekdayLabel,returnToday,handleMonthChange,handleDateChange,todayRecords,todayTotals,monthTotals,selectedRecords,selectedTotals,needsWideDayAmounts,displayedDayRecords,hiddenDayCount,visibleDayLimit,expandingDay,setDayRecordElement,loadMoreDayRecords,selectedDateLabel,getRecordSign,reloading,reloadError,reloadRecords,ownerCurrent: typeof ownerCurrent === "undefined" ? undefined : ownerCurrent}')(...Object.values(bindings)))
   const template = content.slice(content.indexOf('<template>') + 10, content.lastIndexOf('</template>'))
   const stub = { render: () => Vue.h('span') }
   const component = { components: Object.fromEntries(['JournalSticker', 'CatNavIcon', 'ManualEntry', 'CategoryIcon', 'BottomNav', 'CalendarCard'].map(name => [name, stub])),
@@ -129,6 +129,20 @@ test('实际Home模板当天明细保选定日期月份，空日/读取失败/�
     assert.match(summary(await render()), /home-day-totals-wide.*¥1999999999.98/s)
     store.records[0].amount = 'not-a-number'
     const invalid = summary(await render()); assert.match(invalid, /role="alert"/); assert.doesNotMatch(invalid, /<dd/)
+    store.records = Array.from({ length: 121 }, (_, i) => ({ ...records[0], id: 'synthetic-long-' + i, amount: '0.29' }))
+    assert.equal((await render()).match(/class="home-record"/g).length, 60)
+    assert.match(summary(await render()), /¥35.09/); assert.equal(view.hiddenDayCount.value, 61)
+    const focus = [], scroll = []
+    view.setDayRecordElement('synthetic-long-60', { focus: options => focus.push(options), scrollIntoView: options => scroll.push(options) })
+    const expanding = view.loadMoreDayRecords(); assert.equal(await view.loadMoreDayRecords(), false); assert.equal(await expanding, true)
+    assert.equal(view.displayedDayRecords.value.length, 120); assert.equal(view.hiddenDayCount.value, 1)
+    assert.deepEqual(focus, [{ preventScroll: true }]); assert.deepEqual(scroll, [{ block: 'nearest', behavior: 'auto' }])
+    assert.equal(await view.loadMoreDayRecords(), true); assert.equal(view.displayedDayRecords.value.length, 121)
+    assert.doesNotMatch(await render(), /home-load-more/)
+    view.handleDateChange('2026-09-04'); view.handleDateChange('2026-10-04')
+    assert.equal(view.visibleDayLimit.value, 60)
+    const oldExpansion = view.loadMoreDayRecords(); view.handleDateChange('2026-09-04'); view.handleDateChange('2026-10-04')
+    assert.equal(await oldExpansion, false); assert.equal(view.visibleDayLimit.value, 60); assert.equal(focus.length, 1)
     store.records = structuredClone(records)
     view.handleDateChange('2026-10-04'); store.storageError = '合成读取失败'; targets.length = 0
     assert.doesNotMatch(await render(), /查看当天明细|私有合成备注/); assert.equal(targets.some(target => target?.path === '/bills'), false)

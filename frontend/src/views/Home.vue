@@ -3,7 +3,7 @@ import CatNavIcon from '@/components/common/CatNavIcon.vue'
 import JournalSticker from '@/components/common/JournalSticker.vue'
 import ManualEntry from '@/components/record/ManualEntry.vue'
 // 1. 导入
-import { computed } from 'vue'
+import { computed, nextTick, onScopeDispose, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import miaoAvatar from '@/assets/design/mascot/miao-avatar.png'
@@ -25,6 +25,8 @@ const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore, {
 
 // 3. 响应式数据
 const { today, calendarMonth, selectedDate, weekdayLabel, returnToday, handleMonthChange, handleDateChange, ownerCurrent } = useHomeCalendar({ rememberHistory: true, owner: SERVER_MODE ? () => auth.user?.id : undefined })
+let active = true
+onScopeDispose(() => { active = false })
 
 // 4. 计算属性
 const visibleMonthRecords = computed(() => recordStore.records.filter((record) => (
@@ -40,6 +42,27 @@ const selectedRecords = computed(() => recordStore.records
   .sort((left, right) => String(left.time).localeCompare(String(right.time))))
 const selectedTotals = computed(() => getRecordTotals(selectedRecords.value))
 const needsWideDayAmounts = computed(() => !selectedTotals.value.error && [selectedTotals.value.incomeCents, selectedTotals.value.expenseCents].some(value => centsText(value).length > 7))
+const dayBatchSize = 60
+const visibleDayLimit = ref(dayBatchSize), expandingDay = ref(false)
+let dayExpansionGeneration = 0
+watch(selectedDate, () => { dayExpansionGeneration++; visibleDayLimit.value = dayBatchSize; expandingDay.value = false }, { flush: 'sync' })
+const displayedDayRecords = computed(() => selectedRecords.value.slice(0, visibleDayLimit.value))
+const hiddenDayCount = computed(() => selectedRecords.value.length - displayedDayRecords.value.length)
+const dayRecordElements = new Map()
+function setDayRecordElement(id, element) { if (element) dayRecordElements.set(id, element); else dayRecordElements.delete(id) }
+async function loadMoreDayRecords() {
+  if (!active || !ownerCurrent.value || recordStore.storageError || expandingDay.value || !hiddenDayCount.value) return false
+  const generation = ++dayExpansionGeneration, date = selectedDate.value
+  const nextId = selectedRecords.value[visibleDayLimit.value]?.id
+  expandingDay.value = true; visibleDayLimit.value += dayBatchSize
+  try {
+    await nextTick()
+    if (!active || !ownerCurrent.value || recordStore.storageError || generation !== dayExpansionGeneration || date !== selectedDate.value) return false
+    const element = dayRecordElements.get(nextId)
+    element?.focus({ preventScroll: true }); element?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+    return true
+  } finally { if (active && ownerCurrent.value && generation === dayExpansionGeneration) expandingDay.value = false }
+}
 
 const selectedDateLabel = computed(() => {
   const date = dayjs(selectedDate.value)
@@ -114,10 +137,12 @@ function getRecordSign(record) {
 
         <div v-if="selectedRecords.length" class="space-y-3">
           <article
-            v-for="record in selectedRecords"
+            v-for="record in displayedDayRecords"
             :key="record.id"
+            :ref="element => setDayRecordElement(record.id, element)"
             class="home-record"
             :class="{ 'home-record-wide': formatCurrency(record.amount).length > 8 }"
+            tabindex="-1"
           >
             <div class="home-record-main">
               <span class="home-record-stamp" aria-hidden="true"><CategoryIcon :category="record.category" :type="record.type" /></span>
@@ -133,6 +158,7 @@ function getRecordSign(record) {
               {{ getRecordSign(record) }}{{ formatCurrency(record.amount) }}
             </p>
           </article>
+          <button v-if="hiddenDayCount" type="button" class="home-load-more" :disabled="expandingDay" :aria-busy="expandingDay" @click="loadMoreDayRecords">再翻 {{ Math.min(60, hiddenDayCount) }} 张小票 · 还有 {{ hiddenDayCount }} 张</button>
         </div>
 
         <div v-else class="home-empty">
@@ -195,6 +221,9 @@ function getRecordSign(record) {
 .home-record-text { min-width: 0; font-size: 15px; overflow-wrap: anywhere; }
 .home-record-amount { flex-shrink: 0; max-width: 43%; text-align: right; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
 .home-record-wide { flex-wrap:wrap; }.home-record-wide .home-record-main { width:100%; }.home-record-wide .home-record-amount { width:100%; max-width:none; white-space:nowrap; }
+.home-load-more { width:100%; min-height:44px; padding:10px; border:1px dashed var(--zz-home-line); border-radius:14px; background:var(--zz-home-paper); font-size:13px; }
+.home-load-more:focus-visible, .home-record:focus-visible { outline:2px solid var(--zz-home-ink); outline-offset:3px; }
+.home-record { scroll-margin-block:12px calc(var(--zz-home-bottom-nav-height) + 12px); }
 .home-amount-income { color: var(--zz-home-green); }
 .home-amount-expense { color: var(--zz-home-pink); }
 .home-empty { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 20px 14px; border: 1px dashed var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); font-size: 14px; }

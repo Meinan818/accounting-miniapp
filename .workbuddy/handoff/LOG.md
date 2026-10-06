@@ -2000,3 +2000,11 @@ before实际Range.getClientRects每笔-¥999999999.99为3行、宽113.9375px，�
 before选择2026-09-04→当天明细刷新/取消编辑→goBack实际首页2026年10月，JSON/截图与断言失败保留。根因组件remount无日历选择来源。useHomeCalendar仅Home显式rememberHistory，保存owner/date/month/followToday到当前history entry，保留全部Vue Router历史字段且不写账本存储；restore只接受同账号合法同月日期，跟随今天状态重开取最新today。定位非首页/owner变化/离页不再写当前entry，History不可写时原日历选日仍可用。2新增实际composable回归核历史恢复/跨月重开/异账号坏日期/路由字段/他页/释放/不可写；46相关539/两构建本轮执行。三宽39检查78GET全拦截，9历史/当前/收入日返回和真实reload同日一笔保持；原首页跨月轮询/focus两链clone独立输出2检查4API2截图成功，未重复累计。
 
 查证来源：MDN https://developer.mozilla.org/en-US/docs/Web/API/History/replaceState 与Vue Router https://router.vuejs.org/guide/migration/#usage-of-history-state /api/interfaces/HistoryState.html均实际200；官方明确保history.state，当前本地Vue Router4.6.4 dist/vue-router.mjs:139-145也在push前合并浏览器state。未直接覆盖路由字段/创建替代调度/增加依赖。上一05b750b普通Push成功，官方inspect完整remote/HEAD一致及私有/无Pages/0workflows/0deployments再核。当前节点上传结果随后记，继续长日阅读。
+
+## 当前首页长日分批阅读（2026-10-06）
+
+121小票按60→120→121分批展开，完整笔数/日收支小计35.09与明细日期筛选不截断；键盘焦点落首张新小票且不被底栏挡，切日及返回重置显示窗口，旧身份/离页/过期展开不抢焦点。46相关/539前端/两构建及三宽18合成浏览器12API6截图通过，真实请求0；累计83组784检查2037API325截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持，下一项日历直接选月，见STATE/NEXT。
+
+Home完整selectedRecords仅渲染displayedDayRecords，显示60步进/余量按钮，笔数/小计/当天明细链接继续完整数据。展开nextTick后按active/owner/date/generation复核，设置首张新小票focus/nearest，DOM Map按ref收放，逻辑滚动余量为底栏86+12px；选日世代变化即撤旧回调，等待禁重复。既有实际Home模板回归增加121笔/60DOM/35.09/120+1余量/全部后撤按钮/重复阻断/日期切回保护，原金额/身份/数据断言保持。46相关539全量/两构建本轮实际执行。三宽18检查12GET全拦截，60→120/121两次原生Enter首新61/121可见、金额及请求不变；切空日、重选重置、完整121日期明细35.09、浏览器返回原日/60，6截图抽检。未改账本或原history字段。
+
+上一414ac18普通Push成功，官方inspect完整remote/HEAD一致及私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续日历远历史直达入口。
