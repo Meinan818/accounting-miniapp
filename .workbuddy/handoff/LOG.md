@@ -2067,3 +2067,9 @@ RecordInput @Size(max=200)与fromRecordView200，validateRecord/RecordForm120不
 ## 2026-10-06 · 原生Tab备注焦点不被sticky盖住
 
 先browser-note-keyboard-before真实Tab逐控件到note：focused=true，320px input790.890625–834.890625、actions763–823，原几何断言失败/截图保持；不是QA主动滚动造成。仅input/select scroll-margin-block:16px96px，复用错误区已有底部余量方式。原三宽同Tab同断言css全通过，input702.890625–746.890625在763前，0写入/真实请求0。554完整/demo/server两构建通过，不为CSS造镜像单元测试；三宽3检查6GET3截图，累计92组926检查2248API360截图7JSON。此前长备注节点11688e3普通Push reset保持，既有官方同SHA/force:false同步11688e38a87ca178e728ad58da6932303fca8d8e完成，私有/无Pages/0workflow/0deployment；当前后续保存上传，compact=1原automation保持。
+
+## 2026-10-06 · 多行备注原文输入与焦点保护
+
+服务端note含合成午饭\n合成咖啡，原text DOM实际变合成午饭合成咖啡，browser-multiline-note-before精确断言失败保持。改3行textarea/max200、resize vertical、原style/scroll余量/可见focus样式；原生Enter只插换行不submit，显式1PUT/刷新三行/取消0新增写，三宽6检查18全拦截API3截图通过。回归原生Tab320通过而390textarea705.89–802.39被actions763–823盖住，原失败保持；提高CSS margin160仍失败，回退冗余试验，用nextTick后当前activeElement/isConnected/组件active/保存blocked保护，仅实际矩形与操作区重叠才instant center，不抢新焦点或旧页。新增guard实际setup回归，112相关555完整/两构建通过，三宽Tab3与200字符/emoji9两旧链回归通过不重复累计。新增链累计93组932检查2266API363截图7JSON，真实0。
+
+首轮final浏览器在server构建仍返回session时先启动，读旧dist导致与before同失败；等待实际exit0后built链通过，原失败保存，今后构建完成是浏览器预览硬依赖。补harness遗漏的manualEntryTarget/revealNote/lifecycle绑定，消除测试模板警告，不改生产逻辑迎合测试。上一717ac6b普通Push及官方完整717ac6b73bead03d7bc3ea241f6435b8a7dacdc6远端一致/私有无Pages0workflow0deployment核实，当前后续保存上传，compact=1原automation保持。

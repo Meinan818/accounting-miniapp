@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '@/utils/categories'
 import { validateRecord } from '@/utils/ledger'
@@ -13,6 +13,17 @@ const form = ref({ type: props.record.type || 'expense', amount: props.record.am
   time: props.record.time || (unknownTime ? '' : dayjs().format('HH:mm')), remark: props.record.remark || '' })
 const localError = ref('')
 const errorElement = ref(null)
+let active = true
+onBeforeUnmount(() => { active = false })
+async function revealNote(event) {
+  const field = event.currentTarget
+  await nextTick()
+  if (!active || props.saving || props.blocked || field?.ownerDocument?.activeElement !== field || !field?.isConnected) return
+  const actions = field.closest('form')?.querySelector('.form-actions')
+  if (!actions) return
+  const inputBox = field.getBoundingClientRect(), actionBox = actions.getBoundingClientRect()
+  if (inputBox.bottom > actionBox.top && inputBox.top < actionBox.bottom) field.scrollIntoView({ block: 'center', behavior: 'instant' })
+}
 watch(() => localError.value || props.error, async (message, previous, onCleanup) => {
   let current = true
   onCleanup(() => { current = false })
@@ -59,7 +70,7 @@ function save() {
           </button>
         </div>
       </div>
-      <label>备注<input v-model="form.remark" aria-label="备注" type="text" maxlength="200" placeholder="这笔用在了哪里？" /></label>
+      <label>备注<textarea v-model="form.remark" aria-label="备注" rows="3" maxlength="200" placeholder="这笔用在了哪里？" @focus="revealNote" /></label>
     </fieldset>
     <p v-if="localError || error" ref="errorElement" class="form-error" role="alert">{{ localError || error }}</p>
     <div class="form-actions"><button type="button" :disabled="saving" @click="emit('cancel')">取消</button><button class="primary" type="submit" :disabled="saving || blocked">{{ saving ? (progressLabel || '正在保存…') : submitLabel }}</button></div>
@@ -70,8 +81,9 @@ function save() {
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 legend { margin-bottom: 8px; }
 .type-options { display: flex; gap: 10px; margin-bottom: 16px; }
-button, input, select { min-height: 44px; border: 1px solid #d9c5a9; border-radius: 12px 10px 13px 11px; background: #fffdf8; color: inherit; font: inherit; padding: 9px 12px; }
-input, select { scroll-margin-block: 16px 96px; }
+button, input, select, textarea { min-height: 44px; border: 1px solid #d9c5a9; border-radius: 12px 10px 13px 11px; background: #fffdf8; color: inherit; font: inherit; padding: 9px 12px; }
+input, select, textarea { scroll-margin-block: 16px 96px; }
+textarea { min-height: 96px; line-height: 1.7; resize: vertical; overflow-wrap: anywhere; }
 button { cursor: pointer; }
 button:disabled { opacity: .55; cursor: not-allowed; }
 button.selected, button.primary { background: #f6ddd8; }
@@ -93,7 +105,7 @@ input, select { width: 100%; min-width: 0; box-sizing: border-box; }
 .form-actions button { border-width:1.5px; box-shadow:0 3px 0 #ead2bc; }
 .form-actions button.primary { background:#f7ccd7; border-color:#d9a5b6; box-shadow:0 3px 0 #e6acbe; }
 .form-error { color: #aa594d; margin-top: 12px; overflow-wrap: anywhere; scroll-margin-block-end: 96px; }
-input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid #8c6c50; outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible { outline: 2px solid #8c6c50; outline-offset: 2px; }
 @media (prefers-reduced-motion: no-preference) { button { transition: background-color 140ms ease, border-color 140ms ease; } }
 button:not(:disabled):active { border-color: #ba9782; }
 @media(max-width:359px) { .field-grid { grid-template-columns: 1fr; } }

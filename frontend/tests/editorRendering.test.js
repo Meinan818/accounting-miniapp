@@ -50,7 +50,7 @@ const editorSource = source('components/record/RecordEditor.vue'), formSource = 
 test('表单错误等待渲染后滚动且保输入，隐藏元素/错误撤下/卸载后的旧回调不滚动', async () => {
   const props = Vue.reactive({ record: { ...original }, error: '', saving: false, blocked: false })
   const scope = Vue.effectScope(), scrolls = []
-  const values = scope.run(() => evaluate(formSource.script, { ...Vue, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,
+  const values = scope.run(() => evaluate(formSource.script, { ...Vue, onBeforeUnmount: () => {}, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,
     defineProps: () => props, defineEmits: () => () => {}, defineExpose: () => {} }, 'form, localError, errorElement'))
   try {
     const target = { getClientRects: () => [{}], scrollIntoView: options => scrolls.push(options) }
@@ -167,7 +167,7 @@ test('真实表单冲突模板保留保存按钮名称和可关闭入口，实�
     setup(props, context) {
       return evaluate(formSource.script, { ...Vue, dayjs, CATEGORY_OPTIONS, validateRecord, SERVER_MODE: true,
         defineProps: () => props, defineEmits: () => context.emit, defineExpose: context.expose },
-      'props, emit, form, localError, categories, changeType, save, unknownTime')
+      'props, emit, form, localError, categories, changeType, save, revealNote, unknownTime')
     },
   }
   for (const saving of [false, true]) {
@@ -244,7 +244,7 @@ function mountBills({ records = [{ ...original }], navigate = async () => false,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, clearDateAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, selectedDate, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, filteredTotals, needsWideFilteredAmounts, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, clearDateAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, selectedDate, manualEntryTarget, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, filteredTotals, needsWideFilteredAmounts, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, dayjs, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -1282,4 +1282,21 @@ test('独立清日期保最新文字/收支/分类与hash，失败不提前清�
     v.editingRecord.value = null; env.auth.user.id = 'other-owner'
     assert.equal(await v.clearDateAddress(), false); assert.equal(v.selectedDate.value, '2026-10-03')
   } finally { env.dispose() }
+})
+
+test('备注聚焦仅当前可见框与操作区重叠时滚动，失焦/忙碌/离页不执行迟到回调', async () => {
+  const props=Vue.reactive({record:{...original},saving:false,blocked:false}), scrolls=[], hooks=[], doc={}
+  let overlap=true
+  const field={isConnected:true,ownerDocument:doc,getBoundingClientRect:()=>({top:700,bottom:800}),closest:()=>({querySelector:()=>({getBoundingClientRect:()=>({top:overlap?760:900,bottom:960})})}),scrollIntoView:options=>scrolls.push(options)}
+  doc.activeElement=field
+  const scope=Vue.effectScope()
+  const view=scope.run(()=>evaluate(formSource.script,{...Vue,onBeforeUnmount:fn=>hooks.push(fn),dayjs,CATEGORY_OPTIONS,validateRecord,SERVER_MODE:true,defineProps:()=>props,defineEmits:()=>()=>{},defineExpose:()=>{}},'revealNote'))
+  try {
+    await view.revealNote({currentTarget:field});assert.deepEqual(scrolls,[{block:'center',behavior:'instant'}])
+    overlap=false;await view.revealNote({currentTarget:field});assert.equal(scrolls.length,1)
+    overlap=true
+    const old=view.revealNote({currentTarget:field});doc.activeElement={};await old;assert.equal(scrolls.length,1)
+    doc.activeElement=field;props.saving=true;await view.revealNote({currentTarget:field});assert.equal(scrolls.length,1)
+    props.saving=false;const leaving=view.revealNote({currentTarget:field});hooks.forEach(fn=>fn());await leaving;assert.equal(scrolls.length,1)
+  } finally {scope.stop()}
 })

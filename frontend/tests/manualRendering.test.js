@@ -45,7 +45,7 @@ function mount(pending = false, query = {}) {
     cancelManualOperation: () => new Promise(done => { finish = () => { store.manualRecovery = { operations: [], error: '' }; done() } }),
     addRecord: async () => { throw Error('测试禁止自动入账') } })
   const RecordForm = { props: ['record', 'saving', 'error'], setup(props, context) {
-    const values = evaluate(formSource.script, { computed: Vue.computed, ref: Vue.ref, nextTick: Vue.nextTick, watch: Vue.watch, dayjs, CATEGORY_OPTIONS, validateRecord,
+    const values = evaluate(formSource.script, { computed: Vue.computed, ref: Vue.ref, nextTick: Vue.nextTick, onBeforeUnmount: Vue.onBeforeUnmount, watch: Vue.watch, dayjs, CATEGORY_OPTIONS, validateRecord,
       SERVER_MODE: true, defineProps: () => props, defineEmits: () => context.emit, defineExpose: context.expose }, 'form, save')
     instances.push(values)
     return () => Vue.h('form', { class: 'record-form' }, values.form.value.amount)

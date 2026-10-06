@@ -541,3 +541,7 @@ JSON复制会丢undefined属性，uuid-case-related.log两项深比较因此失�
 ## 2026-10-06 · Add原恢复表单与安全返回编码
 
 Add已有v-show保未提交输入，待恢复时隐藏但挂载实例不为0；新日期fixture应核原恢复内容不被新date替换，不能改业务销毁实例。getRepeatReturnPath使用URL编码中文是正常安全行为，按helper结果比较，原失败保持。
+
+## 2026-10-06 · 浏览器预览依赖构建真正完成
+
+build:server返回session表示仍运行，必须write_stdin等待exit0后才启动dist QA。首轮multiline-note-final读取旧bundle失败保持，等待完成后built同断言通过，不把工具时序失误计成业务修复失败。真实模板harness新增变量/生命周期也应同步绑定，缺绑定警告不应长期忽略。
