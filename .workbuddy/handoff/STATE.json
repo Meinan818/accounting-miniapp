@@ -19,13 +19,13 @@
     "status": "ACTIVE",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
-    "targetThreadId": "01a110e5-7c85-70f3-9d53-3f0d6b118869",
-    "transferStatus": "原生update/view及TOML逐字段核仅target_thread_id/updated_at改变；每小时ACTIVE/failed_runs_only/提示/其他字段保持，定时执行未另验",
+    "targetThreadId": "01a1115a-8c43-7073-963a-fbff7c4026cd",
+    "transferStatus": "同一automation原生update/view及TOML逐字段核，仅target_thread_id/updated_at改变；每小时ACTIVE/failed_runs_only/提示和其他字段保持，定时运行未另验",
     "scheduledRunVerified": false,
     "lastHeartbeatReceivedAt": "2026-10-06T09:36:31.849Z",
     "executionEvidence": "本次原生heartbeat已实际收到并执行核心流程验证；scheduler终态尚未另核，不把配置当运行成功"
   },
-  "status": "handoff_pending",
+  "status": "handoff_awaiting_final_receipt",
   "developmentPaused": false,
   "pausedAt": "2026-10-04",
   "pauseReason": "",
@@ -58,13 +58,14 @@
   },
   "handoff": {
     "sourceThreadId": "01a110e5-7c85-70f3-9d53-3f0d6b118869",
-    "targetThreadId": null,
-    "status": "pending",
+    "targetThreadId": "01a1115a-8c43-7073-963a-fbff7c4026cd",
+    "status": "native_target_created_automation_verified_receipt_pending",
     "receiptPath": ".workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a110e5.json",
     "sourceWillModifySharedFiles": true,
     "model": "gpt-6.1-sol",
     "thinking": "high",
-    "finalReceiptRequired": true
+    "finalReceiptRequired": true,
+    "initialCommit": "f0825f72ea1dc447c2a451d35508110569eacc7e"
   },
   "mascotExperiment": {
     "status": "idea_only",

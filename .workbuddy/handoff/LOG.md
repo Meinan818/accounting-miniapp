@@ -2083,3 +2083,5 @@ RecordInput @Size(max=200)与fromRecordView200，validateRecord/RecordForm120不
 已完成aa01b90三页换行展示普通Push/官方同SHA远端核一致。旧browser-core-flow-qa.cjs date-note-regression在该SHA上14检查66全拦截API6截图2实际合成CSV通过：登录/单次合成AI/草稿编辑确认/明细编辑CSV/统计首页/资料/退出重登；真实业务与AI0，旧链回归单列不重复累计。CSV日期筛选文件名现按日期命名，原editorRendering测试补一断言，70相关及server构建、320/390/1440三宽3检查6合成GET3下载通过；改动后未重跑全量/demo，尚未完成节点。证据保留既有memory目录。
 
 本聊天第二次实际compact已识别/告知/STATE登记2；只交接收尾，本地待续commit，不Push不重跑。源01a110e5专用回执 pending，原生gpt-6.1-sol/high目标及同一automation迁移结果随后据实登记；success/目标身份/源停止共享写入/HEAD=finalCommit/automation字段核完前目标只读。实核8080 Java20304、5174 Vite15428监听，未重启，用户授权/数据/缓存/吉祥物边界保持。
+
+原生gpt-6.1-sol/high目标01a1115a-8c43-7073-963a-fbff7c4026cd创建成功；初始本地待续f0825f72ea1dc447c2a451d35508110569eacc7e。同一个automation update/view与落盘逐字段核仅target_thread_id/updated_at变，每小时ACTIVE/failed_runs_only/完整提示/其余字段保持，未新增自动化或宣称未来运行。最终成功回执在尾commit完成及worktree核后发布；sourceWillModifySharedFiles=false后源停止共享写入，目标只读接手条件保持。
