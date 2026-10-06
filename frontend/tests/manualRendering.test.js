@@ -6,7 +6,7 @@ import * as Vue from 'vue'
 import { compile } from '@vue/compiler-dom'
 import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '../src/utils/categories.js'
-import { validateRecord } from '../src/utils/ledger.js'
+import { validateRecord, validDate } from '../src/utils/ledger.js'
 import { useManualRecordSave } from '../src/utils/navigation.js'
 import { createRepeatRecord, getRepeatReturnPath } from '../src/utils/repeatRecord.js'
 
@@ -55,7 +55,7 @@ function mount(pending = false, query = {}) {
     return evaluate(add.script, { computed: Vue.computed, ref: Vue.ref, watch: Vue.watch, useAuthStore: () => auth,
       useRoute: () => ({ query }), createRepeatRecord, getRepeatReturnPath,
       useRouter: () => ({ push: async target => { navigations.push(target) } }),
-      useRecordStore: () => store, createId: () => 'manual-new', SERVER_MODE: true, useManualRecordSave, miaoWriting: 'synthetic' },
+      useRecordStore: () => store, createId: () => 'manual-new', validDate, SERVER_MODE: true, useManualRecordSave, miaoWriting: 'synthetic' },
     'store, router, returnPath, recovery, saving, error, savedRecord, save, cancelPending, restoredRecord, notice, repeatNotice, cancelling, ownerCurrent, miaoWriting, SERVER_MODE, manualForm: typeof manualForm === "undefined" ? null : manualForm')
   }, render: new Function('Vue', compile(add.template, { mode: 'function' }).code)(Vue) }
   Add.render._rc = true
@@ -219,4 +219,32 @@ test('实际Add模板身份变化撤下原输入和未收尾草稿，切回不�
       assert.equal(state.store.manualRecovery.operations.length, pending ? 1 : 0)
     } finally { state.dispose() }
   }
+})
+
+test('指定日期手动入口只初始化日期与来源，不自动保存也不覆盖后续输入', async () => {
+  const query = Vue.reactive({ date:'2024-02-29', returnTo:'/bills?month=2024-02&date=2024-02-29&q=午饭#source' })
+  const state = mount(false, query)
+  try {
+    const form = state.instances[0].form.value
+    assert.equal(form.date, '2024-02-29'); assert.equal(form.amount, '')
+    assert.match(state.view.repeatNotice, /2024-02-29/)
+    assert.equal(state.view.returnPath, getRepeatReturnPath(query.returnTo))
+    form.amount = '25'; form.remark = '新填写'; query.date = '2026-10-03'; await Vue.nextTick()
+    assert.equal(form.date,'2024-02-29'); assert.equal(form.amount,'25'); assert.equal(form.remark,'新填写')
+    assert.equal(state.navigations.length,0)
+  } finally { state.dispose() }
+})
+
+test('日期预填拒绝数组/非法日/正式上限，恢复原操作及再记一笔仍优先', () => {
+  for(const date of [['2024-02-29'], '2024-02-30', '9999-01-01']) {
+    const state = mount(false,{date})
+    try { assert.equal(state.instances[0].form.value.date,dayjs().format('YYYY-MM-DD')); assert.deepEqual(state.view.restoredRecord,{}) }
+    finally { state.dispose() }
+  }
+  const pending=mount(true,{date:'2024-02-29'})
+  try { assert.deepEqual(pending.view.restoredRecord,{});assert.equal(pending.instances[0].form.value.date,dayjs().format('YYYY-MM-DD'));assert.equal(pending.view.recovery.operations[0].record.date,'2026-10-03') }
+  finally { pending.dispose() }
+  const repeat=mount(false,{date:'2024-02-29',repeat:operation.record.id})
+  try { assert.equal(repeat.instances[0].form.value.date,dayjs().format('YYYY-MM-DD'));assert.equal(repeat.instances[0].form.value.amount,'0.29') }
+  finally { repeat.dispose() }
 })

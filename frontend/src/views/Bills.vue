@@ -37,6 +37,11 @@ const currentMonth = computed(() => today.value.slice(0, 7))
 const route = useRoute()
 const router = useRouter()
 const { selectedMonth, selectedDate, searchText, selectedType, selectedCategory } = useBillQuery(route)
+const manualEntryTarget = computed(() => ({ path: '/add', query: {
+  ...(selectedDate.value ? { date: selectedDate.value } : {}),
+  returnTo: createBillFilterPath({ month: selectedMonth.value, date: selectedDate.value, query: searchText.value,
+    type: selectedType.value, category: selectedCategory.value }) + (route.hash || ''),
+} }))
 const editingRecord = ref(null)
 const saving = ref(false)
 const resettingFilters = ref(false)
@@ -391,7 +396,7 @@ function getSign(record) {
         </div>
       </header>
 
-      <ManualEntry class="bills-manual-link" />
+      <ManualEntry :to="manualEntryTarget" class="bills-manual-link" />
       <div v-if="recordStore.storageError || reloadError" class="bills-alert" role="alert" :aria-busy="reloading"><p>{{ recordStore.storageError || reloadError }}</p><button type="button" :disabled="reloading" @click="reloadRecords(true)">{{ reloading ? '正在读取…' : '重新读取账单' }}</button></div>
       <p v-if="notice" ref="noticeElement" class="bills-notice" role="status" tabindex="-1">{{ notice }}</p>
       <div v-if="savedEditMonth" class="bills-alert"><button type="button" :disabled="saving || resettingFilters || Boolean(editingRecord)" :aria-busy="resettingFilters" @click="syncSavedEditMonth">{{ resettingFilters ? '正在同步月份…' : '同步已保存账单的月份' }}</button></div>

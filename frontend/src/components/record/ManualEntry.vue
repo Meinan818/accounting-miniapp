@@ -1,8 +1,9 @@
 <script setup>
 import { NotebookPen, PawPrint } from 'lucide-vue-next'
+defineProps({ to: { type: [String, Object], default: '/add' } })
 </script>
 <template>
-  <router-link to="/add" class="manual-entry">
+  <router-link :to="to" class="manual-entry">
     <span class="manual-entry-icon" aria-hidden="true"><NotebookPen :size="18" :stroke-width="1.6" /></span>
     <span>手动记一笔</span>
     <PawPrint class="manual-entry-paw" :size="13" :stroke-width="1.5" aria-hidden="true" />

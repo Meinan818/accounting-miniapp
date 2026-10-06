@@ -6,7 +6,7 @@ import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import RecordForm from '@/components/record/RecordForm.vue'
 import { useRecordStore } from '@/stores/recordStore'
 import { useAuthStore } from '@/stores/authStore'
-import { createId } from '@/utils/ledger'
+import { createId, validDate } from '@/utils/ledger'
 import { SERVER_MODE } from '@/api/mode'
 import { useManualRecordSave } from '@/utils/navigation'
 import { createRepeatRecord, getRepeatReturnPath } from '@/utils/repeatRecord'
@@ -29,6 +29,14 @@ if (repeatId !== undefined && ownerCurrent.value) {
     repeatNotice.value = `已沿用原账单内容，日期为 ${restoredRecord.value.date}，时间为当前时间。请核对后保存，原账单不会改变。`
   } catch {
     repeatNotice.value = '原账单暂不可用，未复制内容、未入账。可以重新选择账单，或手动填写新账单。'
+  }
+} else if (route.query.date !== undefined && ownerCurrent.value && !recovery.value.operations.length && !recovery.value.error) {
+  const date = route.query.date
+  if (typeof date === 'string' && validDate(date) && (!SERVER_MODE || !date.startsWith('9999-'))) {
+    restoredRecord.value = { date }
+    repeatNotice.value = `日期已预填为 ${date}。请填写并核对后保存，尚未入账。`
+  } else {
+    repeatNotice.value = '未沿用无效日期，请核对表单日期后保存，尚未入账。'
   }
 }
 const manualForm = ref(null)

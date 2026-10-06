@@ -2047,3 +2047,9 @@ QA首轮清除按钮accessible name误写清除搜索，实际清除搜索条件
 Bills复用clearFilterAddress/replaceFilterAddress清date，保当前而非旧URL的文字、收支分类/hash，焦点helper保原clearSearch守卫并只在最新当前页回搜索。日期入口44px/flex换行，等待/保存/编辑禁用，旧owner/导航失败不清。新增实际Vue导航等待失败/重试/重复/焦点/身份回归，before1项缺方法失败保持；119相关551完整/两构建通过。三宽9浏览器15全拦截GET3截图：当天1笔32元→原生键盘解除日期后两笔37元，组合/hash保持、焦点回搜索、真实刷新；0写/真实请求0，截图抽检，累计88组890检查2158API345截图7JSON。首轮错误是请求总数3!=2而非账单笔数，错误JSON实际结果2笔/URL正确；router beforeEach每次认证导航核ledger.refresh，增加1GET是既有合同，保原失败并改断言严格该1GET而非删除请求断言。
 
 上一0bb02e0普通Push reset已保留，既有官方同SHA/force:false同步0bb02e093b13718b7056bf50e179f80ef9422875成功，私有/无Pages/0workflow/0deployments。当前节点随后保存上传，compact=1原automation保持，继续日期上下文手动记账。
+
+## 2026-10-06 · 明细手动记账日期与来源
+
+原浏览器选定10月4日入口到Add却默认Clock10月6日，before JSON/assert保持。ManualEntry增加可选to/默认add，Bills传规范日期及createBillFilterPath来源/hash（无日期也保来源），Add validDate/严格string及正式9998上限只进入时初始化date并明确核对未入账；原恢复操作/损坏恢复记录不改，新repeat明确优先。新增实际Add回归初值/后续query变化保25元未提交输入/非法date/原操作及repeat，原13项11通过2失败保持。112相关553完整/两构建通过，三宽12浏览器30全拦截GET3截图：日期预填、输入0写、取消来源日期组合/hash、刷新预填/顶部返回、普通入口今日，真实0；累计89组902检查2188API348截图7JSON。原related两失败仅fixture：安全returnPath正常百分号编码中文，改按安全helper结果比较；现RecordForm因原未保存保护v-show保持隐藏实例，不是v-if销毁，改断言不预填新日期并保原恢复操作10月3日，而非错误断言实例0，全部原安全验证保留。
+
+上一cba549b普通Push成功，官方inspect完整cba549b2c29fefbf84fa57cf3c0dcca2c2764df3与HEAD远端一致及私有/无Pages/0workflow/0deployment已核。本节点随后保存上传，compact=1原automation保持。

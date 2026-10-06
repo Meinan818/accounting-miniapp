@@ -537,3 +537,7 @@ JSON复制会丢undefined属性，uuid-case-related.log两项深比较因此失�
 ## 2026-10-06 · 路由守卫读取与业务写入分开
 
 清日期QA第一轮3!=2来自请求数，而非笔数；页面2笔正确。认证router.beforeEach每次导航都会ledger.refresh首页核版本，不能把纯筛选的0业务写入假设成0GET。断言改为恰好1次GET snapshot/page且无写入，保全部组合/焦点/刷新验证和原失败材料。
+
+## 2026-10-06 · Add原恢复表单与安全返回编码
+
+Add已有v-show保未提交输入，待恢复时隐藏但挂载实例不为0；新日期fixture应核原恢复内容不被新date替换，不能改业务销毁实例。getRepeatReturnPath使用URL编码中文是正常安全行为，按helper结果比较，原失败保持。
