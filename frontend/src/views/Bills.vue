@@ -29,6 +29,7 @@ const recordStore = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
 const { reloading, reloadError, reloadRecords } = useLedgerReload(recordStore, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const { today } = useLocalDay()
+const currentMonth = computed(() => today.value.slice(0, 7))
 
 // 3. 响应式数据
 const route = useRoute()
@@ -47,6 +48,7 @@ const ownerCurrent = ref(!SERVER_MODE || Boolean(owner))
 if (SERVER_MODE) watch(() => auth.user?.id, value => {
   if (value !== owner) ownerCurrent.value = false
 }, { flush: 'sync' })
+const canReturnToCurrentMonth = computed(() => ownerCurrent.value && !saving.value && !editingRecord.value && selectedMonth.value !== currentMonth.value)
 const exportError = ref('')
 const copyingLink = ref(false)
 const filterLinkText = ref('')
@@ -240,6 +242,15 @@ function changeMonth(offset) {
   if (changeQueryMonth(offset)) notice.value = ''
 }
 
+function returnToCurrentMonth() {
+  if (!active || !canReturnToCurrentMonth.value) return false
+  const [currentYear, currentNumber] = currentMonth.value.split('-').map(Number)
+  const [selectedYear, selectedNumber] = selectedMonth.value.split('-').map(Number)
+  if (!changeQueryMonth((currentYear - selectedYear) * 12 + currentNumber - selectedNumber)) return false
+  notice.value = ''
+  return true
+}
+
 function getDateLabel(date) {
   const target = dayjs(date)
   const currentDay = dayjs(today.value).startOf('day')
@@ -287,7 +298,10 @@ function getSign(record) {
           >
             <ChevronLeft :size="22" :stroke-width="1.5" />
           </button>
-          <h2>{{ monthTitle }}</h2>
+          <div class="bills-month-heading">
+            <h2>{{ monthTitle }}</h2>
+            <button type="button" class="bills-month-button bills-current-month" aria-label="回到本月" :disabled="!canReturnToCurrentMonth" @click="returnToCurrentMonth">{{ selectedMonth === currentMonth ? '已在本月' : '回到本月' }}</button>
+          </div>
           <button
             type="button"
             class="bills-month-button active:scale-95"
@@ -464,6 +478,8 @@ function getSign(record) {
 .bills-month-button { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px 11px 15px 12px; }
 .bills-month-button:hover { background: var(--zz-home-title-brush); }
 .bills-month h2 { padding: 5px 12px; background: var(--zz-home-title-brush); border-radius: 14px 11px 15px 12px; font-size: 18px; font-weight: 400; }
+.bills-month-heading { display: grid; justify-items: center; min-width: 0; gap: 5px; }
+.bills-month-button.bills-current-month { width: auto; min-height: 44px; padding: 5px 12px; border: 1px dashed var(--zz-home-line); font-size: 12px; }
 .bills-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .bills-totals > div { min-width: 0; padding: 11px 8px; border-radius: 14px 11px 15px 12px; text-align: center; }
 .bills-totals dt { color: var(--zz-home-ink-soft); font-size: 12px; }

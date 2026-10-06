@@ -214,7 +214,7 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign')
+    'edit, saveEdit, deleteEdit, adoptLatestVersion, notice, noticeElement, saving, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -223,6 +223,60 @@ function mountBills({ records = [{ ...original }], dateClock = {}, server = fals
   app.mount(root); values.edit(original)
   return { values, calls, route, store, auth, downloads, focusTarget, root, forms, finish: result => finish(result), fail: error => fail(error), dispose: () => app.unmount() }
 }
+
+test('明细回本月保留搜索/收支，沿用切月重置分类，不写账单且重复入口失效', async () => {
+  const state = mountBills({ server: true, dateClock: { now: () => '2026-10-06' } })
+  try {
+    state.values.editingRecord.value = null
+    state.route.query = { month: '2026-09', q: '保留备注', type: 'income', category: '工资' }
+    state.values.notice.value = '旧月份提示'
+    assert.equal(state.values.canReturnToCurrentMonth.value, true)
+    assert.equal(state.values.returnToCurrentMonth(), true)
+    assert.equal(state.values.selectedMonth.value, '2026-10')
+    assert.equal(state.values.searchText.value, '保留备注')
+    assert.equal(state.values.selectedType.value, 'income')
+    assert.equal(state.values.selectedCategory.value, '')
+    assert.equal(state.values.notice.value, '')
+    assert.equal(state.values.returnToCurrentMonth(), false)
+    assert.deepEqual(state.calls, []); assert.deepEqual(state.store.records, [original])
+  } finally { state.dispose() }
+})
+
+test('明细编辑/保存/身份切回及离页后的回本月入口不覆盖原月份或未保存内容', () => {
+  const state = mountBills({ server: true, dateClock: { now: () => '2026-10-06' } })
+  try {
+    state.values.selectedMonth.value = '2026-09'
+    const before = { ...state.values.editingRecord.value }
+    assert.equal(state.values.returnToCurrentMonth(), false)
+    assert.deepEqual(state.values.editingRecord.value, before)
+    state.values.editingRecord.value = null; state.values.saving.value = true
+    assert.equal(state.values.returnToCurrentMonth(), false)
+    state.values.saving.value = false; state.auth.user = null; state.auth.user = { id: 'synthetic-owner' }
+    assert.equal(state.values.returnToCurrentMonth(), false)
+    assert.equal(state.values.selectedMonth.value, '2026-09'); assert.deepEqual(state.calls, [])
+  } finally { state.dispose() }
+  const disposed = mountBills({ dateClock: { now: () => '2026-10-06' } })
+  disposed.values.editingRecord.value = null; disposed.values.selectedMonth.value = '2026-09'; disposed.dispose()
+  assert.equal(disposed.values.returnToCurrentMonth(), false)
+  assert.equal(disposed.values.selectedMonth.value, '2026-09')
+})
+
+test('明细跨月保持历史筛选，再回本月使用最新月份且不修改账本', () => {
+  let day = '2026-10-31', tick
+  const state = mountBills({ dateClock: { now: () => day, documentTarget: null,
+    eventTarget: { addEventListener() {}, removeEventListener() {} },
+    timers: { setInterval: callback => { tick = callback; return 1 }, clearInterval() {} } } })
+  try {
+    state.values.editingRecord.value = null; state.values.selectedMonth.value = '2026-09'
+    state.values.searchText.value = '旧条件'
+    day = '2026-11-01'; tick()
+    assert.equal(state.values.selectedMonth.value, '2026-09')
+    assert.equal(state.values.returnToCurrentMonth(), true)
+    assert.equal(state.values.selectedMonth.value, '2026-11')
+    assert.equal(state.values.searchText.value, '旧条件')
+    assert.deepEqual(state.calls, [])
+  } finally { state.dispose() }
+})
 
 test('真实Bills→Editor→Form关闭再开另一笔，即使同tick也使用新账单输入和时间语义', async () => {
   const previous = { document: globalThis.document, Document: globalThis.Document, ShadowRoot: globalThis.ShadowRoot }
