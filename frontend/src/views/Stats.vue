@@ -5,6 +5,7 @@ import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import NotebookBack from '@/components/common/NotebookBack.vue'
+import MonthPicker from '@/components/common/MonthPicker.vue'
 import CategoryIcon from '@/components/common/CategoryIcon.vue'
 import CategoryWheel from '@/components/common/CategoryWheel.vue'
 import CatNavIcon from '@/components/common/CatNavIcon.vue'
@@ -24,7 +25,7 @@ const router = useRouter()
 const store = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
 const { today } = useLocalDay()
-const { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth, ownerCurrent } = useStatsMonthNavigation(route, router, () => today.value.slice(0, 7), { owner: SERVER_MODE ? () => auth.user?.id : undefined })
+const { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth, selectMonth, ownerCurrent } = useStatsMonthNavigation(route, router, () => today.value.slice(0, 7), { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const currentMonth = computed(() => today.value.slice(0, 7))
 const canReturnToCurrentMonth = computed(() => ownerCurrent.value && !pendingMonth.value && selectedMonth.value !== currentMonth.value)
 const { reloading, reloadError, reloadRecords } = useLedgerReload(store, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
@@ -51,9 +52,7 @@ onScopeDispose(() => { active = false })
 const isCurrentView = () => active && ownerCurrent.value
 function returnToCurrentMonth() {
   if (!isCurrentView() || !canReturnToCurrentMonth.value) return false
-  const [currentYear, currentNumber] = currentMonth.value.split('-').map(Number)
-  const [selectedYear, selectedNumber] = selectedMonth.value.split('-').map(Number)
-  return changeMonth((currentYear - selectedYear) * 12 + currentNumber - selectedNumber)
+  return selectMonth(currentMonth.value)
 }
 function keepChartPosition() { if (isCurrentView()) manuallyMoved = true }
 function keepChartKeyPosition(event) {
@@ -93,12 +92,10 @@ if (!SERVER_MODE) onMounted(reloadRecords)
       <section class="stats-month-card" aria-label="统计月份">
         <div class="stats-month-nav">
           <button type="button" aria-label="上个月" :disabled="navigationMonth === '1000-01'" @click="changeMonth(-1)"><ChevronLeft :size="22" :stroke-width="1.5" /></button>
-          <div class="stats-month-heading">
-            <h2>{{ monthTitle }}</h2>
-            <button type="button" class="stats-current-month" aria-label="回到本月" :disabled="!canReturnToCurrentMonth" @click="returnToCurrentMonth">{{ selectedMonth === currentMonth ? '已在本月' : '回到本月' }}</button>
-          </div>
+          <h2>{{ monthTitle }}</h2>
           <button type="button" aria-label="下个月" :disabled="navigationMonth === '9999-12'" @click="changeMonth(1)"><ChevronRight :size="22" :stroke-width="1.5" /></button>
         </div>
+        <div class="stats-month-shortcuts"><MonthPicker :month="navigationMonth" :disabled="!ownerCurrent || Boolean(pendingMonth)" label="选择统计月份" @select="selectMonth" /><button type="button" class="stats-current-month" aria-label="回到本月" :disabled="!canReturnToCurrentMonth" @click="returnToCurrentMonth">{{ selectedMonth === currentMonth ? '已在本月' : '回到本月' }}</button></div>
         <p v-if="pendingMonth" class="review-scope-note" role="status">正在翻到 {{ pendingMonth }}，当前仍显示 {{ selectedMonth }}。</p>
         <p v-else-if="navigationError" class="review-scope-note" role="alert">{{ navigationError }}</p>
         <template v-if="!error && statistics">
@@ -192,8 +189,8 @@ if (!SERVER_MODE) onMounted(reloadRecords)
 .stats-month-nav button { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px 11px 15px 12px; }
 .stats-month-nav button:hover { background: var(--zz-home-title-brush); }
 .stats-month-nav h2 { padding: 5px 12px; background: var(--zz-home-title-brush); border-radius: 14px 11px 15px 12px; font-size: 18px; font-weight: 400; }
-.stats-month-heading { display: grid; justify-items: center; min-width: 0; gap: 5px; }
-.stats-month-nav .stats-current-month { width: auto; min-height: 44px; padding: 5px 12px; border: 1px dashed var(--zz-home-line); font-size: 12px; }
+.stats-month-shortcuts { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; }
+.stats-month-shortcuts .stats-current-month { min-height: 44px; padding: 5px 12px; border: 1px dashed var(--zz-home-line); border-radius: 12px; font-size: 12px; }
 .stats-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .stats-overview > div { min-width: 0; padding: 11px 8px; border-radius: 14px 11px 15px 12px; text-align: center; }
 .stats-overview dt { color: var(--zz-home-ink-soft); font-size: 12px; }

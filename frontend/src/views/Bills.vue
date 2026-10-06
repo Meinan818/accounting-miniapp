@@ -9,6 +9,7 @@ import { centsText, getRecordTotals } from '@/utils/money'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import NotebookBack from '@/components/common/NotebookBack.vue'
+import MonthPicker from '@/components/common/MonthPicker.vue'
 import miaoWriting from '@/assets/design/mascot/poses/miao-writing.png'
 import receiptKitten from '@/assets/design/mascot/poses/cream-receipt.png'
 import BottomNav from '@/components/layout/BottomNav.vue'
@@ -33,7 +34,7 @@ const currentMonth = computed(() => today.value.slice(0, 7))
 
 // 3. 响应式数据
 const route = useRoute()
-const { selectedMonth, searchText, selectedType, selectedCategory, changeMonth: changeQueryMonth } = useBillQuery(route)
+const { selectedMonth, searchText, selectedType, selectedCategory, changeMonth: changeQueryMonth, selectMonth: selectQueryMonth } = useBillQuery(route)
 const editingRecord = ref(null)
 const saving = ref(false)
 const saveError = ref('')
@@ -244,9 +245,11 @@ function changeMonth(offset) {
 
 function returnToCurrentMonth() {
   if (!active || !canReturnToCurrentMonth.value) return false
-  const [currentYear, currentNumber] = currentMonth.value.split('-').map(Number)
-  const [selectedYear, selectedNumber] = selectedMonth.value.split('-').map(Number)
-  if (!changeQueryMonth((currentYear - selectedYear) * 12 + currentNumber - selectedNumber)) return false
+  return chooseMonth(currentMonth.value)
+}
+
+function chooseMonth(month) {
+  if (!active || !ownerCurrent.value || saving.value || editingRecord.value || !selectQueryMonth(month)) return false
   notice.value = ''
   return true
 }
@@ -298,10 +301,7 @@ function getSign(record) {
           >
             <ChevronLeft :size="22" :stroke-width="1.5" />
           </button>
-          <div class="bills-month-heading">
-            <h2>{{ monthTitle }}</h2>
-            <button type="button" class="bills-month-button bills-current-month" aria-label="回到本月" :disabled="!canReturnToCurrentMonth" @click="returnToCurrentMonth">{{ selectedMonth === currentMonth ? '已在本月' : '回到本月' }}</button>
-          </div>
+          <h2>{{ monthTitle }}</h2>
           <button
             type="button"
             class="bills-month-button active:scale-95"
@@ -312,6 +312,7 @@ function getSign(record) {
             <ChevronRight :size="22" :stroke-width="1.5" />
           </button>
         </div>
+        <div class="bills-month-shortcuts"><MonthPicker :month="selectedMonth" :disabled="!ownerCurrent || saving || Boolean(editingRecord)" label="选择明细月份" @select="chooseMonth" /><button type="button" class="bills-month-button bills-current-month" aria-label="回到本月" :disabled="!canReturnToCurrentMonth" @click="returnToCurrentMonth">{{ selectedMonth === currentMonth ? '已在本月' : '回到本月' }}</button></div>
 
         <p v-if="!recordStore.storageError && monthTotals.error" class="bills-storage-note" role="alert">{{ monthTotals.error }}</p>
         <dl v-else-if="!recordStore.storageError" class="bills-totals" :class="{ 'bills-totals-wide': needsWideAmounts }">
@@ -478,7 +479,7 @@ function getSign(record) {
 .bills-month-button { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 14px 11px 15px 12px; }
 .bills-month-button:hover { background: var(--zz-home-title-brush); }
 .bills-month h2 { padding: 5px 12px; background: var(--zz-home-title-brush); border-radius: 14px 11px 15px 12px; font-size: 18px; font-weight: 400; }
-.bills-month-heading { display: grid; justify-items: center; min-width: 0; gap: 5px; }
+.bills-month-shortcuts { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin-bottom: 14px; }
 .bills-month-button.bills-current-month { width: auto; min-height: 44px; padding: 5px 12px; border: 1px dashed var(--zz-home-line); font-size: 12px; }
 .bills-totals { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .bills-totals > div { min-width: 0; padding: 11px 8px; border-radius: 14px 11px 15px 12px; text-align: center; }

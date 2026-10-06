@@ -22,15 +22,17 @@ export function useBillQuery(route, currentMonth = () => dayjs().format('YYYY-MM
     selectedType.value = ['income', 'expense'].includes(route.query.type) ? route.query.type : 'all'
     selectedCategory.value = typeof route.query.category === 'string' ? route.query.category.slice(0, 120) : ''
   }, { flush: 'sync' })
-  function changeMonth(offset) {
-    if (!Number.isInteger(offset)) return false
-    const next = dayjs(selectedMonth.value + '-01').add(offset, 'month').format('YYYY-MM')
-    if (!isValidMonth(next)) return false
+  function selectMonth(next) {
+    if (!isValidMonth(next) || next === selectedMonth.value) return false
     selectedMonth.value = next
     selectedCategory.value = ''
     return true
   }
-  return { selectedMonth, searchText, selectedType, selectedCategory, changeMonth }
+  function changeMonth(offset) {
+    if (!Number.isInteger(offset)) return false
+    return selectMonth(dayjs(selectedMonth.value + '-01').add(offset, 'month').format('YYYY-MM'))
+  }
+  return { selectedMonth, searchText, selectedType, selectedCategory, changeMonth, selectMonth }
 }
 
 export function useManualRecordSave(store, router, batchId, { owner } = {}) {
@@ -122,10 +124,8 @@ export function useStatsMonthNavigation(route, router, currentMonth = () => dayj
     if (value !== initialOwner) ownerCurrent.value = false
   }, { flush: 'sync' })
   const isCurrent = () => active && ownerCurrent.value
-  async function changeMonth(offset) {
-    if (!isCurrent() || !Number.isInteger(offset)) return false
-    const next = dayjs(navigationMonth.value + '-01').add(offset, 'month').format('YYYY-MM')
-    if (!isValidMonth(next)) return false
+  async function selectMonth(next) {
+    if (!isCurrent() || !isValidMonth(next) || next === navigationMonth.value) return false
     const current = ++generation
     pendingMonth.value = next; navigationError.value = ''
     try {
@@ -143,7 +143,11 @@ export function useStatsMonthNavigation(route, router, currentMonth = () => dayj
       if (isCurrent() && current === generation) pendingMonth.value = ''
     }
   }
-  return { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth, ownerCurrent }
+  function changeMonth(offset) {
+    if (!isCurrent() || !Number.isInteger(offset)) return false
+    return selectMonth(dayjs(navigationMonth.value + '-01').add(offset, 'month').format('YYYY-MM'))
+  }
+  return { selectedMonth, pendingMonth, navigationMonth, navigationError, changeMonth, selectMonth, ownerCurrent }
 }
 
 // 页面滚动与账单定位各自负责，防止导航回顶覆盖保存后的新行。

@@ -30,10 +30,44 @@ function scene(query = {}, dateClock = {}, { server = false, delayedNavigation =
     onMounted() {}, matchMedia: () => ({ matches: true }), useRecordStore: () => store, useRoute: () => route, useRouter: () => router,
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition, keepChartKeyPosition, pendingMonth, navigationError, ownerCurrent, selectDay, selectType, navigationMonth, pointedDay, maximumDayExpense, error, needsWideAmounts, categoryRows, leadingCategory, typeLabel, reloading, reloadRecords, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth}')(...Object.values(bindings)))
+    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition, keepChartKeyPosition, pendingMonth, navigationError, ownerCurrent, selectDay, selectType, navigationMonth, pointedDay, maximumDayExpense, error, needsWideAmounts, categoryRows, leadingCategory, typeLabel, reloading, reloadRecords, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, selectMonth}')(...Object.values(bindings)))
   view.dayChart.value = { clientWidth: 200, set scrollLeft(value) { scrolls.push(value) }, scrollBy: options => calls.push(options) }
   return { view, store, route, calls, scrolls, auth, navigations, dispose: () => scope.stop() }
 }
+
+test('月份输入原生校验失败/清空/禁用时恢复父页月份，有效选择才发事件', () => {
+  const picker = readFileSync(new URL('../src/components/common/MonthPicker.vue', import.meta.url), 'utf8').split('<script setup>')[1].split('</script>')[0]
+  const props = { month: '2026-10', disabled: false }, events = []
+  const view = new Function('defineProps', 'defineEmits', picker + ';return {select}')(() => props, () => (...args) => events.push(args))
+  for (const [value, valid] of [['', false], ['0999-12', false], ['10000-01', false], ['2024-02', true]]) {
+    const input = { value, validity: { valid } }
+    view.select({ target: input }); assert.equal(input.value, '2026-10')
+  }
+  assert.deepEqual(events, [['select', '2024-02']])
+  props.disabled = true
+  const input = { value: '2025-01', validity: { valid: true } }
+  view.select({ target: input }); assert.equal(input.value, '2026-10'); assert.equal(events.length, 1)
+})
+
+test('统计直接选择跨年月，非法或重复选择不导航，失败保原月/选日且可显式重试', async () => {
+  const env = scene({ month: '2026-10', q: '保留' }, { now: () => '2026-10-06' }, { server: true, delayedNavigation: true })
+  try {
+    env.view.selectDay('2026-10-31')
+    for (const month of ['', null, '0999-12', '10000-01', '2026-13', ['2024-02'], '2026-10']) assert.equal(await env.view.selectMonth(month), false)
+    assert.equal(env.navigations.length, 0)
+    const first = env.view.selectMonth('2024-02')
+    assert.equal(env.view.navigationMonth.value, '2024-02')
+    assert.equal(env.view.selectedMonth.value, '2026-10')
+    assert.equal(await env.view.selectMonth('2024-02'), false); assert.equal(env.navigations.length, 1)
+    env.navigations[0].resolve({ type: 4 }); assert.equal(await first, false)
+    assert.equal(env.view.navigationMonth.value, '2026-10'); assert.equal(env.view.selectedDay.value, '2026-10-31')
+    const retry = env.view.selectMonth('2024-02')
+    env.route.query = env.navigations[1].query; env.navigations[1].resolve()
+    assert.equal(await retry, true)
+    assert.deepEqual(env.route.query, { month: '2024-02', q: '保留' }); assert.equal(env.view.selectedDay.value, '')
+    assert.deepEqual(env.calls, [])
+  } finally { env.dispose() }
+})
 
 test('统计从历史月份及年份两端直接回本月，保其他查询和类型，不改账本或额外读取', async () => {
   for (const month of ['2026-09', '1000-01', '9999-12']) {
@@ -153,7 +187,7 @@ test('实际Stats完整模板身份变化撤下旧金额/分类/选日/切月入
   const content = readFileSync(new URL('../src/views/Stats.vue', import.meta.url), 'utf8')
   const template = content.slice(content.indexOf('<template>') + 10, content.lastIndexOf('</template>'))
   const stub = { render: () => Vue.h('span') }
-  const component = { components: Object.fromEntries(['NotebookBack', 'BottomNav', 'ChevronLeft', 'ChevronRight', 'CategoryIcon', 'CategoryWheel', 'CatNavIcon', 'JournalSticker'].map(name => [name, stub])),
+  const component = { components: Object.fromEntries(['NotebookBack', 'MonthPicker', 'BottomNav', 'ChevronLeft', 'ChevronRight', 'CategoryIcon', 'CategoryWheel', 'CatNavIcon', 'JournalSticker'].map(name => [name, stub])),
     setup: () => ({ ...env.view, centsText, SERVER_MODE: true, JOURNAL_COLORS: ['#fff'], miaoWriting: 'synthetic', receiptKitten: 'synthetic' }),
     render: new Function('Vue', compile(template, { mode: 'function' }).code)(Vue) }
   component.components.RouterLink = { props: ['to'], render() { return Vue.h('a', this.$slots.default?.()) } }
