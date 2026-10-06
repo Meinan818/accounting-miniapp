@@ -495,3 +495,7 @@ Stats旧月份导航只向router.replace传query，实际浏览器地址#month�
 ## 2026-10-06 · 完整流程导航与查询边界
 
 Chat实际没有BottomNav，必须按NotebookBack到Home再走明细；first假设底栏而超时保留，修harness不改业务。旧“全部历史误送AI”修复是安全拒绝不支持范围，不能从修复标题误读为已支持全部历史查询；现chatQuery源码明确仅本月，Profile说明该边界正确。新帮助文案须逐项核实际能力，不凭摘要扩大范围。
+
+## 2026-10-06 · 筛选地址与工作目录
+
+useBillQuery当前是来源URL到refs的单向初始化/监听，重置只改refs；原生焦点QA应核界面筛选及来源月份/hash保留，不能误假设重置自动删URL参数。该URL假设在执行after前由源码纠正，原focus-before真实失败独立保持；地址刷新一致性留下一独立节点。首次编辑ignored QA时错误在frontend工作目录引用根.workbuddy而ENOENT，未写文件；恢复根路径后实际完成，相关81通过独立有效。

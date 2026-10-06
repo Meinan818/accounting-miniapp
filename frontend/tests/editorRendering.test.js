@@ -594,6 +594,50 @@ test('CSV字段错误与下载失败明确提示未完成，不能出现已保�
   }
 })
 
+test('查看全部清三种筛选并保月份，重复操作仅最新回调聚焦搜索，无账本请求', async () => {
+  const state = mountBills(), input = node('search')
+  try {
+    state.values.editingRecord.value = null; state.values.searchInput.value = input
+    state.values.selectedMonth.value = '2024-02'; state.values.searchText.value = '合成'
+    state.values.selectedType.value = 'expense'; state.values.selectedCategory.value = '餐饮'
+    await Promise.all([state.values.resetFilters(), state.values.resetFilters()])
+    assert.equal(state.values.selectedMonth.value, '2024-02')
+    assert.equal(state.values.searchText.value, ''); assert.equal(state.values.selectedType.value, 'all')
+    assert.equal(state.values.selectedCategory.value, ''); assert.equal(input.focusCount, 1)
+    assert.equal(state.calls.length, 0)
+  } finally { state.dispose() }
+})
+
+test('查看全部等待DOM时新搜索/收支/分类/月份/编辑/身份/离页不被旧焦点抢占', async () => {
+  for (const change of [state => { state.values.searchText.value = '新关键词' },
+    state => { state.values.selectedType.value = 'income' }, state => { state.values.selectedCategory.value = '工资' },
+    state => { state.values.selectedMonth.value = '2024-03' }, state => state.values.edit(original),
+    state => { state.auth.user = { id: 'other-owner' } }, state => state.dispose()]) {
+    const state = mountBills({ server: true }), input = node('search')
+    try {
+      state.values.editingRecord.value = null; state.values.searchInput.value = input
+      state.values.searchText.value = '合成'; state.values.selectedType.value = 'expense'
+      const pending = state.values.resetFilters(); change(state); await pending
+      assert.equal(input.focusCount, 0); assert.equal(state.calls.length, 0)
+    } finally { state.dispose() }
+  }
+})
+
+test('旧账号/离页/编辑或保存中查看全部不清筛选，也不聚焦或发请求', async () => {
+  for (const change of [state => { state.auth.user = { id: 'other-owner' } }, state => state.dispose(),
+    state => state.values.edit(original), state => { state.values.saving.value = true }]) {
+    const state = mountBills({ server: true }), input = node('search')
+    try {
+      state.values.editingRecord.value = null; state.values.searchInput.value = input
+      state.values.searchText.value = '保留输入'; state.values.selectedType.value = 'expense'; state.values.selectedCategory.value = '餐饮'
+      change(state); await state.values.resetFilters()
+      assert.equal(state.values.searchText.value, '保留输入'); assert.equal(state.values.selectedType.value, 'expense')
+      assert.equal(state.values.selectedCategory.value, '餐饮'); assert.equal(input.focusCount, 0)
+      assert.equal(state.calls.length, 0)
+    } finally { state.dispose() }
+  }
+})
+
 test('清除搜索正常聚焦一次，重复清除仅最新回调聚焦', async () => {
   const state = mountBills(), input = node('search')
   try {

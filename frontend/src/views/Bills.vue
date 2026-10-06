@@ -134,7 +134,11 @@ function chooseCategory(item) {
   selectedType.value = item.type
   selectedCategory.value = alreadyChosen ? '' : item.category
 }
-function resetFilters() { selectedType.value = 'all'; selectedCategory.value = ''; searchText.value = '' }
+async function resetFilters() {
+  if (!active || !ownerCurrent.value || saving.value || editingRecord.value) return
+  selectedType.value = 'all'; selectedCategory.value = ''
+  await clearSearch()
+}
 const groupedRecords = computed(() => {
   const groups = new Map()
 

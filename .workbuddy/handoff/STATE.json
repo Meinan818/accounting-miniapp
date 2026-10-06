@@ -2,12 +2,12 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "Profile新入口帮助已完成，继续明细筛选原生键盘体验",
+  "currentTask": "明细重置筛选原生焦点修复已完成，接着核筛选地址刷新一致性",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "核明细“查看全部”重置筛选后的原生键盘焦点：按钮消失时焦点应回搜索框，保护月份/hash、编辑输入、账号及离页迟到；先取证，再最小修复。",
-  "nextStepReason": "查看全部重置后按钮会消失，需核真实键盘焦点避免回到页面开头。",
+  "nextStep": "核明细从筛选链接进入后“查看全部”再刷新的筛选一致性；当前筛选refs重置不改来源URL，先取证判断是否需同步地址，保护历史月/hash、added定位、编辑输入和身份。",
+  "nextStepReason": "来源链接仍保旧筛选，刷新可能重新应用已清除条件，需按真实界面取证。",
   "pendingUserDecision": "依赖集中PENDING，普通开发自主推进，不主动提问。",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-06",
@@ -29,26 +29,22 @@
   "developmentPaused": false,
   "pausedAt": "2026-10-04",
   "pauseReason": "",
-  "lastVerifiedCodeCommit": "704d60c0dc18a4c0fb32912bedd8b4f9af230e26",
-  "lastPushedCommit": "1721be29fda942a919e305bc5e22e0665b8d3b7a",
+  "lastVerifiedCodeCommit": "41b2ceddce2886506b8738578b3a223f1c606f18",
+  "lastPushedCommit": "41b2ceddce2886506b8738578b3a223f1c606f18",
   "unverifiedChanges": [],
   "resumedAt": "2026-10-06",
   "validation": {
-    "relatedTests": 36,
+    "frontendTests": 522,
+    "relatedTests": 81,
     "builds": [
       "demo",
       "server"
     ],
-    "syntheticBrowserChecks": 13,
+    "syntheticBrowserChecks": 12,
     "syntheticApiRequests": 12,
-    "screenshots": 7,
+    "screenshots": 6,
     "realBusinessRequests": 0,
-    "realAiRequests": 0,
-    "previousFullFrontendTests": {
-      "count": 519,
-      "codeCommit": "704d60c0dc18a4c0fb32912bedd8b4f9af230e26",
-      "note": "旧完整测试为该源码证据；本次纯文案跑相关36及两构建，不虚称重跑全量"
-    }
+    "realAiRequests": 0
   },
   "localServices": {
     "checkedAt": "2026-10-06",
