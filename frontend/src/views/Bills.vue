@@ -197,7 +197,9 @@ async function repeatRecord() {
   if (!recordStore.records.some(record => record.id === id && !record.deletedAt)) return false
   saving.value = true; repeating.value = true; saveError.value = ''
   try {
-    const failure = await router.push({ path: '/add', query: { repeat: id } })
+    const returnTo = createBillFilterPath({ month: selectedMonth.value, query: searchText.value,
+      type: selectedType.value, category: selectedCategory.value }) + (route.hash || '')
+    const failure = await router.push({ path: '/add', query: { repeat: id, returnTo } })
     if (!active || !ownerCurrent.value) return false
     if (failure) throw new Error('暂时未能打开新账单，原账单和编辑窗口已保留，请重试。')
     return true

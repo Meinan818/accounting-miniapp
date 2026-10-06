@@ -1,5 +1,11 @@
 import dayjs from 'dayjs'
 import { validateRecord } from './ledger.js'
+import { getLoginReturnPath } from './loginRedirect.js'
+
+export function getRepeatReturnPath(value) {
+  const safe = getLoginReturnPath(value)
+  return /^\/bills(?:[?#]|$)/.test(safe) ? safe : '/bills'
+}
 
 // Only editable content is copied. Identity, versions and save operation keys belong to the new bill.
 export function createRepeatRecord(record, now = dayjs()) {

@@ -8,7 +8,7 @@ import dayjs from 'dayjs'
 import { CATEGORY_OPTIONS } from '../src/utils/categories.js'
 import { validateRecord } from '../src/utils/ledger.js'
 import { useManualRecordSave } from '../src/utils/navigation.js'
-import { createRepeatRecord } from '../src/utils/repeatRecord.js'
+import { createRepeatRecord, getRepeatReturnPath } from '../src/utils/repeatRecord.js'
 
 function source(file) {
   const content = readFileSync(new URL('../src/' + file, import.meta.url), 'utf8')
@@ -53,10 +53,10 @@ function mount(pending = false, query = {}) {
   const stub = { render: () => Vue.h('span') }
   const Add = { components: { RecordForm, NotebookBack: stub, RouterLink: stub }, setup() {
     return evaluate(add.script, { computed: Vue.computed, ref: Vue.ref, watch: Vue.watch, useAuthStore: () => auth,
-      useRoute: () => ({ query }), createRepeatRecord,
+      useRoute: () => ({ query }), createRepeatRecord, getRepeatReturnPath,
       useRouter: () => ({ push: async target => { navigations.push(target) } }),
       useRecordStore: () => store, createId: () => 'manual-new', SERVER_MODE: true, useManualRecordSave, miaoWriting: 'synthetic' },
-    'store, router, recovery, saving, error, savedRecord, save, cancelPending, restoredRecord, notice, repeatNotice, cancelling, ownerCurrent, miaoWriting, SERVER_MODE, manualForm: typeof manualForm === "undefined" ? null : manualForm')
+    'store, router, returnPath, recovery, saving, error, savedRecord, save, cancelPending, restoredRecord, notice, repeatNotice, cancelling, ownerCurrent, miaoWriting, SERVER_MODE, manualForm: typeof manualForm === "undefined" ? null : manualForm')
   }, render: new Function('Vue', compile(add.template, { mode: 'function' }).code)(Vue) }
   Add.render._rc = true
   const root = node('root'), app = renderer.createApp(Add), view = app.mount(root)
@@ -73,6 +73,21 @@ test('复制收入/支出只保留四项内容，使用指定新日期时间且�
     assert.throws(() => createRepeatRecord({ ...record, deletedAt: '2026-10-06' }))
     assert.throws(() => createRepeatRecord({ ...record, amount: '0' }))
   }
+})
+
+test('再记返回仅接受安全明细地址，外站/其他页/数组/控制字符回退普通明细', () => {
+  const path = '/bills?month=2024-02&q=%E5%90%88%E6%88%90&type=income&category=%E5%B7%A5%E8%B5%84#receipt'
+  assert.equal(getRepeatReturnPath(path), path)
+  for (const value of [undefined, [path], '//evil.invalid/bills', 'https://evil.invalid/bills', '/login', '/bills-other', '/bills\\evil', '/bills\n', '/bills/%2e%2e/profile']) {
+    assert.equal(getRepeatReturnPath(value), '/bills')
+  }
+  const query = Vue.reactive({ repeat: operation.record.id, returnTo: path }), state = mount(false, query)
+  try {
+    assert.equal(state.view.returnPath, path)
+    query.returnTo = '/bills?month=2026-11'
+    assert.equal(state.view.returnPath, path)
+    assert.equal(state.navigations.length, 0)
+  } finally { state.dispose() }
 })
 
 test('再记一笔仅预填新草稿，当前日期时间与原内容进入表单，不带旧ID且不自动保存', async () => {

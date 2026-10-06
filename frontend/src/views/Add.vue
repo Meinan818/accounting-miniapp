@@ -9,7 +9,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { createId } from '@/utils/ledger'
 import { SERVER_MODE } from '@/api/mode'
 import { useManualRecordSave } from '@/utils/navigation'
-import { createRepeatRecord } from '@/utils/repeatRecord'
+import { createRepeatRecord, getRepeatReturnPath } from '@/utils/repeatRecord'
 const router = useRouter()
 const store = useRecordStore()
 const auth = SERVER_MODE ? useAuthStore() : null
@@ -17,7 +17,9 @@ const batchId = createId('manual')
 const { saving, error, savedRecord, save, cancelPending, restoredRecord, notice, cancelling, ownerCurrent } = useManualRecordSave(
   store, router, batchId, { owner: SERVER_MODE ? () => auth.user?.id : undefined })
 const recovery = computed(() => store.manualRecovery || { operations: [], error: '' })
-const repeatId = useRoute().query.repeat
+const route = useRoute()
+const repeatId = route.query.repeat
+const returnPath = getRepeatReturnPath(route.query.returnTo)
 const repeatNotice = ref('')
 // Read once on entry: later refreshes or query changes cannot replace unsaved input.
 if (repeatId !== undefined && ownerCurrent.value) {
@@ -39,7 +41,7 @@ watch(restoredRecord, record => {
 <template>
   <main class="manual-page notebook-evolution">
     <section class="manual-content">
-      <header><NotebookBack to="/bills" label="返回账单明细" /><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
+      <header><NotebookBack :to="returnPath" label="返回账单明细" /><img :src="miaoWriting" alt="" /><div><h1>手动记一笔</h1><p>喵叽智账 · 不用AI也能记</p></div></header>
       <router-link to="/chat" class="chat-link">更想说一说？和小宝聊着记 →</router-link>
       <p class="edition-ribbon">备用小便签 · 和聊天共用一本账</p>
       <article v-if="ownerCurrent" class="manual-card">
@@ -58,7 +60,7 @@ watch(restoredRecord, record => {
           </div>
           <p v-if="error" role="alert" class="warning">{{ error }}</p>
         </section>
-        <RecordForm v-if="!savedRecord" v-show="!cancelling && !recovery.error && !recovery.operations.length" ref="manualForm" :record="restoredRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push('/bills')" />
+        <RecordForm v-if="!savedRecord" v-show="!cancelling && !recovery.error && !recovery.operations.length" ref="manualForm" :record="restoredRecord" :saving="saving" :error="error" @save="record => save(record)" @cancel="router.push(returnPath)" />
         <div v-if="savedRecord" class="saved-recovery" role="status"><p>这笔账单已经保存，可以打开明细查看。</p><p v-if="error" role="alert" class="warning">{{ error }}</p><button type="button" :disabled="saving" @click="save()">{{ saving ? '正在打开明细…' : '打开已保存账单' }}</button></div>
       </article>
       <p v-else class="warning" role="status">登录身份已变化，请重新打开手动记账页。</p>

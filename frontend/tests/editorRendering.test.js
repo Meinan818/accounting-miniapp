@@ -254,7 +254,7 @@ test('明细再记一笔只导航携带账单编号，旧身份/离页/删除/�
   try {
     const before = JSON.stringify(state.store.records)
     assert.equal(await state.values.repeatRecord(), true)
-    assert.deepEqual(state.calls, [['navigate', { path: '/add', query: { repeat: original.id } }]])
+    assert.deepEqual(state.calls, [['navigate', { path: '/add', query: { repeat: original.id, returnTo: '/bills?month=2026-10' } }]])
     assert.equal(JSON.stringify(state.store.records), before)
     state.calls.length = 0
     state.values.saving.value = true; assert.equal(await state.values.repeatRecord(), false)
