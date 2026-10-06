@@ -244,7 +244,7 @@ function mountBills({ records = [{ ...original }], navigate = async () => false,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, selectedDate, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, filteredTotals, needsWideFilteredAmounts, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, clearDateAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, selectedDate, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, filteredTotals, needsWideFilteredAmounts, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, dayjs, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -1256,5 +1256,30 @@ test('实际明细日期筛选保整月总额，搜索清空保日期，CSV/复�
     assert.equal(v.selectedDate.value, ''); assert.equal(env.route.query.date, undefined); assert.equal(v.listedRecords.value.length, 2)
     env.route.query = { month:'2026-10', date:'2026-10-04' }
     await v.chooseMonth('2026-09'); assert.equal(v.selectedDate.value, ''); assert.equal(env.route.query.date, undefined)
+  } finally { env.dispose() }
+})
+
+test('独立清日期保最新文字/收支/分类与hash，失败不提前清，等待与编辑不重复导航', async () => {
+  let resolve
+  const env = mountBills({ server:true, replace: () => new Promise(done => { resolve = done }) })
+  const v = env.values
+  try {
+    v.editingRecord.value = null; env.route.hash = '#source'
+    env.route.query = { month:'2026-10', date:'2026-10-03', q:'旧', type:'expense', category:'餐饮' }
+    v.searchText.value = '最新午饭'
+    const target = node('search'); v.searchInput.value = target
+    const pending = v.clearDateAddress()
+    assert.equal(v.selectedDate.value, '2026-10-03'); assert.equal(v.resettingFilters.value, true)
+    assert.equal(await v.clearDateAddress(), false); assert.equal(env.calls.filter(c => c[0] === 'replace').length, 1)
+    resolve({ type:4 }); assert.equal(await pending, false)
+    assert.equal(v.selectedDate.value, '2026-10-03'); assert.equal(v.searchText.value, '最新午饭'); assert.equal(target.focusCount, 0)
+    const retry = v.clearDateAddress(); resolve(undefined); assert.equal(await retry, true)
+    assert.equal(v.selectedDate.value, ''); assert.equal(v.searchText.value, '最新午饭'); assert.equal(v.selectedType.value, 'expense'); assert.equal(v.selectedCategory.value, '餐饮')
+    assert.deepEqual(env.route.query, { month:'2026-10', q:'最新午饭', type:'expense', category:'餐饮' }); assert.equal(env.route.hash, '#source')
+    assert.equal(target.focusCount, 1)
+    env.route.query = { month:'2026-10', date:'2026-10-03' }; v.edit(original)
+    assert.equal(await v.clearDateAddress(), false); assert.equal(v.selectedDate.value, '2026-10-03')
+    v.editingRecord.value = null; env.auth.user.id = 'other-owner'
+    assert.equal(await v.clearDateAddress(), false); assert.equal(v.selectedDate.value, '2026-10-03')
   } finally { env.dispose() }
 })

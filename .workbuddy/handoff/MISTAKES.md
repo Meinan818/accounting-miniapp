@@ -533,3 +533,7 @@ JSON复制会丢undefined属性，uuid-case-related.log两项深比较因此失�
 ## 2026-10-06 · 当天筛选QA原生名称与异步路由
 
 原生搜索按钮名实际清除搜索条件，QA清除搜索精确定位超时；先核模板。查看全部的click完成不代表async replace完成，失败JSON显示正在重置与旧date URL；等待实际筛选region撤下再断言两笔，不改变断言或业务，保原失败材料。
+
+## 2026-10-06 · 路由守卫读取与业务写入分开
+
+清日期QA第一轮3!=2来自请求数，而非笔数；页面2笔正确。认证router.beforeEach每次导航都会ledger.refresh首页核版本，不能把纯筛选的0业务写入假设成0GET。断言改为恰好1次GET snapshot/page且无写入，保全部组合/焦点/刷新验证和原失败材料。

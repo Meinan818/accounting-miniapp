@@ -2041,3 +2041,9 @@ W3C WAI日期示例 https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/exampl
 在10月5日备注提及10月4日的独立fixture，原当天入口全文q实际2笔而预期1笔，browser-exact-day-details-before保持。新增filterRecords date精确相交、useBillQuery当月合法date及createBillFilterPath白名单；55相关before53通过2失败保持。首页与统计发送date，Bills展示日期口径，全部监听/分批/复制/CSV/再记一笔来源加入日期；清搜索保日期、查看全部清日期、切月或跨月编辑清旧日期，保持q原全文规则不改真实数据。实际Bills测试核32元筛选/37元整月、CSV只当天、复制/来源date及查看全部/切月；Home原q预期按新date合同更新。151相关550全量与两构建通过。三宽42检查63全拦截GET6截图：首页三日期/原生键盘开链接/刷新/编辑取消、独立搜索相交/清除、受控复制不动系统剪贴板、查看全部和统计当日链接，真实0。累计87组881检查2143API342截图7JSON。
 
 QA首轮清除按钮accessible name误写清除搜索，实际清除搜索条件，30秒超时保留；第二轮点击查看全部立刻断言看到1笔时DOM仍正在重置且URL保原date，属未等待路由，改等待filter-result撤下后2笔同断言通过。原失败保持、不改业务迎合。上一81889ec普通Push reset，既有官方Git数据库同SHA/force:false同步81889ec43ad099ee1d71f731d9b4f60463b98fd5成功，私有/无Pages/0workflows/0deployments。本节点随后保存上传，compact=1原automation保持。
+
+## 2026-10-06 · 明细独立取消日期限制
+
+Bills复用clearFilterAddress/replaceFilterAddress清date，保当前而非旧URL的文字、收支分类/hash，焦点helper保原clearSearch守卫并只在最新当前页回搜索。日期入口44px/flex换行，等待/保存/编辑禁用，旧owner/导航失败不清。新增实际Vue导航等待失败/重试/重复/焦点/身份回归，before1项缺方法失败保持；119相关551完整/两构建通过。三宽9浏览器15全拦截GET3截图：当天1笔32元→原生键盘解除日期后两笔37元，组合/hash保持、焦点回搜索、真实刷新；0写/真实请求0，截图抽检，累计88组890检查2158API345截图7JSON。首轮错误是请求总数3!=2而非账单笔数，错误JSON实际结果2笔/URL正确；router beforeEach每次认证导航核ledger.refresh，增加1GET是既有合同，保原失败并改断言严格该1GET而非删除请求断言。
+
+上一0bb02e0普通Push reset已保留，既有官方同SHA/force:false同步0bb02e093b13718b7056bf50e179f80ef9422875成功，私有/无Pages/0workflow/0deployments。当前节点随后保存上传，compact=1原automation保持，继续日期上下文手动记账。

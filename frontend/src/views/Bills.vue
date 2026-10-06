@@ -148,15 +148,17 @@ async function resetFilters() {
 }
 function resetFilterAddress() { return clearFilterAddress(true) }
 function clearSearchAddress() { return clearFilterAddress(false) }
-async function clearFilterAddress(clearAll) {
+function clearDateAddress() { return clearFilterAddress(false, true) }
+async function clearFilterAddress(clearAll, dateOnly = false) {
   const query = { ...route.query, month: selectedMonth.value }
-  delete query.q
-  if (clearAll) delete query.date
+  if (dateOnly && searchText.value) query.q = searchText.value
+  else delete query.q
+  if (clearAll || dateOnly) delete query.date
   if (clearAll || selectedType.value === 'all') delete query.type
   else query.type = selectedType.value
   if (clearAll || !selectedCategory.value) delete query.category
   else query.category = selectedCategory.value
-  return replaceFilterAddress(query, { afterNavigate: () => clearAll ? resetFilters() : clearSearch() })
+  return replaceFilterAddress(query, { afterNavigate: () => dateOnly ? focusSearchInput() : clearAll ? resetFilters() : clearSearch() })
 }
 async function replaceFilterAddress(query, { afterNavigate = async () => {}, errorMessage = '筛选暂时未能重置，原条件已保留，请重试。' } = {}) {
   if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value) return false
@@ -321,6 +323,9 @@ watch([selectedMonth, selectedDate, searchText, selectedType, selectedCategory, 
 async function clearSearch() {
   if (!active || !ownerCurrent.value || resettingFilters.value || editingRecord.value) return
   searchText.value = ''
+  await focusSearchInput()
+}
+async function focusSearchInput() {
   const current = ++searchFocusGeneration
   await nextTick()
   if (!active || !ownerCurrent.value || resettingFilters.value || editingRecord.value || current !== searchFocusGeneration) return
@@ -433,6 +438,7 @@ function getSign(record) {
         </dl>
       </section>
 
+      <div v-if="selectedDate && !recordStore.storageError" class="bills-date-filter" role="group" aria-label="当前日期筛选"><span>只看 {{ selectedDate }}</span><button type="button" :disabled="resettingFilters || saving || Boolean(editingRecord)" :aria-busy="resettingFilters" @click="clearDateAddress">取消日期限制</button></div>
       <section class="bills-search-card" aria-label="只读账单搜索"><label for="bills-search" class="edition-kicker">翻翻本月的小票</label><div class="bills-search-row"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" stroke-linecap="round" /></svg><input ref="searchInput" id="bills-search" v-model="searchText" type="search" maxlength="120" aria-label="搜索本月账单" placeholder="分类、备注、日期或金额…" :disabled="resettingFilters || Boolean(recordStore.storageError)" /><button v-if="searchText" type="button" aria-label="清除搜索条件" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="clearSearchAddress">清除</button></div></section>
       <section v-if="!recordStore.storageError && monthRecords.length" class="bills-filter-shelf" aria-label="按收支和分类筛选">
         <div class="bills-filter-heading"><span>挑一张分类贴纸</span><div class="bills-type-tabs" aria-label="筛选收支"><button v-for="type in ['all','expense','income']" :key="type" type="button" :disabled="resettingFilters" :aria-pressed="selectedType === type" :class="{ selected:selectedType === type }" @click="chooseType(type)">{{ type === 'all' ? '全部' : type === 'income' ? '收入' : '支出' }}</button></div></div>
@@ -545,6 +551,9 @@ function getSign(record) {
 .bills-category-chip .category-icon { width:34px; height:34px; }
 .bills-category-chip small { color:#8b7262; font-size:10px; padding-left:2px; }
 .bills-category-chip.selected { background:var(--chip-paper); border-color:#b68b77; box-shadow:0 3px 0 #d5b4a1; }
+.bills-date-filter { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; margin-top:16px; padding:8px 12px; border:1px dashed #dfbfa7; border-radius:14px; background:#fffaf0; color:#815b46; font-size:12px; }
+.bills-date-filter button { min-height:44px; padding:6px 10px; border:1px solid #dfbfa7; border-radius:12px; }
+.bills-date-filter button:focus-visible { outline:2px solid #91664e; outline-offset:2px; }
 .bills-filter-result { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:9px; padding:11px 12px; border-radius:14px; background:#fff1e0; }
 .bills-filter-result .bills-search-feedback { margin:0; color:#815b46; }
 .bills-filter-result .bills-search-feedback span { color:#a18470; }
