@@ -1910,3 +1910,5 @@ Profile小贴士已补选月、筛选CSV/链接和再记一笔，保聊天只支
 浏览器before：320px Enter重置后activeElement为BODY/id空，原失败与截图保留。旧resetFilters只赋三refs，按钮销毁后没有恢复焦点，也缺账号/编辑/保存/离页保护；48测试46通过2失败证实正常0焦点及旧账号仍清条件。最小修复复用clearSearch现有nextTick/代次/owner守卫，仅增加reset前保护。新增3回归覆盖重复仅最新、7类等待期间改变和4类入口阻断；不写账本、不增加依赖。三宽匹配/空结果各Enter/Space全部重置到2笔，月/hash/原来源地址保持、Tab到收支控件、0请求写；6截图抽检320px。来源地址不自动同步refs是既有行为，本轮没有扩大导航范围，下一项核刷新一致性。
 
 41b2ced普通Push/官方完整远端SHA一致已核，私有/无Pages/0workflows/0deployments。当前节点上传结果随后登记，不把本地commit当Push。
+
+5a578cf2832a160e61d5acc26470fc0bd15612ab普通Push成功，官方API完整远端SHA与HEAD一致/私有/无Pages/0workflows/0deployments再核。敏感检查1提交8blob无发现，业务差异仅resetFilters及3回归，工作区原本干净；仅更新本次上传回执，未重跑源码/测试或修改原automation。当前实际compact=1。
