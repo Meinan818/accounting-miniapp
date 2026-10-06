@@ -203,10 +203,30 @@ test('选相邻月份具体日期不能被切月重置到第一天，非法日�
 function component(props, emit) {
   const file = readFileSync(new URL('../src/components/calendar/CalendarCard.vue', import.meta.url), 'utf8')
   const script = file.split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
-  const names = ['computed', 'dayjs', 'defineProps', 'defineEmits', 'validDate', ...Object.keys(calendarUtils)]
-  return new Function(...names, script + '; return { selectDate, selectMonth, changeMonth, calendarCells }')(
-    computed, dayjs, () => props, () => emit, validDate, ...Object.values(calendarUtils))
+  const names = ['computed', 'nextTick', 'onScopeDispose', 'dayjs', 'defineProps', 'defineEmits', 'validDate', ...Object.keys(calendarUtils)]
+  const scope = effectScope()
+  const values = scope.run(() => new Function(...names, script + '; return { selectDate, selectMonth, changeMonth, calendarCells, setDayElement, handleDayKey }')(
+    computed, Vue.nextTick, Vue.onScopeDispose, dayjs, () => props, () => emit, validDate, ...Object.values(calendarUtils)))
+  return { ...values, dispose: () => scope.stop() }
 }
+
+test('日历方向键移动闰日及跨月，拒绝越界/修饰键，选日改变及释放后的旧焦点不复活', async () => {
+  const props = reactive({ month: '2024-02', selectedDate: '2024-02-28', records: [] }), events = [], focus = []
+  const card = component(props, (name, value) => { events.push([name, value]); if (name === 'update:month') props.month = value; else props.selectedDate = value })
+  const key = (name, date = props.selectedDate, modifiers = {}) => card.handleDayKey({ key: name, preventDefault() {}, ...modifiers }, { date, isCurrentMonth: date.slice(0, 7) === props.month })
+  try {
+    card.setDayElement('2024-02-29', { focus: () => focus.push('leap'), scrollIntoView() {} })
+    assert.equal(await key('ArrowRight'), true); assert.equal(props.selectedDate, '2024-02-29'); assert.deepEqual(focus, ['leap'])
+    assert.equal(await key('ArrowRight'), true); assert.equal(props.selectedDate, '2024-03-01'); assert.equal(props.month, '2024-03')
+    await key('ArrowLeft'); await key('ArrowUp'); assert.equal(props.selectedDate, '2024-02-22'); await key('ArrowDown'); assert.equal(props.selectedDate, '2024-02-29')
+    const count = events.length
+    for (const modifiers of [{ altKey: true }, { ctrlKey: true }, { metaKey: true }]) assert.equal(await key('ArrowRight', props.selectedDate, modifiers), false)
+    for (const [name, date] of [['ArrowLeft', '1000-01-01'], ['ArrowRight', '9999-12-31']]) assert.equal(await key(name, date), false)
+    assert.equal(events.length, count)
+    const previous = key('ArrowLeft'); card.selectDate({ date: '2024-02-29', isCurrentMonth: true }); assert.equal(await previous, false)
+    const disposed = key('ArrowRight'); card.dispose(); assert.equal(await disposed, false)
+  } finally { card.dispose() }
+})
 
 test('日历直接选月沿首页选日规则，合法两端与闰月可选，无效和同月不发事件', () => {
   const state = scene('2026-10-31'), events = [], props = reactive({ month: '2026-10', selectedDate: '2026-10-31', records: [] })

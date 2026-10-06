@@ -1,6 +1,6 @@
 <script setup>
 // 1. 导入
-import { computed } from 'vue'
+import { computed, nextTick, onScopeDispose } from 'vue'
 import dayjs from 'dayjs'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { getCalendarCells, shiftCalendarMonth } from '@/utils/calendar'
@@ -32,23 +32,46 @@ const emit = defineEmits(['update:month', 'update:selected-date'])
 const weekdays = ['日', '一', '二', '三', '四', '五', '六']
 const monthTitle = computed(() => shiftCalendarMonth(props.month, 0) ? dayjs(`${props.month}-01`).format('YYYY年M月') : '请选择有效月份')
 const calendarCells = computed(() => getCalendarCells(props.month, props.selectedDate, props.today, props.records))
+const dayElements = new Map()
+let active = true, focusGeneration = 0
+onScopeDispose(() => { active = false; focusGeneration++ })
 
 // 5. 方法
 function changeMonth(offset) {
   const next = shiftCalendarMonth(props.month, offset)
-  if (next) emit('update:month', next)
+  if (next) { focusGeneration++; emit('update:month', next) }
 }
 
 function selectMonth(month) {
-  if (typeof month === 'string' && month !== props.month && validDate(month + '-01')) emit('update:month', month)
+  if (typeof month === 'string' && month !== props.month && validDate(month + '-01')) { focusGeneration++; emit('update:month', month) }
 }
 
 function selectDate(cell) {
   if (!cell || !validDate(cell.date) || cell.isDisabled) return
+  focusGeneration++
   if (!cell.isCurrentMonth) {
     emit('update:month', cell.date.slice(0, 7))
   }
   emit('update:selected-date', cell.date)
+}
+
+function setDayElement(date, element) { if (element) dayElements.set(date, element); else dayElements.delete(date) }
+async function handleDayKey(event, cell) {
+  const offset = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[event.key]
+  if (!active || offset === undefined || event.altKey || event.ctrlKey || event.metaKey || !cell || cell.isDisabled || !validDate(cell.date)) return false
+  event.preventDefault()
+  const date = dayjs(cell.date).add(offset, 'day').format('YYYY-MM-DD')
+  if (!validDate(date)) return false
+  const source = event.currentTarget
+  selectDate({ date, isCurrentMonth: date.slice(0, 7) === props.month })
+  const generation = focusGeneration
+  await nextTick()
+  if (!active || generation !== focusGeneration || props.selectedDate !== date) return false
+  const document = globalThis.document
+  if (document?.activeElement && document.activeElement !== source && document.activeElement !== document.body) return false
+  const element = dayElements.get(date)
+  element?.focus({ preventScroll: true }); element?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
+  return true
 }
 
 function getDayClass(cell) {
@@ -140,14 +163,17 @@ function getDayNumberClass(cell) {
       <button
         v-for="cell in calendarCells"
         :key="cell.date"
+        :ref="element => setDayElement(cell.date, element)"
         type="button"
         class="calendar-day relative flex items-center justify-center active:scale-95"
         :class="getDayClass(cell)"
         :aria-label="cell.isDisabled ? '超出可查看日期范围' : cell.date"
         :disabled="cell.isDisabled"
+        :tabindex="cell.isSelected ? 0 : -1"
         :aria-pressed="cell.isSelected"
         :aria-current="cell.isToday ? 'date' : undefined"
         @click="selectDate(cell)"
+        @keydown="handleDayKey($event, cell)"
       >
         <span :class="getDayNumberClass(cell)">{{ cell.day }}</span>
         <span v-if="cell.isToday" class="calendar-today-label" aria-hidden="true">今</span>
@@ -158,12 +184,16 @@ function getDayNumberClass(cell) {
       </button>
     </div>
 
+    <p class="calendar-key-hint">日期区可用方向键，逐日或逐周查看</p>
+
 
   </section>
 </template>
 
 <style scoped>
 .calendar-month-picker { display:flex; justify-content:center; margin:3px 0 12px; }
+.calendar-key-hint { margin-top:8px; font-size:10px; text-align:center; color:var(--zz-home-ink-soft); }
+.calendar-day { scroll-margin-block:12px calc(var(--zz-home-bottom-nav-height) + 12px); }
 .journal-calendar {
   width: 100%;
   min-width: 0;

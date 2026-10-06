@@ -2016,3 +2016,11 @@ Home完整selectedRecords仅渲染displayedDayRecords，显示60步进/余量按
 CalendarCard新增共用MonthPicker并selectMonth只接受不同/字符串合法月份，沿Home.handleMonthChange选首日或本月今天；Home日期历史/窗口/金额/原生按钮逻辑不改。现有实际Calendar脚本回归新增直达闰月/范围两端/本月今日/空/非法/数组/同月0事件；金额SSR harness补MonthPicker替身与selectMonth绑定，保原大额/错误断言。55相关540全量/两构建本轮执行。三宽21检查12GET全拦截：原生fill跳2024-02整月7/9.01并首日→Enter闰日0.01与真实reload保持→DOM change空/越界原生validity恢复原月份日期→范围两端42格且前后禁用→回今天→旧上月输入同步；所有选月/日操作0新增API/0写，3截图检查。原生invalidity注入与实际fill/键盘分开，不冒称真机输入。
 
 上一3bc9e9b普通Push成功，官方inspect完整remote/HEAD一致/私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续日历键盘效率。
+
+## 当前日历方向键选日（2026-10-06）
+
+方向键左右逐日/上下逐周，焦点同步且日期区仅选中日进入Tab；闰日/跨月/月输入/空日小计/年份边界均保持，Alt/Ctrl/Meta快捷键不劫持，过期选日/离页不抢焦点。56相关/541前端/两构建及三宽24合成浏览器6API3截图通过，真实请求0；累计85组829检查2055API331截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持，下一项账单编号一致性取证，见STATE/NEXT。
+
+before2024-02-28原生ArrowRight后29日aria-pressed仍false，原JSON/截图/断言保持。新增四方向键1/7日步进，复用selectDate/原月外事件，默认滚动prevent仅未修饰方向键；nextTick复核active/generation/props.selectedDate与当前焦点，原source/body之外新焦点不抢，合法目目标按钮聚焦并nearest滚动，底栏余量98px。date按钮roving tabindex0仅选中日，仍原生button/aria-pressed，不伪加缺row的ARIA grid。1实际脚本回归核闰日跨月/周/修饰键/范围/新选择/释放，金额SSR/harness补真实Vue lifecycle/nextTick/refs绑定，56相关541全量两构建本轮执行。三宽24检查6GET全拦截，Right闰日0.01→跨三月空日→Left返回→Up/Down22↔29→Ctrl保护→从month Tab到选中日→1000/9999两端不越界，焦点每步未被底栏挡/无横滚，3截图检查。
+
+W3C WAI日期示例 https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/examples/datepicker-dialog/ 本轮实际200核四方向移动及单一Tab入口；这里是非弹窗即时浏览，不冒称完整APG dialog实现。上一4570946普通Push成功，官方inspect完整remote/HEAD一致及私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续正式快照编号语义。
