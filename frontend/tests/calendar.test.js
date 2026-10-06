@@ -56,9 +56,10 @@ test('首页身份变化后跨月时钟不重置旧日历选择，释放监听�
   assert.equal(state.events.size, 0); assert.equal(state.cleared(), true)
 })
 
-test('实际Home模板身份变化隐藏旧金额/备注和日历入口，切回不复活也不清账本', async () => {
+test('实际Home模板当天明细保选定日期月份，空日/读取失败/身份变化隐藏且不清账本', async () => {
   const scope = Vue.effectScope(), auth = reactive({ user: { id: 'synthetic' } })
-  const records = [{ id: 'synthetic-record', type: 'expense', amount: 19.29, date: '2026-10-04', category: '餐饮', remark: '私有合成备注' }]
+  const records = [{ id: 'synthetic-record', type: 'expense', amount: 19.29, date: '2026-10-04', category: '餐饮', remark: '私有合成备注' },
+    { id: 'synthetic-history', type: 'income', amount: 7, date: '2026-09-04', category: '其他', remark: '合成历史收入' }]
   const store = reactive({ records: structuredClone(records), storageError: '', refresh: () => assert.fail('禁止后台读取') })
   const content = readFileSync(new URL('../src/views/Home.vue', import.meta.url), 'utf8')
   const script = content.split('<script setup>')[1].split('</script>')[0].replace(/^import .*$/gm, '')
@@ -71,13 +72,23 @@ test('实际Home模板身份变化隐藏旧金额/备注和日历入口，切回
   const component = { components: Object.fromEntries(['JournalSticker', 'CatNavIcon', 'ManualEntry', 'CategoryIcon', 'BottomNav', 'CalendarCard'].map(name => [name, stub])),
     setup: () => ({ ...view, dayjs, centsText, formatCurrency, SERVER_MODE: true, miaoAvatar: 'synthetic', miaoConfused: 'synthetic' }),
     render: new Function('Vue', compile(template, { mode: 'function' }).code)(Vue) }
-  component.components.RouterLink = { render() { return Vue.h('a', this.$slots.default?.()) } }; component.render._rc = true
+  const targets = []
+  component.components.RouterLink = { props: ['to'], render() { targets.push(this.to); return Vue.h('a', this.$slots.default?.()) } }; component.render._rc = true
   const render = () => renderToString(Vue.createSSRApp(component))
   try {
     assert.match(await render(), /私有合成备注/)
+    assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-10', q: '2026-10-04' } })
+    view.handleDateChange('2026-09-04'); targets.length = 0
+    assert.match(await render(), /合成历史收入/)
+    assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-09', q: '2026-09-04' } })
+    view.handleDateChange('2026-09-03'); targets.length = 0
+    assert.match(await render(), /点下方「聊着记」/); assert.equal(targets.some(target => target?.path === '/bills'), false)
+    view.handleDateChange('2026-10-04'); store.storageError = '合成读取失败'; targets.length = 0
+    assert.doesNotMatch(await render(), /查看当天明细|私有合成备注/); assert.equal(targets.some(target => target?.path === '/bills'), false)
+    store.storageError = ''
     auth.user = null; const expired = await render(); auth.user = { id: 'synthetic' }; const returned = await render()
     for (const html of [expired, returned]) {
-      assert.doesNotMatch(html, /19.29|私有合成备注|回到今天/)
+      assert.doesNotMatch(html, /19.29|私有合成备注|回到今天|查看当天明细/)
       assert.match(html, /登录身份已变化/)
     }
     assert.deepEqual(store.records, records)

@@ -96,9 +96,10 @@ function getRecordSign(record) {
             <p class="home-subtitle">当天的小账单</p>
             <h2>{{ selectedDateLabel }}</h2>
           </div>
-          <span class="home-count">
-            {{ selectedRecords.length }} 笔
-          </span>
+          <div class="home-ledger-tools">
+            <span class="home-count">{{ selectedRecords.length }} 笔</span>
+            <router-link v-if="selectedRecords.length" class="home-day-details" :to="{ path: '/bills', query: { month: selectedDate.slice(0, 7), q: selectedDate } }" :aria-label="'查看' + selectedDate + '账单明细'">查看当天明细 <span aria-hidden="true">→</span></router-link>
+          </div>
         </div>
 
         <div v-if="selectedRecords.length" class="space-y-3">
@@ -127,7 +128,7 @@ function getRecordSign(record) {
           <img :src="miaoConfused" alt="摊爪的猫猫" />
           <div>
             <p>这天还没有小账单</p>
-            <p class="home-subtitle">点下面的 +，本喵陪你记一笔</p>
+            <p class="home-subtitle">点下方「聊着记」，本喵陪你记一笔</p>
           </div>
         </div>
       </section>
@@ -170,6 +171,9 @@ function getRecordSign(record) {
 .home-ledger-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-bottom: 13px; }
 .home-ledger-heading h2 { font-size: 18px; font-weight: 400; margin-top: 3px; }
 .home-count { padding: 4px 10px; border: 1px solid var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-paper); font-size: 12px; color: var(--zz-home-ink-soft); white-space: nowrap; }
+.home-ledger-tools { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
+.home-day-details { display:flex; align-items:center; gap:5px; min-height:44px; color:var(--zz-home-ink); font-size:12px; }
+.home-day-details:focus-visible { outline:2px solid var(--zz-home-ink); outline-offset:3px; border-radius:6px; }
 .home-record { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1.5px solid var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); padding: 13px; box-shadow: 3px 4px 0 var(--zz-home-title-brush); }
 .home-record-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .home-record-stamp { display: grid; place-items: center; flex: 0 0 36px; height: 38px; border: 1px dashed var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-title-brush); }

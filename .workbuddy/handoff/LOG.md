@@ -1968,3 +1968,11 @@ gpt-6.1-sol/high目标01a110e5-7c85-70f3-9d53-3f0d6b118869已创建，初始待�
 before实际首页九月后Enter开明细，inputValue=2026-10而预期09，原JSON/截图与断言保留。根因底栏静态/bills与/stats，目标按当前月初始化；现BottomNav可接合法month，Home/Bills/Stats按自身月传入，仅明细/统计链接带月，其他入口保持。实际模板+memory router SSR回归核默认/合法/非法月份与所有href；全部125/537及两构建本轮执行。三宽Home→Bills→真实刷新→Stats→刷新→Bills和Home→Stats共15检查36GET全拦截，未改账本，320px截图检查。
 
 上一筛选节点4c336e8普通Push低速失败原文保留，复用既有官方API同SHA/force:false同步3提交22blob，后续inspect完整remote/HEAD4c336e8一致/私有/无Pages/0workflows/0deployments再核；无强推或部署。当前节点提交上传结果随后登记，继续下一项。
+
+## 当前首页当天明细入口（2026-10-06）
+
+日历选日后可直接查看当天明细，保日期和月份；当前/历史支出/收入日、真实刷新、打开编辑取消均通过，空日/读取失败/旧身份隐藏入口。空日提示已对应实际聊着记。63相关/537前端/两构建及三宽30合成浏览器51API3截图通过，真实请求0；累计79组703检查1923API304截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持，吉祥物只方案已提醒。下一项见STATE/NEXT。
+
+只在完整读取及选定日期有账单时提供原生router-link，query={month:selectedDate.slice(0,7),q:selectedDate}，不自动打开编辑或写账本。沿已有Home实际模板回归加当前/历史/空日/读取失败/旧身份路由props断言，保原身份/私有字段/账本未改断言；537全量/63相关/两构建本轮实际执行。三宽30检查51API全GET拦截，9原生Enter/日期筛选与reload、9原账单编辑Escape取消、空日3项，unknown/意外错误0，320px截图已检查，44px触控目标完整。
+
+上一ff3e87d普通Git低速失败原文保持，官方同SHA/force:false同步11blob成功，后续inspect远端完整ff3e87d与HEAD一致/私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续下一项，不等待回复。
