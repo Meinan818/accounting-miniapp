@@ -528,8 +528,8 @@ function getSign(record) {
 
       <section v-else-if="!recordStore.storageError" class="bills-empty" aria-label="无账单">
         <img :src="receiptKitten" alt="拿着小票的奶油猫" />
-        <p>{{ filtering ? '这张分类贴纸下，还没有小票' : '这个月还没有小账单' }}</p>
-        <p class="bills-subtitle">{{ filtering ? '换一张贴纸、调整关键词，或查看全部' : '点下面的 +，本喵帮你记一笔' }}</p>
+        <p>{{ filtering ? '没有找到符合当前条件的小票' : '这个月还没有小账单' }}</p>
+        <p class="bills-subtitle">{{ selectedDate ? '当前只看 ' + selectedDate + '，可以取消日期限制或调整其他条件' : filtering ? '调整关键词、收支或分类，或查看全部' : '点下方「聊着记」或上方「手动记一笔」，本喵帮你记下' }}</p>
       </section>
     </main>
 
