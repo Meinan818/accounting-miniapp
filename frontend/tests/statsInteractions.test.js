@@ -182,7 +182,7 @@ test('正式Stats正常选日/类型保持，身份变化及离页后旧点击�
   assert.equal(env.view.selectedDay.value, '2026-10-31'); assert.equal(env.view.selectedType.value, 'income')
 })
 
-test('实际Stats完整模板身份变化撤下旧金额/分类/选日/切月入口，切回不复活且保留账本', async () => {
+test('实际Stats选日含空日可到对应日期明细，读取错误或身份变化撤下入口且保留账本', async () => {
   const env = scene({ month: '2026-10' }, {}, { server: true })
   const content = readFileSync(new URL('../src/views/Stats.vue', import.meta.url), 'utf8')
   const template = content.slice(content.indexOf('<template>') + 10, content.lastIndexOf('</template>'))
@@ -190,11 +190,20 @@ test('实际Stats完整模板身份变化撤下旧金额/分类/选日/切月入
   const component = { components: Object.fromEntries(['NotebookBack', 'MonthPicker', 'BottomNav', 'ChevronLeft', 'ChevronRight', 'CategoryIcon', 'CategoryWheel', 'CatNavIcon', 'JournalSticker'].map(name => [name, stub])),
     setup: () => ({ ...env.view, centsText, SERVER_MODE: true, JOURNAL_COLORS: ['#fff'], miaoWriting: 'synthetic', receiptKitten: 'synthetic' }),
     render: new Function('Vue', compile(template, { mode: 'function' }).code)(Vue) }
-  component.components.RouterLink = { props: ['to'], render() { return Vue.h('a', this.$slots.default?.()) } }
+  const targets = []
+  component.components.RouterLink = { props: ['to'], render() { targets.push(this.to); return Vue.h('a', this.$slots.default?.()) } }
   component.render._rc = true
   const render = () => renderToString(Vue.createSSRApp(component))
   try {
     assert.match(await render(), /¥0.29/); assert.match(await render(), /餐饮/)
+    assert.deepEqual(targets.find(target => target?.query?.date), { path: '/bills', query: { month: '2026-10', date: '2026-10-31' } })
+    env.view.selectDay('2026-10-30'); targets.length = 0
+    assert.match(await render(), /这天还没有小票，打开当天明细补记/)
+    assert.deepEqual(targets.find(target => target?.query?.date), { path: '/bills', query: { month: '2026-10', date: '2026-10-30' } })
+    env.store.storageError = '合成读取失败'; targets.length = 0
+    assert.doesNotMatch(await render(), /打开当天明细补记/)
+    assert.equal(targets.some(target => target?.query?.date), false)
+    env.store.storageError = ''
     env.auth.user = null
     const expired = await render()
     env.auth.user = { id: 'synthetic-owner' }
