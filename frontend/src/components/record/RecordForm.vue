@@ -59,7 +59,7 @@ function save() {
           </button>
         </div>
       </div>
-      <label>备注<input v-model="form.remark" aria-label="备注" type="text" maxlength="120" placeholder="这笔用在了哪里？" /></label>
+      <label>备注<input v-model="form.remark" aria-label="备注" type="text" maxlength="200" placeholder="这笔用在了哪里？" /></label>
     </fieldset>
     <p v-if="localError || error" ref="errorElement" class="form-error" role="alert">{{ localError || error }}</p>
     <div class="form-actions"><button type="button" :disabled="saving" @click="emit('cancel')">取消</button><button class="primary" type="submit" :disabled="saving || blocked">{{ saving ? (progressLabel || '正在保存…') : submitLabel }}</button></div>

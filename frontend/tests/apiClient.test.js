@@ -486,3 +486,14 @@ test('浏览器不支持跨页锁时拒绝写入，锁回调前身份变化也�
   assert.equal(storage.values.size, 0)
   assert.equal(calls, 0)
 })
+
+test('服务端合法200字符备注可读后原样修改金额，超限201仍拒绝读写', () => {
+  for(const note of ['合'.repeat(200), '😺'.repeat(100)]) {
+    const record = fromRecordView({ ...view, note })
+    const changed = toRecordInput({ ...record, amount:'0.31' })
+    assert.equal(changed.note, note); assert.equal(changed.amount,'0.31')
+  }
+  const note = '合'.repeat(201)
+  assert.throws(() => fromRecordView({ ...view,note }), /服务账单格式/)
+  assert.throws(() => toRecordInput({ ...input,remark:note }), /备注/)
+})

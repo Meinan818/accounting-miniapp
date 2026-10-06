@@ -21,7 +21,7 @@ export function validateRecord(input) {
   if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(input.time || '')) throw new Error('请选择有效时间')
   if (!CATEGORY_OPTIONS[input.type].some(c => c.label === input.category)) throw new Error('分类与收入/支出不匹配')
   const remark = String(input.remark ?? '').trim()
-  if (remark.length > 120) throw new Error('备注不能超过120个字')
+  if (remark.length > 200) throw new Error('备注不能超过200个字符')
   return {
     type: input.type, amount: cents / 100, category: input.category,
     icon: getCategoryMeta(input.category, input.type).icon,
