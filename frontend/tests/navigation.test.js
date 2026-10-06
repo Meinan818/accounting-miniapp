@@ -419,3 +419,22 @@ test('其他页带同名参数仍从顶部开始', () => {
 test('首次进入没有查询对象也可回顶', () => {
   assert.deepEqual(getScrollPosition({ path: '/' }, { path: '' }), { left: 0, top: 0 })
 })
+
+test('日期筛选链接与明细地址只接收当月有效日期，同页更新和切月清旧日期', () => {
+  const path = createBillFilterPath({ month:'2024-02', date:'2024-02-29', query:'午饭', type:'expense' })
+  const params = new URL(path, 'https://example.test').searchParams
+  assert.equal(params.get('date'), '2024-02-29')
+  const scope = effectScope(), route = reactive({ query:Object.fromEntries(params) })
+  const query = scope.run(() => useBillQuery(route))
+  try {
+    assert.equal(query.selectedDate.value, '2024-02-29')
+    for(const date of ['2024-02-30', '2024-03-01', ['2024-02-29'], undefined]) {
+      route.query = { month:'2024-02', date }
+      assert.equal(query.selectedDate.value, '')
+      assert.equal(new URL(createBillFilterPath({ month:'2024-02', date }), 'https://example.test').searchParams.has('date'), false)
+    }
+    route.query = { month:'2024-02', date:'2024-02-29' }
+    assert.equal(query.selectedDate.value, '2024-02-29')
+    query.selectMonth('2024-03'); assert.equal(query.selectedDate.value, '')
+  } finally { scope.stop() }
+})

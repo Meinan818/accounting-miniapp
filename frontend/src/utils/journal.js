@@ -19,10 +19,10 @@ export function searchRecords(records, query = '') {
 }
 
 // 类型/分类精确匹配，文字搜索仍按原规则；筛选绝不改变月汇总或原账本。
-export function filterRecords(records, { query = '', type = 'all', category = '' } = {}) {
-  if (!['all', 'income', 'expense'].includes(type) || typeof category !== 'string') throw new Error('筛选条件无效')
+export function filterRecords(records, { query = '', type = 'all', category = '', date = '' } = {}) {
+  if (!['all', 'income', 'expense'].includes(type) || typeof category !== 'string' || typeof date !== 'string' || (date !== '' && !validDate(date))) throw new Error('筛选条件无效')
   return searchRecords(records, query).filter(record => (
-    (type === 'all' || record.type === type) && (!category || record.category === category)
+    (type === 'all' || record.type === type) && (!category || record.category === category) && (!date || record.date === date)
   ))
 }
 

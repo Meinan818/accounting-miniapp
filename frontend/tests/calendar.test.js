@@ -116,11 +116,11 @@ test('实际Home模板当天明细保选定日期月份，空日/读取失败/�
     assert.match(await render(), /私有合成备注/)
     const summary = html => html.match(/<section[^>]*aria-label="当天账单汇总"[^>]*>(.*?)<\/section>/s)?.[1] || ''
     assert.match(summary(await render()), /当天收入.*¥0.00.*当天支出.*¥19.29/s)
-    assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-10', q: '2026-10-04' } })
+    assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-10', date: '2026-10-04' } })
     view.handleDateChange('2026-09-04'); targets.length = 0
     assert.match(await render(), /合成历史收入/)
     assert.match(summary(await render()), /当天收入.*¥7.00.*当天支出.*¥0.00/s)
-    assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-09', q: '2026-09-04' } })
+    assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-09', date: '2026-09-04' } })
     view.handleDateChange('2026-09-03'); targets.length = 0
     assert.match(await render(), /点下方「聊着记」/); assert.equal(targets.some(target => target?.path === '/bills'), false)
     assert.match(summary(await render()), /当天收入.*¥0.00.*当天支出.*¥0.00/s)

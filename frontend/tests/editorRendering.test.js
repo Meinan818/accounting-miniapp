@@ -244,7 +244,7 @@ function mountBills({ records = [{ ...original }], navigate = async () => false,
       window: { location: { origin: 'http://127.0.0.1:5174' } }, navigator: { clipboard },
       SERVER_MODE: server, useAuthStore: () => auth, createBillCsv,
       downloadCsv: (csv, filename) => { if (downloadFailure) throw Error('合成下载失败'); downloads.push({ csv, filename }) } },
-    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, filteredTotals, needsWideFilteredAmounts, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
+    'edit, saveEdit, deleteEdit, repeatRecord, adoptLatestVersion, notice, noticeElement, saving, resettingFilters, pendingMonth, savedEditMonth, syncSavedEditMonth, resetFilterAddress, clearSearchAddress, repeating, saveError, editConflict, editingRecord, selectedMonth, selectedDate, searchText, groupedRecords, setRecordElement, loadMoreRecords, visibleLimit, exportBills, exportUnavailable, exportError, selectedType, selectedCategory, reloading, reloadError, clearSearch, searchInput, copyFilterLink, copyLinkUnavailable, copyingLink, filterLinkText, filterLinkMessage, recordStore, ownerCurrent, reloadRecords, monthTitle, monthTotals, needsWideAmounts, monthRecords, changeMonth, filtering, filterCategories, chooseType, chooseCategory, listedRecords, filteredTotals, needsWideFilteredAmounts, resetFilters, hiddenCount, displayedCount, visibleGroups, highlightedId, getSign, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth, chooseMonth')
     values.noticeElement.value = focusTarget
     return template ? { ...values, SERVER_MODE: server, dayjs, centsText, formatCurrency, getCategoryArtwork, miaoWriting: 'synthetic', receiptKitten: 'synthetic' } : () => Vue.h('main')
   } }
@@ -1234,4 +1234,27 @@ test('草稿已保存或取消时撤下旧编辑窗口，旧回调不更新或�
       assert.equal(form.form.value.amount, '16.00')
     } finally { state.dispose() }
   }
+})
+
+test('实际明细日期筛选保整月总额，搜索清空保日期，CSV/复制/再记一笔携带当天，查看全部与切月清日期', async () => {
+  const day = { ...original, amount:32, date:'2026-10-04', remark:'当天午饭' }
+  const other = { ...original, id:'other-day', amount:5, date:'2026-10-05', remark:'提及2026-10-04当天午饭' }
+  const env = mountBills({ records:[day,other], server:true })
+  const v = env.values
+  try {
+    v.editingRecord.value = null
+    env.route.query = { month:'2026-10', date:'2026-10-04', q:'午饭' }
+    assert.deepEqual(v.listedRecords.value.map(r => r.id), [day.id])
+    assert.equal(v.monthTotals.value.expenseCents, 3700); assert.equal(v.filteredTotals.value.expenseCents, 3200)
+    await v.clearSearchAddress(); assert.equal(v.searchText.value, ''); assert.equal(v.selectedDate.value, '2026-10-04')
+    v.exportBills(); assert.equal(env.downloads.length, 1); assert.match(env.downloads[0].csv, /32\.00/); assert.doesNotMatch(env.downloads[0].csv, /提及/)
+    await v.copyFilterLink(); assert.equal(new URL(v.filterLinkText.value).searchParams.get('date'), '2026-10-04')
+    v.edit(day); await v.repeatRecord()
+    const target = env.calls.find(c => c[0] === 'navigate')[1]
+    assert.equal(new URL(target.query.returnTo, 'https://example.test').searchParams.get('date'), '2026-10-04')
+    v.editingRecord.value = null; await v.resetFilterAddress()
+    assert.equal(v.selectedDate.value, ''); assert.equal(env.route.query.date, undefined); assert.equal(v.listedRecords.value.length, 2)
+    env.route.query = { month:'2026-10', date:'2026-10-04' }
+    await v.chooseMonth('2026-09'); assert.equal(v.selectedDate.value, ''); assert.equal(env.route.query.date, undefined)
+  } finally { env.dispose() }
 })

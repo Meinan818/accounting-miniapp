@@ -123,7 +123,7 @@ function getRecordSign(record) {
           </div>
           <div class="home-ledger-tools">
             <span class="home-count">{{ selectedRecords.length }} 笔</span>
-            <router-link v-if="selectedRecords.length" class="home-day-details" :to="{ path: '/bills', query: { month: selectedDate.slice(0, 7), q: selectedDate } }" :aria-label="'查看' + selectedDate + '账单明细'">查看当天明细 <span aria-hidden="true">→</span></router-link>
+            <router-link v-if="selectedRecords.length" class="home-day-details" :to="{ path: '/bills', query: { month: selectedDate.slice(0, 7), date: selectedDate } }" :aria-label="'查看' + selectedDate + '账单明细'">查看当天明细 <span aria-hidden="true">→</span></router-link>
           </div>
         </div>
 

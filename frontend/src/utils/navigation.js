@@ -1,10 +1,14 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { isValidMonth } from './statistics.js'
+import { validDate } from './ledger.js'
 
-export function createBillFilterPath({ month, query = '', type = 'all', category = '' }) {
+function billDate(date, month) { return typeof date === 'string' && validDate(date) && date.startsWith(month + '-') ? date : '' }
+
+export function createBillFilterPath({ month, query = '', type = 'all', category = '', date = '' }) {
   if (!isValidMonth(month)) throw new Error('请选择有效月份。')
   const params = new URLSearchParams({ month })
+  if (billDate(date, month)) params.set('date', date)
   if (typeof query === 'string' && query) params.set('q', query.slice(0, 120))
   if (['income', 'expense'].includes(type)) params.set('type', type)
   if (typeof category === 'string' && category) params.set('category', category.slice(0, 120))
@@ -13,15 +17,18 @@ export function createBillFilterPath({ month, query = '', type = 'all', category
 
 export function useBillQuery(route, currentMonth = () => dayjs().format('YYYY-MM')) {
   const selectedMonth = ref(isValidMonth(route.query.month) ? route.query.month : currentMonth())
+  const selectedDate = ref(billDate(route.query.date, selectedMonth.value))
   const searchText = ref(typeof route.query.q === 'string' ? route.query.q.slice(0, 120) : '')
   const selectedType = ref(['income', 'expense'].includes(route.query.type) ? route.query.type : 'all')
   const selectedCategory = ref(typeof route.query.category === 'string' ? route.query.category.slice(0, 120) : '')
-  watch([() => route.query.month, () => route.query.q, () => route.query.type, () => route.query.category], () => {
+  watch([() => route.query.month, () => route.query.date, () => route.query.q, () => route.query.type, () => route.query.category], () => {
     selectedMonth.value = isValidMonth(route.query.month) ? route.query.month : currentMonth()
+    selectedDate.value = billDate(route.query.date, selectedMonth.value)
     searchText.value = typeof route.query.q === 'string' ? route.query.q.slice(0, 120) : ''
     selectedType.value = ['income', 'expense'].includes(route.query.type) ? route.query.type : 'all'
     selectedCategory.value = typeof route.query.category === 'string' ? route.query.category.slice(0, 120) : ''
   }, { flush: 'sync' })
+  watch(selectedMonth, month => { if (!billDate(selectedDate.value, month)) selectedDate.value = '' }, { flush: 'sync' })
   function selectMonth(next) {
     if (!isValidMonth(next) || next === selectedMonth.value) return false
     selectedMonth.value = next
@@ -32,7 +39,7 @@ export function useBillQuery(route, currentMonth = () => dayjs().format('YYYY-MM
     if (!Number.isInteger(offset)) return false
     return selectMonth(dayjs(selectedMonth.value + '-01').add(offset, 'month').format('YYYY-MM'))
   }
-  return { selectedMonth, searchText, selectedType, selectedCategory, changeMonth, selectMonth }
+  return { selectedMonth, selectedDate, searchText, selectedType, selectedCategory, changeMonth, selectMonth }
 }
 
 export function useManualRecordSave(store, router, batchId, { owner } = {}) {

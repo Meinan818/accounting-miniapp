@@ -117,7 +117,7 @@ if (!SERVER_MODE) onMounted(reloadRecords)
           <div ref="dayChart" class="review-day-chart" :style="{ '--day-count': review.days.length }" aria-label="每日支出，点击日期查看数额" @pointerdown="keepChartPosition" @wheel.passive="keepChartPosition" @keydown="keepChartKeyPosition">
             <button v-for="day in review.days" :key="day.date" type="button" class="review-day" :class="{ selected: pointedDay?.date === day.date, recorded: day.count }" :aria-pressed="pointedDay?.date === day.date" :aria-label="day.date + '，支出' + centsText(day.expenseCents) + '元'" @click="selectDay(day.date)"><span class="review-day-track" aria-hidden="true"><i :style="{ height: day.expenseCents ? Math.max(5, day.expenseCents / maximumDayExpense * 100) + '%' : '0%' }"></i></span><span>{{ day.day }}</span></button>
           </div>
-          <router-link v-if="pointedDay?.count" class="review-day-link" :to="{ path: '/bills', query: { month: selectedMonth, q: pointedDay.date } }">翻开这一天的 {{ pointedDay.count }} 张小票 →</router-link>
+          <router-link v-if="pointedDay?.count" class="review-day-link" :to="{ path: '/bills', query: { month: selectedMonth, date: pointedDay.date } }">翻开这一天的 {{ pointedDay.count }} 张小票 →</router-link>
           <p class="review-scope-note">按完整业务月份统计，未来日期按所属月计入；记录日包含收入与支出，不是连续打卡。</p>
         </section>
         <section class="review-comparison" aria-label="与上月账本对照">

@@ -2035,3 +2035,9 @@ W3C WAI日期示例 https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/exampl
 原53项48通过5失败，实证同页/跨页大小写重复、旧version逃过、删除状态丢失复活及合法游标大小写拒读；fromRecordView统一小写，分页seen/previous/order/links用规范身份，原nextAfter透传服务器且比较规范身份。旧保存聊天uppercase recordIds合成回归0关联再次复现，正式recordsByIds及groupRecords规范UUID，普通demo编号仍区分，不改原存储或真实数据。最終87相关547完整/两构建通过。390px四异常拒读Stats/Bills中文保原31元与删除18元、禁止搜索导出，合法大写显式重读恢复/编辑取消；旧uppercase聊天当前编辑31元与删除18元刷新保持原存储，10检查25全拦截API5截图，真实0。累计86组839检查2080API336截图7JSON，截图抽检；用户人工验收/真机另待。
 
 原uuid-case-related.log最后2失败仅JSON克隆丢deletedAt:undefined造成测试比较不对称，改严格同一数组引用核原账本不替换，业务断言保持；旧聊天QA两次导航定位误用可见名，实际BottomNav aria-label=打开 AI 记账，改getByRole名后全部通过，原失败日志保留且不计通过。源ce16376普通Push已执行；本轮官方inspect完整remote/HEAD ce1637639b5c418535ae01dc758c2958be904105一致，私有/无Pages/0workflows/0deployments。前两次连接失败保留，当前网络已恢复，本节点随后保存上传。compact=1，原automation保持。
+
+## 2026-10-06 · 当天明细精确日期
+
+在10月5日备注提及10月4日的独立fixture，原当天入口全文q实际2笔而预期1笔，browser-exact-day-details-before保持。新增filterRecords date精确相交、useBillQuery当月合法date及createBillFilterPath白名单；55相关before53通过2失败保持。首页与统计发送date，Bills展示日期口径，全部监听/分批/复制/CSV/再记一笔来源加入日期；清搜索保日期、查看全部清日期、切月或跨月编辑清旧日期，保持q原全文规则不改真实数据。实际Bills测试核32元筛选/37元整月、CSV只当天、复制/来源date及查看全部/切月；Home原q预期按新date合同更新。151相关550全量与两构建通过。三宽42检查63全拦截GET6截图：首页三日期/原生键盘开链接/刷新/编辑取消、独立搜索相交/清除、受控复制不动系统剪贴板、查看全部和统计当日链接，真实0。累计87组881检查2143API342截图7JSON。
+
+QA首轮清除按钮accessible name误写清除搜索，实际清除搜索条件，30秒超时保留；第二轮点击查看全部立刻断言看到1笔时DOM仍正在重置且URL保原date，属未等待路由，改等待filter-result撤下后2笔同断言通过。原失败保持、不改业务迎合。上一81889ec普通Push reset，既有官方Git数据库同SHA/force:false同步81889ec43ad099ee1d71f731d9b4f60463b98fd5成功，私有/无Pages/0workflows/0deployments。本节点随后保存上传，compact=1原automation保持。

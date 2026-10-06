@@ -105,3 +105,16 @@ test('多笔同日足迹计笔数且不改记录身份/日期', async () => {
 test('足迹坏查询日期或列表明确拒绝，不把错误当正常空账本', async () => {
   const { getRecentDays } = await import('../src/utils/journal.js');assert.throws(()=>getRecentDays([], '2026-02-30'),/日期/);assert.throws(()=>getRecentDays(null,'2026-10-03'),/日期/)
 })
+
+test('精确日期筛选只取业务日期，与文字及收支筛选相交，不把备注日期当当天', () => {
+  const records = [{ id:'day', date:'2026-10-04', type:'expense', category:'餐饮', amount:32, remark:'午饭' },
+    { id:'other', date:'2026-10-05', type:'expense', category:'餐饮', amount:5, remark:'提及2026-10-04午饭' },
+    { id:'income', date:'2026-10-04', type:'income', category:'其他', amount:7, remark:'退款' }]
+  const before = JSON.stringify(records)
+  assert.deepEqual(filterRecords(records, { date:'2026-10-04' }).map(r => r.id), ['day','income'])
+  assert.deepEqual(filterRecords(records, { date:'2026-10-04', query:'午饭', type:'expense' }).map(r => r.id), ['day'])
+  assert.deepEqual(filterRecords(records, { query:'2026-10-04' }).map(r => r.id), ['day','other','income'])
+  assert.deepEqual(filterRecords(records, { date:'2026-10-06' }), [])
+  for(const date of ['2026-02-30', ['2026-10-04'], null]) assert.throws(() => filterRecords(records, { date }), /筛选/)
+  assert.equal(JSON.stringify(records), before)
+})

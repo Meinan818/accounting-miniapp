@@ -529,3 +529,7 @@ MonthPicker的aria-label直接在input上，首版QA误写带label的后代input
 ## 2026-10-06 · UUID回归fixture和导航定位
 
 JSON复制会丢undefined属性，uuid-case-related.log两项深比较因此失败；拒读保整本应strictEqual原数组引用，不对称克隆不用于业务判定。新增旧聊天QA先后猜可见聊着记/聊喵记为accessible name超时，BottomNav实际aria-label=打开 AI 记账；读取真实模板后定位，保全部原关联/刷新/不改存储断言，失败材料独立保留。
+
+## 2026-10-06 · 当天筛选QA原生名称与异步路由
+
+原生搜索按钮名实际清除搜索条件，QA清除搜索精确定位超时；先核模板。查看全部的click完成不代表async replace完成，失败JSON显示正在重置与旧date URL；等待实际筛选region撤下再断言两笔，不改变断言或业务，保原失败材料。

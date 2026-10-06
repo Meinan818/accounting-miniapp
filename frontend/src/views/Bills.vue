@@ -36,7 +36,7 @@ const currentMonth = computed(() => today.value.slice(0, 7))
 // 3. 响应式数据
 const route = useRoute()
 const router = useRouter()
-const { selectedMonth, searchText, selectedType, selectedCategory } = useBillQuery(route)
+const { selectedMonth, selectedDate, searchText, selectedType, selectedCategory } = useBillQuery(route)
 const editingRecord = ref(null)
 const saving = ref(false)
 const resettingFilters = ref(false)
@@ -62,7 +62,7 @@ const filterLinkText = ref('')
 const filterLinkMessage = ref('')
 let filterLinkGeneration = 0
 const copyLinkUnavailable = computed(() => !active || !ownerCurrent.value || copyingLink.value || saving.value || resettingFilters.value || Boolean(editingRecord.value))
-watch([selectedMonth, searchText, selectedType, selectedCategory, editingRecord, ownerCurrent], () => {
+watch([selectedMonth, selectedDate, searchText, selectedType, selectedCategory, editingRecord, ownerCurrent], () => {
   filterLinkGeneration++
   filterLinkText.value = ''; filterLinkMessage.value = ''
 }, { flush: 'sync' })
@@ -75,7 +75,7 @@ async function copyFilterLink() {
   let link = ''
   try {
     link = new URL(createBillFilterPath({ month: selectedMonth.value, query: searchText.value,
-      type: selectedType.value, category: selectedCategory.value }), window.location.origin).href
+      type: selectedType.value, category: selectedCategory.value, date: selectedDate.value }), window.location.origin).href
     if (typeof navigator.clipboard?.writeText !== 'function') throw new Error('clipboard unavailable')
     await navigator.clipboard.writeText(link)
     if (!current()) return false
@@ -91,7 +91,7 @@ async function copyFilterLink() {
 }
 const displayBatchSize = 60
 const visibleLimit = ref(displayBatchSize)
-watch([selectedMonth, searchText, selectedType, selectedCategory], () => { visibleLimit.value = displayBatchSize })
+watch([selectedMonth, selectedDate, searchText, selectedType, selectedCategory], () => { visibleLimit.value = displayBatchSize })
 
 // 4. 计算属性
 const monthTitle = computed(() => dayjs(`${selectedMonth.value}-01`).format('YYYY年M月'))
@@ -106,13 +106,13 @@ const monthRecords = computed(() => recordStore.records
 const monthTotals = computed(() => getRecordTotals(monthRecords.value))
 const needsWideAmounts = computed(() => !monthTotals.value.error && [monthTotals.value.incomeCents, monthTotals.value.expenseCents, monthTotals.value.balanceCents].some(value => centsText(value).length > 7))
 
-const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value }))
+const listedRecords = computed(() => filterRecords(monthRecords.value, { query: searchText.value, type: selectedType.value, category: selectedCategory.value, date: selectedDate.value }))
 const filteredTotals = computed(() => getRecordTotals(listedRecords.value))
 const needsWideFilteredAmounts = computed(() => !filteredTotals.value.error && [filteredTotals.value.incomeCents, filteredTotals.value.expenseCents].some(value => centsText(value).length > 7))
-const filtering = computed(() => Boolean(searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
+const filtering = computed(() => Boolean(selectedDate.value || searchText.value.trim() || selectedCategory.value || selectedType.value !== 'all'))
 const exportUnavailable = computed(() => !active || !ownerCurrent.value || Boolean(recordStore.storageError || reloadError.value) ||
   reloading.value || saving.value || resettingFilters.value || Boolean(editingRecord.value) || !listedRecords.value.length)
-watch([selectedMonth, searchText, selectedType, selectedCategory], () => { exportError.value = '' })
+watch([selectedMonth, selectedDate, searchText, selectedType, selectedCategory], () => { exportError.value = '' })
 function exportBills() {
   if (exportUnavailable.value || !active) return
   exportError.value = ''; notice.value = ''
@@ -143,7 +143,7 @@ function chooseCategory(item) {
 }
 async function resetFilters() {
   if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value) return
-  selectedType.value = 'all'; selectedCategory.value = ''
+  selectedType.value = 'all'; selectedCategory.value = ''; selectedDate.value = ''
   await clearSearch()
 }
 function resetFilterAddress() { return clearFilterAddress(true) }
@@ -151,6 +151,7 @@ function clearSearchAddress() { return clearFilterAddress(false) }
 async function clearFilterAddress(clearAll) {
   const query = { ...route.query, month: selectedMonth.value }
   delete query.q
+  if (clearAll) delete query.date
   if (clearAll || selectedType.value === 'all') delete query.type
   else query.type = selectedType.value
   if (clearAll || !selectedCategory.value) delete query.category
@@ -160,7 +161,7 @@ async function clearFilterAddress(clearAll) {
 async function replaceFilterAddress(query, { afterNavigate = async () => {}, errorMessage = '筛选暂时未能重置，原条件已保留，请重试。' } = {}) {
   if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value) return false
   notice.value = ''
-  const keys = ['month', 'q', 'type', 'category']
+  const keys = ['month', 'date', 'q', 'type', 'category']
   const needsNavigation = keys.some(key => route.query[key] !== query[key] || (key in route.query) !== (key in query))
   if (!needsNavigation) { await afterNavigate(); return true }
   resettingFilters.value = true
@@ -206,14 +207,14 @@ const recordElements = new Map()
 function setRecordElement(id, element) { if (element) recordElements.set(id, element); else recordElements.delete(id) }
 async function loadMoreRecords() {
   if (!active || !ownerCurrent.value || editingRecord.value) return
-  const query = JSON.stringify([selectedMonth.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])
+  const query = JSON.stringify([selectedMonth.value, selectedDate.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])
   const nextRecord = listedRecords.value.slice(visibleLimit.value, visibleLimit.value + displayBatchSize)
     .find(record => record.id !== highlightedId.value)
   visibleLimit.value += displayBatchSize
   const limit = visibleLimit.value
   await nextTick()
   if (!active || !ownerCurrent.value || editingRecord.value || limit !== visibleLimit.value ||
-    query !== JSON.stringify([selectedMonth.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])) return
+    query !== JSON.stringify([selectedMonth.value, selectedDate.value, searchText.value, selectedType.value, selectedCategory.value, highlightedId.value])) return
   const element = recordElements.get(nextRecord?.id)
   element?.focus({ preventScroll: true })
   element?.scrollIntoView({ block: 'nearest', behavior: 'auto' })
@@ -243,7 +244,7 @@ async function repeatRecord() {
   saving.value = true; repeating.value = true; saveError.value = ''
   try {
     const returnTo = createBillFilterPath({ month: selectedMonth.value, query: searchText.value,
-      type: selectedType.value, category: selectedCategory.value }) + (route.hash || '')
+      type: selectedType.value, category: selectedCategory.value, date: selectedDate.value }) + (route.hash || '')
     const failure = await router.push({ path: '/add', query: { repeat: id, returnTo } })
     if (!active || !ownerCurrent.value) return false
     if (failure) throw new Error('暂时未能打开新账单，原账单和编辑窗口已保留，请重试。')
@@ -281,6 +282,8 @@ async function saveEdit(input) {
 async function syncSavedEditMonth() {
   if (!active || !ownerCurrent.value || saving.value || resettingFilters.value || editingRecord.value || !savedEditMonth.value) return false
   const month = savedEditMonth.value, query = { ...route.query, month }
+  if (selectedDate.value) query.date = selectedDate.value
+  else delete query.date
   if (searchText.value) query.q = searchText.value
   else delete query.q
   if (selectedType.value === 'all') delete query.type
@@ -312,7 +315,7 @@ async function deleteEdit() {
 
 // 5. 方法
 let searchFocusGeneration = 0
-watch([selectedMonth, searchText, selectedType, selectedCategory, editingRecord], () => {
+watch([selectedMonth, selectedDate, searchText, selectedType, selectedCategory, editingRecord], () => {
   searchFocusGeneration++
 }, { flush: 'sync' })
 async function clearSearch() {
@@ -340,6 +343,7 @@ function chooseMonth(month) {
 }
 async function navigateMonth(month) {
   const query = { ...route.query, month }
+  delete query.date
   if (searchText.value) query.q = searchText.value
   else delete query.q
   if (selectedType.value === 'all') delete query.type
@@ -434,7 +438,7 @@ function getSign(record) {
         <div class="bills-filter-heading"><span>挑一张分类贴纸</span><div class="bills-type-tabs" aria-label="筛选收支"><button v-for="type in ['all','expense','income']" :key="type" type="button" :disabled="resettingFilters" :aria-pressed="selectedType === type" :class="{ selected:selectedType === type }" @click="chooseType(type)">{{ type === 'all' ? '全部' : type === 'income' ? '收入' : '支出' }}</button></div></div>
         <div class="bills-filter-chips hide-scrollbar" aria-label="分类贴纸，可左右滑动"><button v-for="item in filterCategories" :key="item.type + item.category" type="button" class="bills-category-chip" :disabled="resettingFilters" :class="{ selected:selectedType === item.type && selectedCategory === item.category }" :aria-pressed="selectedType === item.type && selectedCategory === item.category" :aria-label="'筛选' + (item.type === 'income' ? '收入' : '支出') + '分类：' + item.category" :style="{ '--chip-paper':getCategoryArtwork(item.category,item.type).paper }" @click="chooseCategory(item)"><CategoryIcon :category="item.category" :type="item.type" /><span>{{ item.category }}</span><small>{{ item.count }}</small></button></div>
       </section>
-      <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="resetFilterAddress">{{ resettingFilters ? (pendingMonth || savedEditMonth ? '请稍候…' : '正在重置…') : '查看全部' }}</button></div>
+      <div v-if="filtering && !recordStore.storageError" class="bills-filter-result"><p class="bills-search-feedback" role="status">{{ selectedDate ? selectedDate + ' · ' : '' }}{{ selectedCategory || (selectedType === 'all' ? '全部分类' : selectedType === 'income' ? '收入' : '支出') }} · 找到 {{ listedRecords.length }} 笔<br><span>只筛选小票，本月收支汇总不变</span></p><button type="button" :disabled="resettingFilters" :aria-busy="resettingFilters" @click="resetFilterAddress">{{ resettingFilters ? (pendingMonth || savedEditMonth ? '请稍候…' : '正在重置…') : '查看全部' }}</button></div>
       <section v-if="filtering && !recordStore.storageError" class="bills-filter-summary" aria-label="筛选结果汇总">
         <p class="bills-filter-summary-heading">当前筛选小计<span>包含未展开的小票</span></p>
         <p v-if="filteredTotals.error" class="bills-storage-note" role="alert">{{ filteredTotals.error }}</p>
