@@ -2,34 +2,53 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "开发已暂停；统计回到本月仅源码草稿，未验证。整理未完成项和本地待续存档。",
+  "currentTask": "统计“回到本月”草稿已完成：本月/等待禁重复、复用安全导航；切月丢hash已浏览器和实际内存路由复现并修复。506前端/demo与server两构建、三宽15合成浏览器27API9截图通过，真实业务请求0；累计64组470检查1466API199截图7JSON/源5CSV，失败不计通过。",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "仅在用户明确恢复后：核现场并接续Stats回到本月草稿，补相关测试/构建/窄屏键盘验证；再决定后续节点。",
-  "nextStepReason": "本次暂停优先于之前自主持续推进授权。",
-  "pendingUserDecision": "等待用户主动恢复；未完成/待验与后续规划集中PENDING，不催促。",
+  "nextStep": "明细页增加回到本月快捷入口，保留搜索/收支，沿用月份切换的分类重置及身份/编辑保护；核相关测试与窄屏键盘。",
+  "nextStepReason": "常用明细页也需减少历史月份逐月翻回的操作，保持现有筛选和存储边界。",
+  "pendingUserDecision": "依赖集中PENDING，普通开发自主推进，不主动提问。",
   "onlineVersion": "无（尚未部署）",
-  "updatedAt": "2026-10-04",
+  "updatedAt": "2026-10-06",
   "observedCompactionCount": 1,
   "compactionCountBasis": "当前聊天01a10649-1a5f-77b0-bc50-e8334ce6e784第1次实际compact已识别告知并登记；新窗口原生交接基准0之后加1。同聊天恢复不归零，heartbeat及旧摘要不另计。",
   "automation": {
     "id": "automation",
     "kind": "heartbeat",
-    "status": "PAUSED",
+    "status": "ACTIVE",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a10649-1a5f-77b0-bc50-e8334ce6e784",
-    "transferStatus": "2026-10-04用户暂停；原生update/view及落盘核仅status/updated_at改变，其余字段保持，未迁移。",
+    "transferStatus": "2026-10-06原生恢复及落盘逐字段核只status/updated_at改变，其他字段保持。",
     "scheduledRunVerified": false
   },
-  "status": "paused_by_user",
-  "developmentPaused": true,
+  "status": "active",
+  "developmentPaused": false,
   "pausedAt": "2026-10-04",
-  "pauseReason": "用户明确要求所有未完成开发暂停，过几天再开发；等待用户明确恢复，不自动重启。",
+  "pauseReason": "",
   "lastVerifiedCodeCommit": "c4c741724954f61db115c564e0f38f844785fc93",
   "lastPushedCommit": "d3e6df1afa42620132fd3ad13719f4eedde6348f",
-  "unverifiedChanges": [
-    "frontend/src/views/Stats.vue：回到本月按钮/月份差值/样式，未补测试及构建交互验证"
-  ]
+  "unverifiedChanges": [],
+  "resumedAt": "2026-10-06",
+  "validation": {
+    "frontendTests": 506,
+    "builds": [
+      "demo",
+      "server"
+    ],
+    "syntheticBrowserChecks": 15,
+    "syntheticApiRequests": 27,
+    "screenshots": 9,
+    "realBusinessRequests": 0
+  },
+  "localServices": {
+    "checkedAt": "2026-10-06",
+    "launcherPid": 25808,
+    "backendPid": 20304,
+    "frontendPid": 15428,
+    "bind": "127.0.0.1",
+    "csrfShapeValid": true,
+    "profileHtmlStatus": 200
+  }
 }

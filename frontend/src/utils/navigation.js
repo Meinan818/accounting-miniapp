@@ -129,7 +129,7 @@ export function useStatsMonthNavigation(route, router, currentMonth = () => dayj
     const current = ++generation
     pendingMonth.value = next; navigationError.value = ''
     try {
-      const failure = await router.replace({ query: { ...route.query, month: next } })
+      const failure = await router.replace({ query: { ...route.query, month: next }, hash: route.hash || '' })
       if (!isCurrent() || current !== generation) return false
       if (failure || selectedMonth.value !== next) {
         navigationError.value = '月份未能切换，仍显示原月份，请重试。'

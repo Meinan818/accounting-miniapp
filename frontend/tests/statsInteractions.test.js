@@ -30,10 +30,66 @@ function scene(query = {}, dateClock = {}, { server = false, delayedNavigation =
     onMounted() {}, matchMedia: () => ({ matches: true }), useRecordStore: () => store, useRoute: () => route, useRouter: () => router,
     useLocalDay: () => useLocalDay({ eventTarget: null, ...dateClock }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition, keepChartKeyPosition, pendingMonth, navigationError, ownerCurrent, selectDay, selectType, navigationMonth, pointedDay, maximumDayExpense, error, needsWideAmounts, categoryRows, leadingCategory, typeLabel, reloading, reloadRecords}')(...Object.values(bindings)))
+    ';return {selectedMonth, selectedDay, selectedType, review, statistics, monthTitle, dayChart, changeMonth, slideDays, keepChartPosition, keepChartKeyPosition, pendingMonth, navigationError, ownerCurrent, selectDay, selectType, navigationMonth, pointedDay, maximumDayExpense, error, needsWideAmounts, categoryRows, leadingCategory, typeLabel, reloading, reloadRecords, currentMonth, canReturnToCurrentMonth, returnToCurrentMonth}')(...Object.values(bindings)))
   view.dayChart.value = { clientWidth: 200, set scrollLeft(value) { scrolls.push(value) }, scrollBy: options => calls.push(options) }
   return { view, store, route, calls, scrolls, auth, navigations, dispose: () => scope.stop() }
 }
+
+test('统计从历史月份及年份两端直接回本月，保其他查询和类型，不改账本或额外读取', async () => {
+  for (const month of ['2026-09', '1000-01', '9999-12']) {
+    const env = scene({ month, q: '保留条件' }, { now: () => '2026-10-06' }, { server: true })
+    try {
+      env.view.selectType('income'); env.view.selectDay(month + '-01')
+      assert.equal(env.view.canReturnToCurrentMonth.value, true)
+      assert.equal(await env.view.returnToCurrentMonth(), true)
+      assert.deepEqual(env.route.query, { month: '2026-10', q: '保留条件' })
+      assert.equal(env.view.monthTitle.value, '2026年10月')
+      assert.equal(env.view.selectedDay.value, ''); assert.equal(env.view.selectedType.value, 'income')
+      assert.equal(env.view.statistics.value.expenseCents, 29)
+      assert.equal(await env.view.returnToCurrentMonth(), false)
+      assert.equal(env.view.canReturnToCurrentMonth.value, false)
+      assert.deepEqual(env.store.records, records); assert.deepEqual(env.calls, [])
+    } finally { env.dispose() }
+  }
+})
+
+test('统计回本月等待只发一次，失败保原月并允许显式重试；旧身份和离页入口不导航', async () => {
+  const env = scene({ month: '2026-09' }, { now: () => '2026-10-06' }, { server: true, delayedNavigation: true })
+  try {
+    const pending = env.view.returnToCurrentMonth()
+    assert.equal(env.view.pendingMonth.value, '2026-10')
+    assert.equal(env.view.canReturnToCurrentMonth.value, false)
+    assert.equal(await env.view.returnToCurrentMonth(), false); assert.equal(env.navigations.length, 1)
+    env.navigations[0].resolve({ type: 4 })
+    assert.equal(await pending, false); assert.equal(env.view.selectedMonth.value, '2026-09')
+    assert.match(env.view.navigationError.value, /月份未能切换/)
+    assert.equal(env.view.canReturnToCurrentMonth.value, true)
+    const retry = env.view.returnToCurrentMonth()
+    env.auth.user = null; env.auth.user = { id: 'synthetic-owner' }
+    env.navigations[1].reject(Error('synthetic-old-navigation'))
+    assert.equal(await retry, false)
+    assert.equal(env.view.navigationError.value, '')
+    assert.equal(await env.view.returnToCurrentMonth(), false); assert.equal(env.navigations.length, 2)
+  } finally { env.dispose() }
+  const disposed = scene({ month: '2026-09' }, { now: () => '2026-10-06' })
+  disposed.dispose(); assert.equal(await disposed.view.returnToCurrentMonth(), false)
+  assert.equal(disposed.route.query.month, '2026-09')
+})
+
+test('统计历史月跨月后回到最新本月，不使用页面打开时的旧月份', async () => {
+  let day = '2026-10-31', tick
+  const env = scene({ month: '2026-09' }, { now: () => day, documentTarget: null,
+    eventTarget: { addEventListener() {}, removeEventListener() {} },
+    timers: { setInterval: callback => { tick = callback; return 1 }, clearInterval() {} } })
+  try {
+    day = '2026-11-01'; tick()
+    assert.equal(env.view.selectedMonth.value, '2026-09')
+    assert.equal(await env.view.returnToCurrentMonth(), true)
+    assert.equal(env.route.query.month, '2026-11')
+    assert.equal(env.view.statistics.value.expenseCents, 31)
+    assert.deepEqual(env.calls, [])
+  } finally { env.dispose() }
+})
 
 test('正式Stats进入时账本已由路由读好，初次渲染仍定位峰值且不重复读取', async () => {
   const env = scene({ month: '2026-10' }, {}, { server: true })

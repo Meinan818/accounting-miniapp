@@ -483,3 +483,7 @@ card.scrollWidth包含已有右侧flower贴纸超出9px，不能把这个总数�
 ## 2026-10-04 · 原生dialog焦点与忙碌控件回归
 
 仅等saving=false的DOM更新不能保证原生dialog恢复入口焦点，实际showModal前入口被opening禁用，activeElement已变BODY。focus-diagnostic保留，需显式恢复当前入口焦点并核owner/窗口先前open；异步完成还需等待入口可用DOM。旧回归点击现在禁用的按钮会等到请求超时，不代表业务仍允许关闭；改为disabled断言且保Escape/窗口/输入/重复请求断言，失败原文独立保留。
+
+## 2026-10-06 · 同页切月漏传hash
+
+Stats旧月份导航只向router.replace传query，实际浏览器地址#month切月后消失；新增实际memory router回归33项32通过1失败复现。现显式保route.hash，原query/owner/generation/失败保护保持；506全量与三宽15检查通过。浏览器final和hash-before原失败日志/时间戳截图保留，不删除断言。新月份入口需核完整地址，不能只核query。

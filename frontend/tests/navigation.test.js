@@ -223,14 +223,23 @@ test('已保存导航等待期间身份首次变化，旧失败不填错误或�
   } finally { scope.stop() }
 })
 
-async function setupMonth(month = '2026-10') {
+async function setupMonth(month = '2026-10', hash = '') {
   const router = createRouter({ history: createMemoryHistory(), routes: [{ path: '/stats', component: {} }] })
-  await router.push({ path: '/stats', query: { month, q: '保留筛选' } })
+  await router.push({ path: '/stats', query: { month, q: '保留筛选' }, hash })
   const scope = effectScope()
-  const route = { get query() { return router.currentRoute.value.query } }
+  const route = { get query() { return router.currentRoute.value.query }, get hash() { return router.currentRoute.value.hash } }
   const navigation = scope.run(() => useStatsMonthNavigation(route, router, () => '2026-10'))
   return { router, navigation, dispose: () => scope.stop() }
 }
+
+test('统计同页切月保留查询与锚点，回本月不丢完整地址', async () => {
+  const scene = await setupMonth('2026-09', '#month')
+  try {
+    assert.equal(await scene.navigation.changeMonth(1), true)
+    assert.deepEqual(scene.router.currentRoute.value.query, { month: '2026-10', q: '保留筛选' })
+    assert.equal(scene.router.currentRoute.value.hash, '#month')
+  } finally { scene.dispose() }
+})
 
 test('原草稿取消后保留表单内容，取消失败不放行也不导航或重新写入', async () => {
   let fail = true, cancellations = 0
