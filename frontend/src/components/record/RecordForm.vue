@@ -71,6 +71,7 @@ fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 legend { margin-bottom: 8px; }
 .type-options { display: flex; gap: 10px; margin-bottom: 16px; }
 button, input, select { min-height: 44px; border: 1px solid #d9c5a9; border-radius: 12px 10px 13px 11px; background: #fffdf8; color: inherit; font: inherit; padding: 9px 12px; }
+input, select { scroll-margin-block: 16px 96px; }
 button { cursor: pointer; }
 button:disabled { opacity: .55; cursor: not-allowed; }
 button.selected, button.primary { background: #f6ddd8; }

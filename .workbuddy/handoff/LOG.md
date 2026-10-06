@@ -2063,3 +2063,7 @@ Bills复用clearFilterAddress/replaceFilterAddress清date，保当前而非旧UR
 RecordInput @Size(max=200)与fromRecordView200，validateRecord/RecordForm120不一致，apiClient新读后改金额回归34项33通过1失败原文备注不能超过120个字保持。仅validateRecord拒绝阈值/提示200及原生maxlength200两行，description旧摘要120规则未改，备注本体保持。140相关554完整/两构建通过，三宽9浏览器30完全拦截API3最终截图（6PUT只fixture/真实0）：原200中文备注只改金额版0→1完整保，刷新原文、原生199+合末只入合阻201/0请求，100emoji对应Java UTF16长度200显式保存版2/刷新取消无追加写入。首轮截图scrollIntoViewIfNeeded仅备注标签停在sticky下，QA改手动center展示最终备注作视觉检查，不声称这个滚动是业务修复，也不凭截图断言原生键盘有缺陷。累计91组923检查2242API357截图7JSON，不重复计首轮同链。
 
 上一aabc00a普通Push及官方inspect完整aabc00a65ee77d5564ef15217a355f970336a6bf一致及私有/无Pages/0workflow/0deployment已核，当前后续保存上传。compact=1原automation保持。
+
+## 2026-10-06 · 原生Tab备注焦点不被sticky盖住
+
+先browser-note-keyboard-before真实Tab逐控件到note：focused=true，320px input790.890625–834.890625、actions763–823，原几何断言失败/截图保持；不是QA主动滚动造成。仅input/select scroll-margin-block:16px96px，复用错误区已有底部余量方式。原三宽同Tab同断言css全通过，input702.890625–746.890625在763前，0写入/真实请求0。554完整/demo/server两构建通过，不为CSS造镜像单元测试；三宽3检查6GET3截图，累计92组926检查2248API360截图7JSON。此前长备注节点11688e3普通Push reset保持，既有官方同SHA/force:false同步11688e38a87ca178e728ad58da6932303fca8d8e完成，私有/无Pages/0workflow/0deployment；当前后续保存上传，compact=1原automation保持。
