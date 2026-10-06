@@ -2106,3 +2106,7 @@ selectedDate || selectedMonth仅变下载名，原日期筛选实际渲染测试
 
 Stats f8731bd普通Git push挂起300秒超时，原stats-empty-day-push.log保持；只停止已核本次进程树时余下remote helper仍存在，后二次终止前PID已自然退出，安全guard拒绝避免误杀。read-only inspect远端仍390ae3d，官方github-sync.mjs逐对象同SHA/force:false同步f8731bdd984a3663da2ca27b141d369702357714核成功，私有无Pages0workflow0deployment，不把挂起当上传成功。
 Profile footprint模板仍q=day.date；新增真实模板SSR+useBillQuery/filterRecords回归，before1项失败actual[day,mention]与expected[day]证实他日备注误混入。仅q键改date，普通文本搜索/数据不改；测试核跨月Sep30空日路径。81相关/556全量/demo和server构建exit0，三宽9检查48全拦截GET3截图：首页日历以外七天爪印原生Enter→10月4日仅32元排他日5元备注，整月45保持，刷新保date/noq；10月3日0笔排他日备注8元，手动预填取消保日期；9月30跨月0笔，0业务写。320截图抽检，真实业务/AI0；累计98组977检查2401API384截图7JSON，历史CSV另计。下一项原生Tab爪印焦点取证。
+
+## 2026-10-06 · Profile爪印原生Tab不被底栏盖住
+
+058112a官方Git数据库逐对象同SHA/force:false同步完整058112a0d47995f2e63076b40b4b2108db8c4225已核，私有无Pages0workflow0deployment。爪印原生Tab从退出按钮到第一日期，before320 top784.171875/bottom844.171875而navTop758，几何断言失败/截图原文保持；非QA主动滚动。仅.profile-footprint-item增加scroll-margin-block:12px calc底栏高度+12px，不改链接/数据/资料。556完整/demo与server实际exit0后，三宽各7次原生Tab21检查12合成GET3截图同几何断言全通过，第七入口Enter仍精确date；320/1440约685.87–745.87完整在758上方，成品320抽检，真实业务/AI0。CSS无额外镜像单元测试；只计最终一组，累计99组998检查2413API387截图7JSON，CSV保持另计。下一项本批完整主线回归。
