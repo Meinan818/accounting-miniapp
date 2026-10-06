@@ -2,12 +2,12 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "再记一笔保来源返回已验证完成，准备独立提交及上传",
+  "currentTask": "再记一笔及保来源返回已验证上传；当前文档入口已校准，继续基础流程收尾",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "核基本开发交付清单与当前文档入口：区分已实现/当前验证/真实账号与人工待验/外部依赖，收敛下一项核心体验问题；吉祥物保持仅方案，未到基本开发完成里程碑不触发提醒。",
-  "nextStepReason": "继续基本开发收尾，减少历史文档误导；吉祥物试开发不混入主线。",
+  "nextStep": "串联一条正式模式完整合成用户流程：登录→聊天草稿确认→明细/统计→资料，使用独立fixture并拦截全部业务/AI/账号请求，不触碰真实数据；按实际结果收敛基本开发交付清单，未宣告里程碑前不触发吉祥物提醒。",
+  "nextStepReason": "既有页面独立链已覆盖，收尾核一会话跨页连贯性；真实账号与人工验收仍单列待条件。",
   "pendingUserDecision": "依赖集中PENDING，普通开发自主推进，不主动提问。",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-06",
@@ -27,8 +27,8 @@
   "developmentPaused": false,
   "pausedAt": "2026-10-04",
   "pauseReason": "",
-  "lastVerifiedCodeCommit": "0a3b16251a40ec758b09586b5acc5f5e9ead10d1",
-  "lastPushedCommit": "0a3b16251a40ec758b09586b5acc5f5e9ead10d1",
+  "lastVerifiedCodeCommit": "704d60c0dc18a4c0fb32912bedd8b4f9af230e26",
+  "lastPushedCommit": "704d60c0dc18a4c0fb32912bedd8b4f9af230e26",
   "unverifiedChanges": [],
   "resumedAt": "2026-10-06",
   "validation": {
@@ -81,5 +81,10 @@
     "implementationBoundary": "当前任务完成后如启动试开发须另开新分支；当前只记方案和提醒，未实施",
     "automationId": "automation",
     "reminderSaved": true
+  },
+  "basicDevelopmentMilestone": {
+    "status": "closing_verification",
+    "completed": false,
+    "reason": "基础功能代码已具备，当前整体收尾流程尚未宣告完成；真实验收和外部发布另列待办"
   }
 }
