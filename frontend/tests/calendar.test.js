@@ -66,7 +66,7 @@ test('实际Home模板当天明细保选定日期月份，空日/读取失败/�
   const bindings = { ...Vue, dayjs, centsText, getRecordTotals, formatCurrency, useLedgerReload, SERVER_MODE: true,
     useRecordStore: () => store, useAuthStore: () => auth, useHomeCalendar: options => useHomeCalendar({ ...options, now: () => '2026-10-04', eventTarget: null, documentTarget: null }) }
   const view = scope.run(() => new Function(...Object.keys(bindings), script +
-    ';return {recordStore,today,calendarMonth,selectedDate,weekdayLabel,returnToday,handleMonthChange,handleDateChange,todayRecords,todayTotals,monthTotals,selectedRecords,selectedDateLabel,getRecordSign,reloading,reloadError,reloadRecords,ownerCurrent: typeof ownerCurrent === "undefined" ? undefined : ownerCurrent}')(...Object.values(bindings)))
+    ';return {recordStore,today,calendarMonth,selectedDate,weekdayLabel,returnToday,handleMonthChange,handleDateChange,todayRecords,todayTotals,monthTotals,selectedRecords,selectedTotals,needsWideDayAmounts,selectedDateLabel,getRecordSign,reloading,reloadError,reloadRecords,ownerCurrent: typeof ownerCurrent === "undefined" ? undefined : ownerCurrent}')(...Object.values(bindings)))
   const template = content.slice(content.indexOf('<template>') + 10, content.lastIndexOf('</template>'))
   const stub = { render: () => Vue.h('span') }
   const component = { components: Object.fromEntries(['JournalSticker', 'CatNavIcon', 'ManualEntry', 'CategoryIcon', 'BottomNav', 'CalendarCard'].map(name => [name, stub])),
@@ -77,18 +77,29 @@ test('实际Home模板当天明细保选定日期月份，空日/读取失败/�
   const render = () => renderToString(Vue.createSSRApp(component))
   try {
     assert.match(await render(), /私有合成备注/)
+    const summary = html => html.match(/<section[^>]*aria-label="当天账单汇总"[^>]*>(.*?)<\/section>/s)?.[1] || ''
+    assert.match(summary(await render()), /当天收入.*¥0.00.*当天支出.*¥19.29/s)
     assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-10', q: '2026-10-04' } })
     view.handleDateChange('2026-09-04'); targets.length = 0
     assert.match(await render(), /合成历史收入/)
+    assert.match(summary(await render()), /当天收入.*¥7.00.*当天支出.*¥0.00/s)
     assert.deepEqual(targets.find(target => target?.path === '/bills'), { path: '/bills', query: { month: '2026-09', q: '2026-09-04' } })
     view.handleDateChange('2026-09-03'); targets.length = 0
     assert.match(await render(), /点下方「聊着记」/); assert.equal(targets.some(target => target?.path === '/bills'), false)
+    assert.match(summary(await render()), /当天收入.*¥0.00.*当天支出.*¥0.00/s)
+    view.handleDateChange('2026-10-04')
+    store.records = [0, 1].map(i => ({ ...records[0], id: 'synthetic-large-' + i, amount: '999999999.99' }))
+    assert.match(summary(await render()), /home-day-totals-wide.*¥1999999999.98/s)
+    store.records[0].amount = 'not-a-number'
+    const invalid = summary(await render()); assert.match(invalid, /role="alert"/); assert.doesNotMatch(invalid, /<dd/)
+    store.records = structuredClone(records)
     view.handleDateChange('2026-10-04'); store.storageError = '合成读取失败'; targets.length = 0
     assert.doesNotMatch(await render(), /查看当天明细|私有合成备注/); assert.equal(targets.some(target => target?.path === '/bills'), false)
+    assert.equal(summary(await render()), '')
     store.storageError = ''
     auth.user = null; const expired = await render(); auth.user = { id: 'synthetic' }; const returned = await render()
     for (const html of [expired, returned]) {
-      assert.doesNotMatch(html, /19.29|私有合成备注|回到今天|查看当天明细/)
+      assert.doesNotMatch(html, /19.29|私有合成备注|回到今天|查看当天明细|当天账单汇总/)
       assert.match(html, /登录身份已变化/)
     }
     assert.deepEqual(store.records, records)

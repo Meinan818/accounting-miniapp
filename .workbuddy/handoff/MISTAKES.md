@@ -521,3 +521,7 @@ useBillQuery当前是来源URL到refs的单向初始化/监听，重置只改ref
 ## 2026-10-06 · 原生月份input定位
 
 MonthPicker的aria-label直接在input上，首版QA误写带label的后代input选择器，before30秒等待失败保持。读取实际组件后改为input[aria-label]，month-before得到真实2026-10与预期2026-09断言失败；仅这次正确定位证据用于业务根因，不能把原定位超时算业务失败。15项final同断言全部通过。
+
+## 2026-10-06 · 选日小计错误fixture须匹配既有兼容合同
+
+首轮18相关17通过1失败，测试用0.291误认为汇总非法；实际sumCents复用legacyCents，对旧已存金额允许舍入到分（正式API新金额仍严格）。0.291合计1000000000.28不是本次业务缺陷。错误fixture改为不可数值化not-a-number，保原role=alert/不显示dd断言，不修改既有金额兼容逻辑迎合测试；18相关最终全通过，首轮log保留。

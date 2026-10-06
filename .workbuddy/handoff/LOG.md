@@ -1976,3 +1976,11 @@ before实际首页九月后Enter开明细，inputValue=2026-10而预期09，原J
 只在完整读取及选定日期有账单时提供原生router-link，query={month:selectedDate.slice(0,7),q:selectedDate}，不自动打开编辑或写账本。沿已有Home实际模板回归加当前/历史/空日/读取失败/旧身份路由props断言，保原身份/私有字段/账本未改断言；537全量/63相关/两构建本轮实际执行。三宽30检查51API全GET拦截，9原生Enter/日期筛选与reload、9原账单编辑Escape取消、空日3项，unknown/意外错误0，320px截图已检查，44px触控目标完整。
 
 上一ff3e87d普通Git低速失败原文保持，官方同SHA/force:false同步11blob成功，后续inspect远端完整ff3e87d与HEAD一致/私有/无Pages/0workflows/0deployments再核。当前上传结果随后记，继续下一项，不等待回复。
+
+## 当前首页选日收支小计（2026-10-06）
+
+选定日期独立显示当天收入/支出，完整65笔0.29支出精确18.85，收入/空日/大额小计单列与错误保护保持；顶部今天及日历整月口径不变。18相关/537前端/两构建及三宽12合成浏览器12API6截图通过，真实请求0；累计80组715检查1935API310截图7JSON，源5CSV/上一窗口2CSV另计。compact=0/原静音automation保持。截图另发现原首页逐笔最大金额拆行，尚未修复，下一项见STATE/NEXT。
+
+复用完整selectedRecords与getRecordTotals，误差及错误提示沿既有合同；超宽小计按centsText长度单列，空日两项明确0。实际Home模板回归核当前支出19.29/历史收入7/空日0/最大1999999999.98/非法金额alert不显示dd/读取失败与身份隐藏。18相关首轮17通过1失败是错误fixture误用0.291，证据/解释见MISTAKES；最终18全过，537/两构建本轮实际执行。三宽12检查12GET全拦截，默认空日→Enter选66笔→空日→新fixture大额3笔，选日操作0新增请求/0写入，6截图抽检。仅大额小计完整；逐笔大额已有wrap仍拆符号及小数末位，列为下一任务，不扩大当前完成声明。
+
+上一e9b56b5普通Git443连接失败保留，官方API同SHA/force:false同步7blob成功，后续inspect完整remote/HEAD一致/私有/无Pages/0workflows/0deployments已核。当前节点上传结果随后登记，继续修已证实的金额读数问题。

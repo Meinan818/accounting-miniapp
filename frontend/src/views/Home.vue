@@ -38,6 +38,8 @@ const monthTotals = computed(() => getRecordTotals(visibleMonthRecords.value))
 const selectedRecords = computed(() => recordStore.records
   .filter((record) => record.date === selectedDate.value)
   .sort((left, right) => String(left.time).localeCompare(String(right.time))))
+const selectedTotals = computed(() => getRecordTotals(selectedRecords.value))
+const needsWideDayAmounts = computed(() => !selectedTotals.value.error && [selectedTotals.value.incomeCents, selectedTotals.value.expenseCents].some(value => centsText(value).length > 7))
 
 const selectedDateLabel = computed(() => {
   const date = dayjs(selectedDate.value)
@@ -101,6 +103,14 @@ function getRecordSign(record) {
             <router-link v-if="selectedRecords.length" class="home-day-details" :to="{ path: '/bills', query: { month: selectedDate.slice(0, 7), q: selectedDate } }" :aria-label="'查看' + selectedDate + '账单明细'">查看当天明细 <span aria-hidden="true">→</span></router-link>
           </div>
         </div>
+
+        <section class="home-day-summary" aria-label="当天账单汇总">
+          <p v-if="selectedTotals.error" class="home-subtitle" role="alert">{{ selectedTotals.error }}</p>
+          <dl v-else class="home-day-totals" :class="{ 'home-day-totals-wide': needsWideDayAmounts }">
+            <div><dt>当天收入</dt><dd class="home-amount-income">¥{{ centsText(selectedTotals.incomeCents) }}</dd></div>
+            <div><dt>当天支出</dt><dd class="home-amount-expense">¥{{ centsText(selectedTotals.expenseCents) }}</dd></div>
+          </dl>
+        </section>
 
         <div v-if="selectedRecords.length" class="space-y-3">
           <article
@@ -174,6 +184,10 @@ function getRecordSign(record) {
 .home-ledger-tools { display:flex; flex-direction:column; align-items:flex-end; flex-shrink:0; }
 .home-day-details { display:flex; align-items:center; gap:5px; min-height:44px; color:var(--zz-home-ink); font-size:12px; }
 .home-day-details:focus-visible { outline:2px solid var(--zz-home-ink); outline-offset:3px; border-radius:6px; }
+.home-day-summary { padding:12px; margin-bottom:13px; border:1px dashed var(--zz-home-line); border-radius:14px; background:var(--zz-home-paper); }
+.home-day-totals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.home-day-totals > div { min-width:0; }.home-day-totals dt { color:var(--zz-home-ink-soft); font-size:12px; }.home-day-totals dd { margin-top:4px; font-size:16px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.home-day-totals-wide { grid-template-columns:1fr; }.home-day-totals-wide > div { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }.home-day-totals-wide dd { margin:0; }
 .home-record { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1.5px solid var(--zz-home-line); border-radius: 16px 19px 20px 15px; background: var(--zz-home-paper); padding: 13px; box-shadow: 3px 4px 0 var(--zz-home-title-brush); }
 .home-record-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .home-record-stamp { display: grid; place-items: center; flex: 0 0 36px; height: 38px; border: 1px dashed var(--zz-home-line); border-radius: 11px 9px 12px 10px; background: var(--zz-home-title-brush); }
