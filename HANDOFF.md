@@ -1,3 +1,7 @@
+## 本次原生目标与自动化迁移（2026-10-06）
+
+gpt-6.1-sol/high目标01a110e5-7c85-70f3-9d53-3f0d6b118869已创建，初始待续d6ab3d9671d54d74613c983cf23b773c49472210。原automation原生update/view及落盘逐字段核仅target_thread_id/updated_at变化，每小时ACTIVE/failed_runs_only/提示及其他字段全保持，未另建或验证未来定时执行。最终success、源停止共享写入、finalCommit以本次compaction-transfer-result-01a11076.json为准；目标核完新窗口0直接继续筛选小计浏览器失败定位，不等回复。本次尾commit只本地，不Push、不重跑；源compact=2保持，成功回执发布后停止共享写入。
+
 ## 当前第二次实际压缩交接（2026-10-06，源01a11076）
 
 源compact=2，停止业务和测试，仅本地待续commit，不Push。最新已验证且同SHA远端一致4118dfb75d36395ce5b2545eb68ad635cccf75f7；534前端/93相关/两构建及跨月编辑三宽6合成检查21API3截图已完成。累计76组643检查1821API292截图7JSON，源5CSV/本窗口2CSV另计，真实请求0。

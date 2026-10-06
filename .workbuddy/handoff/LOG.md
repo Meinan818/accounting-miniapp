@@ -1948,3 +1948,7 @@ f33361b普通Push低速及ls-remote443失败原日志保留；官方adapter先�
 筛选金额小计为未完成草稿：复用完整listedRecords与getRecordTotals、保整月口径、空结果零及大额单列。70相关/536前端/demo与server构建通过；首轮浏览器等待“筛选结果汇总”region可见30秒超时，0通过检查/2合成GET/0真实请求，根因未确认。目标先读browser-bills-filter-totals-qa.cjs、first-result.json、页面alert/HTML及snapshot fixture定位，不删断言或跳过失败；原失败及全部log在既有conversation-lifecycle-2026-10-04目录。
 
 本次专用回执.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a11076.json；原生gpt-6.1-sol/high目标仅在success、target为自己、sourceWillModifySharedFiles=false、finalCommit存在且HEAD一致、同一个automation目标及其他字段保持核完后，登记新窗口0并直接继续。源本地服务只读实核127.0.0.1:8080 Java20304 / 5174 Vite15428监听；未重启。复用D:/nodejs和既有Chrome/Playwright，TEMP/TMP及npm cache用E:/CODEX/.cache，不安装依赖。用户完全委托普通开发/commit/核查后Push，不询问不等待；免费/本机/真实数据保护保持；吉祥物仅方案已提醒一次，未来另分支，不实施或重复提醒。
+
+## 本次原生目标与自动化迁移（2026-10-06）
+
+gpt-6.1-sol/high目标01a110e5-7c85-70f3-9d53-3f0d6b118869已创建，初始待续d6ab3d9671d54d74613c983cf23b773c49472210。原automation原生update/view及落盘逐字段核仅target_thread_id/updated_at变化，每小时ACTIVE/failed_runs_only/提示及其他字段全保持，未另建或验证未来定时执行。最终success、源停止共享写入、finalCommit以本次compaction-transfer-result-01a11076.json为准；目标核完新窗口0直接继续筛选小计浏览器失败定位，不等回复。本次尾commit只本地，不Push、不重跑；源compact=2保持，成功回执发布后停止共享写入。

@@ -19,13 +19,13 @@
     "status": "ACTIVE",
     "interval": "每小时",
     "notificationPolicy": "failed_runs_only",
-    "targetThreadId": "01a11076-7f75-7fa0-9f7f-43a76168bd72",
-    "transferStatus": "接手逐字段核仅target_thread_id/updated_at变化且原生view成功；每小时ACTIVE/failed_runs_only保持，定时执行未验证",
+    "targetThreadId": "01a110e5-7c85-70f3-9d53-3f0d6b118869",
+    "transferStatus": "原生update/view及TOML逐字段核仅target_thread_id/updated_at改变；每小时ACTIVE/failed_runs_only/提示/其他字段保持，定时执行未另验",
     "scheduledRunVerified": false,
     "lastHeartbeatReceivedAt": "2026-10-06T09:36:31.849Z",
     "executionEvidence": "本次原生heartbeat已实际收到并执行核心流程验证；scheduler终态尚未另核，不把配置当运行成功"
   },
-  "status": "handoff_preparing",
+  "status": "handoff_finalizing",
   "developmentPaused": false,
   "pausedAt": "2026-10-04",
   "pauseReason": "",
@@ -59,12 +59,14 @@
   },
   "handoff": {
     "sourceThreadId": "01a11076-7f75-7fa0-9f7f-43a76168bd72",
-    "targetThreadId": null,
-    "status": "preparing",
+    "targetThreadId": "01a110e5-7c85-70f3-9d53-3f0d6b118869",
+    "status": "target_created_automation_verified",
     "receiptPath": ".workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a11076.json",
     "sourceWillModifySharedFiles": true,
     "model": "gpt-6.1-sol",
-    "thinking": "high"
+    "thinking": "high",
+    "initialCommit": "d6ab3d9671d54d74613c983cf23b773c49472210",
+    "finalReceiptRequired": true
   },
   "mascotExperiment": {
     "status": "idea_only",
