@@ -124,7 +124,7 @@ function exportBills() {
   try {
     const snapshot = listedRecords.value.map(record => ({ ...record }))
     const csv = createBillCsv(snapshot)
-    downloadCsv(csv, `miaoji-bills-${selectedMonth.value}${filtering.value ? '-filtered' : ''}.csv`)
+    downloadCsv(csv, `miaoji-bills-${selectedDate.value || selectedMonth.value}${filtering.value ? '-filtered' : ''}.csv`)
     notice.value = `已发起下载 ${snapshot.length} 笔${filtering.value ? '筛选' : '本月'}账单，请查看浏览器下载记录。`
   } catch (failure) { exportError.value = '导出未完成：' + failure.message }
 }

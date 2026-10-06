@@ -2077,3 +2077,9 @@ RecordInput @Size(max=200)与fromRecordView200，validateRecord/RecordForm120不
 ## 2026-10-06 · 小票多行备注原样展示
 
 浏览器服务端note甲\n乙，原明细Range两个字符同top，before精确行位置失败保持。仅明细/首页小票备注p及DraftGroupCard内容span white-space:pre-wrap三处CSS，保Vue安全文字/真实数据不改；三宽三页9检查18全拦截GET9截图，Range actual last>first，no横滚、0写入/真实0，截图抽检。555完整/demo/server两构建通过，不为CSS造额外镜像单元。累计94组941检查2284API372截图7JSON。上一36a6713普通Push/官方inspect完整36a671349cea169c8d35cac1198eb804ec515afc一致，私有无Pages0workflow0deployment；当前后续保存上传，compact=1原automation保持，下一项完整主线合成回归。
+
+## 2026-10-06 · 主线回归、日期CSV草稿及第二次实际压缩
+
+已完成aa01b90三页换行展示普通Push/官方同SHA远端核一致。旧browser-core-flow-qa.cjs date-note-regression在该SHA上14检查66全拦截API6截图2实际合成CSV通过：登录/单次合成AI/草稿编辑确认/明细编辑CSV/统计首页/资料/退出重登；真实业务与AI0，旧链回归单列不重复累计。CSV日期筛选文件名现按日期命名，原editorRendering测试补一断言，70相关及server构建、320/390/1440三宽3检查6合成GET3下载通过；改动后未重跑全量/demo，尚未完成节点。证据保留既有memory目录。
+
+本聊天第二次实际compact已识别/告知/STATE登记2；只交接收尾，本地待续commit，不Push不重跑。源01a110e5专用回执 pending，原生gpt-6.1-sol/high目标及同一automation迁移结果随后据实登记；success/目标身份/源停止共享写入/HEAD=finalCommit/automation字段核完前目标只读。实核8080 Java20304、5174 Vite15428监听，未重启，用户授权/数据/缓存/吉祥物边界保持。

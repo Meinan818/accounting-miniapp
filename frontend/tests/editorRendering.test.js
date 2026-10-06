@@ -1247,7 +1247,7 @@ test('实际明细日期筛选保整月总额，搜索清空保日期，CSV/复�
     assert.deepEqual(v.listedRecords.value.map(r => r.id), [day.id])
     assert.equal(v.monthTotals.value.expenseCents, 3700); assert.equal(v.filteredTotals.value.expenseCents, 3200)
     await v.clearSearchAddress(); assert.equal(v.searchText.value, ''); assert.equal(v.selectedDate.value, '2026-10-04')
-    v.exportBills(); assert.equal(env.downloads.length, 1); assert.match(env.downloads[0].csv, /32\.00/); assert.doesNotMatch(env.downloads[0].csv, /提及/)
+    v.exportBills(); assert.equal(env.downloads.length, 1); assert.equal(env.downloads[0].filename, 'miaoji-bills-2026-10-04-filtered.csv'); assert.match(env.downloads[0].csv, /32\.00/); assert.doesNotMatch(env.downloads[0].csv, /提及/)
     await v.copyFilterLink(); assert.equal(new URL(v.filterLinkText.value).searchParams.get('date'), '2026-10-04')
     v.edit(day); await v.repeatRecord()
     const target = env.calls.find(c => c[0] === 'navigate')[1]

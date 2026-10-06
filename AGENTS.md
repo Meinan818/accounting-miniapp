@@ -1,3 +1,11 @@
+## 当前第二次实际压缩交接（2026-10-06，源01a110e5，优先于历史）
+
+本聊天compact=2，停止业务与测试，仅本地待续commit，不Push。最新已验证及远端一致aa01b90f0caeb6524a53345ac5f9f5b8638c8dca：日期精确筛选、日期来源、200字符备注、多行输入/焦点及三页换行展示完成。555全量/两构建属于该已完成源码；累计94组941检查2284API372截图7JSON保持，历史源5CSV/上一窗口2CSV另计。完整主线回归14检查66全拦截API6截图2合成CSV通过，旧链回归单列不重复累计，真实业务/AI请求0。
+
+日期CSV文件名为待续改动：Bills使用selectedDate或selectedMonth，原实际日期导出测试补文件名断言。70相关/server构建及三宽3浏览器6合成GET/3实际合成CSV通过，改动后全量与demo未重跑，不能写成节点完成。证据date-csv-related.log、date-csv-build-server.log、browser-date-csv-final-result.json；完整主线browser-core-flow-date-note-regression-result.json，均在既有conversation-lifecycle-2026-10-04目录，失败原文保持，Git忽略材料不提交。
+
+本次专用回执.workbuddy/memory/conversation-lifecycle-2026-10-04/compaction-transfer-result-01a110e5.json。目标gpt-6.1-sol/high先只读核success、target为自己、sourceWillModifySharedFiles=false、finalCommit与HEAD一致、同一automation目标及其他字段保持，再登记新窗口0并完成CSV剩余验证/提交/核查后Push，直接持续开发。当前源不Push/不重跑。原每小时ACTIVE/failed_runs_only提示及字段保持；配置不等于定时成功。实核127.0.0.1:8080 Java20304及5174 Vite15428监听，未重启；复用D:/nodejs/既有Chrome及Playwright，任务TEMP/TMP/npm cache用E:/CODEX/.cache，不安装依赖。普通开发完全委托不提问/不委派，保护真实数据；吉祥物仅方案且已提醒一次，未来另分支，当前不实施。
+
 ## 当前多行备注小票展示（2026-10-06）
 
 明细/首页/已保存聊天的真实备注换行保留，Vue文字输出和数据不改；555前端/两构建及三宽三页9浏览器18合成GET9截图通过，Range证实甲乙实际分行/无横滚，真实0。累计94组941检查2284API372截图7JSON，源5CSV/上一窗口2CSV另计。compact=1/原静音automation保持，下一项现有完整主线合成回归，见STATE/NEXT。
