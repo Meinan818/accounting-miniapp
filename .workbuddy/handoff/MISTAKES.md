@@ -491,3 +491,7 @@ Stats旧月份导航只向router.replace传query，实际浏览器地址#month�
 ## 2026-10-06 · 再记一笔harness事件与页面过渡
 
 组件emit成功返回true不代表harness events已订阅，repeat-record-related.log的缺事件失败由新增onRepeat监听修正，保原断言；父props更新须nextTick。浏览器地址已到Add但App过渡的旧dialog短暂留DOM，first strict两金额失败保留；应等旧dialog detached，再断言新页，不能first()掩盖或把元素数量判为业务失败。
+
+## 2026-10-06 · 完整流程导航与查询边界
+
+Chat实际没有BottomNav，必须按NotebookBack到Home再走明细；first假设底栏而超时保留，修harness不改业务。旧“全部历史误送AI”修复是安全拒绝不支持范围，不能从修复标题误读为已支持全部历史查询；现chatQuery源码明确仅本月，Profile说明该边界正确。新帮助文案须逐项核实际能力，不凭摘要扩大范围。

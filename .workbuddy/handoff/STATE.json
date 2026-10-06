@@ -2,12 +2,12 @@
   "schemaVersion": 2,
   "owner": "codex",
   "workMode": "codex_full_ownership",
-  "currentTask": "再记一笔及保来源返回已验证上传；当前文档入口已校准，继续基础流程收尾",
+  "currentTask": "本机基础功能开发收尾通过，吉祥物三点方案已提醒一次；继续现有功能体验打磨",
   "stage": "fullstack_verification_and_reliability",
   "blocked": false,
   "blockedReason": "",
-  "nextStep": "串联一条正式模式完整合成用户流程：登录→聊天草稿确认→明细/统计→资料，使用独立fixture并拦截全部业务/AI/账号请求，不触碰真实数据；按实际结果收敛基本开发交付清单，未宣告里程碑前不触发吉祥物提醒。",
-  "nextStepReason": "既有页面独立链已覆盖，收尾核一会话跨页连贯性；真实账号与人工验收仍单列待条件。",
+  "nextStep": "完善Profile记账小贴士，准确介绍直接选月、CSV/筛选链接和再记一笔入口，保持聊天仅支持本月查询的边界；核现有相关检查及窄屏可读性，不实施吉祥物增强。",
+  "nextStepReason": "新入口已经实现，帮助说明应让用户能找到，而不是继续只介绍旧功能。",
   "pendingUserDecision": "依赖集中PENDING，普通开发自主推进，不主动提问。",
   "onlineVersion": "无（尚未部署）",
   "updatedAt": "2026-10-06",
@@ -21,14 +21,16 @@
     "notificationPolicy": "failed_runs_only",
     "targetThreadId": "01a11076-7f75-7fa0-9f7f-43a76168bd72",
     "transferStatus": "接手逐字段核仅target_thread_id/updated_at变化且原生view成功；每小时ACTIVE/failed_runs_only保持，定时执行未验证",
-    "scheduledRunVerified": false
+    "scheduledRunVerified": false,
+    "lastHeartbeatReceivedAt": "2026-10-06T09:36:31.849Z",
+    "executionEvidence": "本次原生heartbeat已实际收到并执行核心流程验证；scheduler终态尚未另核，不把配置当运行成功"
   },
   "status": "developing",
   "developmentPaused": false,
   "pausedAt": "2026-10-04",
   "pauseReason": "",
   "lastVerifiedCodeCommit": "704d60c0dc18a4c0fb32912bedd8b4f9af230e26",
-  "lastPushedCommit": "704d60c0dc18a4c0fb32912bedd8b4f9af230e26",
+  "lastPushedCommit": "6beac5c571f609bcb01ef77bccdc23b0aafc40b7",
   "unverifiedChanges": [],
   "resumedAt": "2026-10-06",
   "validation": {
@@ -38,10 +40,13 @@
       "demo",
       "server"
     ],
-    "syntheticBrowserChecks": 19,
-    "syntheticApiRequests": 50,
-    "screenshots": 12,
-    "realBusinessRequests": 0
+    "syntheticBrowserChecks": 14,
+    "syntheticApiRequests": 66,
+    "screenshots": 6,
+    "csvDownloads": 2,
+    "realBusinessRequests": 0,
+    "realAiRequests": 0,
+    "sourceUnchangedSince": "704d60c0dc18a4c0fb32912bedd8b4f9af230e26"
   },
   "localServices": {
     "checkedAt": "2026-10-06",
@@ -77,14 +82,18 @@
       "大量动画"
     ],
     "remindWhen": "基本开发完成后提醒一次讨论，以当前规划和可审阅验证结果判定，不依据历史数字虚报里程碑",
-    "reminded": false,
+    "reminded": true,
     "implementationBoundary": "当前任务完成后如启动试开发须另开新分支；当前只记方案和提醒，未实施",
     "automationId": "automation",
-    "reminderSaved": true
+    "reminderSaved": true,
+    "remindedAt": "2026-10-06",
+    "reminderBasis": "当前完整合成流程及同源码现有验证证明本机基础功能开发收尾；已在本聊天commentary发出一次提醒，未启动试开发"
   },
   "basicDevelopmentMilestone": {
-    "status": "closing_verification",
-    "completed": false,
-    "reason": "基础功能代码已具备，当前整体收尾流程尚未宣告完成；真实验收和外部发布另列待办"
+    "status": "local_basic_development_complete",
+    "completed": true,
+    "date": "2026-10-06",
+    "scope": "既有本机基础功能实现及完整单会话合成流程收尾；不代表真实账号/真机/人工验收/部署完成",
+    "evidence": ".workbuddy/memory/conversation-lifecycle-2026-10-04/browser-core-flow-navigation-result.json"
   }
 }
